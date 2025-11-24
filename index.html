@@ -76,19 +76,26 @@
 
     const pArea = document.getElementById('photoArea');
     if (l.photos && l.photos.length > 0) {
-      pArea.innerHTML = '';
-      l.photos.forEach(base64 => {
-        if (base64 && base64.startsWith('data:image')) {
-          const img = document.createElement('img');
-          img.src = base64;
-          img.className = 'photo-item';
-          img.onerror = function () { this.style.display = 'none'; };
-          pArea.appendChild(img);
-        }
-      });
-    } else {
-      pArea.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
+  const pArea = document.getElementById('photoArea');
+  pArea.innerHTML = '';
+  l.photos.forEach(base64 => {
+    if (base64 && base64.startsWith('data:image')) {
+      const img = document.createElement('img');
+      img.className = 'photo-item';
+      img.onerror = function () { this.style.display = 'none'; };
+
+      // ← ここが挿入位置
+      setTimeout(() => {
+        img.src = base64;
+      }, 300);
+
+      pArea.appendChild(img);
     }
+  });
+} else {
+  pArea.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
+}
+
   }
 </script>
 </body>
