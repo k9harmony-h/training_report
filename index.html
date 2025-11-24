@@ -84,12 +84,17 @@
     }
   });
 
-  function fetchData(userId) {
-    fetch(`${GAS_API_URL}?userId=${userId}`)
-      .then(res => res.json())
-      .then(data => render(data, userId))
-      .catch(err => alert('Network Error: ' + err));
-  }
+function fetchData(userId) {
+  console.log('送信するuserId:', userId); // ← 追加
+  fetch(`${GAS_API_URL}?userId=${userId}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log('受信データ:', data); // ← 追加
+      render(data, userId);
+    })
+    .catch(err => alert('Network Error: ' + err));
+}
+
 
   function render(data, userId) {
     document.getElementById('loading').style.display = 'none';
