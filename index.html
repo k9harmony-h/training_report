@@ -38,7 +38,7 @@
 </head>
 <body>
   <h1>犬画像表示テスト（Base64埋め込み）</h1>
-<p>0449</p>
+<p>0452</p>
   <div class="row">
     <label>APIエンドポイント（GASデプロイURL）</label>
     <input id="endpoint" type="text"
@@ -121,3 +121,73 @@
         }
 
         if (!data || data.ok !== true) {
+          setStatus(false, `失敗: ${data?.reason || 'unknown_reason'}`);
+          log(`FAIL: reason=${data?.reason || 'unknown'} message=${data?.message || ''} detail=${JSON.stringify(data?.detail || {})}`);
+          setMeta({ http: { status: res.status, statusText: res.statusText }, payload: data });
+          return;
+        }
+
+        if (!data.base64 || !data.mimeType) {
+          setStatus(false, '失敗: レスポンスにbase64/mimeTypeがありません');
+          log('FAIL: base64 or mimeType missing');
+          setMeta({ http: { status: res.status }, payload: data });
+          return;
+        }
+
+        const t1 = performance.now();
+        const src = renderDataUrl(data.mimeType, data.base64);
+
+        // 画像描画タイミング計測
+        const img = $('preview');
+        let rendered = false;
+        const onLoad = () => {
+          if (rendered) return;
+          rendered = true;
+          const t2 = performance.now();
+          setStatus(true, `成功: ${data.mimeType} ${data.bytes} bytes`);
+          log(`SUCCESS: img loaded. net=${(t1 - t0).toFixed(0)}ms render=${(t2 - t1).toFixed(0)}ms total=${(t2 - t0).toFixed(0)}ms`);
+          setMeta({
+            dogKey,
+            fileId: data?.meta?.fileId,
+            fileName: data?.meta?.fileName,
+            bytes: data.bytes,
+            mimeType: data.mimeType,
+            timings: {
+              network_ms: Math.round(t1 - t0),
+              render_ms: Math.round(performance.now() - t1),
+            },
+            ts: data?.meta?.ts
+          });
+          img.removeEventListener('load', onLoad);
+          img.removeEventListener('error', onError);
+        };
+        const onError = (e) => {
+          if (rendered) return;
+          rendered = true;
+          setStatus(false, '描画エラー: imgタグでの表示に失敗');
+          log(`FAIL: img error: ${e?.message || 'unknown'} (src length=${src.length})`);
+          setMeta({ dogKey, bytes: data.bytes, mimeType: data.mimeType, hint: 'Base64長大時は通信量が増えます' });
+          img.removeEventListener('load', onLoad);
+          img.removeEventListener('error', onError);
+        };
+
+        img.addEventListener('load', onLoad);
+        img.addEventListener('error', onError);
+        img.src = src;
+
+      } catch (err) {
+        setStatus(false, '例外: fetch失敗');
+        log(`EXCEPTION: ${err.message}`);
+        setMeta({ error: err.message });
+      }
+    });
+
+    $('clearBtn').addEventListener('click', () => {
+      $('preview').src = '';
+      $('log').textContent = '';
+      setMeta(null);
+      setStatus(false, 'クリア');
+    });
+  </script>
+</body>
+</html>
