@@ -1,6 +1,6 @@
 <script>
 async function loadDogImage(dogKey) {
-  const endpoint = 'YOUR_DEPLOYED_WEB_APP_URL';
+  const endpoint = 'https://script.google.com/macros/s/AKfycbxfkyTD2EXfLA1FTkb3eR086b5la5Z_mXmPCpo5LfDgmJJlRQ2kBvN92p699RIpcXnJ/exec';
   const url = `${endpoint}?dogKey=${encodeURIComponent(dogKey)}`;
   try {
     const res = await fetch(url, { cache: 'no-store' });
