@@ -125,14 +125,15 @@ function fetchData(userId) {
     document.getElementById('trainerName').innerText = l?.trainer_name || 'Staff';
     document.getElementById('ticketCount').innerText = data.ticket_count ?? '-';
 
-    if (d.photo && d.photo.startsWith('http')) {
-      const dogImg = document.getElementById('dogImg');
-      dogImg.src = d.photo;
-      dogImg.onerror = function () {
-        this.alt = '画像読み込み失敗（サイズ超過または形式不正）';
-        this.style.opacity = 0.5;
-      };
-    }
+if (d.photo && d.photo.startsWith('http')) {
+  const dogImg = document.getElementById('dogImg');
+  dogImg.src = d.photo;
+  dogImg.onerror = function () {
+    this.alt = '画像読み込み失敗';
+    this.style.opacity = 0.5;
+  };
+}
+
 
     const pArea = document.getElementById('photoArea');
     pArea.innerHTML = '';
