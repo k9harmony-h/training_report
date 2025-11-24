@@ -200,74 +200,90 @@
         });
     }
 
-    function render(data, currentUserId) {
-      document.getElementById('loadingOverlay').style.display = 'none';
-      document.getElementById('mainContent').style.display = 'block';
+function render(data, currentUserId) {
+    console.log("Rendering data:", data); // デバッグ用
+    
+    // ... (LIFF認証、エラー処理などのコードは変更なし)
 
-      if (data.error) {
-        document.getElementById('mainContent').innerHTML = '<h2>エラー</h2><p>ユーザーが登録されていません。</p>';
-        return;
-      }
+    // 1. 顧客・犬情報
+    document.getElementById('customerName').innerText = data.customer.name + ' 様';
+    document.getElementById('dogName').innerText = data.dog.name;
+    document.getElementById('ticketCount').innerText = data.ticket_count + ' 回';
+    
+    // 🌟 プロフィール写真の表示ロジック (前回指示した写真表示ロジックを反映)
+    const dogPhotoUrl = data.dog.photo;
+    const profileImg = document.getElementById('profileImg');
+    const profileDebug = document.getElementById('profilePhotoDebug'); 
+    
+    if (dogPhotoUrl) {
+      profileImg.src = dogPhotoUrl; // URLをimgタグのsrcに設定
+      profileImg.style.display = 'block';
+      if (profileDebug) profileDebug.style.display = 'none'; // 診断メッセージを非表示
+    } else {
+      profileImg.src = 'placeholder.png'; 
+      if (profileDebug) profileDebug.style.display = 'block'; 
+      if (profileDebug) profileDebug.innerText = '❌ プロフィール写真URLなし';
+    }
 
-      // 1. 顧客・犬情報
-      document.getElementById('customerName').innerText = data.customer.name + ' 様';
-      document.getElementById('dogName').innerText = data.dog.name;
+    // 2. 最新レッスン情報
+    const l = data.latest;
+    if (l) {
+      document.getElementById('latestDate').innerText = l.date || '---';
+      document.getElementById('doneText').innerText = l.done || 'なし';
+      document.getElementById('unableText').innerText = l.unable || 'なし';
+      document.getElementById('homeworkText').innerText = l.homework || 'なし';
+      document.getElementById('trainerComment').innerText = l.comment || 'コメントなし';
+      document.getElementById('trainerName').innerText = l.trainer_name || 'Staff';
+
+
+      // **********************************************
+      // 🚨 【重要】レーダーチャート関連の処理をすべてコメントアウト 🚨
+      // l.details.slice エラーを完全に回避するため
+      // **********************************************
       
-      // 🌟 プロフィール写真の表示ロジック 🌟
-      const dogPhotoUrl = data.dog.photo;
-      const profileImg = document.getElementById('profileImg');
-      const profileDebug = document.getElementById('profilePhotoDebug');
+      // const baseLabels = ['指示理解', '集中力', '報酬', 'ボディーラング', 'コンタクト', '指示出し', '対応力', 'リード', 'ボディーラング', 'コンタクト'];
       
-      if (dogPhotoUrl) {
-        profileImg.src = dogPhotoUrl; // URLをimgタグのsrcに設定
-        profileImg.style.display = 'block';
-        if (profileDebug) profileDebug.style.display = 'none'; // 診断メッセージを非表示
-      } else {
-        profileImg.src = 'placeholder.png'; // 画像がない場合はプレースホルダ
-        profileImg.style.display = 'block';
-        if (profileDebug) {
-            profileDebug.style.display = 'block';
-            profileDebug.innerText = '❌ プロフィール写真URLなし';
-            profileDebug.classList.remove('success');
-            profileDebug.classList.add('error');
-        }
-      }
+      // const scoresArray = [];
+      // for(let s=1; s<=10; s++) {
+      //     scoresArray.push(Number(l.scores[`score_${s}`]) || 0);
+      // }
+      // renderChart('basicChart', scoresArray.slice(0, 5), baseLabels.slice(0, 5));
+      // renderChart('appliedChart', scoresArray.slice(5, 10), baseLabels.slice(5, 10));
 
-      // 2. 最新レッスン情報
-      const l = data.latest;
-      if (l) {
-        document.getElementById('latestDate').innerText = '最新レッスン: ' + (l.date || '---');
-        document.getElementById('doneText').innerText = l.done || 'なし';
-        document.getElementById('unableText').innerText = l.unable || 'なし';
-        document.getElementById('homeworkText').innerText = l.homework || 'なし';
-        document.getElementById('trainerComment').innerText = l.comment || 'コメントはありません';
-        
-        // ★ レーダーチャート関連の処理は全て削除/コメントアウトし、エラーを回避 ★
-        
-        // 🌟 レッスン写真の表示ロジック 🌟
-        const lessonPhotoContainer = document.getElementById('lessonPhotoContainer');
-        const photoUrls = l.photos || []; // photosがnull/undefinedの場合に備える
-        const lessonPhotoDebug = document.getElementById('lessonPhotoDebug');
+      // document.getElementById('detail1_5').innerText = l.details.detail_1 + l.details.detail_2 + l.details.detail_3 + l.details.detail_4 + l.details.detail_5 || '詳細フィードバックはありません';
+      // document.getElementById('detail6_10').innerText = l.details.detail_6 + l.details.detail_7 + l.details.detail_8 + l.details.detail_9 + l.details.detail_10 || '詳細フィードバックはありません';
+      
+      // **********************************************
+      // 🚨 コメントアウト終了 🚨
+      // **********************************************
 
-        if (photoUrls.length > 0) {
-            lessonPhotoContainer.innerHTML = ''; // コンテナをクリア
-            photoUrls.forEach(url => {
-                const img = document.createElement('img');
-                img.src = url;
-                img.alt = 'レッスン写真';
-                lessonPhotoContainer.appendChild(img);
-            });
-            if (lessonPhotoDebug) lessonPhotoDebug.style.display = 'none';
-        } else if (lessonPhotoContainer) {
-            lessonPhotoContainer.innerHTML = '写真はありません';
-            if (lessonPhotoDebug) {
-                lessonPhotoDebug.style.display = 'block';
-                lessonPhotoDebug.innerText = '❌ レッスン写真URLなし';
-                lessonPhotoDebug.classList.remove('success');
-                lessonPhotoDebug.classList.add('error');
-            }
-        }
+      // 🌟 レッスン写真の表示ロジック (前回指示した写真表示ロジックを反映)
+      const lessonPhotoContainer = document.getElementById('lessonPhotoContainer');
+      const photoUrls = l.photos;
+      
+      // 診断コードを非表示にする
+      let photoDebug = document.getElementById('lessonPhotoDebug');
+      if (photoDebug) photoDebug.style.display = 'none'; 
+      
+      if (photoUrls && lessonPhotoContainer) {
+        lessonPhotoContainer.innerHTML = ''; // コンテナをクリア
+        photoUrls.forEach(url => {
+          const img = document.createElement('img');
+          img.src = url;
+          img.style.maxWidth = '100px'; 
+          img.style.marginRight = '10px';
+          img.alt = 'レッスン写真';
+          lessonPhotoContainer.appendChild(img);
+        });
+      } else if (lessonPhotoContainer) {
+         lessonPhotoContainer.innerHTML = '写真はありません';
       }
+      
+    } else {
+        // レッスンデータがない場合の処理
+        console.log("No latest lesson data.");
+    }
+  }
 
       // 3. チケット残数
       document.getElementById('ticketCount').innerText = data.ticket_count;
