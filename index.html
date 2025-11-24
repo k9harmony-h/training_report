@@ -1,296 +1,389 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-  <base target="_top">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>K9 Harmony Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
-  <script src="https://static.line-scdn.net/liff/sdk/v2/liff.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script> 
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
-
   <style>
-    /* CSSはデバッグ用で最小限 */
     :root {
       --brand-color: #57C3C2;
-      --background-color: #F8F8F8;
-      --border-color: #E0E0E0;
+      --brand-bg: #E0F7FA;
+      --text-main: #333333;
     }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--background-color);
-      margin: 0;
-      padding: 0;
+      font-family: 'Montserrat', 'Noto Sans JP', sans-serif;
+      background-color: #ffffff;
+      color: var(--text-main);
+      padding-bottom: 80px;
     }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .loading-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    .spinner {
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-top: 4px solid var(--brand-color);
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .user-info {
-      display: flex;
-      align-items: center;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .profile-img-wrap {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      overflow: hidden;
-      margin-right: 20px;
-      border: 2px solid var(--brand-color);
-      flex-shrink: 0;
-    }
-    #profileImg {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: none; /* 初期状態では非表示 */
-    }
-    .data-section {
-      padding: 15px 0;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .ticket-info {
-      text-align: right;
-      font-size: 1.1em;
-      font-weight: bold;
-      color: var(--brand-color);
-    }
-    /* 診断メッセージ用のスタイル */
-    .debug-message {
-      padding: 5px;
-      margin: 5px 0;
-      font-size: 0.8em;
-      border-radius: 4px;
-      word-break: break-all;
-    }
-    .success { background-color: #e6ffe6; color: green; border: 1px solid #c3ffc3; }
-    .error { background-color: #ffeeee; color: red; border: 1px solid #ffc3c3; }
+    .header-area { padding: 20px 20px 10px; background: #fff; }
+    .brand-title { color: var(--text-main); font-weight: 700; letter-spacing: 0.05em; margin: 0; font-size: 1.2rem; text-align: center; }
     
-    #lessonPhotoContainer img {
-      width: 100px; /* レッスン写真のサイズ調整 */
-      height: 100px;
-      object-fit: cover;
-      margin-right: 8px;
-      border-radius: 4px;
+    .profile-card { margin-top: 20px; display: flex; align-items: center; }
+    .dog-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--brand-color); padding: 2px; background: #fff; }
+    .profile-info { margin-left: 15px; flex-grow: 1; }
+    .cust-name { font-size: 0.85rem; color: #666; margin: 0; }
+    .dog-name { font-size: 1.6rem; font-weight: 700; line-height: 1.2; margin: 0; }
+    .birthday-msg { font-size: 0.8rem; color: #ff6b6b; font-weight: bold; animation: pulse 2s infinite; display: none; margin-bottom: 4px; }
+    @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; transform: scale(1.02); } 100% { opacity: 0.8; } }
+
+    .lesson-meta { margin-top: 5px; font-size: 0.85rem; color: var(--brand-color); font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+    .history-btn { font-size: 0.8rem; color: #999; text-decoration: none; border: 1px solid #ddd; padding: 2px 8px; border-radius: 12px; }
+
+    .chart-section { margin-top: 20px; padding: 0 10px; display: flex; justify-content: space-between; }
+    .chart-box { width: 49%; text-align: center; position: relative; }
+    .chart-container { height: 160px; width: 100%; }
+    .chart-caption { font-size: 0.75rem; color: #888; margin-top: 5px; font-weight: 600; }
+
+    .section-title { font-size: 0.9rem; font-weight: 700; color: var(--brand-color); margin: 25px 20px 10px; display: flex; align-items: center; gap: 8px; }
+    .section-title::before { content: ''; display: block; width: 4px; height: 16px; background: var(--brand-color); border-radius: 2px; }
+    
+    .feedback-box { margin: 0 20px; background: #f8f9fa; border-radius: 10px; padding: 15px; font-size: 0.9rem; line-height: 1.6; }
+    .homework-box { margin: 0 20px; border: 2px solid var(--brand-color); border-radius: 10px; padding: 15px; background: #fff; position: relative; }
+    .homework-badge { position: absolute; top: -10px; left: 15px; background: var(--brand-color); color: #fff; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 20px; }
+    .detail-card { background: #f8f9fa; border-radius: 8px; padding: 10px; }
+    .detail-head { font-size: 0.75rem; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 5px; text-align: center; color: #555; }
+    .detail-body { font-size: 0.8rem; color: #333; }
+
+    .photo-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 0 20px; margin-top: 10px; padding-bottom: 10px; }
+    .photo-item { width: 120px; height: 120px; border-radius: 8px; object-fit: cover; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: #eee; }
+    /* デバッグ用: 読み込み失敗した画像に赤枠 */
+    .photo-error { border: 3px solid red; }
+
+    .meta-info { margin: 20px; padding: 15px; background: #fff; border: 1px dashed #ccc; border-radius: 10px; font-size: 0.85rem; color: #555; }
+
+    .footer-action { margin: 30px 20px 10px; text-align: center; }
+    .btn-reserve { background: var(--brand-color); color: #fff; border: none; width: 100%; padding: 14px; border-radius: 30px; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 12px rgba(87, 195, 194, 0.4); display: block; text-decoration: none; }
+    
+    #loading, #errorView { text-align: center; margin-top: 80px; }
+    #mainContent { display: none; }
+
+    /* デバッグパネル */
+    #debugPanel { 
+      position: fixed; 
+      bottom: 0; 
+      left: 0; 
+      right: 0; 
+      background: #000; 
+      color: #0f0; 
+      padding: 10px; 
+      font-size: 10px; 
+      max-height: 150px; 
+      overflow-y: auto; 
+      font-family: monospace;
+      display: none;
     }
   </style>
 </head>
 <body>
 
-  <div id="loadingOverlay" class="loading-overlay">
-    <div class="spinner"></div>
-    <p style="color: white; margin-top: 15px;">Loading K9 Portal...</p>
-    <div id="debugMessage" class="debug-message error"></div>
+<div id="loading">
+  <div class="spinner-border" style="color: var(--brand-color);" role="status"></div>
+  <p class="mt-3 text-muted small">Loading K9 Portal...</p>
+</div>
+
+<div id="errorView" style="display:none;">
+  <div class="container">
+    <div class="alert alert-warning text-center">
+      <h5 class="fw-bold">登録が必要です</h5>
+      <p class="small">以下のIDをコピーして、<br>トレーナーのLINEに送信してください。</p>
+      <input type="text" id="userIdDisplay" class="form-control text-center fw-bold mb-3" readonly>
+      <button class="btn btn-secondary w-100" onclick="copyId()">IDをコピー</button>
+    </div>
+  </div>
+</div>
+
+<div id="mainContent">
+  <div class="header-area">
+    <h1 class="brand-title">K9 Harmony</h1>
+    
+    <div class="profile-card">
+      <img id="dogImg" src="https://via.placeholder.com/150?text=No+Img" class="dog-img" onerror="this.src='https://via.placeholder.com/150?text=No+Img';">
+      <div class="profile-info">
+        <div id="birthdayMsg" class="birthday-msg">Happy Birthday <span id="bdName"></span>ちゃん🎉</div>
+        
+        <p id="custName" class="cust-name">Loading...</p>
+        <h2 id="dogName" class="dog-name">Your Dog</h2>
+        
+        <div class="lesson-meta">
+          <span id="lessonDate">--/--/--</span>
+          <a href="history.html" class="history-btn">過去履歴 ></a>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="container" style="display: none;" id="mainContent">
-    <h1>K9 Harmony Portal</h1>
-
-    <div id="profilePhotoDebug" class="debug-message success"></div>
-
-    <div class="user-info">
-      <div class="profile-img-wrap">
-        <img id="profileImg" src="placeholder.png" alt="犬のプロフィール写真">
-      </div>
-      <div>
-        <div id="customerName" style="font-size: 1.2em; font-weight: bold;">[顧客名] 様</div>
-        <div id="dogName" style="font-size: 1.5em; color: #333;">[犬名]</div>
-        <div id="latestDate" style="font-size: 0.9em; color: #666;">最新レッスン: ---</div>
-      </div>
+  <div class="chart-section">
+    <div class="chart-box">
+      <div class="chart-container"><canvas id="chart1"></canvas></div>
+      <div class="chart-caption">基礎・集中</div>
     </div>
-
-    <h2 style="margin-top: 20px;">最新レッスン評価（一時的に非表示）</h2>
-    <div style="text-align: center; color: #999;">
-        レーダーチャートと詳細フィードバックは現在デバッグ中です。
+    <div class="chart-box">
+      <div class="chart-container"><canvas id="chart2"></canvas></div>
+      <div class="chart-caption">応用・対応</div>
     </div>
-    <div id="lessonPhotoDebug" class="debug-message success"></div>
-
-
-    <div class="data-section">
-      <div style="font-weight: bold; color: var(--brand-color);">できたこと (Done)</div>
-      <div id="doneText" style="padding-top: 5px;">---</div>
-    </div>
-    <div class="data-section">
-      <div style="font-weight: bold; color: var(--brand-color);">課題 (Unable)</div>
-      <div id="unableText" style="padding-top: 5px;">---</div>
-    </div>
-    <div class="data-section">
-      <div style="font-weight: bold; color: var(--brand-color);">宿題 (Homework)</div>
-      <div id="homeworkText" style="padding-top: 5px;">---</div>
-    </div>
-    
-    <div class="data-section">
-      <div style="font-weight: bold; color: var(--brand-color);">本日のショット</div>
-      <div id="lessonPhotoContainer" style="display: flex; overflow-x: auto; padding-top: 10px;">
-        写真はありません
-      </div>
-    </div>
-
-    <div class="data-section">
-      <div style="font-weight: bold;">トレーナーコメント:</div>
-      <div id="trainerComment" style="padding-top: 5px;">---</div>
-    </div>
-    <div class="data-section ticket-info">
-      チケット残数: <span id="ticketCount">--</span> 回
-    </div>
-    
   </div>
 
-  <script>
-    // LIFFで取得するGAS WebアプリURL (あなたの最新のURLに書き換えてください)
-    // 💡 注意: GASのURLが変わった場合は、この値をブラウザからGitHubで更新する必要があります。
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxG1rLg6t_jlBWy4KTFqVPYmRK-aEleUQR_yqCiNwsWhvDp7I-suBEsYnDHymVNmURO/exec"; // ★あなたのURL★
+  <div class="section-title">本日のテーマ・目標</div>
+  <div class="feedback-box" id="goalText">---</div>
 
-    function initializeLiff() {
-      liff.init({
-        liffId: "2008546673-MJY7j3ox" 
-      })
-      .then(() => {
-        if (!liff.isLoggedIn()) {
-          liff.login();
-        } else {
-          fetchData();
-        }
-      })
-      .catch((err) => {
-        document.getElementById('debugMessage').innerText = 'LIFF Init Error: ' + err.message;
-      });
-    }
+  <div class="section-title">できたこと (Done)</div>
+  <div class="feedback-box" id="doneText">---</div>
 
-    function fetchData() {
-      const userId = liff.getIDToken() ? liff.getDecodedIDToken().sub : 'TEST_USER_ID';
-      
-      fetch(GAS_API_URL + '?userId=' + userId)
-        .then(response => response.json())
-        .then(data => {
-          render(data, userId);
-        })
-        .catch(error => {
-          document.getElementById('debugMessage').innerText = 'Network Error: ' + error.message;
-          document.getElementById('loadingOverlay').style.display = 'flex';
-          document.getElementById('mainContent').style.display = 'none';
-        });
-    }
+  <div class="section-title">課題 (Unable)</div>
+  <div class="feedback-box" id="unableText">---</div>
 
-function render(data, currentUserId) {
-    console.log("Rendering data:", data); // デバッグ用
-    
-    // ... (LIFF認証、エラー処理などのコードは変更なし)
+  <div class="section-title">宿題 (Homework)</div>
+  <div class="homework-box">
+    <div class="homework-badge">HOMEWORK</div>
+    <div id="homeworkText">---</div>
+  </div>
 
-    // 1. 顧客・犬情報
-    document.getElementById('customerName').innerText = data.customer.name + ' 様';
-    document.getElementById('dogName').innerText = data.dog.name;
-    document.getElementById('ticketCount').innerText = data.ticket_count + ' 回';
-    
-    // 🌟 プロフィール写真の表示ロジック (前回指示した写真表示ロジックを反映)
-    const dogPhotoUrl = data.dog.photo;
-    const profileImg = document.getElementById('profileImg');
-    const profileDebug = document.getElementById('profilePhotoDebug'); 
-    
-    if (dogPhotoUrl) {
-      profileImg.src = dogPhotoUrl; // URLをimgタグのsrcに設定
-      profileImg.style.display = 'block';
-      if (profileDebug) profileDebug.style.display = 'none'; // 診断メッセージを非表示
-    } else {
-      profileImg.src = 'placeholder.png'; 
-      if (profileDebug) profileDebug.style.display = 'block'; 
-      if (profileDebug) profileDebug.innerText = '❌ プロフィール写真URLなし';
-    }
+  <div class="section-title">詳細フィードバック</div>
+  <div class="detail-grid">
+    <div class="detail-card">
+      <div class="detail-head">項目1-5</div>
+      <div class="detail-body" id="detail1">---</div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-head">項目6-10</div>
+      <div class="detail-body" id="detail2">---</div>
+    </div>
+  </div>
+  
+  <div class="feedback-box mt-2" style="background:#fff; border:1px solid #eee;">
+    <strong>トレーナーコメント:</strong><br>
+    <span id="trainerComment">---</span>
+  </div>
 
-    // 2. 最新レッスン情報
-    const l = data.latest;
-    if (l) {
-      document.getElementById('latestDate').innerText = l.date || '---';
-      document.getElementById('doneText').innerText = l.done || 'なし';
-      document.getElementById('unableText').innerText = l.unable || 'なし';
-      document.getElementById('homeworkText').innerText = l.homework || 'なし';
-      document.getElementById('trainerComment').innerText = l.comment || 'コメントなし';
-      document.getElementById('trainerName').innerText = l.trainer_name || 'Staff';
+  <div class="section-title">本日のショット</div>
+  <div class="photo-scroll" id="photoArea">
+    <div class="text-muted small ms-3">写真はありません</div>
+  </div>
 
+  <div class="meta-info">
+    担当トレーナー: <span id="trainerName" class="fw-bold">---</span>
+  </div>
 
-      // **********************************************
-      // 🚨 【重要】レーダーチャート関連の処理をすべてコメントアウト 🚨
-      // l.details.slice エラーを完全に回避するため
-      // **********************************************
-      
-      // const baseLabels = ['指示理解', '集中力', '報酬', 'ボディーラング', 'コンタクト', '指示出し', '対応力', 'リード', 'ボディーラング', 'コンタクト'];
-      
-      // const scoresArray = [];
-      // for(let s=1; s<=10; s++) {
-      //     scoresArray.push(Number(l.scores[`score_${s}`]) || 0);
-      // }
-      // renderChart('basicChart', scoresArray.slice(0, 5), baseLabels.slice(0, 5));
-      // renderChart('appliedChart', scoresArray.slice(5, 10), baseLabels.slice(5, 10));
+  <div class="footer-action">
+    <a href="#" class="btn-reserve">予約する / Reserve</a>
+    <div class="text-muted small mt-2">チケット残数: <span id="ticketCount" class="fw-bold">計算中</span> 回</div>
+  </div>
+</div>
 
-      // document.getElementById('detail1_5').innerText = l.details.detail_1 + l.details.detail_2 + l.details.detail_3 + l.details.detail_4 + l.details.detail_5 || '詳細フィードバックはありません';
-      // document.getElementById('detail6_10').innerText = l.details.detail_6 + l.details.detail_7 + l.details.detail_8 + l.details.detail_9 + l.details.detail_10 || '詳細フィードバックはありません';
-      
-      // **********************************************
-      // 🚨 コメントアウト終了 🚨
-      // **********************************************
+<!-- デバッグパネル (開発時のみ表示) -->
+<div id="debugPanel"></div>
 
-      // 🌟 レッスン写真の表示ロジック (前回指示した写真表示ロジックを反映)
-      const lessonPhotoContainer = document.getElementById('lessonPhotoContainer');
-      const photoUrls = l.photos;
-      
-      // 診断コードを非表示にする
-      let photoDebug = document.getElementById('lessonPhotoDebug');
-      if (photoDebug) photoDebug.style.display = 'none'; 
-      
-      if (photoUrls && lessonPhotoContainer) {
-        lessonPhotoContainer.innerHTML = ''; // コンテナをクリア
-        photoUrls.forEach(url => {
-          const img = document.createElement('img');
-          img.src = url;
-          img.style.maxWidth = '100px'; 
-          img.style.marginRight = '10px';
-          img.alt = 'レッスン写真';
-          lessonPhotoContainer.appendChild(img);
-        });
-      } else if (lessonPhotoContainer) {
-         lessonPhotoContainer.innerHTML = '写真はありません';
-      }
-      
-    } else {
-        // レッスンデータがない場合の処理
-        console.log("No latest lesson data.");
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script>
+  const LIFF_ID     = '2008546673-MJY7j3ox'; 
+  const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxG1rLg6t_jlBWy4KTFqVPYmRK-aEleUQR_yqCiNwsWhvDp7I-suBEsYnDHymVNmURO/exec';
+  
+  // デバッグログ関数
+  function debugLog(msg) {
+    console.log('🔍 ' + msg);
+    const panel = document.getElementById('debugPanel');
+    panel.style.display = 'block';
+    panel.innerHTML += msg + '<br>';
+  }
+
+  async function main() {
+    try {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+      const profile = await liff.getProfile();
+      debugLog(`User ID: ${profile.userId}`);
+      fetchData(profile.userId);
+    } catch (err) {
+      alert('Start Error: ' + err.message);
     }
   }
 
-      // 3. チケット残数
-      document.getElementById('ticketCount').innerText = data.ticket_count;
+  function fetchData(userId) {
+    const url = `${GAS_API_URL}?userId=${userId}`;
+    debugLog(`Fetching: ${url}`);
+    
+    fetch(url)
+      .then(res => {
+        debugLog(`Response status: ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        debugLog(`Data received: ${JSON.stringify(data).substring(0, 200)}...`);
+        render(data, userId);
+      })
+      .catch(err => {
+        debugLog(`Network Error: ${err.message}`);
+        alert('Network Error: ' + err);
+      });
+  }
+
+  function formatDate(dateString) {
+    if (!dateString) return '--/--/--';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return dateString;
+
+    const year = d.getFullYear().toString().slice(-2);
+    const month = ('0' + (d.getMonth() + 1)).slice(-2);
+    const day = ('0' + d.getDate()).slice(-2);
+    return `${year}/${month}/${day}`;
+  }
+
+  function render(data, currentUserId) {
+    document.getElementById('loading').style.display = 'none';
+
+    if (data.error === 'Unregistered') {
+      document.getElementById('errorView').style.display = 'block';
+      document.getElementById('userIdDisplay').value = currentUserId;
+      return;
     }
 
-    // LIFF初期化を開始
-    initializeLiff();
-  </script>
+    if (data.error) {
+      alert('System Error: ' + data.error);
+      return;
+    }
+
+    document.getElementById('mainContent').style.display = 'block';
+    
+    const c = data.customer || {};
+    const d = data.dog || {};
+    document.getElementById('custName').innerText = c.name + " 様";
+    document.getElementById('dogName').innerText = d.name || "Your Dog";
+    
+    // 犬の写真
+    if (d.photo && d.photo.startsWith('http')) {
+      debugLog(`Dog photo URL: ${d.photo}`);
+      document.getElementById('dogImg').src = d.photo;
+    }
+
+    if (d.birth_date && d.name) {
+      checkBirthday(d.birth_date, d.name);
+    }
+
+    if (data.ticket_count !== undefined) {
+      document.getElementById('ticketCount').innerText = data.ticket_count;
+    } else {
+      document.getElementById('ticketCount').innerText = "-";
+    }
+
+    const l = data.latest;
+    if (l) {
+      document.getElementById('lessonDate').innerText = formatDate(l.date);
+
+      document.getElementById('goalText').innerText = l.goal || 'なし';
+      document.getElementById('doneText').innerText = l.done || 'なし';
+      document.getElementById('unableText').innerText = l.unable || 'なし';
+      document.getElementById('homeworkText').innerText = l.homework || 'なし';
+      document.getElementById('trainerComment').innerText = l.comment || 'なし';
+      document.getElementById('trainerName').innerText = l.trainer_name || 'Staff';
+
+      const d1 = l.details.slice(0, 5).filter(t => t).map((t, i) => `[${i+1}] ${t}`).join('<br>');
+      document.getElementById('detail1').innerHTML = d1 || '特になし';
+      
+      const d2 = l.details.slice(5, 10).filter(t => t).map((t, i) => `[${i+6}] ${t}`).join('<br>');
+      document.getElementById('detail2').innerHTML = d2 || '特になし';
+
+      if (l.scores && l.scores.length >= 10) {
+        renderChart('chart1', l.scores.slice(0, 5), ['指示理解','ボディラン','報酬','集中力','コンタクト']);
+        renderChart('chart2', l.scores.slice(5, 10), ['指示出し','ボディラン','リード','対応力','コンタクト']);
+      }
+
+      // 写真表示 (デバッグ強化)
+      debugLog(`Photos array: ${JSON.stringify(l.photos)}`);
+      
+      if (l.photos && l.photos.length > 0) {
+        const pArea = document.getElementById('photoArea');
+        pArea.innerHTML = '';
+        
+        l.photos.forEach((url, idx) => {
+          debugLog(`Photo ${idx+1}: ${url}`);
+          
+          if(url && url.startsWith('http')) {
+             const img = document.createElement('img');
+             img.src = url;
+             img.className = 'photo-item';
+             
+             // 読み込み成功
+             img.onload = function() {
+               debugLog(`✅ Photo ${idx+1} loaded successfully`);
+             };
+             
+             // 読み込み失敗
+             img.onerror = function() {
+               debugLog(`❌ Photo ${idx+1} FAILED: ${url}`);
+               this.classList.add('photo-error');
+               this.alt = 'Load Error';
+             };
+             
+             pArea.appendChild(img);
+          }
+        });
+      } else {
+        debugLog('⚠️ No photos in data');
+      }
+    } else {
+      document.getElementById('lessonDate').innerText = 'データなし';
+    }
+  }
+
+  function checkBirthday(birthDateStr, name) {
+    const today = new Date();
+    const bDate = new Date(birthDateStr);
+    
+    bDate.setFullYear(today.getFullYear());
+    
+    const diffTime = bDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (Math.abs(diffDays) <= 14) {
+      document.getElementById('bdName').innerText = name;
+      document.getElementById('birthdayMsg').style.display = 'block';
+    }
+  }
+
+  function renderChart(canvasId, dataPoints, labels) {
+    new Chart(document.getElementById(canvasId), {
+      type: 'radar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Score',
+          data: dataPoints,
+          backgroundColor: 'rgba(87, 195, 194, 0.2)',
+          borderColor: '#57C3C2',
+          borderWidth: 2,
+          pointBackgroundColor: '#57C3C2',
+          pointRadius: 2
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        scales: {
+          r: {
+            min: 0, max: 5,
+            ticks: { stepSize: 1, display: false },
+            pointLabels: { font: { size: 9 }, color: '#555' }
+          }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+  function copyId() {
+    const el = document.getElementById('userIdDisplay');
+    el.select();
+    navigator.clipboard.writeText(el.value);
+    alert('コピーしました');
+  }
+
+  main();
+</script>
 </body>
 </html>
