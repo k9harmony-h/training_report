@@ -4,91 +4,92 @@
   <meta charset="UTF-8">
   <title>K9 Harmony Portal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- LIFF SDK は head に置く -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     body { font-family: 'Noto Sans JP', sans-serif; background: #fff; padding: 20px; }
     .dog-img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #57C3C2; }
-    .muted { color: #888; }
+    .photo-item { width: 100px; height: 100px; object-fit: cover; margin-right: 8px; border-radius: 8px; border: 1px solid #ccc; }
   </style>
 </head>
 <body>
 
-  <h2 id="custName" class="mb-1">Loading...</h2>
-  <h3 id="dogName" class="mt-0 mb-3">Your Dog</h3>
-  <!-- ページ上部の画像（ここに表示される） -->
-  <img id="dogImg" src="" class="dog-img" alt="Dog Image">
-  <p class="muted mt-2">レッスン日: <span id="lessonDate">--/--/--</span></p>
+<h2 id="custName">Loading...</h2>
+<h3 id="dogName">Your Dog</h3>
+<img id="dogImg" src="" class="dog-img" alt="Dog Image">
+<p>レッスン日: <span id="lessonDate">--/--/--</span></p>
 
-  <!-- script は body の末尾（</body>直前）に丸ごと挿入 -->
-  <script>
-    // ===== 設定値（あなたのLIFF/GAS） =====
-    const LIFF_ID = '2008546673-MJY7j3ox';
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxG1rLg6t_jlBWy4KTFqVPYmRK-aEleUQR_yqCiNwsWhvDp7I-suBEsYnDHymVNmURO/exec';
+<div class="section-title">本日のショット</div>
+<div class="photo-scroll" id="photoArea">
+  <div class="text-muted small ms-3">写真はありません</div>
+</div>
 
-    // ===== 起動時処理 =====
-    window.addEventListener('DOMContentLoaded', async () => {
-      try {
-        await liff.init({ liffId: LIFF_ID });
-        if (!liff.isLoggedIn()) {
-          liff.login();
-          return;
+<script>
+  const LIFF_ID = '2008546673-MJY7j3ox';
+  const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxG1rLg6t_jlBWy4KTFqVPYmRK-aEleUQR_yqCiNwsWhvDp7I-suBEsYnDHymVNmURO/exec';
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    try {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
+      const profile = await liff.getProfile();
+      fetchData(profile.userId);
+    } catch (err) {
+      alert('Start Error: ' + err.message);
+    }
+  });
+
+  function fetchData(userId) {
+    fetch(`${GAS_API_URL}?userId=${encodeURIComponent(userId)}`)
+      .then(res => {
+        if (!res.ok) throw new Error('GAS応答失敗: ' + res.status);
+        return res.json();
+      })
+      .then(data => render(data, userId))
+      .catch(err => {
+        console.error('Fetch Error:', err);
+        alert('読み込みエラー: ' + err.message);
+      });
+  }
+
+  function render(data, userId) {
+    const c = data.customer || {};
+    const d = data.dog || {};
+    const l = data.lesson || {};
+
+    document.getElementById('custName').innerText = c.name + ' 様';
+    document.getElementById('dogName').innerText = d.name || 'Your Dog';
+    document.getElementById('lessonDate').innerText = d.birth_date || '--/--/--';
+
+    const dogImg = document.getElementById('dogImg');
+    if (d.photo && d.photo.startsWith('data:image')) {
+      setTimeout(() => { dogImg.src = d.photo; }, 300);
+    }
+
+    dogImg.onerror = function () {
+      console.error('画像読み込み失敗:', d.photo);
+      this.alt = '画像読み込み失敗';
+      this.style.opacity = 0.6;
+    };
+
+    const pArea = document.getElementById('photoArea');
+    if (l.photos && l.photos.length > 0) {
+      pArea.innerHTML = '';
+      l.photos.forEach(base64 => {
+        if (base64 && base64.startsWith('data:image')) {
+          const img = document.createElement('img');
+          img.src = base64;
+          img.className = 'photo-item';
+          img.onerror = function () { this.style.display = 'none'; };
+          pArea.appendChild(img);
         }
-        const profile = await liff.getProfile();
-        fetchData(profile.userId);
-      } catch (err) {
-        alert('Start Error: ' + err.message);
-      }
-    });
-
-    // ===== GASへデータ取得 =====
-    function fetchData(userId) {
-      fetch(`${GAS_API_URL}?userId=${encodeURIComponent(userId)}`)
-        .then(res => {
-          if (!res.ok) throw new Error('GAS応答失敗: ' + res.status);
-          return res.json();
-        })
-        .then(data => render(data, userId))
-        .catch(err => {
-          console.error('Fetch Error:', err);
-          alert('読み込みエラー: ' + err.message);
-        });
+      });
+    } else {
+      pArea.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
     }
-
-    // ===== 描画処理（ここが画像表示を含む） =====
-    // 差し込み位置の質問が多かったため明確化：
-    // 「console.log はこの render() の中、img.src を代入する直前」に置く
-    function render(data, userId) {
-      const c = data.customer || {};
-      const d = data.dog || {};
-
-      document.getElementById('custName').innerText = (c.name || '顧客') + ' 様';
-      document.getElementById('dogName').innerText = d.name || 'Your Dog';
-      document.getElementById('lessonDate').innerText = d.birth_date || '--/--/--';
-
-      // 画像の表示（Base64データURLを優先）
-      console.log('dog.photo:', d.photo); // ← 差し込み位置はここ（img.src代入の直前）
-      const dogImg = document.getElementById('dogImg');
-
-      if (typeof d.photo === 'string' && d.photo.startsWith('data:image')) {
-        // LINE WebView対策：外部リクエスト不要のBase64をそのまま表示
-        dogImg.src = d.photo;
-      } else if (typeof d.photo === 'string' && d.photo.startsWith('http')) {
-        // 万一、URLで返す場合のフォールバック（WebViewで失敗しうる）
-        dogImg.src = d.photo;
-      } else {
-        // 画像が取得できない場合のフォールバック
-        dogImg.removeAttribute('src');
-        dogImg.alt = '画像がありません';
-      }
-
-      // 失敗検知
-      dogImg.onerror = function () {
-        console.error('画像読み込み失敗:', d.photo);
-        this.alt = '画像読み込み失敗';
-        this.style.opacity = 0.6;
-      };
-    }
-  </script>
+  }
+</script>
 </body>
 </html>
