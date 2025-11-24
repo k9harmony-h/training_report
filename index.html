@@ -70,19 +70,22 @@
   const LIFF_ID = '2008546673-MJY7j3ox';
   const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxG1rLg6t_jlBWy4KTFqVPYmRK-aEleUQR_yqCiNwsWhvDp7I-suBEsYnDHymVNmURO/exec';
 
-  window.addEventListener('DOMContentLoaded', async () => {
-    try {
-      await liff.init({ liffId: LIFF_ID });
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
-      }
-      const profile = await liff.getProfile();
-      fetchData(profile.userId);
-    } catch (err) {
-      alert('Start Error: ' + err.message);
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
     }
-  });
+
+    const profile = await liff.getProfile();
+    fetchData(profile.userId); // ← ここでGASにアクセス
+  } catch (err) {
+    alert('Start Error: ' + err.message);
+  }
+});
+
 
 function fetchData(userId) {
   console.log('送信するuserId:', userId); // ← 追加
