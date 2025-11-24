@@ -1,41 +1,29 @@
-<!doctype html>
+<!-- index.html（GitHub Pagesで公開中のLIFFエンドポイント） -->
+<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <title>犬画像表示テスト（直リンク）</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>犬画像表示テスト（Base64）</title>
   <style>
-    :root { color-scheme: light dark; }
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif; margin: 16px; }
+    body { font-family: system-ui, sans-serif; padding: 12px; }
     .row { margin-bottom: 12px; }
-    .label { font-weight: 600; }
-    #dogImage { max-width: 100%; height: auto; border: 1px solid #ccc; border-radius: 4px; }
-    #log { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: rgba(0,0,0,0.05); padding: 8px; border-radius: 4px; }
-    button { padding: 8px 12px; }
-    input { padding: 6px; width: 100%; }
+    #preview { max-width: 100%; border: 1px solid #ccc; }
+    #log { white-space: pre-wrap; font-family: ui-monospace, monospace; background: #f6f8fa; padding: 8px; border-radius: 6px; }
+    .status-ok { color: #0a7; }
+    .status-ng { color: #c33; }
   </style>
 </head>
 <body>
-  <h1>犬画像表示テスト（直リンク）</h1>
-<p>0338</p>
-  <a href="https://drive.google.com/uc?export=view&id=1-OgcdL81ZJ41z18LfQuuirBHabCOgHEb">Image test 01</a>
+  <h1>犬画像表示テスト（Base64）</h1>
 
-  <a href="https://drive.google.com/uc?export=view&id=1-OgcdL81ZJ41z18LfQuuirBHabCOgHEb/da12c3a5.photo.192606.jpg">Image test 02</a>
-
-<img src="https://drive.google.com/uc?export=view&id=1-OgcdL81ZJ41z18LfQuuirBHabCOgHEb">
-
-  <img src="https://drive.google.com/uc?export=view&id=1-OgcdL81ZJ41z18LfQuuirBHabCOgHEb/da12c3a5.photo.192606.jpg">
-  
   <div class="row">
-    <div class="label">APIエンドポイント（GASデプロイURL）</div>
-    <input id="endpoint" 
-       value="https://script.google.com/macros/s/AKfycbxfkyTD2EXfLA1FTkb3eR086b5la5Z_mXmPCpo5LfDgmJJlRQ2kBvN92p699RIpcXnJ/exec"
-       placeholder="https://script.google.com/macros/s/XXXX/exec">
+    <div class="label"><strong>APIエンドポイント:</strong> GASデプロイURL</div>
+    <input id="endpoint" value="https://script.google.com/macros/s/AKfycbzlFbJpqnYLmNWPA6tlO1-JyAnnFLJfxZVYjSPoWkJHViEplc0ZCeDauJU4SSmL3ZBH/exec" style="width:100%;">
   </div>
 
   <div class="row">
-    <div class="label">dogKey（シートA列: dog_unique_key）</div>
-    <input id="dogKey" placeholder="例: da12c3a5" value="da12c3a5">
+    <div class="label"><strong>dogKey:</strong> A列の dog_unique_key</div>
+    <input id="dogKey" placeholder="da12c3a5" style="width:100%;">
   </div>
 
   <div class="row">
@@ -44,106 +32,74 @@
   </div>
 
   <div class="row">
-    <div class="label">ステータス</div>
-    <div id="status">未実行</div>
-  </div>
-<div class="row">
-  <div class="label">画像URL（確認用リンク）</div>
-  <a id="imageLink" href="#" target="_blank">画像を別タブで開く</a>
-</div>
-
-  <div class="row">
-    <div class="label">画像プレビュー</div>
-    <img id="dogImage" alt="プレビュー">
+    <div><strong>ステータス:</strong> <span id="status" class="status-ng">未実行</span></div>
   </div>
 
   <div class="row">
-    <div class="label">ログ（最後の10行）</div>
+    <div><strong>画像プレビュー:</strong></div>
+    <img id="preview" alt="プレビュー" />
+  </div>
+
+  <div class="row">
+    <div><strong>ログ:</strong></div>
     <div id="log"></div>
   </div>
 
   <script>
-    // --- 簡易ログバッファ ---
-    const logs = [];
-    function log(msg) {
-      const line = `[${new Date().toLocaleString()}] ${msg}`;
-      logs.push(line);
-      if (logs.length > 50) logs.shift(); // メモリ抑制
-      document.getElementById('log').textContent = logs.slice(-10).join('\n');
-      console.log(line);
-    }
+    const $ = (id) => document.getElementById(id);
+    const log = (msg) => {
+      const ts = new Date().toISOString();
+      $('log').textContent += `[${ts}] ${msg}\n`;
+      console.log(`[${ts}] ${msg}`);
+    };
+    const setStatus = (ok, text) => {
+      const el = $('status');
+      el.textContent = text;
+      el.className = ok ? 'status-ok' : 'status-ng';
+    };
 
-    // --- 画像読み込み ---
-    async function loadDogImage() {
-      const endpoint = document.getElementById('endpoint').value.trim();
-      const dogKey = document.getElementById('dogKey').value.trim();
-      const statusEl = document.getElementById('status');
-      const imgEl = document.getElementById('dogImage');
-
-      // 入力チェック
-      if (!endpoint) {
-        statusEl.textContent = 'エンドポイント未設定';
-        log('エラー: endpoint未設定');
-        return;
-      }
-      if (!dogKey) {
-        statusEl.textContent = 'dogKey未設定';
-        log('エラー: dogKey未設定');
-        return;
-      }
+    $('loadBtn').addEventListener('click', async () => {
+      const endpoint = $('endpoint').value.trim();
+      const dogKey = $('dogKey').value.trim();
+      if (!endpoint) { setStatus(false, 'endpoint未設定'); log('ERROR: endpoint未設定'); return; }
+      if (!dogKey) { setStatus(false, 'dogKey未入力'); log('ERROR: dogKey未入力'); return; }
 
       const url = `${endpoint}?dogKey=${encodeURIComponent(dogKey)}`;
-      log(`fetch開始: ${url}`);
-      statusEl.textContent = '読み込み中…';
+      log(`REQUEST: ${url}`);
 
       try {
-        const res = await fetch(url, { cache: 'no-store' });
-        log(`HTTP ${res.status}`);
-        if (!res.ok) {
-          statusEl.textContent = `HTTPエラー: ${res.status}`;
-          log(`HTTPエラー: ${res.status}`);
-          return;
-        }
+        const res = await fetch(url, { method: 'GET', mode: 'cors' });
+        const ct = res.headers.get('content-type') || '';
+        log(`HTTP: ${res.status} ${res.statusText} content-type=${ct}`);
         const data = await res.json();
-        log(`レスポンス: ${JSON.stringify(data)}`);
 
         if (!data.ok) {
-          const reason = data.reason || 'unknown';
-          statusEl.textContent = `失敗: ${reason}`;
-          log(`失敗理由: ${reason}`);
+          setStatus(false, `失敗: ${data.reason}`);
+          log(`FAIL: reason=${data.reason} message=${data.message || ''} detail=${JSON.stringify(data.detail || {})}`);
           return;
         }
 
-        if (!data.url) {
-          statusEl.textContent = '失敗: url_not_present';
-          log('失敗理由: url_not_present');
+        if (!data.base64 || !data.mimeType) {
+          setStatus(false, '失敗: base64レスポンス不備');
+          log(`FAIL: base64 or mimeType missing`);
           return;
         }
 
-        // 画像設定
-        imgEl.src = data.url;
-        statusEl.textContent = 'Loaded';
-        log(`画像設定: ${data.url}`);
+        const src = `data:${data.mimeType};base64,${data.base64}`;
+        $('preview').src = src;
+        setStatus(true, `成功: ${data.mimeType} ${data.bytes} bytes`);
+        log(`SUCCESS: set img src (bytes=${data.bytes}) meta=${JSON.stringify(data.meta || {})}`);
       } catch (err) {
-        statusEl.textContent = `Fetch例外: ${err.message}`;
-        log(`例外: ${err.message}`);
+        setStatus(false, '例外: fetch失敗');
+        log(`EXCEPTION: ${err.message}`);
       }
-    }
+    });
 
-    function clearAll() {
-      document.getElementById('dogImage').src = '';
-      document.getElementById('status').textContent = '未実行';
-      log('クリア');
-    }
-
-    // --- イベント ---
-    document.getElementById('loadBtn').addEventListener('click', loadDogImage);
-    document.getElementById('clearBtn').addEventListener('click', clearAll);
-
-    // --- ページ初期化ヘルプ ---
-    log('ページロード');
-    // 必要ならここで既定のendpointを設定しておく:
-    // document.getElementById('endpoint').value = 'https://script.google.com/macros/s/AKfycbxfkyTD2EXfLA1FTkb3eR086b5la5Z_mXmPCpo5LfDgmJJlRQ2kBvN92p699RIpcXnJ/exec';
+    $('clearBtn').addEventListener('click', () => {
+      $('preview').src = '';
+      $('log').textContent = '';
+      setStatus(false, 'クリア');
+    });
   </script>
 </body>
 </html>
