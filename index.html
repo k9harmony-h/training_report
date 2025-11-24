@@ -1,63 +1,101 @@
-<!-- index.html（GitHub Pagesで公開中のLIFFエンドポイント） -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <title>犬画像表示テスト（Base64）</title>
+  <title>犬画像表示テスト（Base64埋め込み）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: system-ui, sans-serif; padding: 12px; }
+    :root {
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    body { font-family: var(--sans); margin: 16px; }
+    h1 { font-size: 18px; margin: 0 0 12px; }
     .row { margin-bottom: 12px; }
-    #preview { max-width: 100%; border: 1px solid #ccc; }
-    #log { white-space: pre-wrap; font-family: ui-monospace, monospace; background: #f6f8fa; padding: 8px; border-radius: 6px; }
-    .status-ok { color: #0a7; }
-    .status-ng { color: #c33; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; }
+    input[type="text"] { width: 100%; padding: 8px; border: 1px solid #d0d7de; border-radius: 6px; font-family: var(--mono); }
+    button { padding: 8px 12px; margin-right: 8px; border-radius: 6px; border: 1px solid #c9d1d9; background: #f6f8fa; cursor: pointer; }
+    button.primary { background: #0969da; color: #fff; border: 1px solid #0969da; }
+    #status { font-weight: 700; }
+    .status-ok { color: #0f766e; }
+    .status-ng { color: #b91c1c; }
+    #preview {
+      max-width: 100%;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: #fff;
+    }
+    #meta, #log {
+      font-family: var(--mono);
+      white-space: pre-wrap;
+      background: #f6f8fa;
+      border: 1px solid #d0d7de;
+      padding: 8px;
+      border-radius: 6px;
+    }
+    .tips { font-size: 12px; color: #57606a; }
   </style>
 </head>
 <body>
-  <h1>犬画像表示テスト（Base64）</h1>
+  <h1>犬画像表示テスト（Base64埋め込み）</h1>
 
   <div class="row">
-    <div class="label"><strong>APIエンドポイント:</strong> GASデプロイURL</div>
-    <input id="endpoint" value="https://script.google.com/macros/s/AKfycbzlFbJpqnYLmNWPA6tlO1-JyAnnFLJfxZVYjSPoWkJHViEplc0ZCeDauJU4SSmL3ZBH/exec" style="width:100%;">
+    <label>APIエンドポイント（GASデプロイURL）</label>
+    <input id="endpoint" type="text"
+           value="https://script.google.com/macros/s/AKfycbzlFbJpqnYLmNWPA6tlO1-JyAnnFLJfxZVYjSPoWkJHViEplc0ZCeDauJU4SSmL3ZBH/exec">
+    <div class="tips">例: https://script.google.com/macros/s/XXXX/exec</div>
   </div>
 
   <div class="row">
-    <div class="label"><strong>dogKey:</strong> A列の dog_unique_key</div>
-    <input id="dogKey" placeholder="da12c3a5" style="width:100%;">
+    <label>dogKey（A列の dog_unique_key）</label>
+    <input id="dogKey" type="text" value="da12c3a5">
   </div>
 
   <div class="row">
-    <button id="loadBtn">画像を読み込む</button>
+    <button id="loadBtn" class="primary">画像を読み込む</button>
     <button id="clearBtn">クリア</button>
   </div>
 
   <div class="row">
-    <div><strong>ステータス:</strong> <span id="status" class="status-ng">未実行</span></div>
+    <span><strong>ステータス:</strong> <span id="status" class="status-ng">未実行</span></span>
   </div>
 
   <div class="row">
-    <div><strong>画像プレビュー:</strong></div>
-    <img id="preview" alt="プレビュー" />
+    <label>メタ情報</label>
+    <div id="meta"></div>
   </div>
 
   <div class="row">
-    <div><strong>ログ:</strong></div>
+    <label>画像プレビュー</label>
+    <img id="preview" alt="プレビュー画像" />
+  </div>
+
+  <div class="row">
+    <label>ログ</label>
     <div id="log"></div>
   </div>
 
   <script>
+    // DOM utils
     const $ = (id) => document.getElementById(id);
+    const ts = () => new Date().toISOString();
     const log = (msg) => {
-      const ts = new Date().toISOString();
-      $('log').textContent += `[${ts}] ${msg}\n`;
-      console.log(`[${ts}] ${msg}`);
+      $('log').textContent += `[${ts()}] ${msg}\n`;
+      console.log(`[${ts()}] ${msg}`);
     };
     const setStatus = (ok, text) => {
       const el = $('status');
       el.textContent = text;
       el.className = ok ? 'status-ok' : 'status-ng';
     };
+    const setMeta = (obj) => {
+      $('meta').textContent = obj ? JSON.stringify(obj, null, 2) : '';
+    };
 
+    // Render helpers
+    const renderDataUrl = (mimeType, base64) => `data:${mimeType};base64,${base64}`;
+
+    // Main actions
     $('loadBtn').addEventListener('click', async () => {
       const endpoint = $('endpoint').value.trim();
       const dogKey = $('dogKey').value.trim();
@@ -67,39 +105,19 @@
       const url = `${endpoint}?dogKey=${encodeURIComponent(dogKey)}`;
       log(`REQUEST: ${url}`);
 
+      const t0 = performance.now();
       try {
-        const res = await fetch(url, { method: 'GET', mode: 'cors' });
+        const res = await fetch(url, { method: 'GET' });
         const ct = res.headers.get('content-type') || '';
         log(`HTTP: ${res.status} ${res.statusText} content-type=${ct}`);
-        const data = await res.json();
 
-        if (!data.ok) {
-          setStatus(false, `失敗: ${data.reason}`);
-          log(`FAIL: reason=${data.reason} message=${data.message || ''} detail=${JSON.stringify(data.detail || {})}`);
+        let data;
+        try {
+          data = await res.json();
+        } catch (e) {
+          setStatus(false, 'JSON解析エラー');
+          log(`FAIL: JSON parse error: ${e.message}`);
           return;
         }
 
-        if (!data.base64 || !data.mimeType) {
-          setStatus(false, '失敗: base64レスポンス不備');
-          log(`FAIL: base64 or mimeType missing`);
-          return;
-        }
-
-        const src = `data:${data.mimeType};base64,${data.base64}`;
-        $('preview').src = src;
-        setStatus(true, `成功: ${data.mimeType} ${data.bytes} bytes`);
-        log(`SUCCESS: set img src (bytes=${data.bytes}) meta=${JSON.stringify(data.meta || {})}`);
-      } catch (err) {
-        setStatus(false, '例外: fetch失敗');
-        log(`EXCEPTION: ${err.message}`);
-      }
-    });
-
-    $('clearBtn').addEventListener('click', () => {
-      $('preview').src = '';
-      $('log').textContent = '';
-      setStatus(false, 'クリア');
-    });
-  </script>
-</body>
-</html>
+        if (!data || data.ok !== true) {
