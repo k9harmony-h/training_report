@@ -104,34 +104,10 @@
       });
   }
 
-  function render(data, userId) {
-    document.getElementById('loading').style.display = 'none';
-
-    if (data.error === 'Unregistered') {
-      document.getElementById('errorView').style.display = 'block';
-      document.getElementById('userIdDisplay').value = userId;
-      return;
-    }
-
-    document.getElementById('mainContent').style.display = 'block';
-
-    const c = data.customer || {};
+   function render(data, userId) {
     const d = data.dog || {};
-    const l = data.latest;
-
-    document.getElementById('custName').innerText = c.name + ' 様';
-    document.getElementById('dogName').innerText = d.name || 'Your Dog';
-    document.getElementById('lessonDate').innerText = l?.date || '--/--/--';
-    document.getElementById('goalText').innerText = l?.goal || 'なし';
-    document.getElementById('doneText').innerText = l?.done || 'なし';
-    document.getElementById('unableText').innerText = l?.unable || 'なし';
-    document.getElementById('homeworkText').innerText = l?.homework || 'なし';
-    document.getElementById('trainerComment').innerText = l?.comment || 'なし';
-    document.getElementById('trainerName').innerText = l?.trainer_name || 'Staff';
-    document.getElementById('ticketCount').innerText = data.ticket_count ?? '-';
-
-    // 画像表示処理（dog.photo）
     console.log('dog.photo:', d.photo);
+
     if (d.photo && d.photo.startsWith('http')) {
       const dogImg = document.getElementById('dogImg');
       dogImg.src = d.photo;
@@ -143,26 +119,6 @@
     } else {
       console.warn('画像URLが無効:', d.photo);
     }
-
-    // 写真一覧表示（latest.photos）
-    const pArea = document.getElementById('photoArea');
-    pArea.innerHTML = '';
-    if (l?.photos?.length > 0) {
-      l.photos.forEach(url => {
-        const img = document.createElement('img');
-        img.src = url;
-        img.className = 'photo-item';
-        img.onerror = function () {
-          console.error('写真読み込み失敗:', url);
-          this.alt = '画像読み込み失敗';
-          this.style.opacity = 0.5;
-        };
-        pArea.appendChild(img);
-      });
-    } else {
-      pArea.innerHTML = '<p class="text-muted">写真はありません</p>';
-    }
-  }
 
   function copyId() {
     const el = document.getElementById('userIdDisplay');
