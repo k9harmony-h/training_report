@@ -100,6 +100,20 @@ function fetchData(userId) {
 
 
   function render(data, userId) {
+    const d = data.dog || {};
+  console.log('dog.photo:', d.photo); // ← ここで値を確認
+
+  if (d.photo && d.photo.startsWith('http')) {
+    const dogImg = document.getElementById('dogImg');
+    dogImg.src = d.photo;
+    dogImg.onerror = function () {
+      console.error('画像読み込み失敗:', d.photo); // ← 失敗時のログ
+      this.alt = '画像読み込み失敗';
+      this.style.opacity = 0.5;
+    };
+  } else {
+    console.warn('画像URLが無効:', d.photo); // ← 条件に入らなかった場合
+  }
     document.getElementById('loading').style.display = 'none';
 
     if (data.error === 'Unregistered') {
