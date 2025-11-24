@@ -1,204 +1,14 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>K9 Harmony Portal</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
-  <style>
-    :root {
-      --brand-color: #57C3C2;
-      --brand-bg: #E0F7FA;
-      --text-main: #333333;
-    }
-    body {
-      font-family: 'Montserrat', 'Noto Sans JP', sans-serif;
-      background-color: #ffffff;
-      color: var(--text-main);
-      padding-bottom: 80px;
-    }
-    .header-area { padding: 20px 20px 10px; background: #fff; }
-    .brand-title { color: var(--text-main); font-weight: 700; letter-spacing: 0.05em; margin: 0; font-size: 1.2rem; text-align: center; }
-    
-    .profile-card { margin-top: 20px; display: flex; align-items: center; }
-    .dog-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--brand-color); padding: 2px; background: #fff; }
-    .profile-info { margin-left: 15px; flex-grow: 1; }
-    .cust-name { font-size: 0.85rem; color: #666; margin: 0; }
-    .dog-name { font-size: 1.6rem; font-weight: 700; line-height: 1.2; margin: 0; }
-    .birthday-msg { font-size: 0.8rem; color: #ff6b6b; font-weight: bold; animation: pulse 2s infinite; display: none; margin-bottom: 4px; }
-    @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; transform: scale(1.02); } 100% { opacity: 0.8; } }
+<!-- 省略された<head>部分はそのままでOK。以下は<body>以降の主要部分 -->
 
-    .lesson-meta { margin-top: 5px; font-size: 0.85rem; color: var(--brand-color); font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
-    .history-btn { font-size: 0.8rem; color: #999; text-decoration: none; border: 1px solid #ddd; padding: 2px 8px; border-radius: 12px; }
-
-    .chart-section { margin-top: 20px; padding: 0 10px; display: flex; justify-content: space-between; }
-    .chart-box { width: 49%; text-align: center; position: relative; }
-    .chart-container { height: 160px; width: 100%; }
-    .chart-caption { font-size: 0.75rem; color: #888; margin-top: 5px; font-weight: 600; }
-
-    .section-title { font-size: 0.9rem; font-weight: 700; color: var(--brand-color); margin: 25px 20px 10px; display: flex; align-items: center; gap: 8px; }
-    .section-title::before { content: ''; display: block; width: 4px; height: 16px; background: var(--brand-color); border-radius: 2px; }
-    
-    .feedback-box { margin: 0 20px; background: #f8f9fa; border-radius: 10px; padding: 15px; font-size: 0.9rem; line-height: 1.6; }
-    .homework-box { margin: 0 20px; border: 2px solid var(--brand-color); border-radius: 10px; padding: 15px; background: #fff; position: relative; }
-    .homework-badge { position: absolute; top: -10px; left: 15px; background: var(--brand-color); color: #fff; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
-
-    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 20px; }
-    .detail-card { background: #f8f9fa; border-radius: 8px; padding: 10px; }
-    .detail-head { font-size: 0.75rem; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 5px; text-align: center; color: #555; }
-    .detail-body { font-size: 0.8rem; color: #333; }
-
-    .photo-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 0 20px; margin-top: 10px; padding-bottom: 10px; }
-    .photo-item { width: 120px; height: 120px; border-radius: 8px; object-fit: cover; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: #eee; }
-    /* デバッグ用: 読み込み失敗した画像に赤枠 */
-    .photo-error { border: 3px solid red; }
-
-    .meta-info { margin: 20px; padding: 15px; background: #fff; border: 1px dashed #ccc; border-radius: 10px; font-size: 0.85rem; color: #555; }
-
-    .footer-action { margin: 30px 20px 10px; text-align: center; }
-    .btn-reserve { background: var(--brand-color); color: #fff; border: none; width: 100%; padding: 14px; border-radius: 30px; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 12px rgba(87, 195, 194, 0.4); display: block; text-decoration: none; }
-    
-    #loading, #errorView { text-align: center; margin-top: 80px; }
-    #mainContent { display: none; }
-
-    /* デバッグパネル */
-    #debugPanel { 
-      position: fixed; 
-      bottom: 0; 
-      left: 0; 
-      right: 0; 
-      background: #000; 
-      color: #0f0; 
-      padding: 10px; 
-      font-size: 10px; 
-      max-height: 150px; 
-      overflow-y: auto; 
-      font-family: monospace;
-      display: none;
-    }
-  </style>
-</head>
-<body>
-
-<div id="loading">
-  <div class="spinner-border" style="color: var(--brand-color);" role="status"></div>
-  <p class="mt-3 text-muted small">Loading K9 Portal...</p>
-</div>
-
-<div id="errorView" style="display:none;">
-  <div class="container">
-    <div class="alert alert-warning text-center">
-      <h5 class="fw-bold">登録が必要です</h5>
-      <p class="small">以下のIDをコピーして、<br>トレーナーのLINEに送信してください。</p>
-      <input type="text" id="userIdDisplay" class="form-control text-center fw-bold mb-3" readonly>
-      <button class="btn btn-secondary w-100" onclick="copyId()">IDをコピー</button>
-    </div>
-  </div>
-</div>
-
-<div id="mainContent">
-  <div class="header-area">
-    <h1 class="brand-title">K9 Harmony</h1>
-    
-    <div class="profile-card">
-      <img id="dogImg" src="https://via.placeholder.com/150?text=No+Img" class="dog-img" onerror="this.src='https://via.placeholder.com/150?text=No+Img';">
-      <div class="profile-info">
-        <div id="birthdayMsg" class="birthday-msg">Happy Birthday <span id="bdName"></span>ちゃん🎉</div>
-        
-        <p id="custName" class="cust-name">Loading...</p>
-        <h2 id="dogName" class="dog-name">Your Dog</h2>
-        
-        <div class="lesson-meta">
-          <span id="lessonDate">--/--/--</span>
-          <a href="history.html" class="history-btn">過去履歴 ></a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="chart-section">
-    <div class="chart-box">
-      <div class="chart-container"><canvas id="chart1"></canvas></div>
-      <div class="chart-caption">基礎・集中</div>
-    </div>
-    <div class="chart-box">
-      <div class="chart-container"><canvas id="chart2"></canvas></div>
-      <div class="chart-caption">応用・対応</div>
-    </div>
-  </div>
-
-  <div class="section-title">本日のテーマ・目標</div>
-  <div class="feedback-box" id="goalText">---</div>
-
-  <div class="section-title">できたこと (Done)</div>
-  <div class="feedback-box" id="doneText">---</div>
-
-  <div class="section-title">課題 (Unable)</div>
-  <div class="feedback-box" id="unableText">---</div>
-
-  <div class="section-title">宿題 (Homework)</div>
-  <div class="homework-box">
-    <div class="homework-badge">HOMEWORK</div>
-    <div id="homeworkText">---</div>
-  </div>
-
-  <div class="section-title">詳細フィードバック</div>
-  <div class="detail-grid">
-    <div class="detail-card">
-      <div class="detail-head">項目1-5</div>
-      <div class="detail-body" id="detail1">---</div>
-    </div>
-    <div class="detail-card">
-      <div class="detail-head">項目6-10</div>
-      <div class="detail-body" id="detail2">---</div>
-    </div>
-  </div>
-  
-  <div class="feedback-box mt-2" style="background:#fff; border:1px solid #eee;">
-    <strong>トレーナーコメント:</strong><br>
-    <span id="trainerComment">---</span>
-  </div>
-
-  <div class="section-title">本日のショット</div>
-  <div class="photo-scroll" id="photoArea">
-    <div class="text-muted small ms-3">写真はありません</div>
-  </div>
-
-  <div class="meta-info">
-    担当トレーナー: <span id="trainerName" class="fw-bold">---</span>
-  </div>
-
-  <div class="footer-action">
-    <a href="#" class="btn-reserve">予約する / Reserve</a>
-    <div class="text-muted small mt-2">チケット残数: <span id="ticketCount" class="fw-bold">計算中</span> 回</div>
-  </div>
-</div>
-
-<!-- デバッグパネル (開発時のみ表示) -->
-<div id="debugPanel"></div>
-
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
   const LIFF_ID     = '2008546673-MJY7j3ox'; 
   const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxG1rLg6t_jlBWy4KTFqVPYmRK-aEleUQR_yqCiNwsWhvDp7I-suBEsYnDHymVNmURO/exec';
-  
-  // デバッグログ関数
-  function debugLog(msg) {
-    console.log('🔍 ' + msg);
-    const panel = document.getElementById('debugPanel');
-    panel.style.display = 'block';
-    panel.innerHTML += msg + '<br>';
-  }
 
   async function main() {
     try {
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login(); return; }
       const profile = await liff.getProfile();
-      debugLog(`User ID: ${profile.userId}`);
       fetchData(profile.userId);
     } catch (err) {
       alert('Start Error: ' + err.message);
@@ -206,29 +16,16 @@
   }
 
   function fetchData(userId) {
-    const url = `${GAS_API_URL}?userId=${userId}`;
-    debugLog(`Fetching: ${url}`);
-    
-    fetch(url)
-      .then(res => {
-        debugLog(`Response status: ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        debugLog(`Data received: ${JSON.stringify(data).substring(0, 200)}...`);
-        render(data, userId);
-      })
-      .catch(err => {
-        debugLog(`Network Error: ${err.message}`);
-        alert('Network Error: ' + err);
-      });
+    fetch(`${GAS_API_URL}?userId=${userId}`)
+      .then(res => res.json())
+      .then(data => render(data, userId))
+      .catch(err => alert('Network Error: ' + err));
   }
 
   function formatDate(dateString) {
     if (!dateString) return '--/--/--';
     const d = new Date(dateString);
     if (isNaN(d.getTime())) return dateString;
-
     const year = d.getFullYear().toString().slice(-2);
     const month = ('0' + (d.getMonth() + 1)).slice(-2);
     const day = ('0' + d.getDate()).slice(-2);
@@ -250,15 +47,13 @@
     }
 
     document.getElementById('mainContent').style.display = 'block';
-    
+
     const c = data.customer || {};
     const d = data.dog || {};
     document.getElementById('custName').innerText = c.name + " 様";
     document.getElementById('dogName').innerText = d.name || "Your Dog";
-    
-    // 犬の写真
+
     if (d.photo && d.photo.startsWith('http')) {
-      debugLog(`Dog photo URL: ${d.photo}`);
       document.getElementById('dogImg').src = d.photo;
     }
 
@@ -266,16 +61,11 @@
       checkBirthday(d.birth_date, d.name);
     }
 
-    if (data.ticket_count !== undefined) {
-      document.getElementById('ticketCount').innerText = data.ticket_count;
-    } else {
-      document.getElementById('ticketCount').innerText = "-";
-    }
+    document.getElementById('ticketCount').innerText = data.ticket_count ?? "-";
 
     const l = data.latest;
     if (l) {
       document.getElementById('lessonDate').innerText = formatDate(l.date);
-
       document.getElementById('goalText').innerText = l.goal || 'なし';
       document.getElementById('doneText').innerText = l.done || 'なし';
       document.getElementById('unableText').innerText = l.unable || 'なし';
@@ -285,7 +75,6 @@
 
       const d1 = l.details.slice(0, 5).filter(t => t).map((t, i) => `[${i+1}] ${t}`).join('<br>');
       document.getElementById('detail1').innerHTML = d1 || '特になし';
-      
       const d2 = l.details.slice(5, 10).filter(t => t).map((t, i) => `[${i+6}] ${t}`).join('<br>');
       document.getElementById('detail2').innerHTML = d2 || '特になし';
 
@@ -294,38 +83,19 @@
         renderChart('chart2', l.scores.slice(5, 10), ['指示出し','ボディラン','リード','対応力','コンタクト']);
       }
 
-      // 写真表示 (デバッグ強化)
-      debugLog(`Photos array: ${JSON.stringify(l.photos)}`);
-      
+      const pArea = document.getElementById('photoArea');
+      pArea.innerHTML = '';
       if (l.photos && l.photos.length > 0) {
-        const pArea = document.getElementById('photoArea');
-        pArea.innerHTML = '';
-        
-        l.photos.forEach((url, idx) => {
-          debugLog(`Photo ${idx+1}: ${url}`);
-          
+        l.photos.forEach(url => {
           if(url && url.startsWith('http')) {
-             const img = document.createElement('img');
-             img.src = url;
-             img.className = 'photo-item';
-             
-             // 読み込み成功
-             img.onload = function() {
-               debugLog(`✅ Photo ${idx+1} loaded successfully`);
-             };
-             
-             // 読み込み失敗
-             img.onerror = function() {
-               debugLog(`❌ Photo ${idx+1} FAILED: ${url}`);
-               this.classList.add('photo-error');
-               this.alt = 'Load Error';
-             };
-             
-             pArea.appendChild(img);
+            const img = document.createElement('img');
+            img.src = url;
+            img.className = 'photo-item';
+            pArea.appendChild(img);
           }
         });
       } else {
-        debugLog('⚠️ No photos in data');
+        pArea.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
       }
     } else {
       document.getElementById('lessonDate').innerText = 'データなし';
@@ -335,12 +105,9 @@
   function checkBirthday(birthDateStr, name) {
     const today = new Date();
     const bDate = new Date(birthDateStr);
-    
     bDate.setFullYear(today.getFullYear());
-    
     const diffTime = bDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
     if (Math.abs(diffDays) <= 14) {
       document.getElementById('bdName').innerText = name;
       document.getElementById('birthdayMsg').style.display = 'block';
@@ -385,5 +152,3 @@
 
   main();
 </script>
-</body>
-</html>
