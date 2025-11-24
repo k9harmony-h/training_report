@@ -70,50 +70,41 @@
   const LIFF_ID = '2008546673-MJY7j3ox';
   const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxG1rLg6t_jlBWy4KTFqVPYmRK-aEleUQR_yqCiNwsWhvDp7I-suBEsYnDHymVNmURO/exec';
 
-window.addEventListener('DOMContentLoaded', async () => {
-  try {
-    await liff.init({ liffId: LIFF_ID });
+  window.addEventListener('DOMContentLoaded', async () => {
+    try {
+      await liff.init({ liffId: LIFF_ID });
 
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
+
+      const profile = await liff.getProfile();
+      console.log('LIFFログイン成功:', profile);
+      fetchData(profile.userId);
+    } catch (err) {
+      alert('Start Error: ' + err.message);
     }
+  });
 
-    const profile = await liff.getProfile();
-    fetchData(profile.userId); // ← ここでGASにアクセス
-  } catch (err) {
-    alert('Start Error: ' + err.message);
+  function fetchData(userId) {
+    console.log('送信userId:', userId);
+    fetch(`${GAS_API_URL}?userId=${userId}`)
+      .then(res => {
+        if (!res.ok) throw new Error('GAS応答失敗: ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        console.log('受信データ:', data);
+        render(data, userId);
+      })
+      .catch(err => {
+        console.error('Fetch Error:', err);
+        alert('読み込みエラー: ' + err.message);
+      });
   }
-});
-
-
-function fetchData(userId) {
-  console.log('送信するuserId:', userId); // ← 追加
-  fetch(`${GAS_API_URL}?userId=${userId}`)
-    .then(res => res.json())
-    .then(data => {
-      console.log('受信データ:', data); // ← 追加
-      render(data, userId);
-    })
-    .catch(err => alert('Network Error: ' + err));
-}
-
 
   function render(data, userId) {
-    const d = data.dog || {};
-  console.log('dog.photo:', d.photo); // ← ここで値を確認
-
-  if (d.photo && d.photo.startsWith('http')) {
-    const dogImg = document.getElementById('dogImg');
-    dogImg.src = d.photo;
-    dogImg.onerror = function () {
-      console.error('画像読み込み失敗:', d.photo); // ← 失敗時のログ
-      this.alt = '画像読み込み失敗';
-      this.style.opacity = 0.5;
-    };
-  } else {
-    console.warn('画像URLが無効:', d.photo); // ← 条件に入らなかった場合
-  }
     document.getElementById('loading').style.display = 'none';
 
     if (data.error === 'Unregistered') {
@@ -139,16 +130,21 @@ function fetchData(userId) {
     document.getElementById('trainerName').innerText = l?.trainer_name || 'Staff';
     document.getElementById('ticketCount').innerText = data.ticket_count ?? '-';
 
-if (d.photo && d.photo.startsWith('http')) {
-  const dogImg = document.getElementById('dogImg');
-  dogImg.src = d.photo;
-  dogImg.onerror = function () {
-    this.alt = '画像読み込み失敗';
-    this.style.opacity = 0.5;
-  };
-}
+    // 画像表示処理（dog.photo）
+    console.log('dog.photo:', d.photo);
+    if (d.photo && d.photo.startsWith('http')) {
+      const dogImg = document.getElementById('dogImg');
+      dogImg.src = d.photo;
+      dogImg.onerror = function () {
+        console.error('画像読み込み失敗:', d.photo);
+        this.alt = '画像読み込み失敗';
+        this.style.opacity = 0.5;
+      };
+    } else {
+      console.warn('画像URLが無効:', d.photo);
+    }
 
-
+    // 写真一覧表示（latest.photos）
     const pArea = document.getElementById('photoArea');
     pArea.innerHTML = '';
     if (l?.photos?.length > 0) {
@@ -157,6 +153,7 @@ if (d.photo && d.photo.startsWith('http')) {
         img.src = url;
         img.className = 'photo-item';
         img.onerror = function () {
+          console.error('写真読み込み失敗:', url);
           this.alt = '画像読み込み失敗';
           this.style.opacity = 0.5;
         };
@@ -174,5 +171,6 @@ if (d.photo && d.photo.startsWith('http')) {
     alert('コピーしました');
   }
 </script>
+
 </body>
 </html>
