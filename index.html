@@ -1,193 +1,101 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <title>犬画像表示テスト（Base64埋め込み）</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Debug v0001</title>
   <style>
-    :root {
-      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-      --sans: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-    }
-    body { font-family: var(--sans); margin: 16px; }
-    h1 { font-size: 18px; margin: 0 0 12px; }
-    .row { margin-bottom: 12px; }
-    label { display: block; font-weight: 600; margin-bottom: 6px; }
-    input[type="text"] { width: 100%; padding: 8px; border: 1px solid #d0d7de; border-radius: 6px; font-family: var(--mono); }
-    button { padding: 8px 12px; margin-right: 8px; border-radius: 6px; border: 1px solid #c9d1d9; background: #f6f8fa; cursor: pointer; }
-    button.primary { background: #0969da; color: #fff; border: 1px solid #0969da; }
-    #status { font-weight: 700; }
-    .status-ok { color: #0f766e; }
-    .status-ng { color: #b91c1c; }
-    #preview {
-      max-width: 100%;
-      border: 1px solid #d0d7de;
-      border-radius: 6px;
-      background: #fff;
-    }
-    #meta, #log {
-      font-family: var(--mono);
-      white-space: pre-wrap;
-      background: #f6f8fa;
-      border: 1px solid #d0d7de;
-      padding: 8px;
-      border-radius: 6px;
-    }
-    .tips { font-size: 12px; color: #57606a; }
+    body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
+    #version { position: fixed; top: 0; right: 0; background: red; color: white; padding: 5px; font-weight: bold; }
+    .log-box { background: #333; color: #0f0; padding: 10px; font-family: monospace; height: 150px; overflow-y: scroll; margin-bottom: 20px; border-radius: 5px; }
+    img { max-width: 100%; border: 3px solid #57C3C2; border-radius: 10px; display: block; margin: 0 auto; }
+    .status { text-align: center; margin: 10px 0; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>犬画像表示テスト（Base64埋め込み）</h1>
-<p>0504</p>
-  <div class="row">
-    <label>APIエンドポイント（GASデプロイURL）</label>
-    <input id="endpoint" type="text"
-           value="https://script.google.com/macros/s/AKfycbzlFbJpqnYLmNWPA6tlO1-JyAnnFLJfxZVYjSPoWkJHViEplc0ZCeDauJU4SSmL3ZBH/exec">
-    <div class="tips">例: https://script.google.com/macros/s/XXXX/exec</div>
-  </div>
+  <div id="version">v0001</div>
 
-  <div class="row">
-    <label>dogKey（A列の dog_unique_key）</label>
-    <input id="dogKey" type="text" value="da12c3a5">
-  </div>
+  <h3>K9 Photo Debugger</h3>
+  
+  <div id="appLog" class="log-box">Initializing...<br></div>
 
-  <div class="row">
-    <button id="loadBtn" class="primary">画像を読み込む</button>
-    <button id="clearBtn">クリア</button>
-  </div>
+  <div class="status" id="statusMsg">Loading...</div>
 
-  <div class="row">
-    <span><strong>ステータス:</strong> <span id="status" class="status-ng">未実行</span></span>
-  </div>
+  <div id="imageContainer"></div>
 
-  <div class="row">
-    <label>メタ情報</label>
-    <div id="meta"></div>
-  </div>
-
-  <div class="row">
-    <label>画像プレビュー</label>
-    <img id="preview" alt="プレビュー画像" />
-  </div>
-
-  <div class="row">
-    <label>ログ</label>
-    <div id="log"></div>
-  </div>
-
+  <script src="https://static.line-scdn.net/liff/2.2/sdk.js"></script>
+  
   <script>
-    // DOM utils
-    const $ = (id) => document.getElementById(id);
-    const ts = () => new Date().toISOString();
-    const log = (msg) => {
-      $('log').textContent += `[${ts()}] ${msg}\n`;
-      console.log(`[${ts()}] ${msg}`);
-    };
-    const setStatus = (ok, text) => {
-      const el = $('status');
-      el.textContent = text;
-      el.className = ok ? 'status-ok' : 'status-ng';
-    };
-    const setMeta = (obj) => {
-      $('meta').textContent = obj ? JSON.stringify(obj, null, 2) : '';
-    };
+    const LIFF_ID = '2008546673-MJY7j3ox'; 
+    // ★新しいGASのURLに書き換えてください★
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzheC-9sqA4TjIRD3mYYZlbhU7HAkpg2eis2YR9saNZqPCn_aklmjchErKRKyAfEhgA/exec';
 
-    // Render helpers
-    const renderDataUrl = (mimeType, base64) => `data:${mimeType};base64,${base64}`;
+    // 画面にログを出す関数
+    function log(msg) {
+      const box = document.getElementById('appLog');
+      const time = new Date().toLocaleTimeString();
+      box.innerHTML += `[${time}] ${msg}<br>`;
+      box.scrollTop = box.scrollHeight; // 自動スクロール
+      console.log(msg);
+    }
 
-    // Main actions
-    $('loadBtn').addEventListener('click', async () => {
-      const endpoint = $('endpoint').value.trim();
-      const dogKey = $('dogKey').value.trim();
-      if (!endpoint) { setStatus(false, 'endpoint未設定'); log('ERROR: endpoint未設定'); return; }
-      if (!dogKey) { setStatus(false, 'dogKey未入力'); log('ERROR: dogKey未入力'); return; }
-
-      const url = `${endpoint}?dogKey=${encodeURIComponent(dogKey)}`;
-      log(`REQUEST: ${url}`);
-
-      const t0 = performance.now();
+    async function main() {
+      log('LIFF init start...');
       try {
-        const res = await fetch(url, { method: 'GET' });
-        const ct = res.headers.get('content-type') || '';
-        log(`HTTP: ${res.status} ${res.statusText} content-type=${ct}`);
-
-        let data;
-        try {
-          data = await res.json();
-        } catch (e) {
-          setStatus(false, 'JSON解析エラー');
-          log(`FAIL: JSON parse error: ${e.message}`);
+        await liff.init({ liffId: LIFF_ID });
+        log('LIFF init success');
+        
+        if (!liff.isLoggedIn()) {
+          log('Not logged in. Redirecting...');
+          liff.login();
           return;
         }
 
-        if (!data || data.ok !== true) {
-          setStatus(false, `失敗: ${data?.reason || 'unknown_reason'}`);
-          log(`FAIL: reason=${data?.reason || 'unknown'} message=${data?.message || ''} detail=${JSON.stringify(data?.detail || {})}`);
-          setMeta({ http: { status: res.status, statusText: res.statusText }, payload: data });
-          return;
-        }
-
-        if (!data.base64 || !data.mimeType) {
-          setStatus(false, '失敗: レスポンスにbase64/mimeTypeがありません');
-          log('FAIL: base64 or mimeType missing');
-          setMeta({ http: { status: res.status }, payload: data });
-          return;
-        }
-
-        const t1 = performance.now();
-        const src = renderDataUrl(data.mimeType, data.base64);
-
-        // 画像描画タイミング計測
-        const img = $('preview');
-        let rendered = false;
-        const onLoad = () => {
-          if (rendered) return;
-          rendered = true;
-          const t2 = performance.now();
-          setStatus(true, `成功: ${data.mimeType} ${data.bytes} bytes`);
-          log(`SUCCESS: img loaded. net=${(t1 - t0).toFixed(0)}ms render=${(t2 - t1).toFixed(0)}ms total=${(t2 - t0).toFixed(0)}ms`);
-          setMeta({
-            dogKey,
-            fileId: data?.meta?.fileId,
-            fileName: data?.meta?.fileName,
-            bytes: data.bytes,
-            mimeType: data.mimeType,
-            timings: {
-              network_ms: Math.round(t1 - t0),
-              render_ms: Math.round(performance.now() - t1),
-            },
-            ts: data?.meta?.ts
-          });
-          img.removeEventListener('load', onLoad);
-          img.removeEventListener('error', onError);
-        };
-        const onError = (e) => {
-          if (rendered) return;
-          rendered = true;
-          setStatus(false, '描画エラー: imgタグでの表示に失敗');
-          log(`FAIL: img error: ${e?.message || 'unknown'} (src length=${src.length})`);
-          setMeta({ dogKey, bytes: data.bytes, mimeType: data.mimeType, hint: 'Base64長大時は通信量が増えます' });
-          img.removeEventListener('load', onLoad);
-          img.removeEventListener('error', onError);
-        };
-
-        img.addEventListener('load', onLoad);
-        img.addEventListener('error', onError);
-        img.src = src;
+        const profile = await liff.getProfile();
+        log('User: ' + profile.displayName);
+        fetchData(profile.userId);
 
       } catch (err) {
-        setStatus(false, '例外: fetch失敗');
-        log(`EXCEPTION: ${err.message}`);
-        setMeta({ error: err.message });
+        log('Error: ' + err);
+        document.getElementById('statusMsg').innerText = 'LIFF Error';
       }
-    });
+    }
 
-    $('clearBtn').addEventListener('click', () => {
-      $('preview').src = '';
-      $('log').textContent = '';
-      setMeta(null);
-      setStatus(false, 'クリア');
-    });
+    function fetchData(userId) {
+      log('Fetching data from GAS...');
+      document.getElementById('statusMsg').innerText = 'Fetching Data...';
+
+      fetch(`${GAS_URL}?userId=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          log('Data received!');
+          
+          if (data.error) {
+            log('GAS Error: ' + data.error);
+            document.getElementById('statusMsg').innerText = 'GAS Error';
+            return;
+          }
+
+          if (data.photoData) {
+            log('Photo data found. Rendering...');
+            const img = document.createElement('img');
+            img.src = data.photoData; // Base64データをそのままセット
+            document.getElementById('imageContainer').appendChild(img);
+            document.getElementById('statusMsg').innerText = 'Photo Loaded!';
+            log('Done.');
+          } else {
+            log('No photo data in response.');
+            log('Has Log: ' + data.hasLog);
+            document.getElementById('statusMsg').innerText = 'No Photo Found';
+          }
+        })
+        .catch(err => {
+          log('Fetch Error: ' + err);
+          document.getElementById('statusMsg').innerText = 'Network Error';
+        });
+    }
+
+    main();
   </script>
 </body>
 </html>
