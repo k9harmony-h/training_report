@@ -3,41 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Photo Debug v0001</title>
+  <title>Photo Debug v0002</title>
+  
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
   <style>
     body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
-    #version { position: fixed; top: 0; right: 0; background: red; color: white; padding: 5px; font-weight: bold; }
+    #version { position: fixed; top: 0; right: 0; background: blue; color: white; padding: 5px; font-weight: bold; }
     .log-box { background: #333; color: #0f0; padding: 10px; font-family: monospace; height: 150px; overflow-y: scroll; margin-bottom: 20px; border-radius: 5px; }
     img { max-width: 100%; border: 3px solid #57C3C2; border-radius: 10px; display: block; margin: 0 auto; }
-    .status { text-align: center; margin: 10px 0; font-weight: bold; }
+    .status { text-align: center; margin: 10px 0; font-weight: bold; font-size: 1.2rem; }
   </style>
 </head>
 <body>
-  <div id="version">v0001</div>
+  <div id="version">v0002</div>
 
   <h3>K9 Photo Debugger</h3>
   
-  <div id="appLog" class="log-box">Initializing...<br></div>
+  <div id="appLog" class="log-box">Waiting for window load...<br></div>
 
-  <div class="status" id="statusMsg">Loading...</div>
+  <div class="status" id="statusMsg">Initializing...</div>
 
   <div id="imageContainer"></div>
-
-  <script src="https://static.line-scdn.net/liff/2.2/sdk.js"></script>
   
   <script>
     const LIFF_ID = '2008546673-MJY7j3ox'; 
-    // ★新しいGASのURLに書き換えてください★
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzheC-9sqA4TjIRD3mYYZlbhU7HAkpg2eis2YR9saNZqPCn_aklmjchErKRKyAfEhgA/exec';
+    // ★GASのURLは前回のまま（変更していなければそのままでOK）★
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec';
 
-    // 画面にログを出す関数
     function log(msg) {
       const box = document.getElementById('appLog');
       const time = new Date().toLocaleTimeString();
       box.innerHTML += `[${time}] ${msg}<br>`;
-      box.scrollTop = box.scrollHeight; // 自動スクロール
       console.log(msg);
     }
+
+    // 画面の読み込みが完了してからスタートする
+    window.onload = function() {
+      log('Window loaded.');
+      
+      // LIFFが読み込まれているかチェック
+      if (typeof liff === 'undefined') {
+        log('Error: LIFF SDK not loaded.');
+        document.getElementById('statusMsg').innerText = 'SDK Load Error';
+        return;
+      }
+      
+      main();
+    };
 
     async function main() {
       log('LIFF init start...');
@@ -46,46 +59,53 @@
         log('LIFF init success');
         
         if (!liff.isLoggedIn()) {
-          log('Not logged in. Redirecting...');
+          log('Not logged in. Logging in...');
           liff.login();
           return;
         }
 
         const profile = await liff.getProfile();
         log('User: ' + profile.displayName);
+        log('ID: ' + profile.userId.substring(0, 5) + '...');
+        
+        // データ取得開始
         fetchData(profile.userId);
 
       } catch (err) {
-        log('Error: ' + err);
-        document.getElementById('statusMsg').innerText = 'LIFF Error';
+        log('LIFF Init Error: ' + err);
+        document.getElementById('statusMsg').innerText = 'LIFF Init Failed';
       }
     }
 
     function fetchData(userId) {
-      log('Fetching data from GAS...');
-      document.getElementById('statusMsg').innerText = 'Fetching Data...';
+      log('Calling GAS...');
+      document.getElementById('statusMsg').innerText = 'Fetching Photo...';
 
-      fetch(`${GAS_URL}?userId=${userId}`)
+      // キャッシュ回避のためにタイムスタンプをつける
+      const url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}`;
+
+      fetch(url)
         .then(res => res.json())
         .then(data => {
-          log('Data received!');
+          log('Response received.');
           
           if (data.error) {
             log('GAS Error: ' + data.error);
-            document.getElementById('statusMsg').innerText = 'GAS Error';
+            if(data.debug) log('Debug: ' + data.debug);
+            document.getElementById('statusMsg').innerText = 'Data Error';
             return;
           }
 
           if (data.photoData) {
-            log('Photo data found. Rendering...');
+            log('Base64 Data found. Length: ' + data.photoData.length);
             const img = document.createElement('img');
-            img.src = data.photoData; // Base64データをそのままセット
+            img.src = data.photoData; 
             document.getElementById('imageContainer').appendChild(img);
-            document.getElementById('statusMsg').innerText = 'Photo Loaded!';
-            log('Done.');
+            document.getElementById('statusMsg').innerText = 'Success!';
+            log('Image displayed.');
           } else {
-            log('No photo data in response.');
-            log('Has Log: ' + data.hasLog);
+            log('No photo data returned.');
+            log('HasLog: ' + data.hasLog);
             document.getElementById('statusMsg').innerText = 'No Photo Found';
           }
         })
@@ -94,8 +114,6 @@
           document.getElementById('statusMsg').innerText = 'Network Error';
         });
     }
-
-    main();
   </script>
 </body>
 </html>
