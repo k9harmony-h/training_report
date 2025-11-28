@@ -3,57 +3,165 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Photo Debug v0003</title>
+  <title>K9 Harmony Portal</title>
+  
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
-    #version { position: fixed; top: 0; right: 0; background: green; color: white; padding: 5px; font-weight: bold; }
+    :root {
+      --brand-color: #57C3C2;
+      --brand-bg: #E0F7FA;
+      --text-main: #333333;
+    }
+    body {
+      font-family: 'Montserrat', 'Noto Sans JP', sans-serif;
+      background-color: #ffffff;
+      color: var(--text-main);
+      padding-bottom: 80px;
+    }
+    /* ヘッダー & プロフィール */
+    .header-area { padding: 20px 20px 10px; background: #fff; }
+    .brand-title { color: var(--text-main); font-weight: 700; letter-spacing: 0.05em; font-size: 1.2rem; text-align: center; }
     
-    .section { background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    h3 { margin-top: 0; color: #57C3C2; }
+    .profile-card { margin-top: 20px; display: flex; align-items: center; }
+    .dog-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--brand-color); padding: 2px; background: #fff; }
+    .profile-info { margin-left: 15px; flex-grow: 1; }
+    .cust-name { font-size: 0.85rem; color: #666; margin: 0; }
+    .dog-name { font-size: 1.6rem; font-weight: 700; line-height: 1.2; margin: 0; }
+    .lesson-meta { margin-top: 5px; font-size: 0.85rem; color: var(--brand-color); font-weight: 600; }
+
+    /* チャートエリア */
+    .chart-section { margin-top: 20px; padding: 0 10px; display: flex; justify-content: space-between; }
+    .chart-box { width: 49%; text-align: center; }
+    .chart-caption { font-size: 0.75rem; color: #888; margin-top: 5px; font-weight: 600; }
+
+    /* 各種ボックス */
+    .section-title { font-size: 0.9rem; font-weight: 700; color: var(--brand-color); margin: 25px 20px 10px; display: flex; align-items: center; gap: 8px; }
+    .section-title::before { content: ''; display: block; width: 4px; height: 16px; background: var(--brand-color); border-radius: 2px; }
     
-    .profile-img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid #57C3C2; display: block; margin: 0 auto; }
+    .feedback-box { margin: 0 20px; background: #f8f9fa; border-radius: 10px; padding: 15px; font-size: 0.9rem; line-height: 1.6; }
     
-    .gallery { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; }
-    .gallery img { height: 150px; border-radius: 8px; border: 1px solid #ddd; }
-    
-    .status { text-align: center; margin: 10px 0; font-weight: bold; }
-    .log-box { background: #333; color: #0f0; padding: 10px; font-family: monospace; height: 100px; overflow-y: scroll; font-size: 0.8rem; }
+    .homework-box { margin: 0 20px; border: 2px solid var(--brand-color); border-radius: 10px; padding: 15px; background: #fff; position: relative; margin-top: 30px; }
+    .homework-badge { position: absolute; top: -12px; left: 15px; background: var(--brand-color); color: #fff; font-size: 0.75rem; padding: 2px 10px; border-radius: 10px; font-weight: bold; }
+
+    /* 詳細フィードバック */
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 20px; }
+    .detail-card { background: #f8f9fa; border-radius: 8px; padding: 10px; }
+    .detail-head { font-size: 0.75rem; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 5px; text-align: center; color: #555; }
+    .detail-body { font-size: 0.8rem; color: #333; white-space: pre-wrap; }
+
+    /* 写真スクロール */
+    .photo-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 0 20px; margin-top: 10px; padding-bottom: 10px; }
+    .photo-item { height: 120px; border-radius: 8px; border: 1px solid #eee; }
+
+    /* フッター */
+    .footer-action { margin: 30px 20px 10px; text-align: center; }
+    .btn-reserve { background: var(--brand-color); color: #fff; border: none; width: 100%; padding: 14px; border-radius: 30px; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 12px rgba(87, 195, 194, 0.4); display: block; text-decoration: none; }
+
+    #loading, #errorView { text-align: center; margin-top: 100px; }
+    #mainContent { display: none; }
   </style>
 </head>
 <body>
-  <div id="version">v0003</div>
 
-  <div class="status" id="statusMsg">Initializing...</div>
-
-  <div class="section">
-    <h3>Dog Profile</h3>
-    <div id="dogContainer">loading...</div>
+  <div id="loading">
+    <div class="spinner-border" style="color: var(--brand-color);" role="status"></div>
+    <p class="mt-3 text-muted small">Loading K9 Portal...</p>
   </div>
 
-  <div class="section">
-    <h3>Lesson Photos</h3>
-    <div id="lessonContainer" class="gallery">loading...</div>
+  <div id="errorView" style="display:none;">
+    <div class="container">
+      <div class="alert alert-warning text-center">
+        <h5 class="fw-bold">ユーザー登録がありません</h5>
+        <p class="small">初回ご利用時はトレーナーによる登録が必要です。</p>
+      </div>
+    </div>
   </div>
 
-  <div id="appLog" class="log-box"></div>
-  
+  <div id="mainContent">
+    <div class="header-area">
+      <h1 class="brand-title">K9 Harmony</h1>
+      
+      <div class="profile-card">
+        <img id="dogImg" src="https://via.placeholder.com/150?text=No+Img" class="dog-img">
+        <div class="profile-info">
+          <p id="custName" class="cust-name">Loading...</p>
+          <h2 id="dogName" class="dog-name">---</h2>
+          <div class="lesson-meta">
+            Last Lesson: <span id="lessonDate">--/--/--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-section">
+      <div class="chart-box">
+        <canvas id="chart1"></canvas>
+        <div class="chart-caption">基礎・集中</div>
+      </div>
+      <div class="chart-box">
+        <canvas id="chart2"></canvas>
+        <div class="chart-caption">応用・対応</div>
+      </div>
+    </div>
+
+    <div class="section-title">本日のテーマ・目標</div>
+    <div class="feedback-box" id="goalText">---</div>
+
+    <div class="section-title">できたこと (Done)</div>
+    <div class="feedback-box" id="doneText">---</div>
+
+    <div class="section-title">課題 (Unable)</div>
+    <div class="feedback-box" id="unableText">---</div>
+
+    <div class="section-title">宿題 (Homework)</div>
+    <div class="homework-box">
+      <div class="homework-badge">HOMEWORK</div>
+      <div id="homeworkText">---</div>
+    </div>
+
+    <div class="section-title">詳細フィードバック</div>
+    <div class="detail-grid">
+      <div class="detail-card">
+        <div class="detail-head">項目1-5</div>
+        <div class="detail-body" id="detail1">---</div>
+      </div>
+      <div class="detail-card">
+        <div class="detail-head">項目6-10</div>
+        <div class="detail-body" id="detail2">---</div>
+      </div>
+    </div>
+    
+    <div class="feedback-box mt-4" style="background:#fff; border:1px solid #eee;">
+      <strong style="color:var(--brand-color);">トレーナーコメント:</strong><br>
+      <span id="trainerComment">---</span>
+    </div>
+
+    <div class="section-title">本日のショット</div>
+    <div class="photo-scroll" id="photoArea">
+      <div class="text-muted small ms-3">写真はありません</div>
+    </div>
+
+    <div class="footer-action">
+      <a href="#" class="btn-reserve">予約する / Reserve</a>
+      <div class="text-muted small mt-2">
+        チケット残数: <span id="ticketCount" class="fw-bold" style="font-size:1.2rem;">-</span> 回
+      </div>
+    </div>
+  </div>
+
   <script>
     const LIFF_ID = '2008546673-MJY7j3ox'; 
-    // ★GAS URLは変更なし★
+    // ★GASのURLを更新してください★
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzheC-9sqA4TjIRD3mYYZlbhU7HAkpg2eis2YR9saNZqPCn_aklmjchErKRKyAfEhgA/exec';
-
-    function log(msg) {
-      const box = document.getElementById('appLog');
-      const time = new Date().toLocaleTimeString();
-      box.innerHTML += `[${time}] ${msg}<br>`;
-      console.log(msg);
-    }
 
     window.onload = function() {
       if (typeof liff === 'undefined') {
-        document.getElementById('statusMsg').innerText = 'SDK Load Error';
-        return;
+        alert('LIFF SDK Load Error'); return;
       }
       main();
     };
@@ -65,49 +173,97 @@
         const profile = await liff.getProfile();
         fetchData(profile.userId);
       } catch (err) {
-        log('Error: ' + err);
-        document.getElementById('statusMsg').innerText = 'LIFF Error';
+        alert('LIFF Error: ' + err);
       }
     }
 
     function fetchData(userId) {
-      document.getElementById('statusMsg').innerText = 'Downloading Photos...';
-      const url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}`;
-
-      fetch(url)
+      fetch(`${GAS_URL}?userId=${userId}`)
         .then(res => res.json())
-        .then(data => {
-          document.getElementById('statusMsg').innerText = 'Rendering...';
-          
-          // 1. 犬の写真表示
-          const dogBox = document.getElementById('dogContainer');
-          if (data.dogPhoto) {
-            dogBox.innerHTML = `<img src="${data.dogPhoto}" class="profile-img">`;
-            log('Dog photo loaded.');
-          } else {
-            dogBox.innerHTML = 'No Dog Photo';
-          }
+        .then(data => render(data))
+        .catch(err => alert('Network Error: ' + err));
+    }
 
-          // 2. レッスン写真表示
-          const lessonBox = document.getElementById('lessonContainer');
-          if (data.lessonPhotos && data.lessonPhotos.length > 0) {
-            lessonBox.innerHTML = ''; // クリア
-            data.lessonPhotos.forEach((b64, index) => {
-              const img = document.createElement('img');
-              img.src = b64;
-              lessonBox.appendChild(img);
-            });
-            log(`Lesson photos loaded: ${data.lessonPhotos.length}枚`);
-          } else {
-            lessonBox.innerHTML = 'No Lesson Photos';
-          }
-          
-          document.getElementById('statusMsg').innerText = 'Done!';
-        })
-        .catch(err => {
-          log('Fetch Error: ' + err);
-          document.getElementById('statusMsg').innerText = 'Network Error';
-        });
+    function render(data) {
+      document.getElementById('loading').style.display = 'none';
+      if (data.error) {
+        document.getElementById('errorView').style.display = 'block';
+        return;
+      }
+      document.getElementById('mainContent').style.display = 'block';
+
+      // 1. 基本情報
+      const c = data.customer || {};
+      const d = data.dog || {};
+      document.getElementById('custName').innerText = c.name + ' 様';
+      document.getElementById('dogName').innerText = d.name || 'Your Dog';
+      document.getElementById('ticketCount').innerText = data.ticket_count;
+
+      // 2. 犬の写真 (Base64)
+      if (d.photo) {
+        document.getElementById('dogImg').src = d.photo;
+      }
+
+      // 3. 最新レッスン情報
+      const l = data.latest;
+      if (l) {
+        document.getElementById('lessonDate').innerText = l.date;
+        document.getElementById('goalText').innerText = l.goal;
+        document.getElementById('doneText').innerText = l.done;
+        document.getElementById('unableText').innerText = l.unable;
+        document.getElementById('homeworkText').innerText = l.homework;
+        document.getElementById('trainerComment').innerText = l.comment;
+
+        // レッスン写真 (Base64配列)
+        const pArea = document.getElementById('photoArea');
+        if (l.photos && l.photos.length > 0) {
+          pArea.innerHTML = '';
+          l.photos.forEach(b64 => {
+            const img = document.createElement('img');
+            img.src = b64;
+            img.className = 'photo-item';
+            pArea.appendChild(img);
+          });
+        }
+
+        // 詳細コメント (1-5, 6-10)
+        // 項目名がわからないので、単純に番号付きでリスト化
+        let d1 = '', d2 = '';
+        for(let i=0; i<5; i++) {
+           if(l.details[i]) d1 += `[${i+1}] ${l.details[i]}\n`;
+        }
+        for(let i=5; i<10; i++) {
+           if(l.details[i]) d2 += `[${i+1}] ${l.details[i]}\n`;
+        }
+        document.getElementById('detail1').innerText = d1 || '特になし';
+        document.getElementById('detail2').innerText = d2 || '特になし';
+
+        // チャート描画
+        renderChart('chart1', l.scores.slice(0, 5), ['指示理解','集中力','報酬','ボディ','コンタクト']);
+        renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト']);
+      }
+    }
+
+    function renderChart(id, data, labels) {
+      new Chart(document.getElementById(id), {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: 'rgba(87, 195, 194, 0.2)',
+            borderColor: '#57C3C2',
+            pointBackgroundColor: '#57C3C2',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          scales: {
+            r: { min: 0, max: 5, ticks: { display: false } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
     }
   </script>
 </body>
