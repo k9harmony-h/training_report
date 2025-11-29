@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>レッスンの履歴</title>
+    <title>レッスン履歴</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -82,7 +82,7 @@
         </div>
         <h2 id="dogNameTitle" class="text-center mt-2" style="font-size: 1.5rem; font-weight: 600;">---</h2>
     </div>
-11292002
+
     <div class="content-container py-3">
         
         <p class="text-muted small text-center mt-3">過去のレッスン評価の推移です。</p>
@@ -102,11 +102,12 @@
     <script>
         // LIFF IDとGAS URLはindex.htmlと同じものを設定
         const LIFF_ID = '2008546673-MJY7j3ox'; 
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzheC-9sqA4TjIRD3mYYZlbhU7HAkpg2eis2YR9saNZqPCn_aklmjchErKRKyAfEhgA/exec'; // ★メインGAS URL★
+        // ★★★ ここを必ず最新のデプロイURLに修正してください ★★★
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec'; 
         
         const scoreLabels = [
-            '指示理解', '集中力', '報酬', 'ボディ', 'コンタクト', // 1-5 (基礎・集中)
-            '指示出し', '対応力', 'リード', 'ボディ', 'コンタクト'  // 6-10 (応用・対応)
+            '指示理解', '集中力', '報酬', 'ボディ', 'コンタクト',
+            '指示出し', '対応力', 'リード', 'ボディ', 'コンタクト'
         ];
         const chartColors = [
             'rgba(255, 99, 132, 1)', 'rgba(255, 159, 64, 1)', 'rgba(255, 205, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(54, 162, 235, 1)',
@@ -120,44 +121,65 @@
         async function main() {
             try {
                 await liff.init({ liffId: LIFF_ID });
-                if (!liff.isLoggedIn()) { liff.login(); return; }
+                if (!liff.isLoggedIn()) { 
+                    liff.login(); 
+                    return; 
+                }
                 const profile = await liff.getProfile();
                 fetchData(profile.userId);
             } catch (err) {
-                alert('LIFF Error: ' + err);
+                console.error('LIFF/Init Error:', err);
+                alert('アプリの起動エラーが発生しました。時間を置いて再度お試しください。');
                 document.getElementById('loadingOverlay').style.display = 'none';
             }
         }
 
         function fetchData(userId) {
             fetch(`${GAS_URL}?userId=${userId}&t=${new Date().getTime()}`)
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`HTTP error! status: ${res.status}`);
+                    }
+                    return res.json();
+                })
                 .then(data => renderHistory(data))
                 .catch(err => {
-                    alert('Network Error: ' + err);
+                    console.error('Fetch/GAS Error:', err);
+                    alert('データ取得エラーが発生しました。GASデプロイ設定をご確認ください。' + err.message);
                     document.getElementById('loadingOverlay').style.display = 'none';
                 });
         }
 
-//        function renderHistory(data) {
+        function renderHistory(data) {
             document.getElementById('loadingOverlay').style.display = 'none';
+            const chartArea = document.getElementById('chartArea');
+            const lessonList = document.getElementById('lessonList');
+            chartArea.innerHTML = ''; // グラフエリアを初期化
+            lessonList.innerHTML = ''; // リストエリアを初期化
 
-            if (data.error || !data.score_history || data.score_history.length === 0) {
-                document.getElementById('dogNameTitle').innerText = data.dog ? data.dog.name : '履歴なし';
+            // 敬称の判定と設定
+            const dogName = data.dog ? data.dog.name : '愛犬';
+            // GASから性別データ(data.dog.gender)が渡されている前提で処理
+            const gender = data.dog ? data.dog.gender : 'オス'; // デフォルトは「オス」
+            const honorific = gender === 'メス' ? 'ちゃん' : 'くん'; 
+            
+            document.getElementById('dogNameTitle').innerText = dogName + honorific + ' のレッスン履歴';
+
+            // データがない場合の処理
+            if (data.error || !data.score_history || data.score_history.length < 1) {
+                chartArea.innerHTML = `<div class="text-center text-muted small mt-4">まだレッスン履歴がありません。次回のレッスン後に表示されます。</div>`;
+                lessonList.innerHTML = `<div class="text-center text-muted small mt-4">履歴がありません。</div>`;
                 return;
             }
 
             const history = data.score_history;
-            document.getElementById('dogNameTitle').innerText = data.dog.name + ' のレッスン履歴';
             
             // 1. 10個のグラフを動的に生成
-            const chartArea = document.getElementById('chartArea');
-
             for (let i = 0; i < 10; i++) {
                 const itemLabel = scoreLabels[i];
                 const color = chartColors[i];
                 
-                // 過去のスコアデータを抽出 (score_1なら scores[0], score_2なら scores[1]...)
+                // 過去のスコアデータを抽出
                 const scores = history.map(h => h.scores[i]);
                 const dates = history.map(h => h.date);
 
@@ -192,143 +214,70 @@
                     comparisonClass = 'status-steady';
                 }
 
-function renderHistory(data) {
-    document.getElementById('loadingOverlay').style.display = 'none';
-
-    // 敬称の判定と設定
-    const dogName = data.dog ? data.dog.name : 'Your Dog';
-    // ※ 性別データがGASから渡されていないため、ここでは仮に性別を判断できません。
-    //    GASから性別データ(例: data.dog.gender)が渡されている前提で、以下のロジックを組んでいます。
-    //    今回は、GASの「犬情報」シートに `dog_gender` の列があり、'オス'/'メス'が入ると仮定します。
-    //    今回はデータがないため、一旦「くん」をデフォルトとします。
-    const honorific = data.dog && data.dog.gender === 'メス' ? 'ちゃん' : 'くん'; 
-    
-    document.getElementById('dogNameTitle').innerText = dogName + honorific + ' のレッスン履歴';
-
-    // ★★★ データがない場合の条件を修正し、グラフ描画処理を確実に行う ★★★
-    if (!data.score_history || data.score_history.length < 1) {
-        // データがない場合は、グラフエリアにメッセージを表示
-        document.getElementById('chartArea').innerHTML = `
-            <div class="text-center text-muted small mt-4">
-                まだレッスン履歴がありません。次回のレッスン後に表示されます。
-            </div>
-        `;
-        document.getElementById('lessonList').innerHTML = `<div class="text-center text-muted small mt-4">履歴がありません。</div>`;
-        return;
-    }
-
-    const history = data.score_history;
-    const chartArea = document.getElementById('chartArea');
-    chartArea.innerHTML = ''; // グラフエリアをクリア
-    
-    // ... (以下、グラフ描画ロジックは前回提示した内容と基本的に同じ) ...
-    // ... (グラフ描画ロジックは省略せずに下部に記載します) ...
-
-    for (let i = 0; i < 10; i++) {
-        const itemLabel = scoreLabels[i];
-        const color = chartColors[i];
-        
-        // 過去のスコアデータを抽出 (score_1なら scores[0], score_2なら scores[1]...)
-        const scores = history.map(h => h.scores[i]);
-        const dates = history.map(h => h.date);
-
-        // 前回スコアとの比較
-        const latestScore = scores[scores.length - 1];
-        const previousScore = scores.length > 1 ? scores[scores.length - 2] : null;
-        
-        let comparisonText = '';
-        let comparisonClass = '';
-        let specialComment = '';
-
-        // 満点コメント
-        if (latestScore === 5) {
-            specialComment = '⭐️🐶⭐️';
-        }
-
-        // 前回比較コメント
-        if (previousScore !== null) {
-            const diff = latestScore - previousScore;
-            if (diff >= 1) {
-                comparisonText = '素晴らしい！成長してます🐶';
-                comparisonClass = 'status-great';
-            } else if (diff === 0) {
-                comparisonText = 'じっくり頑張ってます🐶';
-                comparisonClass = 'status-steady';
-            } else if (diff <= -1) {
-                comparisonText = 'ゆっくりいきましょう🐶';
-                comparisonClass = 'status-slow';
-            }
-        } else {
-            comparisonText = '初回評価です！';
-            comparisonClass = 'status-steady';
-        }
-
-        // HTMLカードの生成
-        const cardHtml = `
-            <div class="chart-card">
-                <div class="chart-meta">
-                    <h4 class="chart-title">[${i + 1}] ${itemLabel}</h4>
-                    <div class="text-end">
-                        <span class="chart-status ${comparisonClass}">${comparisonText}</span>
-                        ${specialComment ? `<div style="font-size:1.2rem; font-weight:bold; color:gold; line-height:1;">${specialComment}</div>` : ''}
+                // HTMLカードの生成
+                const cardHtml = `
+                    <div class="chart-card">
+                        <div class="chart-meta">
+                            <h4 class="chart-title">[${i + 1}] ${itemLabel}</h4>
+                            <div class="text-end">
+                                <span class="chart-status ${comparisonClass}">${comparisonText}</span>
+                                ${specialComment ? `<div style="font-size:1.2rem; font-weight:bold; color:gold; line-height:1;">${specialComment}</div>` : ''}
+                            </div>
+                        </div>
+                        <canvas id="chart-${i}"></canvas>
                     </div>
-                </div>
-                <canvas id="chart-${i}"></canvas>
-            </div>
-        `;
-        chartArea.insertAdjacentHTML('beforeend', cardHtml);
+                `;
+                chartArea.insertAdjacentHTML('beforeend', cardHtml);
 
-        // Chart.jsで折れ線グラフを描画
-        new Chart(document.getElementById(`chart-${i}`), {
-            type: 'line',
-            data: {
-                labels: dates,
-                datasets: [{
-                    label: itemLabel,
-                    data: scores,
-                    borderColor: color,
-                    backgroundColor: color.replace('1)', '0.1)'),
-                    borderWidth: 2,
-                    pointRadius: 5,
-                    fill: true,
-                    tension: 0.2
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        min: 0,
-                        max: 5,
-                        ticks: { stepSize: 1, font: { size: 10 } },
-                        title: { display: true, text: '評価点', font: { size: 10 } }
+                // Chart.jsで折れ線グラフを描画
+                new Chart(document.getElementById(`chart-${i}`), {
+                    type: 'line',
+                    data: {
+                        labels: dates, // 日付 (MM/dd)
+                        datasets: [{
+                            label: itemLabel,
+                            data: scores, // スコア値
+                            borderColor: color,
+                            backgroundColor: color.replace('1)', '0.1)'),
+                            borderWidth: 2,
+                            pointRadius: 5,
+                            fill: true,
+                            tension: 0.2
+                        }]
                     },
-                    x: {
-                        ticks: { font: { size: 10 } }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false, // カードのサイズに合わせる
+                        scales: {
+                            y: {
+                                min: 0,
+                                max: 5,
+                                ticks: { stepSize: 1, font: { size: 10 } },
+                                title: { display: true, text: '評価点', font: { size: 10 } }
+                            },
+                            x: {
+                                ticks: { font: { size: 10 } }
+                            }
+                        },
+                        plugins: { legend: { display: false } }
                     }
-                },
-                plugins: { legend: { display: false } }
+                });
             }
-        });
-    }
-    
-    // 2. 過去のレッスン一覧
-    const lessonList = document.getElementById('lessonList');
-    lessonList.innerHTML = '';
-    
-    history.reverse().forEach(h => {
-         const listItem = `
-            <a href="index.html?date=${h.date}" class="list-group-item list-group-item-action">
-                <div class="d-flex w-100 justify-content-between list-header">
-                    レッスン日: ${h.date}
-                    <span class="list-date">スコア確認済</span>
-                </div>
-                <p class="mb-0 small text-muted">タップで詳細を表示 (未実装)</p>
-            </a>
-        `;
-        lessonList.insertAdjacentHTML('beforeend', listItem);
-    });
-}
+            
+            // 2. 過去のレッスン一覧
+            history.reverse().forEach(h => {
+                 const listItem = `
+                    <a href="index.html?date=${h.date}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between list-header">
+                            レッスン日: ${h.date}
+                            <span class="list-date">スコア確認済</span>
+                        </div>
+                        <p class="mb-0 small text-muted">タップで詳細を表示 (未実装)</p>
+                    </a>
+                `;
+                lessonList.insertAdjacentHTML('beforeend', listItem);
+            });
+        }
     </script>
 </body>
 </html>
