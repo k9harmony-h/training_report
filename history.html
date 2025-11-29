@@ -102,8 +102,8 @@
     <script>
         // LIFF IDとGAS URLはindex.htmlと同じものを設定
         const LIFF_ID = '2008546673-MJY7j3ox'; 
-        // ★★★ ここを必ず最新のデプロイURLに修正してください ★★★
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec'; 
+        // ユーザー情報から取得したGAS URLを使用します。
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec'; 
         
         const scoreLabels = [
             '指示理解', '集中力', '報酬', 'ボディ', 'コンタクト',
@@ -119,6 +119,7 @@
         };
 
         async function main() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
             try {
                 await liff.init({ liffId: LIFF_ID });
                 if (!liff.isLoggedIn()) { 
@@ -126,45 +127,43 @@
                     return; 
                 }
                 const profile = await liff.getProfile();
+                // ユーザーIDの取得確認ログ
+                console.log('LIFF Success. User ID:', profile.userId); 
                 fetchData(profile.userId);
             } catch (err) {
-                // エラー発生時にローディングを解除し、メッセージを表示
                 console.error('LIFF/Init Error:', err);
                 document.getElementById('loadingOverlay').style.display = 'none';
-                alert('アプリの起動エラーが発生しました。時間を置いて再度お試しください。');
+                alert('アプリの起動エラーが発生しました。コンソールを確認してください。');
             }
         }
 
-function fetchData(userId) {
-    // 取得試行URLをコンソールに出力
-    const url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}`;
-    console.log('--- Fetching Data ---');
-    console.log('GAS URL:', GAS_URL);
-    console.log('Request URL:', url);
-    
-    fetch(url)
-        .then(res => {
-            if (!res.ok) {
-                // HTTPエラー（404, 500など）の場合
-                res.text().then(text => {
-                    console.error('Fetch HTTP Error Status:', res.status);
-                    console.error('Fetch HTTP Error Response Text:', text);
-                    throw new Error(`HTTP error! status: ${res.status}`);
+        function fetchData(userId) {
+            const url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}`;
+            console.log('--- Fetching Data ---');
+            console.log('Request URL:', url);
+            
+            fetch(url)
+                .then(res => {
+                    if (!res.ok) {
+                        return res.text().then(text => {
+                            console.error('Fetch HTTP Error Status:', res.status);
+                            console.error('Fetch HTTP Error Response Text:', text);
+                            throw new Error(`HTTP error! status: ${res.status}`);
+                        });
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    console.log('Fetch Success! Data:', data);
+                    renderHistory(data);
+                })
+                .catch(err => {
+                    console.error('Fetch/GAS Error Details:', err);
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    // エラーメッセージはコンソール確認を促すように変更
+                    alert('データ取得エラーが発生しました。コンソールで詳細を確認してください。Load failed');
                 });
-            }
-            return res.json();
-        })
-        .then(data => {
-            console.log('Fetch Success! Data:', data);
-            renderHistory(data);
-        })
-        .catch(err => {
-            // ネットワークエラー、JSONパースエラー、throwされたHTTPエラーなど
-            console.error('Fetch/GAS Error Details:', err);
-            document.getElementById('loadingOverlay').style.display = 'none';
-            alert('データ取得エラーが発生しました。コンソールで詳細を確認してください。Load failed');
-        });
-}
+        }
 
         function renderHistory(data) {
             document.getElementById('loadingOverlay').style.display = 'none';
@@ -173,14 +172,12 @@ function fetchData(userId) {
             chartArea.innerHTML = ''; 
             lessonList.innerHTML = ''; 
 
-            // ★★★ 修正点：堅牢なデータアクセスを使用 ★★★
-            const dogData = data.dog || {}; // data.dogがnullでも空のオブジェクト{}とする
+            // オスメス判別ロジックを削除し、敬称をシンプルに表示
+            const dogData = data.dog || {}; 
             const dogName = dogData.name || '愛犬';
-            const gender = dogData.gender || 'オス';
-            const honorific = gender.includes('メス') ? 'ちゃん' : 'くん'; 
+            const honorific = 'ちゃん/くん'; // 性別判定を省略
             
             document.getElementById('dogNameTitle').innerText = dogName + honorific + ' のレッスン履歴';
-            // ★★★ 修正点ここまで ★★★
 
             // データがない場合の処理
             if (data.error || !data.score_history || data.score_history.length < 1) {
@@ -196,11 +193,9 @@ function fetchData(userId) {
                 const itemLabel = scoreLabels[i];
                 const color = chartColors[i];
                 
-                // 過去のスコアデータを抽出
                 const scores = history.map(h => h.scores[i]);
                 const dates = history.map(h => h.date);
 
-                // 前回スコアとの比較
                 const latestScore = scores[scores.length - 1];
                 const previousScore = scores.length > 1 ? scores[scores.length - 2] : null;
                 
@@ -208,12 +203,10 @@ function fetchData(userId) {
                 let comparisonClass = '';
                 let specialComment = '';
 
-                // 満点コメント
                 if (latestScore === 5) {
                     specialComment = '⭐️🐶⭐️';
                 }
 
-                // 前回比較コメント
                 if (previousScore !== null) {
                     const diff = latestScore - previousScore;
                     if (diff >= 1) {
@@ -231,7 +224,6 @@ function fetchData(userId) {
                     comparisonClass = 'status-steady';
                 }
 
-                // HTMLカードの生成
                 const cardHtml = `
                     <div class="chart-card">
                         <div class="chart-meta">
@@ -246,7 +238,6 @@ function fetchData(userId) {
                 `;
                 chartArea.insertAdjacentHTML('beforeend', cardHtml);
 
-                // Chart.jsで折れ線グラフを描画
                 new Chart(document.getElementById(`chart-${i}`), {
                     type: 'line',
                     data: {
