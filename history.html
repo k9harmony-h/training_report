@@ -139,7 +139,7 @@
                 });
         }
 
-        function renderHistory(data) {
+//        function renderHistory(data) {
             document.getElementById('loadingOverlay').style.display = 'none';
 
             if (data.error || !data.score_history || data.score_history.length === 0) {
@@ -192,74 +192,143 @@
                     comparisonClass = 'status-steady';
                 }
 
-                // HTMLカードの生成
-                const cardHtml = `
-                    <div class="chart-card">
-                        <div class="chart-meta">
-                            <h4 class="chart-title">[${i + 1}] ${itemLabel}</h4>
-                            <div class="text-end">
-                                <span class="chart-status ${comparisonClass}">${comparisonText}</span>
-                                ${specialComment ? `<div style="font-size:1.2rem; font-weight:bold; color:gold; line-height:1;">${specialComment}</div>` : ''}
-                            </div>
-                        </div>
-                        <canvas id="chart-${i}"></canvas>
-                    </div>
-                `;
-                chartArea.insertAdjacentHTML('beforeend', cardHtml);
+function renderHistory(data) {
+    document.getElementById('loadingOverlay').style.display = 'none';
 
-                // Chart.jsで折れ線グラフを描画
-                new Chart(document.getElementById(`chart-${i}`), {
-                    type: 'line',
-                    data: {
-                        labels: dates, // 日付 (MM/dd)
-                        datasets: [{
-                            label: itemLabel,
-                            data: scores, // スコア値
-                            borderColor: color,
-                            backgroundColor: color.replace('1)', '0.1)'), // 透過色
-                            borderWidth: 2,
-                            pointRadius: 5,
-                            fill: true,
-                            tension: 0.2 // 曲線の滑らかさ
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                min: 0,
-                                max: 5,
-                                ticks: { stepSize: 1, font: { size: 10 } },
-                                title: { display: true, text: '評価点', font: { size: 10 } }
-                            },
-                            x: {
-                                ticks: { font: { size: 10 } }
-                            }
-                        },
-                        plugins: { legend: { display: false } }
-                    }
-                });
-            }
-            
-            // 2. 過去のレッスン一覧（リスト）は今回はダミー表示
-            // 必要なデータ（レッスンテーマなど）がGASから返されていないため、一旦日付のみのリストとします。
-            const lessonList = document.getElementById('lessonList');
-            lessonList.innerHTML = ''; // 初期メッセージを削除
-            
-            // 履歴を逆順（最新から）で表示
-            history.reverse().forEach(h => {
-                 const listItem = `
-                    <a href="index.html?date=${h.date}" class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between list-header">
-                            レッスン日: ${h.date}
-                            <span class="list-date">スコア確認済</span>
-                        </div>
-                        <p class="mb-0 small text-muted">タップで詳細を表示 (未実装)</p>
-                    </a>
-                `;
-                lessonList.insertAdjacentHTML('beforeend', listItem);
-            });
+    // 敬称の判定と設定
+    const dogName = data.dog ? data.dog.name : 'Your Dog';
+    // ※ 性別データがGASから渡されていないため、ここでは仮に性別を判断できません。
+    //    GASから性別データ(例: data.dog.gender)が渡されている前提で、以下のロジックを組んでいます。
+    //    今回は、GASの「犬情報」シートに `dog_gender` の列があり、'オス'/'メス'が入ると仮定します。
+    //    今回はデータがないため、一旦「くん」をデフォルトとします。
+    const honorific = data.dog && data.dog.gender === 'メス' ? 'ちゃん' : 'くん'; 
+    
+    document.getElementById('dogNameTitle').innerText = dogName + honorific + ' のレッスン履歴';
+
+    // ★★★ データがない場合の条件を修正し、グラフ描画処理を確実に行う ★★★
+    if (!data.score_history || data.score_history.length < 1) {
+        // データがない場合は、グラフエリアにメッセージを表示
+        document.getElementById('chartArea').innerHTML = `
+            <div class="text-center text-muted small mt-4">
+                まだレッスン履歴がありません。次回のレッスン後に表示されます。
+            </div>
+        `;
+        document.getElementById('lessonList').innerHTML = `<div class="text-center text-muted small mt-4">履歴がありません。</div>`;
+        return;
+    }
+
+    const history = data.score_history;
+    const chartArea = document.getElementById('chartArea');
+    chartArea.innerHTML = ''; // グラフエリアをクリア
+    
+    // ... (以下、グラフ描画ロジックは前回提示した内容と基本的に同じ) ...
+    // ... (グラフ描画ロジックは省略せずに下部に記載します) ...
+
+    for (let i = 0; i < 10; i++) {
+        const itemLabel = scoreLabels[i];
+        const color = chartColors[i];
+        
+        // 過去のスコアデータを抽出 (score_1なら scores[0], score_2なら scores[1]...)
+        const scores = history.map(h => h.scores[i]);
+        const dates = history.map(h => h.date);
+
+        // 前回スコアとの比較
+        const latestScore = scores[scores.length - 1];
+        const previousScore = scores.length > 1 ? scores[scores.length - 2] : null;
+        
+        let comparisonText = '';
+        let comparisonClass = '';
+        let specialComment = '';
+
+        // 満点コメント
+        if (latestScore === 5) {
+            specialComment = '⭐️🐶⭐️';
         }
+
+        // 前回比較コメント
+        if (previousScore !== null) {
+            const diff = latestScore - previousScore;
+            if (diff >= 1) {
+                comparisonText = '素晴らしい！成長してます🐶';
+                comparisonClass = 'status-great';
+            } else if (diff === 0) {
+                comparisonText = 'じっくり頑張ってます🐶';
+                comparisonClass = 'status-steady';
+            } else if (diff <= -1) {
+                comparisonText = 'ゆっくりいきましょう🐶';
+                comparisonClass = 'status-slow';
+            }
+        } else {
+            comparisonText = '初回評価です！';
+            comparisonClass = 'status-steady';
+        }
+
+        // HTMLカードの生成
+        const cardHtml = `
+            <div class="chart-card">
+                <div class="chart-meta">
+                    <h4 class="chart-title">[${i + 1}] ${itemLabel}</h4>
+                    <div class="text-end">
+                        <span class="chart-status ${comparisonClass}">${comparisonText}</span>
+                        ${specialComment ? `<div style="font-size:1.2rem; font-weight:bold; color:gold; line-height:1;">${specialComment}</div>` : ''}
+                    </div>
+                </div>
+                <canvas id="chart-${i}"></canvas>
+            </div>
+        `;
+        chartArea.insertAdjacentHTML('beforeend', cardHtml);
+
+        // Chart.jsで折れ線グラフを描画
+        new Chart(document.getElementById(`chart-${i}`), {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: itemLabel,
+                    data: scores,
+                    borderColor: color,
+                    backgroundColor: color.replace('1)', '0.1)'),
+                    borderWidth: 2,
+                    pointRadius: 5,
+                    fill: true,
+                    tension: 0.2
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 5,
+                        ticks: { stepSize: 1, font: { size: 10 } },
+                        title: { display: true, text: '評価点', font: { size: 10 } }
+                    },
+                    x: {
+                        ticks: { font: { size: 10 } }
+                    }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+    
+    // 2. 過去のレッスン一覧
+    const lessonList = document.getElementById('lessonList');
+    lessonList.innerHTML = '';
+    
+    history.reverse().forEach(h => {
+         const listItem = `
+            <a href="index.html?date=${h.date}" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between list-header">
+                    レッスン日: ${h.date}
+                    <span class="list-date">スコア確認済</span>
+                </div>
+                <p class="mb-0 small text-muted">タップで詳細を表示 (未実装)</p>
+            </a>
+        `;
+        lessonList.insertAdjacentHTML('beforeend', listItem);
+    });
+}
     </script>
 </body>
 </html>
