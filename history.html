@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght=400;500;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -38,7 +38,7 @@
             margin-top: 20px;
             padding: 15px;
         }
-        /* ★ 修正点 1: グラフの高さを120pxに固定 ★ */
+        /* グラフの高さを120pxに固定 */
         .chart-card canvas {
             height: 120px !important; 
         }
@@ -55,13 +55,13 @@
         /* 比較コメント色 */
         .status-great { color: #FF6B6B; } /* 素晴らしい（成長時） */
         .status-steady { color: #555555; } /* じっくり（初回/下降時） */
-        /* .status-slow は未使用 */
         
         /* レッスン一覧 */
         .lesson-list { margin-top: 30px; }
         .list-group-item { 
             border: none; margin-bottom: 8px; border-radius: 8px;
             background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            padding: 15px; /* パディングを統一 */
         }
         .list-header { font-weight: 700; color: var(--brand-color); }
         .list-date { font-size: 0.85rem; color: #888; }
@@ -96,7 +96,7 @@
             </div>
 
         <div class="lesson-list">
-            <h3 class="section-title" style="font-size: 1.2rem; color: #555;">過去のレッスン日一覧</h3>
+            <h3 class="section-title" style="font-size: 1.2rem; color: #555;">過去のレッスン日一覧 (新しい順)</h3>
             <div id="lessonList" class="list-group">
                 <div class="text-center text-muted small mt-4">履歴がありません。</div>
             </div>
@@ -177,10 +177,11 @@
             chartArea.innerHTML = ''; 
             lessonList.innerHTML = ''; 
 
-            // 1. 犬の名前を表示
+            // 1. 犬の名前を表示を修正
             const dogData = data.dog || {}; 
             const dogName = dogData.name || '愛犬';
-            document.getElementById('dogNameTitle').innerText = dogName + 'ちゃん/くん のレッスン履歴';
+            // ★ 修正点 1: 敬称表示を愛犬名の後に「のレッスン履歴」とシンプルに修正 ★
+            document.getElementById('dogNameTitle').innerText = `${dogName}のレッスン履歴`; 
 
             // 2. データがない場合の処理
             if (data.error || !data.score_history || data.score_history.length < 1) {
@@ -213,100 +214,10 @@
                     specialComment = '⭐️🐶⭐️';
                 }
 
-                // ★ 修正点 2: 比較コメントロジックの修正 ★
+                // 比較コメントロジック
                 if (previousScore !== null) {
                     const diff = latestScore - previousScore;
                     
                     if (diff >= 1) { // 成長時
                         // 満点 (5点) の場合は「成長してます」の文章を非表示
-                        if (latestScore < 5) { 
-                            comparisonText = '素晴らしい！成長してます🐶';
-                            comparisonClass = 'status-great';
-                        }
-                        // latestScoreが5の場合はspecialCommentのみで、comparisonTextは''のまま
-
-                    } else if (diff === 0) { // 同点時
-                        // コメント非表示
-                        comparisonText = '';
-                        comparisonClass = '';
-                    
-                    } else if (diff <= -1) { // 下降時
-                        // 「じっくり頑張ってます🐶」を表示
-                        comparisonText = 'じっくり頑張ってます🐶';
-                        comparisonClass = 'status-steady';
-                    }
-                } else {
-                    // 初回評価
-                    comparisonText = '初回評価です！';
-                    comparisonClass = 'status-steady';
-                }
-                // ★ 修正点 2: ここまで ★
-
-                // HTMLカードの生成
-                const cardHtml = `
-                    <div class="chart-card">
-                        <div class="chart-meta">
-                            <h4 class="chart-title">[${i + 1}] ${itemLabel}</h4>
-                            <div class="text-end">
-                                <span class="chart-status ${comparisonClass}">${comparisonText}</span>
-                                ${specialComment ? `<div style="font-size:1.2rem; font-weight:bold; color:gold; line-height:1;">${specialComment}</div>` : ''}
-                            </div>
-                        </div>
-                        <canvas id="chart-${i}"></canvas>
-                    </div>
-                `;
-                chartArea.insertAdjacentHTML('beforeend', cardHtml);
-
-                // Chart.jsで折れ線グラフを描画
-                new Chart(document.getElementById(`chart-${i}`), {
-                    type: 'line',
-                    data: {
-                        labels: dates, 
-                        datasets: [{
-                            label: itemLabel,
-                            data: scores, 
-                            borderColor: color,
-                            backgroundColor: color.replace('1)', '0.1)'),
-                            borderWidth: 2,
-                            pointRadius: 5,
-                            fill: true,
-                            tension: 0.2
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        // Chart.jsはコンテナのサイズを継承するため、CSSで固定
-                        scales: {
-                            y: {
-                                min: 0,
-                                max: 5,
-                                ticks: { stepSize: 1, font: { size: 10 } },
-                                title: { display: true, text: '評価点', font: { size: 10 } }
-                            },
-                            x: {
-                                ticks: { font: { size: 10 } }
-                            }
-                        },
-                        plugins: { legend: { display: false } }
-                    }
-                });
-            }
-            
-            // 4. 過去のレッスン日一覧
-            history.reverse().forEach(h => {
-                 const listItem = `
-                    <a href="index.html?date=${h.date}" class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between list-header">
-                            レッスン日: ${h.date}
-                            <span class="list-date">スコア確認済</span>
-                        </div>
-                        <p class="mb-0 small text-muted">タップで詳細を表示 (未実装)</p>
-                    </a>
-                `;
-                lessonList.insertAdjacentHTML('beforeend', listItem);
-            });
-        }
-    </script>
-</body>
-</html>
+                        if (latestScore < 5) {
