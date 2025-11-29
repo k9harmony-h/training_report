@@ -38,6 +38,11 @@
             margin-top: 20px;
             padding: 15px;
         }
+        /* ★ 修正点 1: グラフの高さを120pxに固定 ★ */
+        .chart-card canvas {
+            height: 120px !important; 
+        }
+        
         .chart-title { 
             font-size: 1.1rem; font-weight: 700; color: var(--brand-color); margin-bottom: 5px; 
         }
@@ -48,9 +53,9 @@
             font-size: 0.9rem; font-weight: 600;
         }
         /* 比較コメント色 */
-        .status-great { color: #FF6B6B; } /* 素晴らしい */
-        .status-steady { color: #555555; } /* じっくり */
-        .status-slow { color: #3A89FF; } /* ゆっくり */
+        .status-great { color: #FF6B6B; } /* 素晴らしい（成長時） */
+        .status-steady { color: #555555; } /* じっくり（初回/下降時） */
+        /* .status-slow は未使用 */
         
         /* レッスン一覧 */
         .lesson-list { margin-top: 30px; }
@@ -102,7 +107,7 @@
     <script>
         // LIFF IDとGAS URLはindex.htmlと同じものを設定
         const LIFF_ID = '2008546673-MJY7j3ox'; 
-        // ★★★ 更新された最新のデプロイURLを使用します ★★★
+        // 最新のデプロイURL
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec'; 
         
         const scoreLabels = [
@@ -203,28 +208,39 @@
                 let comparisonClass = '';
                 let specialComment = '';
 
-                // 満点コメント
+                // 満点コメント (Score 5 獲得時)
                 if (latestScore === 5) {
                     specialComment = '⭐️🐶⭐️';
                 }
 
-                // 前回比較コメント
+                // ★ 修正点 2: 比較コメントロジックの修正 ★
                 if (previousScore !== null) {
                     const diff = latestScore - previousScore;
-                    if (diff >= 1) {
-                        comparisonText = '素晴らしい！成長してます🐶';
-                        comparisonClass = 'status-great';
-                    } else if (diff === 0) {
+                    
+                    if (diff >= 1) { // 成長時
+                        // 満点 (5点) の場合は「成長してます」の文章を非表示
+                        if (latestScore < 5) { 
+                            comparisonText = '素晴らしい！成長してます🐶';
+                            comparisonClass = 'status-great';
+                        }
+                        // latestScoreが5の場合はspecialCommentのみで、comparisonTextは''のまま
+
+                    } else if (diff === 0) { // 同点時
+                        // コメント非表示
+                        comparisonText = '';
+                        comparisonClass = '';
+                    
+                    } else if (diff <= -1) { // 下降時
+                        // 「じっくり頑張ってます🐶」を表示
                         comparisonText = 'じっくり頑張ってます🐶';
                         comparisonClass = 'status-steady';
-                    } else if (diff <= -1) {
-                        comparisonText = 'ゆっくりいきましょう🐶';
-                        comparisonClass = 'status-slow';
                     }
                 } else {
+                    // 初回評価
                     comparisonText = '初回評価です！';
                     comparisonClass = 'status-steady';
                 }
+                // ★ 修正点 2: ここまで ★
 
                 // HTMLカードの生成
                 const cardHtml = `
@@ -260,6 +276,7 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        // Chart.jsはコンテナのサイズを継承するため、CSSで固定
                         scales: {
                             y: {
                                 min: 0,
