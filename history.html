@@ -30,16 +30,27 @@
         }
         .content-container { padding: 0 15px; }
         
-        /* 履歴表示用スタイル */
-        .score-history-card {
-            background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            margin-top: 20px; padding: 15px;
+        /* グラフカード */
+        .chart-card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-top: 20px;
+            padding: 15px;
         }
-        .score-title { font-size: 1.1rem; font-weight: 700; color: var(--brand-color); margin-bottom: 5px; }
-        .score-list-item { 
-            display: block; padding: 5px 0; border-bottom: 1px dashed #eee; font-size: 1rem;
+        .chart-title { 
+            font-size: 1.1rem; font-weight: 700; color: var(--brand-color); margin-bottom: 5px; 
         }
-        .score-list-item:last-child { border-bottom: none; }
+        .chart-meta {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+        }
+        .chart-status {
+            font-size: 0.9rem; font-weight: 600;
+        }
+        /* 比較コメント色 */
+        .status-great { color: #FF6B6B; } /* 素晴らしい */
+        .status-steady { color: #555555; } /* じっくり */
+        .status-slow { color: #3A89FF; } /* ゆっくり */
         
         /* レッスン一覧 */
         .lesson-list { margin-top: 30px; }
@@ -74,10 +85,11 @@
 
     <div class="content-container py-3">
         
-        <p class="text-muted small text-center mt-3">各項目のスコア履歴です。</p>
+        <p class="text-muted small text-center mt-3">過去のレッスン評価の推移です。</p>
         
-        <div id="chartArea" class="row">
+        <div id="chartArea">
             </div>
+
         <div class="lesson-list">
             <h3 class="section-title" style="font-size: 1.2rem; color: #555;">過去のレッスン日一覧</h3>
             <div id="lessonList" class="list-group">
@@ -90,12 +102,17 @@
     <script>
         // LIFF IDとGAS URLはindex.htmlと同じものを設定
         const LIFF_ID = '2008546673-MJY7j3ox'; 
+        // ★★★ 更新された最新のデプロイURLを使用します ★★★
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec'; 
         
-        // ★ スコア項目のラベルを定義（グラフ描画時にも使用） ★
         const scoreLabels = [
             '指示理解', '集中力', '報酬', 'ボディ', 'コンタクト',
             '指示出し', '対応力', 'リード', 'ボディ', 'コンタクト'
+        ];
+        // グラフの色を定義
+        const chartColors = [
+            'rgba(255, 99, 132, 1)', 'rgba(255, 159, 64, 1)', 'rgba(255, 205, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(54, 162, 235, 1)',
+            'rgba(153, 102, 255, 1)', 'rgba(201, 203, 207, 1)', 'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)'
         ];
 
         window.onload = function() {
@@ -147,7 +164,6 @@
                 });
         }
 
-        // ★ 修正点 2: スコア履歴表示ロジックの追加 ★
         function renderHistory(data) {
             document.getElementById('loadingOverlay').style.display = 'none';
             const chartArea = document.getElementById('chartArea');
@@ -169,34 +185,98 @@
             }
 
             const history = data.score_history;
-            const dates = history.map(h => h.date); // 日付リスト
             
-            // 3. 10項目分のスコア履歴を表示
+            // 3. 10個のグラフを動的に生成（グラフとコメント表示）
             for (let i = 0; i < 10; i++) {
                 const itemLabel = scoreLabels[i];
+                const color = chartColors[i];
                 
-                // 全履歴から i 番目のスコアを抽出 (例: scores[0] = Score_1 の全履歴)
+                // 過去のスコアデータを抽出
                 const scores = history.map(h => h.scores[i]);
-                
-                // スコアリストのHTMLを作成
-                let scoreListHtml = scores.map((score, index) => {
-                    return `<span class="score-list-item">(${dates[index]}) スコア: ${score}</span>`;
-                }).join('');
+                const dates = history.map(h => h.date);
 
+                // 前回スコアとの比較
+                const latestScore = scores[scores.length - 1];
+                const previousScore = scores.length > 1 ? scores[scores.length - 2] : null;
+                
+                let comparisonText = '';
+                let comparisonClass = '';
+                let specialComment = '';
+
+                // 満点コメント
+                if (latestScore === 5) {
+                    specialComment = '⭐️🐶⭐️';
+                }
+
+                // 前回比較コメント
+                if (previousScore !== null) {
+                    const diff = latestScore - previousScore;
+                    if (diff >= 1) {
+                        comparisonText = '素晴らしい！成長してます🐶';
+                        comparisonClass = 'status-great';
+                    } else if (diff === 0) {
+                        comparisonText = 'じっくり頑張ってます🐶';
+                        comparisonClass = 'status-steady';
+                    } else if (diff <= -1) {
+                        comparisonText = 'ゆっくりいきましょう🐶';
+                        comparisonClass = 'status-slow';
+                    }
+                } else {
+                    comparisonText = '初回評価です！';
+                    comparisonClass = 'status-steady';
+                }
+
+                // HTMLカードの生成
                 const cardHtml = `
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <div class="score-history-card">
-                            <h4 class="score-title">[${i + 1}] ${itemLabel}</h4>
-                            <div class="score-list">
-                                ${scoreListHtml}
+                    <div class="chart-card">
+                        <div class="chart-meta">
+                            <h4 class="chart-title">[${i + 1}] ${itemLabel}</h4>
+                            <div class="text-end">
+                                <span class="chart-status ${comparisonClass}">${comparisonText}</span>
+                                ${specialComment ? `<div style="font-size:1.2rem; font-weight:bold; color:gold; line-height:1;">${specialComment}</div>` : ''}
                             </div>
                         </div>
+                        <canvas id="chart-${i}"></canvas>
                     </div>
                 `;
                 chartArea.insertAdjacentHTML('beforeend', cardHtml);
-            }
 
-            // 4. 過去のレッスン日一覧を表示 (前回成功したロジック)
+                // Chart.jsで折れ線グラフを描画
+                new Chart(document.getElementById(`chart-${i}`), {
+                    type: 'line',
+                    data: {
+                        labels: dates, 
+                        datasets: [{
+                            label: itemLabel,
+                            data: scores, 
+                            borderColor: color,
+                            backgroundColor: color.replace('1)', '0.1)'),
+                            borderWidth: 2,
+                            pointRadius: 5,
+                            fill: true,
+                            tension: 0.2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                min: 0,
+                                max: 5,
+                                ticks: { stepSize: 1, font: { size: 10 } },
+                                title: { display: true, text: '評価点', font: { size: 10 } }
+                            },
+                            x: {
+                                ticks: { font: { size: 10 } }
+                            }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+            
+            // 4. 過去のレッスン日一覧
             history.reverse().forEach(h => {
                  const listItem = `
                     <a href="index.html?date=${h.date}" class="list-group-item list-group-item-action">
