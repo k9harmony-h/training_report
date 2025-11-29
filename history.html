@@ -128,9 +128,10 @@
                 const profile = await liff.getProfile();
                 fetchData(profile.userId);
             } catch (err) {
+                // エラー発生時にローディングを解除し、メッセージを表示
                 console.error('LIFF/Init Error:', err);
-                alert('アプリの起動エラーが発生しました。時間を置いて再度お試しください。');
                 document.getElementById('loadingOverlay').style.display = 'none';
+                alert('アプリの起動エラーが発生しました。時間を置いて再度お試しください。');
             }
         }
 
@@ -144,9 +145,10 @@
                 })
                 .then(data => renderHistory(data))
                 .catch(err => {
+                    // データ取得失敗時にローディングを解除し、エラーメッセージを表示
                     console.error('Fetch/GAS Error:', err);
-                    alert('データ取得エラーが発生しました。GASデプロイ設定をご確認ください。' + err.message);
                     document.getElementById('loadingOverlay').style.display = 'none';
+                    alert('データ取得エラーが発生しました。GASデプロイ設定をご確認ください。Load failed'); // ユーザーへのフィードバック
                 });
         }
 
@@ -154,16 +156,17 @@
             document.getElementById('loadingOverlay').style.display = 'none';
             const chartArea = document.getElementById('chartArea');
             const lessonList = document.getElementById('lessonList');
-            chartArea.innerHTML = ''; // グラフエリアを初期化
-            lessonList.innerHTML = ''; // リストエリアを初期化
+            chartArea.innerHTML = ''; 
+            lessonList.innerHTML = ''; 
 
-            // 敬称の判定と設定
-            const dogName = data.dog ? data.dog.name : '愛犬';
-            // GASから性別データ(data.dog.gender)が渡されている前提で処理
-            const gender = data.dog ? data.dog.gender : 'オス'; // デフォルトは「オス」
-            const honorific = gender === 'メス' ? 'ちゃん' : 'くん'; 
+            // ★★★ 修正点：堅牢なデータアクセスを使用 ★★★
+            const dogData = data.dog || {}; // data.dogがnullでも空のオブジェクト{}とする
+            const dogName = dogData.name || '愛犬';
+            const gender = dogData.gender || 'オス';
+            const honorific = gender.includes('メス') ? 'ちゃん' : 'くん'; 
             
             document.getElementById('dogNameTitle').innerText = dogName + honorific + ' のレッスン履歴';
+            // ★★★ 修正点ここまで ★★★
 
             // データがない場合の処理
             if (data.error || !data.score_history || data.score_history.length < 1) {
@@ -233,10 +236,10 @@
                 new Chart(document.getElementById(`chart-${i}`), {
                     type: 'line',
                     data: {
-                        labels: dates, // 日付 (MM/dd)
+                        labels: dates, 
                         datasets: [{
                             label: itemLabel,
-                            data: scores, // スコア値
+                            data: scores, 
                             borderColor: color,
                             backgroundColor: color.replace('1)', '0.1)'),
                             borderWidth: 2,
@@ -247,7 +250,7 @@
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: false, // カードのサイズに合わせる
+                        maintainAspectRatio: false,
                         scales: {
                             y: {
                                 min: 0,
