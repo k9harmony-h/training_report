@@ -7,6 +7,7 @@
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght=400;500;700&display=swap" rel="stylesheet">
 
@@ -32,46 +33,35 @@
         
         /* グラフカード */
         .chart-card {
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            margin-top: 20px;
-            padding: 15px;
+            background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-top: 20px; padding: 15px;
         }
-        /* グラフの高さを120pxに固定 */
-        .chart-card canvas {
-            height: 120px !important; 
-        }
-        
-        .chart-title { 
-            font-size: 1.1rem; font-weight: 700; color: var(--brand-color); margin-bottom: 5px; 
-        }
-        .chart-meta {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
-        }
-        .chart-status {
-            font-size: 0.9rem; font-weight: 600;
-        }
-        /* 比較コメント色 */
-        .status-great { color: #FF6B6B; } /* 素晴らしい（成長時） */
-        .status-steady { color: #555555; } /* じっくり（初回/下降時） */
+        .chart-card canvas { height: 120px !important; }
+        .chart-title { font-size: 1.1rem; font-weight: 700; color: var(--brand-color); margin-bottom: 5px; }
+        .chart-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .chart-status { font-size: 0.9rem; font-weight: 600; }
+        .status-great { color: #FF6B6B; } 
+        .status-steady { color: #555555; } 
         
         /* レッスン一覧 */
         .lesson-list { margin-top: 30px; }
         .list-group-item { 
-            border: none; margin-bottom: 8px; border-radius: 8px;
-            background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-            padding: 15px; /* パディングを統一 */
+            border: none; margin-bottom: 8px; border-radius: 8px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            padding: 15px; 
+            /* ポインターカーソルを明示的に指定 */
+            cursor: pointer; 
         }
         .list-header { font-weight: 700; color: var(--brand-color); }
         .list-date { font-size: 0.85rem; color: #888; }
         
         #loadingOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: var(--brand-color); display: flex; justify-content: center; align-items: center;
-            z-index: 9999; color: white;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-color); 
+            display: flex; justify-content: center; align-items: center; z-index: 9999; color: white;
         }
         .spinner-border-white { border-color: white; border-right-color: transparent; }
+        
+        /* モーダル内のスタイル */
+        .modal-score-item { margin-bottom: 5px; font-size: 1rem; }
+        .modal-score-item strong { color: var(--brand-color); width: 80px; display: inline-block; }
     </style>
 </head>
 <body>
@@ -104,6 +94,37 @@
 
     </div>
 
+    <div class="modal fade" id="historyDetailModal" tabindex="-1" aria-labelledby="historyDetailModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="historyDetailModalLabel">レッスン詳細: <span id="modalDate"></span></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            
+            <h6 class="mt-2 text-muted">評価スコア</h6>
+            <div id="modalScores">
+              </div>
+            
+            <h6 class="mt-4 text-muted">コメント</h6>
+            <p id="modalComment" style="white-space: pre-wrap; background:#f7f7f7; padding:10px; border-radius:5px;"></p>
+            
+            <h6 class="mt-4 text-muted">宿題</h6>
+            <p id="modalHomework" style="white-space: pre-wrap; background:#f7f7f7; padding:10px; border-radius:5px;"></p>
+
+            <h6 class="mt-4 text-muted">写真ギャラリー (次回実装)</h6>
+            <div id="modalGallery" class="row">
+              <div class="col-12 text-center text-muted small">ここに写真が表示されます。</div>
+            </div>
+            
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <script>
         // LIFF IDとGAS URLはindex.htmlと同じものを設定
         const LIFF_ID = '2008546673-MJY7j3ox'; 
@@ -118,6 +139,9 @@
             'rgba(255, 99, 132, 1)', 'rgba(255, 159, 64, 1)', 'rgba(255, 205, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(54, 162, 235, 1)',
             'rgba(153, 102, 255, 1)', 'rgba(201, 203, 207, 1)', 'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)'
         ];
+
+        // データをグローバル変数に保持（モーダル表示時に使用）
+        let allHistoryData = []; 
 
         window.onload = function() {
             main();
@@ -144,27 +168,24 @@
         function fetchData(userId) {
             const url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}`;
             console.log('--- Fetching Data ---');
-            console.log('Request URL:', url);
             
             fetch(url)
                 .then(res => {
                     if (!res.ok) {
-                        return res.text().then(text => {
-                            console.error('Fetch HTTP Error Status:', res.status);
-                            console.error('Fetch HTTP Error Response Text:', text);
-                            throw new Error(`HTTP error! status: ${res.status}`);
-                        });
+                        return res.text().then(text => { throw new Error(`HTTP error! status: ${res.status}`); });
                     }
                     return res.json();
                 })
                 .then(data => {
                     console.log('Fetch Success! Data:', data);
+                    // データをグローバル変数に格納
+                    allHistoryData = data.score_history || []; 
                     renderHistory(data);
                 })
                 .catch(err => {
                     console.error('Fetch/GAS Error Details:', err);
                     document.getElementById('loadingOverlay').style.display = 'none';
-                    alert('データ取得エラーが発生しました。コンソールで詳細を確認してください。Load failed');
+                    alert('データ取得エラーが発生しました。Load failed');
                 });
         }
 
@@ -176,25 +197,25 @@
             chartArea.innerHTML = ''; 
             lessonList.innerHTML = ''; 
 
-            // ★ 修正点 1: 敬称表示のロジックをコメントアウトし、初期値「---」を維持 ★
-            // const dogData = data.dog || {}; 
-            // const dogName = dogData.name || '愛犬';
-            // document.getElementById('dogNameTitle').innerText = `${dogName}のレッスン履歴`; 
+            // ★ 修正点 1: 名前表示の復元 ★
+            const dogData = data.dog || {}; 
+            const dogName = dogData.name || '愛犬';
+            document.getElementById('dogNameTitle').innerText = `${dogName}のレッスン履歴`; 
 
             // 2. データがない場合の処理
-            if (data.error || !data.score_history || data.score_history.length < 1) {
+            if (!allHistoryData || allHistoryData.length < 1) {
                 chartArea.innerHTML = `<div class="text-center text-muted small mt-4">まだレッスン履歴がありません。</div>`;
                 lessonList.innerHTML = `<div class="text-center text-muted small mt-4">履歴がありません。</div>`;
                 return;
             }
 
-            const history = data.score_history;
+            const history = allHistoryData;
             
             // 3. 10個のグラフを動的に生成
             for (let i = 0; i < 10; i++) {
                 const itemLabel = scoreLabels[i];
                 const color = chartColors[i];
-                
+                // ... (グラフ描画ロジックは変更なし) ...
                 const scores = history.map(h => h.scores[i]);
                 const dates = history.map(h => h.date);
 
@@ -243,35 +264,19 @@
                 `;
                 chartArea.insertAdjacentHTML('beforeend', cardHtml);
 
-                // Chart.jsで折れ線グラフを描画
                 new Chart(document.getElementById(`chart-${i}`), {
                     type: 'line',
                     data: {
-                        labels: dates, 
-                        datasets: [{
-                            label: itemLabel,
-                            data: scores, 
-                            borderColor: color,
+                        labels: dates, datasets: [{
+                            label: itemLabel, data: scores, borderColor: color,
                             backgroundColor: color.replace('1)', '0.1)'),
-                            borderWidth: 2,
-                            pointRadius: 5,
-                            fill: true,
-                            tension: 0.2
+                            borderWidth: 2, pointRadius: 5, fill: true, tension: 0.2
                         }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                min: 0,
-                                max: 5,
-                                ticks: { stepSize: 1, font: { size: 10 } },
-                                title: { display: true, text: '評価点', font: { size: 10 } }
-                            },
-                            x: {
-                                ticks: { font: { size: 10 } }
-                            }
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { y: { min: 0, max: 5, ticks: { stepSize: 1, font: { size: 10 } }, title: { display: true, text: '評価点', font: { size: 10 } } },
+                            x: { ticks: { font: { size: 10 } } }
                         },
                         plugins: { legend: { display: false } }
                     }
@@ -279,7 +284,7 @@
             }
             
             // 4. 過去のレッスン日一覧
-            const reversedHistory = [...history].reverse(); // 新しい順の配列を作成
+            const reversedHistory = [...history].reverse(); 
             
             if (reversedHistory.length > 0) {
                  lessonList.innerHTML = ''; 
@@ -292,10 +297,10 @@
                 const homework = h.homework || '宿題なし';
 
                  const listItem = `
-                    <div class="list-group-item">
+                    <div class="list-group-item" onclick="showLessonDetail('${h.date}')">
                         <div class="d-flex w-100 justify-content-between list-header">
                             レッスン日: ${h.date}
-                            <span class="list-date">タップ機能は一時停止</span>
+                            <span class="list-date">タップで詳細</span>
                         </div>
                         <div class="mt-2 p-2" style="background:#f7f7f7; border-radius:5px;">
                             <p class="mb-1 small" style="white-space: pre-wrap;"><strong>コメント:</strong> ${comment}</p>
@@ -307,9 +312,39 @@
             });
         }
         
-        /* showLessonDetail 関数は、エラーの原因切り分けのため削除しました。
-         * モーダル機能は次回以降のステップで実装を再開します。
-         */
+        // ★ 修正点 5: モーダル表示機能の実装 ★
+        function showLessonDetail(date) {
+            // 該当する日付のデータを見つける
+            const detail = allHistoryData.find(h => h.date === date);
+            
+            if (!detail) {
+                alert('データが見つかりませんでした。');
+                return;
+            }
+
+            // 1. タイトル、コメント、宿題をセット
+            document.getElementById('modalDate').innerText = date;
+            document.getElementById('modalComment').innerText = detail.comment || 'コメントなし';
+            document.getElementById('modalHomework').innerText = detail.homework || '宿題なし';
+
+            // 2. スコアリストを生成
+            const scoresContainer = document.getElementById('modalScores');
+            scoresContainer.innerHTML = '';
+            
+            for (let i = 0; i < 10; i++) {
+                const scoreHtml = `
+                    <div class="modal-score-item">
+                        <strong>[${i + 1}] ${scoreLabels[i]}：</strong> 
+                        ${detail.scores[i]} 点
+                    </div>
+                `;
+                scoresContainer.insertAdjacentHTML('beforeend', scoreHtml);
+            }
+
+            // 3. モーダルを表示
+            const detailModal = new bootstrap.Modal(document.getElementById('historyDetailModal'));
+            detailModal.show();
+        }
     </script>
 </body>
 </html>
