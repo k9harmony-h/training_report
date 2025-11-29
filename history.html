@@ -30,27 +30,7 @@
         }
         .content-container { padding: 0 15px; }
         
-        /* グラフカード */
-        .chart-card {
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            margin-top: 20px;
-            padding: 15px;
-        }
-        .chart-title { 
-            font-size: 1.1rem; font-weight: 700; color: var(--brand-color); margin-bottom: 5px; 
-        }
-        .chart-meta {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
-        }
-        .chart-status {
-            font-size: 0.9rem; font-weight: 600;
-        }
-        /* 比較コメント色 */
-        .status-great { color: #FF6B6B; } /* 素晴らしい */
-        .status-steady { color: #555555; } /* じっくり */
-        .status-slow { color: #3A89FF; } /* ゆっくり */
+        /* グラフ描画はしないため、CSSは最小限に */
         
         /* レッスン一覧 */
         .lesson-list { margin-top: 30px; }
@@ -88,7 +68,8 @@
         <p class="text-muted small text-center mt-3">過去のレッスン評価の推移です。</p>
         
         <div id="chartArea">
-            </div>
+            <div class="text-center text-muted small mt-4">（デバッグ中：グラフ描画は一時停止しています）</div>
+        </div>
 
         <div class="lesson-list">
             <h3 class="section-title" style="font-size: 1.2rem; color: #555;">過去のレッスン一覧</h3>
@@ -102,17 +83,12 @@
     <script>
         // LIFF IDとGAS URLはindex.htmlと同じものを設定
         const LIFF_ID = '2008546673-MJY7j3ox'; 
-        // ユーザー情報から取得したGAS URLを使用します。
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec'; 
+        // ユーザー情報から取得したGAS URLを使用
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec'; 
         
-        const scoreLabels = [
-            '指示理解', '集中力', '報酬', 'ボディ', 'コンタクト',
-            '指示出し', '対応力', 'リード', 'ボディ', 'コンタクト'
-        ];
-        const chartColors = [
-            'rgba(255, 99, 132, 1)', 'rgba(255, 159, 64, 1)', 'rgba(255, 205, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(54, 162, 235, 1)',
-            'rgba(153, 102, 255, 1)', 'rgba(201, 203, 207, 1)', 'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)'
-        ];
+        // グラフ関連の変数は使用しない
+        // const scoreLabels = [...]
+        // const chartColors = [...]
 
         window.onload = function() {
             main();
@@ -127,7 +103,6 @@
                     return; 
                 }
                 const profile = await liff.getProfile();
-                // ユーザーIDの取得確認ログ
                 console.log('LIFF Success. User ID:', profile.userId); 
                 fetchData(profile.userId);
             } catch (err) {
@@ -160,125 +135,37 @@
                 .catch(err => {
                     console.error('Fetch/GAS Error Details:', err);
                     document.getElementById('loadingOverlay').style.display = 'none';
-                    // エラーメッセージはコンソール確認を促すように変更
                     alert('データ取得エラーが発生しました。コンソールで詳細を確認してください。Load failed');
                 });
         }
 
+        // ★★★ 最小機能の renderHistory 関数 ★★★
         function renderHistory(data) {
             document.getElementById('loadingOverlay').style.display = 'none';
-            const chartArea = document.getElementById('chartArea');
             const lessonList = document.getElementById('lessonList');
-            chartArea.innerHTML = ''; 
-            lessonList.innerHTML = ''; 
+            lessonList.innerHTML = ''; // リストエリアをクリア
 
-            // オスメス判別ロジックを削除し、敬称をシンプルに表示
+            // 1. 犬の名前を表示
             const dogData = data.dog || {}; 
             const dogName = dogData.name || '愛犬';
-            const honorific = 'ちゃん/くん'; // 性別判定を省略
-            
-            document.getElementById('dogNameTitle').innerText = dogName + honorific + ' のレッスン履歴';
+            // 敬称は、デバッグのため一旦「(名前を表示できた)」という文字列にする
+            document.getElementById('dogNameTitle').innerText = dogName + ' (名前を表示できた) のレッスン履歴';
 
-            // データがない場合の処理
+            // 2. データがない場合の処理
             if (data.error || !data.score_history || data.score_history.length < 1) {
-                chartArea.innerHTML = `<div class="text-center text-muted small mt-4">まだレッスン履歴がありません。次回のレッスン後に表示されます。</div>`;
-                lessonList.innerHTML = `<div class="text-center text-muted small mt-4">履歴がありません。</div>`;
+                lessonList.innerHTML = `<div class="text-center text-muted small mt-4">履歴がありません。（データなし）</div>`;
                 return;
             }
 
+            // 3. 過去のレッスン一覧を表示
             const history = data.score_history;
             
-            // 1. 10個のグラフを動的に生成
-            for (let i = 0; i < 10; i++) {
-                const itemLabel = scoreLabels[i];
-                const color = chartColors[i];
-                
-                const scores = history.map(h => h.scores[i]);
-                const dates = history.map(h => h.date);
-
-                const latestScore = scores[scores.length - 1];
-                const previousScore = scores.length > 1 ? scores[scores.length - 2] : null;
-                
-                let comparisonText = '';
-                let comparisonClass = '';
-                let specialComment = '';
-
-                if (latestScore === 5) {
-                    specialComment = '⭐️🐶⭐️';
-                }
-
-                if (previousScore !== null) {
-                    const diff = latestScore - previousScore;
-                    if (diff >= 1) {
-                        comparisonText = '素晴らしい！成長してます🐶';
-                        comparisonClass = 'status-great';
-                    } else if (diff === 0) {
-                        comparisonText = 'じっくり頑張ってます🐶';
-                        comparisonClass = 'status-steady';
-                    } else if (diff <= -1) {
-                        comparisonText = 'ゆっくりいきましょう🐶';
-                        comparisonClass = 'status-slow';
-                    }
-                } else {
-                    comparisonText = '初回評価です！';
-                    comparisonClass = 'status-steady';
-                }
-
-                const cardHtml = `
-                    <div class="chart-card">
-                        <div class="chart-meta">
-                            <h4 class="chart-title">[${i + 1}] ${itemLabel}</h4>
-                            <div class="text-end">
-                                <span class="chart-status ${comparisonClass}">${comparisonText}</span>
-                                ${specialComment ? `<div style="font-size:1.2rem; font-weight:bold; color:gold; line-height:1;">${specialComment}</div>` : ''}
-                            </div>
-                        </div>
-                        <canvas id="chart-${i}"></canvas>
-                    </div>
-                `;
-                chartArea.insertAdjacentHTML('beforeend', cardHtml);
-
-                new Chart(document.getElementById(`chart-${i}`), {
-                    type: 'line',
-                    data: {
-                        labels: dates, 
-                        datasets: [{
-                            label: itemLabel,
-                            data: scores, 
-                            borderColor: color,
-                            backgroundColor: color.replace('1)', '0.1)'),
-                            borderWidth: 2,
-                            pointRadius: 5,
-                            fill: true,
-                            tension: 0.2
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                min: 0,
-                                max: 5,
-                                ticks: { stepSize: 1, font: { size: 10 } },
-                                title: { display: true, text: '評価点', font: { size: 10 } }
-                            },
-                            x: {
-                                ticks: { font: { size: 10 } }
-                            }
-                        },
-                        plugins: { legend: { display: false } }
-                    }
-                });
-            }
-            
-            // 2. 過去のレッスン一覧
             history.reverse().forEach(h => {
                  const listItem = `
                     <a href="index.html?date=${h.date}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between list-header">
                             レッスン日: ${h.date}
-                            <span class="list-date">スコア確認済</span>
+                            <span class="list-date">データ取得成功</span>
                         </div>
                         <p class="mb-0 small text-muted">タップで詳細を表示 (未実装)</p>
                     </a>
