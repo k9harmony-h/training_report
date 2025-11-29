@@ -135,22 +135,36 @@
             }
         }
 
-        function fetchData(userId) {
-            fetch(`${GAS_URL}?userId=${userId}&t=${new Date().getTime()}`)
-                .then(res => {
-                    if (!res.ok) {
-                        throw new Error(`HTTP error! status: ${res.status}`);
-                    }
-                    return res.json();
-                })
-                .then(data => renderHistory(data))
-                .catch(err => {
-                    // データ取得失敗時にローディングを解除し、エラーメッセージを表示
-                    console.error('Fetch/GAS Error:', err);
-                    document.getElementById('loadingOverlay').style.display = 'none';
-                    alert('データ取得エラーが発生しました。GASデプロイ設定をご確認ください。Load failed'); // ユーザーへのフィードバック
+function fetchData(userId) {
+    // 取得試行URLをコンソールに出力
+    const url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}`;
+    console.log('--- Fetching Data ---');
+    console.log('GAS URL:', GAS_URL);
+    console.log('Request URL:', url);
+    
+    fetch(url)
+        .then(res => {
+            if (!res.ok) {
+                // HTTPエラー（404, 500など）の場合
+                res.text().then(text => {
+                    console.error('Fetch HTTP Error Status:', res.status);
+                    console.error('Fetch HTTP Error Response Text:', text);
+                    throw new Error(`HTTP error! status: ${res.status}`);
                 });
-        }
+            }
+            return res.json();
+        })
+        .then(data => {
+            console.log('Fetch Success! Data:', data);
+            renderHistory(data);
+        })
+        .catch(err => {
+            // ネットワークエラー、JSONパースエラー、throwされたHTTPエラーなど
+            console.error('Fetch/GAS Error Details:', err);
+            document.getElementById('loadingOverlay').style.display = 'none';
+            alert('データ取得エラーが発生しました。コンソールで詳細を確認してください。Load failed');
+        });
+}
 
         function renderHistory(data) {
             document.getElementById('loadingOverlay').style.display = 'none';
