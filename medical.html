@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>うちの子医療・防災手帳</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #6da06f; /* Brand Color */
+            --accent-color: #e7f3e8;
+            --alert-color: #d9534f;
+            --mask-color: #f0f0f0;
+        }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f8f9fa; color: #333; }
+
+        /* --- SCREEN MODE STYLES --- */
+        .card-section {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-left: 5px solid var(--primary-color);
+        }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+        .info-row { margin-bottom: 8px; font-size: 0.95rem; }
+        .info-label { font-weight: bold; color: #555; display: block; font-size: 0.8rem; }
+        .info-value { font-size: 1rem; min-height: 20px; word-break: break-all; }
+        .loading { text-align: center; padding: 20px; color: #666; }
+        
+        /* Privacy Masking (Click to Reveal) */
+        .masked-text { 
+            letter-spacing: 2px; color: #aaa; background: var(--mask-color); 
+            padding: 2px 8px; border-radius: 4px; user-select: none;
+        }
+        .real-text { display: none; font-weight: bold; color: #333; }
+        .btn-toggle-mask {
+            font-size: 0.75rem; padding: 2px 8px; margin-left: 10px;
+            border-radius: 12px; border: 1px solid var(--alert-color);
+            color: var(--alert-color); background: white; cursor: pointer;
+        }
+        .btn-toggle-mask.active { background: var(--alert-color); color: white; }
+
+        /* Certificate Buttons */
+        .btn-cert-view {
+            font-size: 0.8rem; padding: 4px 12px; margin-left: 10px;
+            border-radius: 4px; background-color: var(--primary-color);
+            color: white; border: none; text-decoration: none; cursor: pointer;
+        }
+        .btn-cert-view:hover { opacity: 0.9; color: white; }
+
+        /* UI Actions (Print/Back) */
+        .no-print-area { margin: 20px; text-align: center; }
+        .btn-print {
+            background-color: var(--primary-color); color: white;
+            padding: 10px 30px; border-radius: 50px; border: none; font-weight: bold;
+        }
+        
+        /* Footer Disclaimer (Screen) */
+        .disclaimer-footer { font-size: 0.8rem; color: #999; margin-top: 30px; padding-bottom: 20px; }
+
+        /* --- PRINT MODE STYLES (A4 Landscape / 4-Split) --- */
+        @media print {
+            @page { size: A4 landscape; margin: 10mm; }
+            body { background: white; -webkit-print-color-adjust: exact; }
+            
+            /* Hide UI controls */
+            .no-print-area, header, .btn-toggle-mask, .btn-cert-view, .modal-backdrop, .modal { 
+                display: none !important; 
+            }
+            
+            /* FORCE UNMASK: Reveal all data on paper */
+            .masked-text { display: none !important; }
+            .real-text { display: block !important; }
+
+            /* Grid Layout */
+            .print-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: 1fr 1fr;
+                height: 180mm; /* Fits standard A4 printable height */
+                gap: 10mm;
+            }
+            
+            .print-block {
+                border: 2px solid #333;
+                border-radius: 8px;
+                padding: 10px;
+                overflow: hidden;
+                position: relative;
+            }
+
+            /* Block Headers */
+            .print-block h3 {
+                font-size: 14pt;
+                background: #eee;
+                text-align: center;
+                margin: -10px -10px 10px -10px;
+                padding: 5px;
+                border-bottom: 1px solid #333;
+                color: #000;
+            }
+            
+            .p-label { font-size: 8pt; color: #666; margin-top: 5px; }
+            .p-value { font-size: 11pt; font-weight: bold; border-bottom: 1px dotted #ccc; }
+            
+            /* Importance Highlights */
+            .alert-box { border: 2px solid red; padding: 5px; margin-top: 5px; border-radius: 4px; }
+            .alert-title { color: red; font-weight: bold; font-size: 9pt; }
+            
+            /* Reset screen card styles */
+            .card-section { border: none; box-shadow: none; padding: 0; margin: 0; border-left: none; }
+            
+            /* Paper Footer */
+            .print-footer {
+                position: fixed; bottom: 0; left: 0; width: 100%;
+                text-align: center; font-size: 8pt; color: #666;
+            }
+        }
+        
+        @media screen {
+            .print-container { display: block; }
+            .print-block { display: contents; }
+            .print-only-header, .print-footer { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container py-3 no-print-area">
+        <h4 class="text-center mb-3">⛑️ うちの子医療・防災手帳</h4>
+        <div id="loading" class="loading">
+            <div class="spinner-border text-success" role="status"></div>
+            <p class="mt-2">データを読み込んでいます...</p>
+        </div>
+        <div id="content" style="display:none;">
+            <p class="text-center small text-muted">緊急時に備え、この情報を印刷して携帯してください。</p>
+            <div class="d-flex justify-content-center gap-2">
+                <button onclick="window.print()" class="btn btn-print">🖨️ 手帳を印刷する</button>
+                <button onclick="window.location.href='index.html'" class="btn btn-outline-secondary" style="border-radius:50px;">戻る</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="main-display" style="display:none;">
+        <div class="print-container">
+            
+            <div class="print-block">
+                <h3 class="print-only-header">基本情報 / Owner Info</h3>
+                <div class="card-section">
+                    <div class="section-title d-none d-print-none">基本情報</div>
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <span class="p-label info-label">お名前 (Dog Name)</span>
+                            <div class="p-value info-value" id="d_name">Loading...</div>
+                        </div>
+                        <div class="col-6">
+                            <span class="p-label info-label">犬種 (Breed)</span>
+                            <div class="p-value info-value" id="d_breed">-</div>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-4">
+                            <span class="p-label info-label">性別</span>
+                            <div class="p-value info-value" id="d_gender">-</div>
+                        </div>
+                        <div class="col-4">
+                            <span class="p-label info-label">誕生日</span>
+                            <div class="p-value info-value" id="d_birth">-</div>
+                        </div>
+                        <div class="col-4">
+                            <span class="p-label info-label">年齢</span>
+                            <div class="p-value info-value" id="d_age">-</div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <span class="p-label info-label">飼い主様 (Owner)</span>
+                    <div class="p-value info-value" id="c_name">-</div>
+                    
+                    <span class="p-label info-label">住所 (Address)</span>
+                    <div class="p-value info-value" id="c_address" style="font-size: 9pt;">-</div>
+                    
+                    <span class="p-label info-label">電話番号 (Phone)</span>
+                    <div class="p-value info-value">
+                        <span class="masked-text">***-****-****</span>
+                        <span class="real-text" id="c_phone">-</span>
+                        <button class="btn-toggle-mask" onclick="toggleMask(this)">表示</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="print-block">
+                <h3 class="print-only-header">緊急連絡先 / Emergency</h3>
+                <div class="card-section">
+                    <div class="section-title d-none d-print-none">緊急連絡先</div>
+                    
+                    <div class="mb-3">
+                        <span class="p-label info-label">緊急連絡先 (Emergency Contact)</span>
+                        <div class="p-value info-value" id="c_em_name">-</div>
+                        <div class="p-value info-value">
+                            <span class="masked-text">***-****-****</span>
+                            <span class="real-text" id="c_em_phone">-</span>
+                            <button class="btn-toggle-mask" onclick="toggleMask(this)">表示</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3" style="background-color: #fff3cd; padding: 5px; border-radius: 5px;">
+                        <span class="p-label info-label text-danger">代理引受人 (Proxy Person)</span>
+                        <div class="small text-muted d-print-none" style="font-size:8pt;">※飼い主不在時に犬を保護する人</div>
+                        <div class="p-value info-value fw-bold" id="c_proxy_name">-</div>
+                        <div class="p-value info-value">
+                            <span class="masked-text">***-****-****</span>
+                            <span class="real-text" id="c_proxy_phone">-</span>
+                            <button class="btn-toggle-mask" onclick="toggleMask(this)">表示</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <span class="p-label info-label">指定避難所 (Evacuation Site)</span>
+                        <div class="p-value info-value" id="c_evac">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="print-block">
+                <h3 class="print-only-header">医療情報 / Medical</h3>
+                <div class="card-section">
+                    <div class="section-title d-none d-print-none">医療情報</div>
+
+                    <span class="p-label info-label">かかりつけ動物病院 (Vet)</span>
+                    <div class="p-value info-value" id="d_vet">-</div>
+
+                    <div class="row mt-2">
+                        <div class="col-6">
+                            <span class="p-label info-label">狂犬病予防接種</span>
+                            <div class="p-value info-value d-flex align-items-center">
+                                <span id="d_rabies_status">-</span>
+                                <button id="btn_rabies_img" class="btn-cert-view" style="display:none;">📷</button>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <span class="p-label info-label">混合ワクチン</span>
+                            <div class="p-value info-value d-flex align-items-center">
+                                <span id="d_vaccine_status">-</span>
+                                <button id="btn_vaccine_img" class="btn-cert-view" style="display:none;">📷</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-2">
+                        <span class="p-label info-label">既往歴 (Medical History)</span>
+                        <div class="p-value info-value" id="d_history">-</div>
+                    </div>
+
+                    <div class="mt-2">
+                        <span class="p-label info-label">常備薬 (Medicine)</span>
+                        <div class="p-value info-value" id="d_medicine" style="color:red;">-</div>
+                    </div>
+                    
+                    <div class="mt-2">
+                        <span class="p-label info-label">鑑札番号 / マイクロチップ</span>
+                        <div class="p-value info-value" style="font-size:9pt;"><span id="d_license"></span> / <span id="d_chip"></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="print-block">
+                <h3 class="print-only-header">ケア情報 / Care Info</h3>
+                <div class="card-section">
+                    <div class="section-title d-none d-print-none">食事・ケア</div>
+
+                    <div class="alert-box">
+                        <span class="alert-title">⚠️ アレルギー (Allergies)</span>
+                        <div class="p-value info-value" id="d_allergy">-</div>
+                    </div>
+
+                    <div class="mt-2">
+                        <span class="p-label info-label">食べているフード (Food)</span>
+                        <div class="p-value info-value" id="d_food">-</div>
+                    </div>
+
+                    <div class="mt-2">
+                        <span class="p-label info-label">性格・注意事項 (Caution)</span>
+                        <div class="p-value info-value" id="d_caution">-</div>
+                    </div>
+                    
+                    <div class="mt-3 text-end">
+                        <small style="font-size:8pt; color:#999;">K9 Harmony Portal - Data Generated: <span id="print_date"></span></small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="print-footer">
+                【ご注意】本カードは公的証明書ではありません。狂犬病予防法に基づく手続き等では、必ず原本をご提示ください。
+            </div>
+
+        </div>
+        
+        <footer class="disclaimer-footer no-print-area text-center">
+            <hr>
+            <p>
+                【免責事項・ご注意】<br>
+                本アプリおよび出力されたカードは、公的な証明書ではありません。<br>
+                ドッグランや宿泊施設の利用に際しては、必ず証明書の原本をご提示ください。<br>
+                掲載情報は最終更新日時点のものです。
+            </p>
+        </footer>
+    </div>
+
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">証明書プレビュー</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="modalLoading" class="spinner-border text-primary" role="status" style="display:none;"></div>
+                    <img id="modalImage" src="" class="img-fluid" alt="Certificate" onload="document.getElementById('modalLoading').style.display='none';">
+                    <div class="mt-2 text-muted small">※画像を長押しして保存できます</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // CONFIG
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIqH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec';
+        const LIFF_ID = "2008546673-MJY7j3ox"; // Use saved LIFF ID
+
+        let imageModal; // Bootstrap modal instance
+
+        // 1. Initialize
+        window.onload = async function() {
+            imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+            
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+                const profile = await liff.getProfile();
+                
+                // Get dogId from query string if available (for multi-dog support)
+                const urlParams = new URLSearchParams(window.location.search);
+                const dogId = urlParams.get('dogId');
+                
+                fetchData(profile.userId, dogId);
+            } catch (err) {
+                console.error("LIFF/Init Error:", err);
+                document.getElementById('loading').innerHTML = `<p class="text-danger">初期化エラー: ${err.message}</p>`;
+            }
+        };
+
+        // 2. Fetch Data
+        function fetchData(userId, dogId) {
+            let url = `${API_URL}?userId=${userId}`;
+            if(dogId) url += `&dogId=${dogId}`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('loading').innerHTML = `<p class="text-danger">データ取得エラー: ${data.error}</p>`;
+                        return;
+                    }
+                    if (data.multiple_dogs) {
+                        // If multiple dogs and no dogId specified, prompt user (omitted here for simplicity, or just pick first)
+                        // In this implementation, main.gs returns lists if no dogId.
+                        // Ideally, index.html handles selection. Here we assume we got full data for one dog.
+                         document.getElementById('loading').innerHTML = `<p class="text-warning">犬の指定が必要です。</p>`;
+                         return;
+                    }
+                    renderData(data);
+                })
+                .catch(err => {
+                    document.getElementById('loading').innerHTML = `<p class="text-danger">通信エラー: ${err.message}</p>`;
+                });
+        }
+
+        // 3. Render Data
+        function renderData(data) {
+            const c = data.customer;
+            const d = data.dog;
+
+            // --- Dog Info ---
+            setText('d_name', d.name_disp);
+            setText('d_breed', d.breed);
+            setText('d_gender', d.gender || '-');
+            setText('d_birth', d.birth_date);
+            setText('d_age', d.age);
+            
+            // --- Owner Info ---
+            setText('c_name', c.name);
+            setText('c_address', c.address);
+            setText('c_phone', c.phone); // Masked
+            
+            // --- Emergency & Proxy ---
+            setText('c_em_name', c.em_name);
+            setText('c_em_phone', c.em_phone); // Masked
+            setText('c_proxy_name', c.proxy_name || '未登録');
+            setText('c_proxy_phone', c.proxy_phone || '-'); // Masked
+            setText('c_evac', c.evac_site || '未登録');
+
+            // --- Medical ---
+            setText('d_vet', d.vet_name);
+            setText('d_history', d.history);
+            setText('d_medicine', d.medicine);
+            setText('d_license', d.license_no || '-');
+            setText('d_chip', d.microchip || '-');
+            
+            // --- Image Buttons (Lazy Load) ---
+            // Pass the reference (ID/URL) to the button handler
+            setupCertButton('d_rabies_status', 'btn_rabies_img', d.has_rabies, d.rabies_img_ref);
+            setupCertButton('d_vaccine_status', 'btn_vaccine_img', d.has_vaccine, d.vaccine_img_ref);
+
+            // --- Care Info ---
+            setText('d_allergy', d.allergy);
+            setText('d_food', d.food);
+            setText('d_caution', d.caution);
+
+            // --- Date ---
+            const today = new Date();
+            setText('print_date', today.toLocaleDateString('ja-JP'));
+
+            // Show UI
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            document.getElementById('main-display').style.display = 'block';
+        }
+
+        // Helpers
+        function setText(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text || '-';
+        }
+
+        // Feature: Toggle Privacy Mask
+        function toggleMask(btn) {
+            const container = btn.parentElement;
+            const masked = container.querySelector('.masked-text');
+            const real = container.querySelector('.real-text');
+            
+            if (real.style.display === 'inline') {
+                real.style.display = 'none';
+                masked.style.display = 'inline';
+                btn.textContent = '表示';
+                btn.classList.remove('active');
+            } else {
+                if(confirm('周囲に人がいないことを確認してください。\n個人情報を表示しますか？')) {
+                    real.style.display = 'inline';
+                    masked.style.display = 'none';
+                    btn.textContent = '隠す';
+                    btn.classList.add('active');
+                }
+            }
+        }
+
+        // Feature: Setup Certificate Button & Lazy Loading
+        function setupCertButton(statusId, btnId, hasCert, imgRef) {
+            const statusEl = document.getElementById(statusId);
+            const btnEl = document.getElementById(btnId);
+            
+            statusEl.textContent = hasCert ? '接種済み' : '未登録';
+            
+            if (hasCert && imgRef) {
+                btnEl.style.display = 'inline-block';
+                // Only load image when clicked
+                btnEl.onclick = function() {
+                    openImageModal(imgRef);
+                };
+            } else {
+                btnEl.style.display = 'none';
+            }
+        }
+
+        function openImageModal(ref) {
+            const imgEl = document.getElementById('modalImage');
+            const loadingEl = document.getElementById('modalLoading');
+            
+            // Clear previous image
+            imgEl.src = '';
+            imgEl.style.display = 'none';
+            loadingEl.style.display = 'inline-block';
+            
+            // Construct Drive URL from ID or use raw URL
+            // Assuming common ID format or Drive URL
+            let src = ref;
+            if (ref.indexOf('http') === -1) {
+                // It's likely a File ID
+                src = `https://drive.google.com/uc?export=view&id=${ref}`;
+            } else if (ref.indexOf('drive.google.com') > -1) {
+                // It's a Drive Link, try to convert to direct link if it's a view link
+                // Simple regex to extract ID
+                const match = ref.match(/\/d\/(.+?)\//);
+                if(match) {
+                    src = `https://drive.google.com/uc?export=view&id=${match[1]}`;
+                }
+            }
+            
+            imgEl.src = src;
+            imgEl.style.display = 'block';
+            
+            imageModal.show();
+        }
+    </script>
+</body>
+</html>
