@@ -14,7 +14,35 @@
             --alert-color: #d9534f;
             --mask-color: #f0f0f0;
         }
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f8f9fa; color: #333; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f8f9fa; color: #333; padding-bottom: 200px; /* デバッグ表示用余白 */ }
+
+        /* --- VERSION STAMP --- */
+        .version-stamp {
+            position: fixed;
+            top: 0;
+            right: 0;
+            background: #ff0000;
+            color: white;
+            font-size: 10px;
+            padding: 2px 5px;
+            z-index: 9999;
+            font-family: monospace;
+            opacity: 0.8;
+        }
+
+        /* --- DEBUG CONSOLE --- */
+        #debug-console {
+            background-color: #000;
+            color: #0f0;
+            font-family: monospace;
+            font-size: 10px;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            border: 2px solid #333;
+        }
 
         /* --- SCREEN MODE --- */
         .card-section {
@@ -54,8 +82,8 @@
         /* --- PRINT MODE --- */
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
-            body { background: white; -webkit-print-color-adjust: exact; }
-            .no-print-area, header, .btn-toggle-mask, .btn-cert-view, .modal-backdrop, .modal { display: none !important; }
+            body { background: white; -webkit-print-color-adjust: exact; padding-bottom: 0; }
+            .no-print-area, header, .btn-toggle-mask, .btn-cert-view, .modal-backdrop, .modal, .version-stamp, #debug-console { display: none !important; }
             .masked-text { display: none !important; }
             .real-text { display: block !important; }
 
@@ -84,7 +112,9 @@
     </style>
 </head>
 <body>
-0146
+
+    <div class="version-stamp">v001-DEBUG</div>
+
     <div class="container py-3 no-print-area">
         <h4 class="text-center mb-3">⛑️ うちの子医療・防災手帳</h4>
         <div id="loading" class="loading">
@@ -184,6 +214,11 @@
             <div class="print-footer">【ご注意】本カードは公的証明書ではありません。狂犬病予防法に基づく手続き等では、必ず原本をご提示ください。</div>
         </div>
         <footer class="disclaimer-footer no-print-area text-center"><hr><p>【免責事項・ご注意】<br>本アプリおよび出力されたカードは、公的な証明書ではありません。<br>掲載情報は最終更新日時点のものです。</p></footer>
+        
+        <div class="container no-print-area">
+            <h6 class="text-danger fw-bold">⚠️ Debug Console</h6>
+            <div id="debug-console">Initializing...</div>
+        </div>
     </div>
 
     <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
@@ -205,15 +240,34 @@
         const LIFF_ID = "2008546673-MJY7j3ox";
         let imageModal;
 
+        // DEBUG LOGGER
+        function log(msg) {
+            const el = document.getElementById('debug-console');
+            const time = new Date().toLocaleTimeString();
+            el.innerHTML += `[${time}] ${msg}\n`;
+            console.log(msg);
+        }
+
         window.onload = async function() {
             imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
             try {
+                log('Starting LIFF init...');
                 await liff.init({ liffId: LIFF_ID });
-                if (!liff.isLoggedIn()) { liff.login(); return; }
+                if (!liff.isLoggedIn()) { 
+                    log('Not logged in. Calling login().');
+                    liff.login(); 
+                    return; 
+                }
                 const profile = await liff.getProfile();
+                log('Logged in as: ' + profile.userId);
+                
                 const urlParams = new URLSearchParams(window.location.search);
-                fetchData(profile.userId, urlParams.get('dogId'));
+                const dogId = urlParams.get('dogId');
+                log('DogID from URL: ' + (dogId ? dogId : 'None'));
+
+                fetchData(profile.userId, dogId);
             } catch (err) {
+                log('FATAL ERROR: ' + err.message);
                 document.getElementById('loading').innerHTML = `<p class="text-danger">初期化エラー: ${err.message}</p>`;
             }
         };
@@ -221,18 +275,38 @@
         function fetchData(userId, dogId) {
             let url = `${API_URL}?userId=${userId}`;
             if(dogId) url += `&dogId=${dogId}`;
+            
+            log('Fetching API: ' + url);
+
             fetch(url).then(res => res.json()).then(data => {
-                if (data.error) { document.getElementById('loading').innerHTML = `<p class="text-danger">${data.error}</p>`; return; }
-                if (data.multiple_dogs) { document.getElementById('loading').innerHTML = `<p class="text-warning">犬を選択してください</p>`; return; }
+                log('Response received.');
+                
+                // DATA INSPECTION
+                log('Customer Data: ' + JSON.stringify(data.customer, null, 2));
+                log('Dog Data: ' + JSON.stringify(data.dog, null, 2));
+
+                if (data.error) { 
+                    log('API Error: ' + data.error);
+                    document.getElementById('loading').innerHTML = `<p class="text-danger">${data.error}</p>`; 
+                    return; 
+                }
+                if (data.multiple_dogs) { 
+                    log('Multiple dogs found, selection needed.');
+                    document.getElementById('loading').innerHTML = `<p class="text-warning">犬を選択してください</p>`; 
+                    return; 
+                }
+                
                 renderData(data);
             }).catch(err => {
+                log('Fetch Error: ' + err.message);
                 document.getElementById('loading').innerHTML = `<p class="text-danger">通信エラー: ${err.message}</p>`;
             });
         }
 
         function renderData(data) {
+            log('Rendering data...');
             const c = data.customer || {};
-            const d = data.dog || {}; // ★修正: データ欠損時の保護を追加
+            const d = data.dog || {};
 
             setText('d_name', d.name_disp);
             setText('d_breed', d.breed);
@@ -268,6 +342,7 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'block';
             document.getElementById('main-display').style.display = 'block';
+            log('Render complete.');
         }
 
         function setText(id, text) {
