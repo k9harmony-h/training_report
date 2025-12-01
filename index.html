@@ -129,7 +129,8 @@
 
     <div class="section-title">本日のショット</div>
     <div class="photo-scroll" id="photoArea">
-      </div>
+      <div class="text-muted small ms-3" id="photoLoadingMsg">画像を読み込み中...</div>
+    </div>
 
     <div class="footer-action">
       <a href="#" class="btn-reserve">予約する / Reserve</a>
@@ -141,9 +142,10 @@
 
   <script>
     const LIFF_ID = '2008546673-MJY7j3ox'; 
-    // ★最新のGAS URLに書き換えてください★
+    // 最新のGAS URL (お客様ご提示のURL)
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
 
+    // Tips
     const dogTips = [
       "犬の鼻紋は人間の指紋と同じで、一頭一頭違います。", "犬は人間の約4倍の聴力を持っています。", "犬の嗅覚は人間の100万倍〜1億倍とも言われます。", "犬は汗を肉球からしかかけません。", "犬があくびをするのは、ストレスを感じて落ち着こうとしている時もあります。", "犬のしっぽの振り方は、右寄りだと「嬉しい」、左寄りだと「不安」な時があります。", "小型犬の方が大型犬よりも長生きする傾向があります。", "犬は夢を見ます。寝言を言ったり足を動かすのはその証拠です。", "ダルメシアンは生まれた時は真っ白で、後から斑点が出てきます。", "犬が飼い主の顔を舐めるのは、愛情表現やご飯の催促です。"
     ];
@@ -178,55 +180,57 @@
         await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) { liff.login(); return; }
         const profile = await liff.getProfile();
+        
+        // 1. テキストデータを取得 (高速)
         fetchTextData(profile.userId);
+
       } catch (err) {
         alert('LIFF Error: ' + err);
         finishLoading();
       }
     }
 
+    // --- Step 1: テキストデータ取得 (高速) ---
     function fetchTextData(userId) {
-      // テキストデータ取得 (爆速)
-      fetch(`${GAS_URL}?userId=${userId}&t=${new Date().getTime()}`)
-        .then(res => res.json())
+      // キャッシュ回避用の乱数パラメータを追加
+      const url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
+      
+      fetch(url)
+        .then(res => {
+             if (!res.ok) throw new Error(res.statusText);
+             return res.json();
+        })
         .then(data => {
           renderTextData(data);
           
-          // テキスト表示後に画像取得を開始 (Lazy Loading)
+          // テキスト表示が完了したら、裏で画像を取得開始 (Step 2)
           if (!data.error) {
-             // プロフィール画像は常に確認
-             fetchProfileImage(userId);
-
-             // レッスン画像は、存在フラグがある場合のみ取得
-             if (data.latest && data.latest.has_photos) {
-                document.getElementById('photoArea').innerHTML = '<div class="text-muted small ms-3">画像を読み込み中...</div>';
-                fetchLessonImages(userId);
-             } else {
-                document.getElementById('photoArea').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
-             }
+             fetchImages(userId);
           }
         })
         .catch(err => {
-          alert('Network Error: ' + err);
+          // エラー発生時、詳細を表示
+          alert('通信エラー: ' + err + '\n(タイムアウトの可能性があります)');
           finishLoading();
         });
     }
 
-    function fetchProfileImage(userId) {
+    // --- Step 2: 画像データ取得 (遅延読み込み) ---
+    function fetchImages(userId) {
+      // A. プロフィール画像
       fetch(`${GAS_URL}?userId=${userId}&type=img_profile`)
         .then(res => res.json())
         .then(data => {
            if(data.image) document.getElementById('dogImg').src = data.image;
            else document.getElementById('dogImg').src = 'https://via.placeholder.com/150?text=No+Img';
         });
-    }
 
-    function fetchLessonImages(userId) {
+      // B. レッスン画像
       fetch(`${GAS_URL}?userId=${userId}&type=img_latest`)
         .then(res => res.json())
         .then(data => {
            const pArea = document.getElementById('photoArea');
-           pArea.innerHTML = ''; 
+           pArea.innerHTML = ''; // 「読み込み中」を消す
            
            if (data.images && data.images.length > 0) {
              data.images.forEach(b64 => {
@@ -235,6 +239,7 @@
                img.className = 'photo-item zoomable';
                pArea.appendChild(img);
              });
+             // 新しく追加された画像にZoomを適用
              mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
            } else {
              pArea.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
@@ -253,6 +258,7 @@
 
       if (data.error) { finishLoading(); return; }
 
+      // テキスト情報の反映
       const c = data.customer || {};
       const d = data.dog || {};
       document.getElementById('custName').innerText = c.name + ' 様';
@@ -281,7 +287,7 @@
         renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト'], 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
       }
       
-      // テキスト描画完了でローディング終了
+      // ★ここでローディングを終了し、画面を表示★
       finishLoading();
     }
 
