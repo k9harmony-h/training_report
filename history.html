@@ -85,58 +85,27 @@
         .status-great { color: #FF6B6B; }
         .status-steady { color: #555555; }
 
-        /* Gallery Section (Updated for 3.5 items logic) */
+        /* Gallery Section */
         .photo-scroll {
-            display: flex; 
-            gap: 10px; 
-            overflow-x: auto; 
-            padding-bottom: 10px; 
-            -webkit-overflow-scrolling: touch;
-            padding-right: 20px; /* End padding */
+            display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch; padding-right: 20px;
         }
         .photo-scroll::-webkit-scrollbar { display: none; }
         
-        /* スマホ画面で3枚表示＋4枚目チラ見せの計算:
-           Gap(10px)*3 = 30px
-           左右Padding = 20px
-           28vw * 3.5 = 98vw ≒ 画面いっぱい
-           これにより4枚目が半分見切れる
-        */
+        /* 3.5 items logic (28vw) */
         .gallery-item {
-            flex: 0 0 28vw; 
-            width: 28vw;
-            height: 28vw;
-            border-radius: 12px;
-            overflow: hidden;
-            position: relative;
-            background: #f8f9fa;
-            border: 1px solid #eee;
+            flex: 0 0 28vw; width: 28vw; height: 28vw;
+            border-radius: 12px; overflow: hidden; position: relative;
+            background: #f8f9fa; border: 1px solid #eee;
         }
         .gallery-img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* See More Card Style */
         .see-more-card {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
             background: linear-gradient(135deg, rgba(87, 195, 194, 0.8), rgba(87, 195, 194, 0.1));
-            text-decoration: none;
-            color: var(--brand-color);
-            border: 2px solid var(--brand-color);
+            text-decoration: none; color: var(--brand-color); border: 2px solid var(--brand-color);
         }
-        .see-more-text {
-            font-size: 0.8rem;
-            font-weight: 700;
-            margin-top: 5px;
-            color: #fff;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-        }
-        .see-more-icon {
-            font-size: 1.5rem;
-            color: #fff;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-        }
+        .see-more-text { font-size: 0.8rem; font-weight: 700; margin-top: 5px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .see-more-icon { font-size: 1.5rem; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
 
         .btn-drive-link {
             display: inline-block; font-size: 0.85rem; color: var(--brand-color);
@@ -164,10 +133,14 @@
             background: var(--brand-bg); color: var(--brand-color);
             border-radius: 4px; font-size: 0.8rem; font-weight: 600;
         }
-        /* Modal Gallery tweaks */
-        .modal-gallery-wrapper {
-             width: 100%; height: 80px; border-radius: 8px; overflow: hidden; position: relative;
-        }
+        .modal-gallery-wrapper { width: 100%; height: 80px; border-radius: 8px; overflow: hidden; position: relative; }
+
+        /* Error Display */
+        #errorContainer { display: none; padding: 20px; text-align: center; }
+        .error-box { background: #fff; padding: 20px; border-radius: 12px; border: 2px solid #ffcccc; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .error-title { color: #d9534f; font-weight: 700; margin-bottom: 10px; }
+        .error-msg { font-size: 0.9rem; color: #555; margin-bottom: 10px; }
+        .id-box { background: #eee; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; word-break: break-all; color: #333; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -177,7 +150,18 @@
         <p class="mt-3 fw-bold small">履歴データを取得中...</p>
     </div>
 
-    <div class="header-area">
+    <div id="errorContainer">
+        <div class="error-box">
+            <h3 class="error-title">データが見つかりません</h3>
+            <p class="error-msg">ご登録のLINE IDと連携されたデータが見つかりませんでした。</p>
+            <p class="small text-muted">以下のIDをトレーナーにお伝えください：</p>
+            <div id="dispLineId" class="id-box">---</div>
+            <p id="errorDetail" class="small text-danger"></p>
+            <button class="btn btn-secondary btn-sm mt-2" onclick="location.reload()">再読み込み</button>
+        </div>
+    </div>
+
+    <div id="mainHeader" class="header-area">
         <a href="index.html" class="back-link">&lt; 戻る</a>
         <div class="profile-img-container">
             <img id="dogProfileImg" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="dog-profile-large" alt="Profile">
@@ -185,7 +169,7 @@
         <h1 id="pageTitle" class="page-title">...のレッスン履歴</h1>
     </div>
 
-    <div class="content-container">
+    <div id="mainContent" class="content-container">
         
         <div class="section-title">スコア推移</div>
         <div class="chart-card">
@@ -199,6 +183,7 @@
         <div id="galleryContainer" class="photo-scroll">
             <div class="text-muted small ms-2">読み込み中...</div>
         </div>
+
         <div class="section-title">レッスン履歴一覧</div>
         <div id="historyList" class="list-group">
             </div>
@@ -246,7 +231,7 @@
 
         let allHistoryData = [];
         let currentUserId = null;
-        let customerSharedFolder = null; // ギャラリー用URL保持
+        let customerSharedFolder = null;
 
         // --- Init ---
         window.onload = async function() {
@@ -264,7 +249,7 @@
                 fetchHistoryData(currentUserId);
             } catch (err) {
                 console.error(err);
-                document.body.classList.add('loaded'); 
+                showError('アプリ起動エラー', err.message);
             }
         };
 
@@ -274,34 +259,54 @@
             
             try {
                 const res = await fetch(url);
-                if (!res.ok) throw new Error('Network response was not ok');
+                if (!res.ok) throw new Error(`Network response was not ok (Status: ${res.status})`);
                 const data = await res.json();
                 
-                if (data.error) console.error('GAS Error:', data.error);
+                // ★エラーチェック: GASがエラーを返している場合
+                if (data.error) {
+                    showError('データ取得エラー', `サーバーからの応答: ${data.error}`, userId);
+                    return;
+                }
 
                 allHistoryData = data.score_history || [];
                 if(data.customer && data.customer.shared_folder_url) {
                     customerSharedFolder = data.customer.shared_folder_url;
                 }
                 
-                // 1. Render Text & Structure
+                // 成功時は描画
                 renderHeader(data);
                 renderChart(data.score_history);
                 renderList(data.score_history);
                 setupDriveLinks(data.customer);
 
-            } catch (err) {
-                console.error('Fetch Error:', err);
-            } finally {
+                // ロード完了
                 document.body.classList.add('loaded');
                 
-                // 2. Lazy Load Images
-                if (allHistoryData.length > 0 || (typeof data !== 'undefined' && data.latest)) {
+                // 画像遅延読み込み
+                if (allHistoryData.length > 0 || (data && data.latest)) {
                     setTimeout(() => {
-                        loadImages(userId, typeof data !== 'undefined' ? data : {});
+                        loadImages(userId, data || {});
                     }, 100);
                 }
+
+            } catch (err) {
+                console.error('Fetch Error:', err);
+                showError('通信エラー', 'データの読み込みに失敗しました。', userId);
             }
+        }
+
+        // --- Error Handling ---
+        function showError(title, msg, userId) {
+            document.body.classList.add('loaded'); // ローディングを消す
+            document.getElementById('mainHeader').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'none';
+            
+            const errDiv = document.getElementById('errorContainer');
+            errDiv.style.display = 'block';
+            
+            document.querySelector('.error-title').innerText = title;
+            document.getElementById('errorDetail').innerText = msg;
+            if(userId) document.getElementById('dispLineId').innerText = userId;
         }
 
         // --- Rendering ---
@@ -374,7 +379,7 @@
                 return;
             }
 
-            // ★ リスト用: 日付降順（最新が上）
+            // リスト用: 日付降順（最新が上）
             const sortedForList = [...history].sort((a, b) => {
                 const dateA = new Date(a.full_date || a.date);
                 const dateB = new Date(b.full_date || b.date);
@@ -418,7 +423,7 @@
                         container.innerHTML = '';
                         
                         if(d.images && d.images.length > 0) {
-                            // ★ 3枚まで表示
+                            // 3枚まで表示
                             const displayImages = d.images.slice(0, 3);
                             
                             displayImages.forEach(src => {
@@ -428,10 +433,9 @@
                                 container.appendChild(div);
                             });
                             
-                            // ズーム機能適用
                             mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
 
-                            // ★ 4枚目（もしくは最後）に「もっと見る」カードを追加
+                            // 4枚目（もっと見る）
                             if (customerSharedFolder) {
                                 const moreCard = document.createElement('a');
                                 moreCard.href = customerSharedFolder;
