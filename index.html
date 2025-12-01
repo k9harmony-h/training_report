@@ -8,86 +8,58 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/medium-zoom/dist/medium-zoom.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 
   <style>
+    /* CSSは既存のまま */
     :root { --brand-color: #57C3C2; --brand-bg: #E0F7FA; --text-main: #333333; --accent-color: #F2A679; }
     body { font-family: 'Montserrat', 'Noto Sans JP', sans-serif; background-color: #fafafa; color: var(--text-main); padding-bottom: 80px; overflow-x: hidden; }
-    
     #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; transition: opacity 0.5s ease-out, visibility 0.5s ease-out; }
     .spinner-border-white { border-color: white; border-right-color: transparent; }
     #tipsText { margin-top: 20px; font-weight: 500; font-size: 1rem; text-align: center; padding: 0 20px; height: 1.5em; }
-    
     body.loaded #loadingOverlay { opacity: 0; visibility: hidden; }
     #mainContent { opacity: 0; transform: scale(0.95); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
     body.loaded #mainContent { opacity: 1; transform: scale(1); }
     
     .header-area { padding: 20px 20px 10px; background: #fff; }
     .brand-title { color: var(--text-main); font-weight: 700; letter-spacing: 0.05em; font-size: 1.2rem; text-align: center; }
-    
     .profile-card { margin-top: 20px; display: flex; align-items: center; }
-    
-    #dogImgContainer {
-        width: 150px; height: 150px; 
-        border-radius: 50%; 
-        border: 4px solid var(--brand-color); 
-        background: #fff; 
-        flex-shrink: 0; 
-        display: flex; align-items: center; justify-content: center;
-        overflow: hidden;
-        font-size: 0.8rem; color: #aaa; text-align: center;
-    }
+    #dogImgContainer { width: 150px; height: 150px; border-radius: 50%; border: 4px solid var(--brand-color); background: #fff; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 0.8rem; color: #aaa; text-align: center; }
     .dog-img { width: 100%; height: 100%; object-fit: cover; }
-    
     .profile-info { margin-left: 20px; flex-grow: 1; }
     .birthday-msg { color: #FF6B6B; font-weight: bold; font-size: 0.8rem; margin-bottom: 0px; display: none; animation: pulse 1.5s infinite; }
     @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-    
     .cust-name { font-size: 0.85rem; color: #666; margin: 0; line-height: 1.2; }
     .dog-name { font-size: 1.6rem; font-weight: 700; line-height: 1.2; margin: 0; }
     .lesson-meta { margin-top: 5px; font-size: 0.85rem; color: var(--brand-color); font-weight: 600; }
     .history-link { text-decoration: none; color: var(--brand-color); font-weight: bold; font-size: 0.9rem; margin-left: auto; display: block; text-align: right; margin-top: 10px;}
-    
     .chart-section { margin-top: 20px; padding: 0 10px; display: flex; justify-content: space-between; }
     .chart-box { width: 49%; text-align: center; }
     .chart-caption { font-size: 0.75rem; color: #888; margin-top: 5px; font-weight: 600; }
-    
     .section-title { font-size: 0.9rem; font-weight: 700; color: var(--brand-color); margin: 25px 20px 10px; display: flex; align-items: center; gap: 8px; }
     .section-title::before { content: ''; display: block; width: 4px; height: 16px; background: var(--brand-color); border-radius: 2px; }
-    
-    /* 次回目標（特別色） */
     .section-title.accent { color: var(--accent-color); }
     .section-title.accent::before { background: var(--accent-color); }
-    .next-goal-box { 
-        margin: 0 20px; background: #fff; 
-        border: 2px solid var(--accent-color); 
-        border-radius: 10px; padding: 15px; 
-        font-weight: 700; color: #555; 
-        box-shadow: 0 2px 8px rgba(242, 166, 121, 0.15);
-    }
-
+    .next-goal-box { margin: 0 20px; background: #fff; border: 2px solid var(--accent-color); border-radius: 10px; padding: 15px; font-weight: 700; color: #555; box-shadow: 0 2px 8px rgba(242, 166, 121, 0.15); }
     .feedback-box { margin: 0 20px; background: #f8f9fa; border-radius: 10px; padding: 15px; font-size: 0.9rem; line-height: 1.6; }
     .homework-box { margin: 0 20px; border: 2px solid var(--brand-color); border-radius: 10px; padding: 15px; background: #fff; position: relative; margin-top: 30px; }
     .homework-badge { position: absolute; top: -12px; left: 15px; background: var(--brand-color); color: #fff; font-size: 0.75rem; padding: 2px 10px; border-radius: 10px; font-weight: bold; }
-    
     .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 20px; }
     .detail-card { background: #f8f9fa; border-radius: 8px; padding: 10px; }
     .detail-head { font-size: 0.75rem; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 5px; text-align: center; color: #555; }
     .detail-body { font-size: 0.8rem; color: #333; white-space: pre-wrap; }
-    
     .photo-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 0 20px; margin-top: 10px; padding-bottom: 10px; }
     .photo-item { height: 120px; border-radius: 8px; border: 1px solid #eee; cursor: pointer; }
-    
     .footer-action { margin: 30px 20px 10px; text-align: center; }
     .btn-reserve { background: var(--brand-color); color: #fff; border: none; width: 100%; padding: 14px; border-radius: 30px; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 12px rgba(87, 195, 194, 0.4); display: block; text-decoration: none; }
-    
-    .reminder-box {
-        background: #fff3cd; border: 1px solid #ffeeba; color: #856404;
-        padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem; font-weight: bold;
-    }
-
+    .reminder-box { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem; font-weight: bold; }
     #errorView { text-align: center; margin-top: 50px; display: none; padding: 20px; }
     .line-id-box { background: #eee; padding: 10px; border-radius: 5px; margin: 15px 0; font-family: monospace; font-weight: bold; word-break: break-all; }
+    
+    /* 犬選択モーダル */
+    .dog-select-btn { width: 100%; margin-bottom: 10px; padding: 15px; font-weight: bold; font-size: 1.1rem; border-radius: 12px; background: #f8f9fa; border: 2px solid var(--brand-color); color: var(--brand-color); transition: all 0.2s; }
+    .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
   </style>
 </head>
 <body>
@@ -113,33 +85,22 @@
       <h1 class="brand-title">K9 Harmony</h1>
       
       <div class="profile-card">
-        <div id="dogImgContainer">
-           読み込み中...
-        </div>
-        
+        <div id="dogImgContainer">読み込み中...</div>
         <div class="profile-info">
           <div id="custBirthdayMsg" class="birthday-msg">🎉Happy Birthday🍰</div>
           <p id="custName" class="cust-name">Loading...</p>
           <div style="height: 5px;"></div>
           <div id="dogBirthdayMsg" class="birthday-msg">🎉Happy Birthday🐶</div>
           <h2 id="dogName" class="dog-name">---</h2>
-          <div class="lesson-meta">
-            <span id="lessonDate">Last: --/--/--</span>
-          </div>
-          <a href="history.html" class="history-link">履歴 ></a>
+          <div class="lesson-meta"><span id="lessonDate">Last: --/--/--</span></div>
+          <a href="#" id="historyLinkBtn" class="history-link">履歴 ></a>
         </div>
       </div>
     </div>
 
     <div class="chart-section">
-      <div class="chart-box">
-        <canvas id="chart1"></canvas>
-        <div class="chart-caption">基礎・集中</div>
-      </div>
-      <div class="chart-box">
-        <canvas id="chart2"></canvas>
-        <div class="chart-caption">応用・対応</div>
-      </div>
+      <div class="chart-box"><canvas id="chart1"></canvas><div class="chart-caption">基礎・集中</div></div>
+      <div class="chart-box"><canvas id="chart2"></canvas><div class="chart-caption">応用・対応</div></div>
     </div>
 
     <div class="section-title">本日のテーマ・目標</div>
@@ -156,40 +117,33 @@
     </div>
 
     <div class="section-title accent">次回目標 (Next Goal)</div>
-    <div class="next-goal-box" id="nextGoalText">
-       ---
-    </div>
+    <div class="next-goal-box" id="nextGoalText">---</div>
     
     <div class="section-title">詳細フィードバック</div>
     <div class="detail-grid">
-      <div class="detail-card">
-        <div class="detail-head">項目1-5</div>
-        <div class="detail-body" id="detail1">---</div>
-      </div>
-      <div class="detail-card">
-        <div class="detail-head">項目6-10</div>
-        <div class="detail-body" id="detail2">---</div>
-      </div>
+      <div class="detail-card"><div class="detail-head">項目1-5</div><div class="detail-body" id="detail1">---</div></div>
+      <div class="detail-card"><div class="detail-head">項目6-10</div><div class="detail-body" id="detail2">---</div></div>
     </div>
     <div class="feedback-box mt-4" style="background:#fff; border:1px solid #eee;">
-      <strong style="color:var(--brand-color);">トレーナーコメント:</strong><br>
-      <span id="trainerComment">---</span>
+      <strong style="color:var(--brand-color);">トレーナーコメント:</strong><br><span id="trainerComment">---</span>
     </div>
 
     <div class="section-title">本日のショット</div>
-    <div class="photo-scroll" id="photoArea">
-      <div class="text-muted small ms-3" id="photoLoadingMsg">画像を読み込み中...</div>
-    </div>
+    <div class="photo-scroll" id="photoArea"><div class="text-muted small ms-3" id="photoLoadingMsg">画像を読み込み中...</div></div>
 
     <div class="footer-action">
       <a href="#" class="btn-reserve">予約する / Reserve</a>
-      
-      <div id="reminderArea" class="reminder-box" style="display:none;">
-          次回予約目安: <span id="reminderDate">--/-- 〜 --/--</span>
-      </div>
+      <div id="reminderArea" class="reminder-box" style="display:none;">次回予約目安: <span id="reminderDate">--/-- 〜 --/--</span></div>
+      <div class="text-muted small mt-2">チケット残数: <span id="ticketCount" class="fw-bold" style="font-size:1.2rem;">-</span> 回</div>
+    </div>
+  </div>
 
-      <div class="text-muted small mt-2">
-        チケット残数: <span id="ticketCount" class="fw-bold" style="font-size:1.2rem;">-</span> 回
+  <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center">わんちゃんを選択</h5></div>
+        <div class="modal-body" id="dogSelectBody">
+          </div>
       </div>
     </div>
   </div>
@@ -203,9 +157,11 @@
     ];
 
     let tipsTimer;
+    let currentUserId = null;
+    let currentDogId = null; // ★ 選択された犬ID
+
     function startTipsSlider() {
       const tipsText = document.getElementById('tipsText');
-      if(!tipsText) return;
       let currentTipIndex = Math.floor(Math.random() * dogTips.length);
       tipsText.innerText = dogTips[currentTipIndex];
       tipsTimer = setInterval(() => {
@@ -222,9 +178,7 @@
 
     window.onload = function() {
       startTipsSlider();
-      if (typeof liff === 'undefined') {
-        alert('LIFF SDK Load Error'); finishLoading(); return;
-      }
+      if (typeof liff === 'undefined') { alert('LIFF SDK Load Error'); finishLoading(); return; }
       main();
     };
 
@@ -233,27 +187,38 @@
         await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) { liff.login(); return; }
         const profile = await liff.getProfile();
-        
-        fetchTextData(profile.userId);
-
+        currentUserId = profile.userId;
+        fetchTextData(currentUserId);
       } catch (err) {
         alert('LIFF Error: ' + err);
         finishLoading();
       }
     }
 
-    function fetchTextData(userId) {
-      const url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
-      
+    function fetchTextData(userId, dogId = null) {
+      let url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
+      if (dogId) url += `&dogId=${dogId}`;
+
       fetch(url)
         .then(res => res.json())
         .then(data => {
+          
+          // ★ 複数犬の判定
+          if (data.multiple_dogs) {
+              showDogSelectModal(data.multiple_dogs);
+              return; // ここで中断して選択を待つ
+          }
+
           renderTextData(data);
           
           if (!data.error) {
-             fetchProfileImage(userId);
+             currentDogId = data.dog.id || null; // ID保持
+             updateHistoryLink(); // 履歴リンク更新
+
+             // 画像取得にもdogIdを渡す
+             fetchProfileImage(userId, currentDogId);
              if (data.latest && data.latest.has_photos) {
-                fetchLessonImages(userId);
+                fetchLessonImages(userId, currentDogId);
              } else {
                 document.getElementById('photoArea').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
              }
@@ -265,8 +230,54 @@
         });
     }
 
-    function fetchProfileImage(userId) {
-      fetch(`${GAS_URL}?userId=${userId}&type=img_profile`)
+    // ★ 犬選択モーダル表示
+    function showDogSelectModal(dogs) {
+        const body = document.getElementById('dogSelectBody');
+        body.innerHTML = '';
+        dogs.forEach(dog => {
+            const btn = document.createElement('button');
+            btn.className = 'dog-select-btn';
+            btn.innerText = dog.name; // "ポチくん" など
+            btn.onclick = () => selectDog(dog.id);
+            body.appendChild(btn);
+        });
+        
+        // モーダル表示 (ローディングは維持したまま、モーダルを重ねるか、一旦ローディング消すか)
+        // 今回はTipsローディングを一旦消してモーダルを出す
+        document.getElementById('loadingOverlay').style.opacity = 0;
+        setTimeout(() => { document.getElementById('loadingOverlay').style.visibility = 'hidden'; }, 500);
+        
+        new bootstrap.Modal(document.getElementById('dogSelectModal')).show();
+    }
+
+    function selectDog(dogId) {
+        // モーダルを閉じてローディング再開
+        const modalEl = document.getElementById('dogSelectModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+        
+        // ローディング再表示
+        document.getElementById('loadingOverlay').style.visibility = 'visible';
+        document.getElementById('loadingOverlay').style.opacity = 1;
+        
+        currentDogId = dogId;
+        fetchTextData(currentUserId, dogId);
+    }
+
+    function updateHistoryLink() {
+        const link = document.getElementById('historyLinkBtn');
+        if (currentDogId) {
+            link.href = `history.html?dogId=${currentDogId}`;
+        } else {
+            link.href = `history.html`;
+        }
+    }
+
+    function fetchProfileImage(userId, dogId) {
+      let url = `${GAS_URL}?userId=${userId}&type=img_profile`;
+      if(dogId) url += `&dogId=${dogId}`;
+      
+      fetch(url)
         .then(res => res.json())
         .then(data => {
            const container = document.getElementById('dogImgContainer');
@@ -279,19 +290,19 @@
         .catch(e => console.log('Profile Image Error', e));
     }
 
-    function fetchLessonImages(userId) {
-      fetch(`${GAS_URL}?userId=${userId}&type=img_latest`)
+    function fetchLessonImages(userId, dogId) {
+      let url = `${GAS_URL}?userId=${userId}&type=img_latest`;
+      if(dogId) url += `&dogId=${dogId}`;
+
+      fetch(url)
         .then(res => res.json())
         .then(data => {
            const pArea = document.getElementById('photoArea');
            pArea.innerHTML = ''; 
-           
            if (data.images && data.images.length > 0) {
              data.images.forEach(b64 => {
                const img = document.createElement('img');
-               img.src = b64;
-               img.className = 'photo-item zoomable';
-               pArea.appendChild(img);
+               img.src = b64; img.className = 'photo-item zoomable'; pArea.appendChild(img);
              });
              mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
            } else {
@@ -309,7 +320,6 @@
         document.getElementById('dispLineId').innerText = 'ID取得中...'; 
         return;
       }
-
       if (data.error) { finishLoading(); return; }
 
       const c = data.customer || {};
@@ -329,7 +339,6 @@
         document.getElementById('unableText').innerText = l.unable;
         document.getElementById('homeworkText').innerText = l.homework;
         document.getElementById('trainerComment').innerText = l.comment;
-        
         document.getElementById('nextGoalText').innerText = l.next_goal || 'トレーナーと相談しましょう';
 
         if (l.recommend_date) {
@@ -337,56 +346,28 @@
             document.getElementById('reminderArea').style.display = 'block';
         }
 
-        // ★ 詳細フィードバックを個別に表示
         let d1 = '', d2 = '';
-        // 項目1-5
-        for(let i=0; i<5; i++) {
-            const detailText = l.details[i] ? l.details[i] : 'なし';
-            d1 += `[${i+1}] ${detailText}\n`;
-        }
-        // 項目6-10
-        for(let i=5; i<10; i++) {
-            const detailText = l.details[i] ? l.details[i] : 'なし';
-            d2 += `[${i+1}] ${detailText}\n`;
-        }
-        
+        for(let i=0; i<5; i++) { d1 += `[${i+1}] ${l.details[i] || 'なし'}\n`; }
+        for(let i=5; i<10; i++) { d2 += `[${i+1}] ${l.details[i] || 'なし'}\n`; }
         document.getElementById('detail1').innerText = d1 || '特になし';
         document.getElementById('detail2').innerText = d2 || '特になし';
 
         renderChart('chart1', l.scores.slice(0, 5), ['指示理解','集中力','報酬','ボディ','コンタクト'], 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 1)');
         renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト'], 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
       }
-      
       finishLoading();
     }
 
     function checkBirthday(dateStr, elementId) {
         if (!dateStr) return;
-        const today = new Date();
-        const bDate = new Date(dateStr);
-        bDate.setFullYear(today.getFullYear());
-        const diffTime = bDate.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const today = new Date(); const bDate = new Date(dateStr); bDate.setFullYear(today.getFullYear());
+        const diffTime = bDate.getTime() - today.getTime(); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         if (Math.abs(diffDays) <= 14 || Math.abs(diffDays - 365) <= 14 || Math.abs(diffDays + 365) <= 14) {
             document.getElementById(elementId).style.display = 'block';
         }
     }
-
     function renderChart(id, data, labels, bgColor, borderColor) {
-      new Chart(document.getElementById(id), {
-        type: 'radar',
-        data: {
-          labels: labels,
-          datasets: [{
-            data: data,
-            backgroundColor: bgColor, borderColor: borderColor, pointBackgroundColor: borderColor, borderWidth: 2
-          }]
-        },
-        options: {
-          scales: { r: { min: 0, max: 5, ticks: { display: false }, pointLabels: { font: { size: 11 } } } },
-          plugins: { legend: { display: false } }
-        }
-      });
+      new Chart(document.getElementById(id), { type: 'radar', data: { labels: labels, datasets: [{ data: data, backgroundColor: bgColor, borderColor: borderColor, pointBackgroundColor: borderColor, borderWidth: 2 }] }, options: { scales: { r: { min: 0, max: 5, ticks: { display: false }, pointLabels: { font: { size: 11 } } } }, plugins: { legend: { display: false } } } });
     }
     function copyLineId() { /*...*/ }
   </script>
