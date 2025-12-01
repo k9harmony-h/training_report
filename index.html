@@ -19,7 +19,6 @@
     .spinner-border-white { border-color: white; border-right-color: transparent; }
     #tipsText { margin-top: 20px; font-weight: 500; font-size: 1rem; text-align: center; padding: 0 20px; height: 1.5em; }
     
-    /* bodyにloadedがついたらローディングを消す */
     body.loaded #loadingOverlay { opacity: 0; visibility: hidden; pointer-events: none; }
     
     #mainContent { opacity: 0; transform: scale(0.95); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
@@ -208,14 +207,11 @@
 
     function finishLoading() {
       clearInterval(tipsTimer);
-      
-      // ★ 修正箇所: JSで付与したインラインスタイルを削除し、CSSクラス制御に戻す
       const overlay = document.getElementById('loadingOverlay');
       if (overlay) {
           overlay.style.visibility = '';
           overlay.style.opacity = '';
       }
-      
       document.body.classList.add('loaded');
       mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
     }
@@ -232,7 +228,14 @@
         if (!liff.isLoggedIn()) { liff.login(); return; }
         const profile = await liff.getProfile();
         currentUserId = profile.userId;
-        fetchTextData(currentUserId);
+        
+        // ★ URLパラメータからdogIdを取得
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlDogId = urlParams.get('dogId');
+        
+        // ★ dogIdがあればそれを指定してフェッチ
+        fetchTextData(currentUserId, urlDogId);
+
       } catch (err) {
         showError('LIFF Init Error', err.message);
       }
@@ -291,7 +294,6 @@
             body.appendChild(btn);
         });
         
-        // ローディングを一旦隠す（スタイル操作）
         document.getElementById('loadingOverlay').style.opacity = 0;
         setTimeout(() => { document.getElementById('loadingOverlay').style.visibility = 'hidden'; }, 500);
         
@@ -303,10 +305,8 @@
         const modal = bootstrap.Modal.getInstance(modalEl);
         modal.hide();
         
-        // 再度ローディングを表示（スタイル操作）
-        const overlay = document.getElementById('loadingOverlay');
-        overlay.style.visibility = 'visible';
-        overlay.style.opacity = 1;
+        document.getElementById('loadingOverlay').style.visibility = 'visible';
+        document.getElementById('loadingOverlay').style.opacity = 1;
         
         currentDogId = dogId;
         fetchTextData(currentUserId, dogId);
