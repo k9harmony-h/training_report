@@ -50,6 +50,15 @@
     .lesson-meta { margin-top: 5px; font-size: 0.85rem; color: var(--brand-color); font-weight: 600; }
     .history-link { text-decoration: none; color: var(--brand-color); font-weight: bold; font-size: 0.9rem; margin-left: auto; display: block; text-align: right; margin-top: 10px;}
     
+    /* Medical Button Style */
+    .medical-btn-card {
+        cursor: pointer; 
+        border-radius: 12px; 
+        border: 1px solid #eee; 
+        transition: transform 0.1s;
+    }
+    .medical-btn-card:active { transform: scale(0.98); background-color: #f8f9fa; }
+
     .chart-section { margin-top: 20px; padding: 0 10px; display: flex; justify-content: space-between; }
     .chart-box { width: 49%; text-align: center; }
     .chart-caption { font-size: 0.75rem; color: #888; margin-top: 5px; font-weight: 600; }
@@ -129,7 +138,27 @@
           <a href="#" id="historyLinkBtn" class="history-link">履歴 ></a>
         </div>
       </div>
-    </div>
+
+      <div class="mt-4">
+        <div onclick="openMedicalPage()" class="card shadow-sm medical-btn-card">
+            <div class="card-body py-2 d-flex align-items-center">
+                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" 
+                     style="width: 42px; height: 42px; min-width: 42px; background-color: #f0fcfc; color: var(--brand-color);">
+                    <span style="font-size: 1.4rem;">⛑️</span>
+                </div>
+                
+                <div class="flex-grow-1">
+                    <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">医療・防災手帳</h6>
+                    <small class="text-muted" style="font-size: 0.7rem;">緊急時・災害時の身分証カルテ</small>
+                </div>
+                
+                <div class="text-muted" style="font-size: 0.9rem;">
+                    &gt;
+                </div>
+            </div>
+        </div>
+      </div>
+      </div>
 
     <div class="chart-section">
       <div class="chart-box"><canvas id="chart1"></canvas><div class="chart-caption">基礎・集中</div></div>
@@ -319,6 +348,15 @@
         } else {
             link.href = `history.html`;
         }
+    }
+
+    // ★ NEW: Medical Page Navigation Helper
+    function openMedicalPage() {
+        let url = 'medical.html';
+        if (currentDogId) {
+            url += `?dogId=${currentDogId}`;
+        }
+        window.location.href = url;
     }
 
     function fetchProfileImage(userId, dogId) {
