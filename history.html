@@ -26,7 +26,6 @@
             padding-bottom: 60px;
         }
 
-        /* Loading Overlay */
         #loadingOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--brand-color);
@@ -37,44 +36,25 @@
         body.loaded #loadingOverlay { opacity: 0; visibility: hidden; }
         .spinner-border-white { border-color: white; border-right-color: transparent; }
 
-        /* Header Area */
         .header-area {
-            background: #fff;
-            padding: 15px 20px 20px;
-            border-bottom: 1px solid #eee;
-            position: relative;
-            text-align: center;
+            background: #fff; padding: 15px 20px 20px; border-bottom: 1px solid #eee;
+            position: relative; text-align: center;
         }
-
         .back-link {
-            position: absolute;
-            top: 20px; left: 20px;
-            color: var(--brand-color);
-            font-weight: 700;
-            text-decoration: none;
-            font-size: 0.9rem;
-            z-index: 10;
+            position: absolute; top: 20px; left: 20px; color: var(--brand-color);
+            font-weight: 700; text-decoration: none; font-size: 0.9rem; z-index: 10;
         }
-
         .profile-img-container {
-            width: 120px; height: 120px;
-            margin: 10px auto 0;
-            border-radius: 50%;
-            border: 4px solid var(--brand-color);
-            padding: 2px;
-            background: #fff;
-            overflow: hidden;
+            width: 120px; height: 120px; margin: 10px auto 0;
+            border-radius: 50%; border: 4px solid var(--brand-color);
+            padding: 2px; background: #fff; overflow: hidden;
             display: flex; align-items: center; justify-content: center;
         }
         .dog-profile-large { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-
         .page-title {
-            margin-top: 15px; margin-bottom: 0;
-            font-weight: 700; font-size: 1.2rem;
-            color: var(--text-main);
+            margin-top: 15px; margin-bottom: 0; font-weight: 700; font-size: 1.2rem; color: var(--text-main);
         }
 
-        /* Common Containers */
         .content-container { padding: 0 20px; }
         .section-title {
             font-size: 1.0rem; font-weight: 700; color: var(--brand-color);
@@ -85,49 +65,35 @@
             background: var(--brand-color); border-radius: 2px;
         }
 
-        /* Chart Section */
         .chart-card {
-            background: #fff; border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             padding: 15px; margin-top: 10px;
         }
         .chart-container { position: relative; height: 220px; width: 100%; }
 
-        /* Gallery Section */
         .photo-scroll {
-            display: flex; gap: 10px; overflow-x: auto;
-            padding-bottom: 10px; -webkit-overflow-scrolling: touch;
+            display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch;
         }
         .photo-scroll::-webkit-scrollbar { display: none; }
-        
         .gallery-img-wrapper {
-            width: 100px; height: 100px;
-            border-radius: 8px; border: 1px solid #eee;
-            flex-shrink: 0; overflow: hidden; position: relative;
-            background: #f8f9fa;
+            width: 100px; height: 100px; border-radius: 8px; border: 1px solid #eee;
+            flex-shrink: 0; overflow: hidden; position: relative; background: #f8f9fa;
         }
         .gallery-img { width: 100%; height: 100%; object-fit: cover; }
-
         .btn-drive-link {
             display: inline-block; font-size: 0.85rem; color: var(--brand-color);
             text-decoration: none; font-weight: 700; margin-top: 5px;
         }
 
-        /* List Section */
         .list-group-item {
-            border: none; border-radius: 8px !important;
-            margin-bottom: 10px; background: #fff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            padding: 15px; cursor: pointer;
-            transition: transform 0.1s;
+            border: none; border-radius: 8px !important; margin-bottom: 10px; background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 15px; cursor: pointer; transition: transform 0.1s;
         }
         .list-group-item:active { transform: scale(0.98); background: #f0fcfc; }
-        
         .list-date { font-weight: 700; color: var(--brand-color); font-size: 1rem; }
         .list-score-preview { font-size: 0.85rem; color: #666; margin-top: 4px; }
         .arrow-icon { color: #ccc; font-size: 1.2rem; }
 
-        /* Modal */
         .modal-header { border-bottom: none; padding-bottom: 0; }
         .modal-footer { border-top: none; }
         .modal-title { font-weight: 700; color: var(--brand-color); }
@@ -156,12 +122,9 @@
     </div>
 
     <div class="content-container">
-        
         <div class="section-title">スコア推移</div>
         <div class="chart-card">
-            <div class="chart-container">
-                <canvas id="scoreChart"></canvas>
-            </div>
+            <div class="chart-container"><canvas id="scoreChart"></canvas></div>
             <p class="text-center text-muted small mt-2 mb-0">過去10回分の平均スコア推移</p>
         </div>
 
@@ -174,9 +137,7 @@
         </div>
 
         <div class="section-title">レッスン履歴一覧</div>
-        <div id="historyList" class="list-group">
-            </div>
-
+        <div id="historyList" class="list-group"></div>
     </div>
 
     <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
@@ -187,24 +148,15 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    
                     <div class="detail-label">PHOTO</div>
-                    <div id="modalPhotoArea" class="row g-2 mb-3">
-                        <div class="col-12 text-center text-muted small">画像を読み込み中...</div>
-                    </div>
-                    <div class="text-end">
-                        <a href="#" id="driveLinkModal" class="btn-drive-link" target="_blank" style="display:none;">元データ &gt;</a>
-                    </div>
-
+                    <div id="modalPhotoArea" class="row g-2 mb-3"><div class="col-12 text-center text-muted small">読み込み中...</div></div>
+                    <div class="text-end"><a href="#" id="driveLinkModal" class="btn-drive-link" target="_blank" style="display:none;">元データ &gt;</a></div>
                     <div class="detail-label">SCORES</div>
                     <div id="modalScoreArea" class="mb-3"></div>
-
                     <div class="detail-label">COMMENT</div>
                     <div id="modalComment" class="detail-text"></div>
-
                     <div class="detail-label">HOMEWORK</div>
                     <div id="modalHomework" class="detail-text"></div>
-
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">閉じる</button>
@@ -214,68 +166,55 @@
     </div>
 
     <script>
-        // --- Configuration ---
         const LIFF_ID = '2008546673-MJY7j3ox'; 
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIqH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec';
 
         let allHistoryData = [];
         let currentUserId = null;
 
-        // --- Init ---
         window.onload = async function() {
             try {
-                // LIFF初期化
-                if (typeof liff === 'undefined') { throw new Error('LIFF SDK not loaded.'); }
+                if (typeof liff === 'undefined') throw new Error('LIFF SDK error');
                 await liff.init({ liffId: LIFF_ID });
-                
-                if (!liff.isLoggedIn()) { 
-                    liff.login(); 
-                    return; 
-                }
-                
+                if (!liff.isLoggedIn()) { liff.login(); return; }
                 const profile = await liff.getProfile();
                 currentUserId = profile.userId;
                 fetchHistoryData(currentUserId);
             } catch (err) {
                 console.error(err);
-                alert('アプリの起動に失敗しました。LINEから開き直してください。');
-                document.body.classList.add('loaded'); // エラー時もローディングを消す
+                alert('初期化エラー: ' + err);
+                document.body.classList.add('loaded');
             }
         };
 
-        // --- Fetch Data ---
         async function fetchHistoryData(userId) {
             const url = `${GAS_URL}?userId=${userId}&t=${Date.now()}`;
-            
             try {
                 const res = await fetch(url);
-                if (!res.ok) throw new Error('Network response was not ok');
+                if (!res.ok) throw new Error('Network error');
                 const data = await res.json();
                 
                 if (data.error) throw new Error(data.error);
 
+                // ★デバッグ用: データをアラートで確認（本番運用時は削除してください）
+                // alert('取得データ確認:\n犬の名前: ' + (data.dog ? data.dog.name : 'なし') + '\n履歴数: ' + (data.score_history ? data.score_history.length : 0));
+
                 allHistoryData = data.score_history || [];
-                
-                // 1. Render Text & Structure
                 renderHeader(data);
                 renderChart(data.score_history);
-                renderList(data.score_history); // ソートロジック修正済み
+                renderList(data.score_history);
                 setupDriveLinks(data.customer);
-
-                document.body.classList.add('loaded'); // Overlay fade out
-
-                // 2. Lazy Load Images (After content is visible)
-                setTimeout(() => {
-                    loadImages(userId, data);
-                }, 100);
+                document.body.classList.add('loaded');
+                setTimeout(() => { loadImages(userId, data); }, 100);
 
             } catch (err) {
                 console.error('Fetch Error:', err);
-                document.getElementById('loadingOverlay').innerHTML = '<p class="text-white">データの読み込みに失敗しました</p><button class="btn btn-light btn-sm mt-3" onclick="location.reload()">再読み込み</button>';
+                // エラー内容を画面に表示
+                document.getElementById('loadingOverlay').innerHTML = 
+                    `<div class="text-center px-3"><p class="text-white fw-bold">データの読み込みに失敗しました</p><p class="text-white small">${err.message}</p><button class="btn btn-light btn-sm mt-3" onclick="location.reload()">再読み込み</button></div>`;
             }
         }
 
-        // --- Rendering ---
         function renderHeader(data) {
             const dogName = (data.dog && data.dog.name) ? data.dog.name : '愛犬';
             document.getElementById('pageTitle').innerText = `${dogName}のレッスン履歴`;
@@ -284,58 +223,41 @@
         function setupDriveLinks(customer) {
             if (customer && customer.shared_folder_url) {
                 const url = customer.shared_folder_url;
-                const linkMain = document.getElementById('driveLinkMain');
-                const linkModal = document.getElementById('driveLinkModal');
-                
-                linkMain.href = url; linkMain.style.display = 'inline-block';
-                linkModal.href = url; linkModal.style.display = 'inline-block';
+                document.getElementById('driveLinkMain').href = url;
+                document.getElementById('driveLinkMain').style.display = 'inline-block';
+                document.getElementById('driveLinkModal').href = url;
+                document.getElementById('driveLinkModal').style.display = 'inline-block';
             }
         }
 
         function renderChart(history) {
             if (!history || history.length === 0) return;
-            
-            // グラフ用: 日付昇順（古い順、左→右）
-            const sortedForChart = [...history].sort((a, b) => {
-                const dateA = new Date(a.full_date || a.date);
-                const dateB = new Date(b.full_date || b.date);
-                return dateA - dateB; 
+            // 日付昇順（古い順）
+            const sorted = [...history].sort((a, b) => {
+                const da = new Date(a.full_date || a.date);
+                const db = new Date(b.full_date || b.date);
+                return da - db;
             });
-            const recent10 = sortedForChart.slice(-10); // 最新10件
-
+            const recent10 = sorted.slice(-10);
             const ctx = document.getElementById('scoreChart').getContext('2d');
-            
-            const labels = recent10.map(h => h.date); // MM/dd
-            const dataPoints = recent10.map(h => {
-                const sum = h.scores.reduce((a, b) => a + b, 0);
-                return (sum / h.scores.length).toFixed(1);
-            });
+            const labels = recent10.map(h => h.date);
+            const dataPoints = recent10.map(h => (h.scores.reduce((a, b) => a + b, 0) / h.scores.length).toFixed(1));
 
             new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: '平均スコア',
-                        data: dataPoints,
-                        borderColor: '#57C3C2', // brand-color
-                        backgroundColor: 'rgba(87, 195, 194, 0.1)',
-                        borderWidth: 2,
-                        pointBackgroundColor: '#fff',
-                        pointBorderColor: '#57C3C2',
-                        pointRadius: 4,
-                        fill: true,
-                        tension: 0.3
+                        label: '平均スコア', data: dataPoints,
+                        borderColor: '#57C3C2', backgroundColor: 'rgba(87, 195, 194, 0.1)',
+                        borderWidth: 2, pointBackgroundColor: '#fff', pointBorderColor: '#57C3C2', pointRadius: 4,
+                        fill: true, tension: 0.3
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: {
-                        y: { min: 0, max: 5, ticks: { stepSize: 1 } },
-                        x: { grid: { display: false } }
-                    }
+                    scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } }, x: { grid: { display: false } } }
                 }
             });
         }
@@ -343,130 +265,71 @@
         function renderList(history) {
             const listEl = document.getElementById('historyList');
             listEl.innerHTML = '';
-
             if (!history || history.length === 0) {
                 listEl.innerHTML = '<div class="text-center text-muted small mt-3">履歴がありません</div>';
                 return;
             }
-
-            // リスト用: 日付降順（新しい順、上→下）※ GASのfull_date(yyyy/MM/dd)を使用
-            const sortedForList = [...history].sort((a, b) => {
-                const dateA = new Date(a.full_date || a.date);
-                const dateB = new Date(b.full_date || b.date);
-                return dateB - dateA; 
+            // 日付降順（新しい順）
+            const sorted = [...history].sort((a, b) => {
+                const da = new Date(a.full_date || a.date);
+                const db = new Date(b.full_date || b.date);
+                return db - da;
             });
 
-            sortedForList.forEach(item => {
-                // 平均スコア算出
+            sorted.forEach(item => {
                 const avg = (item.scores.reduce((a, b) => a + b, 0) / item.scores.length).toFixed(1);
-                
                 const div = document.createElement('div');
                 div.className = 'list-group-item d-flex justify-content-between align-items-center';
-                div.onclick = () => openDetailModal(item.id); // IDで詳細を開く
-                div.innerHTML = `
-                    <div>
-                        <div class="list-date">${item.date}</div>
-                        <div class="list-score-preview">Avg Score: ${avg} / Comment: ${item.comment ? 'あり' : 'なし'}</div>
-                    </div>
-                    <div class="arrow-icon">&gt;</div>
-                `;
+                div.onclick = () => openDetailModal(item.id);
+                div.innerHTML = `<div><div class="list-date">${item.date}</div><div class="list-score-preview">Avg Score: ${avg} / Comment: ${item.comment ? 'あり' : 'なし'}</div></div><div class="arrow-icon">&gt;</div>`;
                 listEl.appendChild(div);
             });
         }
 
-        // --- Lazy Load Images ---
         function loadImages(userId, data) {
-            // 1. Profile Image
             fetch(`${GAS_URL}?userId=${userId}&type=img_profile`)
-                .then(res => res.json())
-                .then(d => {
-                    if(d.image) {
-                        const img = document.getElementById('dogProfileImg');
-                        img.src = d.image;
-                    }
-                })
-                .catch(e => console.error('Profile Image Error:', e));
+                .then(r => r.json()).then(d => { if(d.image) document.getElementById('dogProfileImg').src = d.image; }).catch(console.error);
 
-            // 2. Gallery Images (Latest)
+            const gCon = document.getElementById('galleryContainer');
             if (data.latest && data.latest.has_photos) {
                 fetch(`${GAS_URL}?userId=${userId}&type=img_latest`)
-                    .then(res => res.json())
-                    .then(d => {
-                        const container = document.getElementById('galleryContainer');
-                        container.innerHTML = '';
+                    .then(r => r.json()).then(d => {
+                        gCon.innerHTML = '';
                         if(d.images && d.images.length > 0) {
                             d.images.forEach(src => {
-                                const div = document.createElement('div');
-                                div.className = 'gallery-img-wrapper';
-                                div.innerHTML = `<img src="${src}" class="gallery-img zoomable" alt="Photo">`;
-                                container.appendChild(div);
+                                gCon.innerHTML += `<div class="gallery-img-wrapper"><img src="${src}" class="gallery-img zoomable"></div>`;
                             });
                             mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
-                        } else {
-                            container.innerHTML = '<div class="text-muted small ms-2">画像なし</div>';
-                        }
-                    })
-                    .catch(e => {
-                        console.error('Gallery Error:', e);
-                        document.getElementById('galleryContainer').innerHTML = '<div class="text-muted small ms-2">読込エラー</div>';
+                        } else gCon.innerHTML = '<div class="text-muted small ms-2">画像なし</div>';
                     });
-            } else {
-                document.getElementById('galleryContainer').innerHTML = '<div class="text-muted small ms-2">写真なし</div>';
-            }
+            } else gCon.innerHTML = '<div class="text-muted small ms-2">写真なし</div>';
         }
 
-        // --- Modal Logic ---
-        function openDetailModal(lessonId) {
-            const item = allHistoryData.find(h => h.id === lessonId);
+        function openDetailModal(lid) {
+            const item = allHistoryData.find(h => h.id === lid);
             if (!item) return;
-
             document.getElementById('modalDate').innerText = item.date;
             document.getElementById('modalComment').innerText = item.comment || 'なし';
             document.getElementById('modalHomework').innerText = item.homework || 'なし';
 
-            // Scores
+            const scArea = document.getElementById('modalScoreArea'); scArea.innerHTML = '';
             const labels = ['指示理解','集中力','報酬','ボディ','コンタクト','指示出し','対応力','リード','ボディ','コンタクト'];
-            const scoreArea = document.getElementById('modalScoreArea');
-            scoreArea.innerHTML = '';
-            item.scores.forEach((score, idx) => {
-                const span = document.createElement('span');
-                span.className = 'score-badge';
-                span.innerText = `${labels[idx] || '項目'}: ${score}`;
-                scoreArea.appendChild(span);
-            });
+            item.scores.forEach((s, i) => { scArea.innerHTML += `<span class="score-badge">${labels[i] || '項目'}: ${s}</span>`; });
 
-            // Photos (Lazy Load for specific lesson)
-            const photoArea = document.getElementById('modalPhotoArea');
-            photoArea.innerHTML = '<div class="col-12 text-center text-muted small">読み込み中...</div>';
-            
-            const myModal = new bootstrap.Modal(document.getElementById('detailModal'));
-            myModal.show();
+            const pArea = document.getElementById('modalPhotoArea');
+            pArea.innerHTML = '<div class="col-12 text-center text-muted small">読み込み中...</div>';
+            new bootstrap.Modal(document.getElementById('detailModal')).show();
 
-            // Fetch Detail Images
-            fetch(`${GAS_URL}?userId=${currentUserId}&type=img_lesson_detail&lessonId=${lessonId}`)
-                .then(res => res.json())
-                .then(d => {
-                    photoArea.innerHTML = '';
+            fetch(`${GAS_URL}?userId=${currentUserId}&type=img_lesson_detail&lessonId=${lid}`)
+                .then(r => r.json()).then(d => {
+                    pArea.innerHTML = '';
                     if(d.images && d.images.length > 0) {
                         d.images.forEach(src => {
-                            const div = document.createElement('div');
-                            div.className = 'col-4'; // 3列
-                            div.innerHTML = `
-                                <div class="gallery-img-wrapper" style="width:100%; height:80px;">
-                                    <img src="${src}" class="gallery-img zoomable-modal" alt="Detail">
-                                </div>
-                            `;
-                            photoArea.appendChild(div);
+                            pArea.innerHTML += `<div class="col-4"><div class="gallery-img-wrapper" style="width:100%;height:80px;"><img src="${src}" class="gallery-img zoomable-modal"></div></div>`;
                         });
                         mediumZoom('.zoomable-modal', { margin: 24, background: 'rgba(0,0,0,0.8)' });
-                    } else {
-                        photoArea.innerHTML = '<div class="col-12 text-center text-muted small">写真はありません</div>';
-                    }
-                })
-                .catch(e => {
-                    console.error('Detail Image Error:', e);
-                    photoArea.innerHTML = '<div class="col-12 text-center text-danger small">読込エラー</div>';
-                });
+                    } else pArea.innerHTML = '<div class="col-12 text-center text-muted small">写真はありません</div>';
+                }).catch(() => { pArea.innerHTML = '<div class="col-12 text-center text-danger small">読込エラー</div>'; });
         }
     </script>
 </body>
