@@ -12,50 +12,86 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 
   <style>
-    /* CSSは変更なし */
     :root { --brand-color: #57C3C2; --brand-bg: #E0F7FA; --text-main: #333333; --accent-color: #F2A679; }
     body { font-family: 'Montserrat', 'Noto Sans JP', sans-serif; background-color: #fafafa; color: var(--text-main); padding-bottom: 80px; overflow-x: hidden; }
+    
     #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; transition: opacity 0.5s ease-out, visibility 0.5s ease-out; }
     .spinner-border-white { border-color: white; border-right-color: transparent; }
     #tipsText { margin-top: 20px; font-weight: 500; font-size: 1rem; text-align: center; padding: 0 20px; height: 1.5em; }
-    body.loaded #loadingOverlay { opacity: 0; visibility: hidden; }
+    
+    /* bodyにloadedがついたらローディングを消す */
+    body.loaded #loadingOverlay { opacity: 0; visibility: hidden; pointer-events: none; }
+    
     #mainContent { opacity: 0; transform: scale(0.95); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
     body.loaded #mainContent { opacity: 1; transform: scale(1); }
+    
     .header-area { padding: 20px 20px 10px; background: #fff; }
     .brand-title { color: var(--text-main); font-weight: 700; letter-spacing: 0.05em; font-size: 1.2rem; text-align: center; }
+    
     .profile-card { margin-top: 20px; display: flex; align-items: center; }
-    #dogImgContainer { width: 150px; height: 150px; border-radius: 50%; border: 4px solid var(--brand-color); background: #fff; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 0.8rem; color: #aaa; text-align: center; }
+    
+    #dogImgContainer {
+        width: 150px; height: 150px; 
+        border-radius: 50%; 
+        border: 4px solid var(--brand-color); 
+        background: #fff; 
+        flex-shrink: 0; 
+        display: flex; align-items: center; justify-content: center;
+        overflow: hidden;
+        font-size: 0.8rem; color: #aaa; text-align: center;
+    }
     .dog-img { width: 100%; height: 100%; object-fit: cover; }
+    
     .profile-info { margin-left: 20px; flex-grow: 1; }
     .birthday-msg { color: #FF6B6B; font-weight: bold; font-size: 0.8rem; margin-bottom: 0px; display: none; animation: pulse 1.5s infinite; }
     @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    
     .cust-name { font-size: 0.85rem; color: #666; margin: 0; line-height: 1.2; }
     .dog-name { font-size: 1.6rem; font-weight: 700; line-height: 1.2; margin: 0; }
     .lesson-meta { margin-top: 5px; font-size: 0.85rem; color: var(--brand-color); font-weight: 600; }
     .history-link { text-decoration: none; color: var(--brand-color); font-weight: bold; font-size: 0.9rem; margin-left: auto; display: block; text-align: right; margin-top: 10px;}
+    
     .chart-section { margin-top: 20px; padding: 0 10px; display: flex; justify-content: space-between; }
     .chart-box { width: 49%; text-align: center; }
     .chart-caption { font-size: 0.75rem; color: #888; margin-top: 5px; font-weight: 600; }
+    
     .section-title { font-size: 0.9rem; font-weight: 700; color: var(--brand-color); margin: 25px 20px 10px; display: flex; align-items: center; gap: 8px; }
     .section-title::before { content: ''; display: block; width: 4px; height: 16px; background: var(--brand-color); border-radius: 2px; }
+    
     .section-title.accent { color: var(--accent-color); }
     .section-title.accent::before { background: var(--accent-color); }
-    .next-goal-box { margin: 0 20px; background: #fff; border: 2px solid var(--accent-color); border-radius: 10px; padding: 15px; font-weight: 700; color: #555; box-shadow: 0 2px 8px rgba(242, 166, 121, 0.15); }
+    .next-goal-box { 
+        margin: 0 20px; background: #fff; 
+        border: 2px solid var(--accent-color); 
+        border-radius: 10px; padding: 15px; 
+        font-weight: 700; color: #555; 
+        box-shadow: 0 2px 8px rgba(242, 166, 121, 0.15);
+    }
+
     .feedback-box { margin: 0 20px; background: #f8f9fa; border-radius: 10px; padding: 15px; font-size: 0.9rem; line-height: 1.6; }
     .homework-box { margin: 0 20px; border: 2px solid var(--brand-color); border-radius: 10px; padding: 15px; background: #fff; position: relative; margin-top: 30px; }
     .homework-badge { position: absolute; top: -12px; left: 15px; background: var(--brand-color); color: #fff; font-size: 0.75rem; padding: 2px 10px; border-radius: 10px; font-weight: bold; }
+    
     .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 20px; }
     .detail-card { background: #f8f9fa; border-radius: 8px; padding: 10px; }
     .detail-head { font-size: 0.75rem; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 5px; text-align: center; color: #555; }
     .detail-body { font-size: 0.8rem; color: #333; white-space: pre-wrap; }
+    
     .photo-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 0 20px; margin-top: 10px; padding-bottom: 10px; }
     .photo-item { height: 120px; border-radius: 8px; border: 1px solid #eee; cursor: pointer; }
+    
     .footer-action { margin: 30px 20px 10px; text-align: center; }
     .btn-reserve { background: var(--brand-color); color: #fff; border: none; width: 100%; padding: 14px; border-radius: 30px; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 12px rgba(87, 195, 194, 0.4); display: block; text-decoration: none; }
-    .reminder-box { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem; font-weight: bold; }
     
+    .reminder-box {
+        background: #fff3cd; border: 1px solid #ffeeba; color: #856404;
+        padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem; font-weight: bold;
+    }
+
     #errorView { text-align: center; margin-top: 50px; display: none; padding: 20px; }
     .line-id-box { background: #eee; padding: 10px; border-radius: 5px; margin: 15px 0; font-family: monospace; font-weight: bold; word-break: break-all; }
+    
+    /* モーダル用ボタン */
     .dog-select-btn { width: 100%; margin-bottom: 10px; padding: 15px; font-weight: bold; font-size: 1.1rem; border-radius: 12px; background: #f8f9fa; border: 2px solid var(--brand-color); color: var(--brand-color); transition: all 0.2s; }
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
   </style>
@@ -156,7 +192,7 @@
     let tipsTimer;
     let currentUserId = null;
     let currentDogId = null;
-    let chartInstance1 = null; // ★ チャートインスタンス保持用
+    let chartInstance1 = null; 
     let chartInstance2 = null;
 
     function startTipsSlider() {
@@ -172,6 +208,14 @@
 
     function finishLoading() {
       clearInterval(tipsTimer);
+      
+      // ★ 修正箇所: JSで付与したインラインスタイルを削除し、CSSクラス制御に戻す
+      const overlay = document.getElementById('loadingOverlay');
+      if (overlay) {
+          overlay.style.visibility = '';
+          overlay.style.opacity = '';
+      }
+      
       document.body.classList.add('loaded');
       mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
     }
@@ -214,7 +258,6 @@
               return;
           }
 
-          // ★ レンダー処理をtry-catchで保護
           try {
               renderTextData(data);
               
@@ -248,6 +291,7 @@
             body.appendChild(btn);
         });
         
+        // ローディングを一旦隠す（スタイル操作）
         document.getElementById('loadingOverlay').style.opacity = 0;
         setTimeout(() => { document.getElementById('loadingOverlay').style.visibility = 'hidden'; }, 500);
         
@@ -259,8 +303,10 @@
         const modal = bootstrap.Modal.getInstance(modalEl);
         modal.hide();
         
-        document.getElementById('loadingOverlay').style.visibility = 'visible';
-        document.getElementById('loadingOverlay').style.opacity = 1;
+        // 再度ローディングを表示（スタイル操作）
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.style.visibility = 'visible';
+        overlay.style.opacity = 1;
         
         currentDogId = dogId;
         fetchTextData(currentUserId, dogId);
@@ -347,14 +393,12 @@
         document.getElementById('detail1').innerText = d1 || '特になし';
         document.getElementById('detail2').innerText = d2 || '特になし';
 
-        // ★ チャート描画 (既存があれば破壊してから再描画)
         if (chartInstance1) chartInstance1.destroy();
         if (chartInstance2) chartInstance2.destroy();
 
         chartInstance1 = renderChart('chart1', l.scores.slice(0, 5), ['指示理解','集中力','報酬','ボディ','コンタクト'], 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 1)');
         chartInstance2 = renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト'], 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
       } else {
-          // レッスン履歴がない場合
           document.getElementById('lessonDate').innerText = 'レッスン履歴なし';
       }
       
@@ -388,10 +432,8 @@
       });
     }
 
-    // エラー表示関数
     function showError(title, msg, userId) {
         finishLoading();
-        document.getElementById('loadingOverlay').style.display = 'none';
         document.getElementById('mainContent').style.display = 'none';
         
         const errDiv = document.getElementById('errorView');
