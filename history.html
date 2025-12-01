@@ -31,7 +31,6 @@
         .badge-section { background: #fff; margin-top: 20px; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; min-height: 80px;}
         .badge-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
         
-        /* 獲得したものだけ表示 */
         .badge-item { width: 50px; height: 75px; display: flex; flex-direction: column; align-items: center; transition: transform 0.3s; }
         .badge-item:hover { transform: scale(1.1); }
         
@@ -44,7 +43,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         
-        /* キラキラアニメーション */
+        /* キラキラ */
         @keyframes sparkle {
             0% { transform: translateX(-100%) rotate(45deg); opacity: 0; }
             50% { opacity: 1; }
@@ -91,19 +90,16 @@
         #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-color); display: flex; justify-content: center; align-items: center; z-index: 9999; color: white; flex-direction: column; }
         body.loaded #loadingOverlay { display: none !important; }
         .spinner-border-white { border-color: white; border-right-color: transparent; }
+        #tipsText { margin-top: 20px; font-weight: 500; font-size: 1rem; text-align: center; padding: 0 20px; height: 1.5em; }
+        
         #errorContainer { display: none; padding: 20px; text-align: center; margin-top: 20px; }
         .error-box { background: #fff; padding: 20px; border-radius: 12px; border: 2px solid #ffcccc; color: #d9534f; }
 
         .modal-score-item { margin-bottom: 5px; font-size: 1rem; }
         .modal-score-item strong { color: var(--brand-color); width: 80px; display: inline-block; }
         
-        /* 平均点ボックス (モーダル用) */
-        .modal-avg-box {
-            display: flex; gap: 10px; margin-bottom: 20px;
-        }
-        .avg-item {
-            flex: 1; background: #E0F7FA; border-radius: 8px; padding: 10px; text-align: center;
-        }
+        .modal-avg-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        .avg-item { flex: 1; background: #E0F7FA; border-radius: 8px; padding: 10px; text-align: center; }
         .avg-label { font-size: 0.7rem; color: #666; font-weight: bold; display: block; }
         .avg-val { font-size: 1.4rem; color: var(--brand-color); font-weight: 700; }
     </style>
@@ -112,7 +108,7 @@
 
     <div id="loadingOverlay">
         <div class="spinner-border spinner-border-white" role="status"></div>
-        <p class="mt-3 small fw-bold">データを読み込み中...</p>
+        <p id="tipsText">Loading...</p>
     </div>
 
     <div id="errorContainer">
@@ -136,8 +132,7 @@
             
             <div class="badge-section">
                 <h6 style="color:#888; font-size:0.8rem; font-weight:bold;">マスタリーバッジ (5点×3連続)</h6>
-                <div id="badgeContainer" class="badge-grid">
-                    </div>
+                <div id="badgeContainer" class="badge-grid"></div>
                 <div id="noBadgeMsg" class="text-muted small mt-3" style="display:none;">まだ獲得したバッジはありません</div>
             </div>
 
@@ -195,9 +190,36 @@
         const scoreLabels = [ '指示理解', '集中力', '報酬', 'ボディ', 'コンタクト', '指示出し', '対応力', 'リード', 'ボディ', 'コンタクト' ];
         const chartColors = [ 'rgba(255, 99, 132, 1)', 'rgba(255, 159, 64, 1)', 'rgba(255, 205, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(54, 162, 235, 1)', 'rgba(153, 102, 255, 1)', 'rgba(201, 203, 207, 1)', 'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)' ];
 
+        // ★ Tips用
+        const dogTips = [
+          "犬の鼻紋は人間の指紋と同じで、一頭一頭違います。", "犬は人間の約4倍の聴力を持っています。", "犬の嗅覚は人間の100万倍〜1億倍とも言われます。", "犬は汗を肉球からしかかけません。", "犬があくびをするのは、ストレスを感じて落ち着こうとしている時もあります。", "犬のしっぽの振り方は、右寄りだと「嬉しい」、左寄りだと「不安」な時があります。", "小型犬の方が大型犬よりも長生きする傾向があります。", "犬は夢を見ます。寝言を言ったり足を動かすのはその証拠です。", "ダルメシアンは生まれた時は真っ白で、後から斑点が出てきます。", "犬が飼い主の顔を舐めるのは、愛情表現やご飯の催促です。"
+        ];
+
+        let tipsTimer;
         let allHistoryData = []; let customerData = {}; let currentUserId = '';
 
-        window.onload = function() { if (typeof liff === 'undefined') { showError('LIFF SDK not loaded.'); return; } main(); };
+        // ★ Tips開始
+        function startTipsSlider() {
+          const tipsText = document.getElementById('tipsText');
+          if(!tipsText) return;
+          let currentTipIndex = Math.floor(Math.random() * dogTips.length);
+          tipsText.innerText = dogTips[currentTipIndex];
+          tipsTimer = setInterval(() => {
+            currentTipIndex = (currentTipIndex + 1) % dogTips.length;
+            tipsText.innerText = dogTips[currentTipIndex];
+          }, 2500); 
+        }
+
+        function finishLoading() {
+            clearInterval(tipsTimer);
+            document.body.classList.add('loaded');
+        }
+
+        window.onload = function() {
+            startTipsSlider(); 
+            if (typeof liff === 'undefined') { showError('LIFF SDK not loaded.'); return; } 
+            main(); 
+        };
 
         async function main() {
             try {
@@ -219,16 +241,20 @@
                     renderHistory(data);
                     renderBadges(data.badges || []); 
 
-                    document.body.classList.add('loaded');
+                    finishLoading(); // ★Tips終了
+                    
                     if (allHistoryData.length > 0 || (data.latest && data.latest.has_photos)) {
                         setTimeout(() => { fetchGalleryImages(userId, data); fetchProfileImage(userId); }, 100);
                     } else { document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>'; }
                 })
-                .catch(err => { showError('通信エラー: ' + err.message); });
+                .catch(err => { 
+                    showError('通信エラー: ' + err.message); 
+                    finishLoading(); // エラー時も消す
+                });
         }
 
         function showError(msg) {
-            document.body.classList.add('loaded');
+            finishLoading();
             document.getElementById('mainWrapper').style.display = 'none';
             document.getElementById('errorContainer').style.display = 'block';
             document.getElementById('errorMsg').innerText = msg;
@@ -238,33 +264,23 @@
             const container = document.getElementById('badgeContainer');
             container.innerHTML = '';
             
-            // バッジがない場合の処理
             if (!earnedIndices || earnedIndices.length === 0) {
-                // ★ ここでエラーが出ていました。要素を追加したので直ります。
-                const msgEl = document.getElementById('noBadgeMsg');
-                if(msgEl) msgEl.style.display = 'block';
+                document.getElementById('noBadgeMsg').style.display = 'block';
                 return;
             } else {
-                const msgEl = document.getElementById('noBadgeMsg');
-                if(msgEl) msgEl.style.display = 'none';
+                document.getElementById('noBadgeMsg').style.display = 'none';
             }
             
             scoreLabels.forEach((label, idx) => {
                 const badgeNum = idx + 1; 
-                // 獲得しているもののみ表示
                 if (!earnedIndices.includes(badgeNum)) return;
 
                 const color = chartColors[idx]; 
-                
                 const iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-star-fill" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>`;
                 
                 const div = document.createElement('div');
                 div.className = 'badge-item';
-                
-                div.innerHTML = `
-                    <div class="badge-icon" style="background:${color}; box-shadow: 0 2px 5px ${color.replace('1)','0.4)')};">${iconHtml}</div>
-                    <div class="badge-label">${label}</div>
-                `;
+                div.innerHTML = `<div class="badge-icon" style="background:${color}; box-shadow: 0 2px 5px ${color.replace('1)','0.4)')};">${iconHtml}</div><div class="badge-label">${label}</div>`;
                 container.appendChild(div);
             });
         }
@@ -292,7 +308,6 @@
             const chartArea = document.getElementById('chartArea'); const lessonList = document.getElementById('lessonList');
             chartArea.innerHTML = ''; lessonList.innerHTML = ''; 
             const dogData = data.dog || {}; 
-            
             document.getElementById('pageTitle').innerText = `${dogData.name_disp || dogData.name || '愛犬'}のレッスン履歴`; 
 
             if (!allHistoryData || allHistoryData.length < 1) { chartArea.innerHTML = `<div class="text-center text-muted small mt-4">まだレッスン履歴がありません。</div>`; lessonList.innerHTML = `<div class="text-center text-muted small mt-4">履歴がありません。</div>`; return; }
