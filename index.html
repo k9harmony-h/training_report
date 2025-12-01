@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 
   <style>
-    /* ... CSSは以前と同じなので、前回成功したCSSをそのまま使ってください ... */
+    /* CSSは変更なし */
     :root { --brand-color: #57C3C2; --brand-bg: #E0F7FA; --text-main: #333333; }
     body { font-family: 'Montserrat', 'Noto Sans JP', sans-serif; background-color: #fafafa; color: var(--text-main); padding-bottom: 80px; overflow-x: hidden; }
     #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; transition: opacity 0.5s ease-out, visibility 0.5s ease-out; }
@@ -52,6 +52,7 @@
   </style>
 </head>
 <body>
+
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
     <p id="tipsText">Loading...</p>
@@ -71,6 +72,7 @@
   <div id="mainContent">
     <div class="header-area">
       <h1 class="brand-title">K9 Harmony</h1>
+      
       <div class="profile-card">
         <img id="dogImg" src="https://via.placeholder.com/150?text=Loading..." class="dog-img">
         <div class="profile-info">
@@ -109,7 +111,6 @@
       <div class="homework-badge">HOMEWORK</div>
       <div id="homeworkText">---</div>
     </div>
-    
     <div class="section-title">詳細フィードバック</div>
     <div class="detail-grid">
       <div class="detail-card">
@@ -128,7 +129,7 @@
 
     <div class="section-title">本日のショット</div>
     <div class="photo-scroll" id="photoArea">
-      <div class="text-muted small ms-3" id="photoLoadingText">画像を読み込み中...</div>
+      <div class="text-muted small ms-3" id="photoLoadingMsg">画像を読み込み中...</div>
     </div>
 
     <div class="footer-action">
@@ -141,21 +142,11 @@
 
   <script>
     const LIFF_ID = '2008546673-MJY7j3ox'; 
-    // ★GAS URLは最新のものを使ってください★
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzheC-9sqA4TjIRD3mYYZlbhU7HAkpg2eis2YR9saNZqPCn_aklmjchErKRKyAfEhgA/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
 
-    // Tips (変更なし)
+    // Tips
     const dogTips = [
-      "犬の鼻紋は人間の指紋と同じで、一頭一頭違います。",
-      "犬は人間の約4倍の聴力を持っています。",
-      "犬の嗅覚は人間の100万倍〜1億倍とも言われます。",
-      "犬は汗を肉球からしかかけません。",
-      "犬があくびをするのは、ストレスを感じて落ち着こうとしている時もあります。",
-      "犬のしっぽの振り方は、右寄りだと「嬉しい」、左寄りだと「不安」な時があります。",
-      "小型犬の方が大型犬よりも長生きする傾向があります。",
-      "犬は夢を見ます。寝言を言ったり足を動かすのはその証拠です。",
-      "ダルメシアンは生まれた時は真っ白で、後から斑点が出てきます。",
-      "犬が飼い主の顔を舐めるのは、愛情表現やご飯の催促です。"
+      "犬の鼻紋は人間の指紋と同じで、一頭一頭違います。", "犬は人間の約4倍の聴力を持っています。", "犬の嗅覚は人間の100万倍〜1億倍とも言われます。", "犬は汗を肉球からしかかけません。", "犬があくびをするのは、ストレスを感じて落ち着こうとしている時もあります。", "犬のしっぽの振り方は、右寄りだと「嬉しい」、左寄りだと「不安」な時があります。", "小型犬の方が大型犬よりも長生きする傾向があります。", "犬は夢を見ます。寝言を言ったり足を動かすのはその証拠です。", "ダルメシアンは生まれた時は真っ白で、後から斑点が出てきます。", "犬が飼い主の顔を舐めるのは、愛情表現やご飯の催促です。"
     ];
 
     let tipsTimer;
@@ -203,9 +194,9 @@
       fetch(`${GAS_URL}?userId=${userId}&t=${new Date().getTime()}`)
         .then(res => res.json())
         .then(data => {
-          renderTextData(data); // 画面表示
+          renderTextData(data); // 画面表示 (ここでLoadingは消える)
           
-          // テキスト表示が完了したら、裏で画像を取得開始
+          // テキスト表示が完了したら、裏で画像を取得開始 (Step 2)
           if (!data.error) {
              fetchImages(userId);
           }
@@ -218,7 +209,7 @@
 
     // --- Step 2: 画像データ取得 (遅延読み込み) ---
     function fetchImages(userId) {
-      // プロフィール画像
+      // A. プロフィール画像
       fetch(`${GAS_URL}?userId=${userId}&type=img_profile`)
         .then(res => res.json())
         .then(data => {
@@ -226,7 +217,7 @@
            else document.getElementById('dogImg').src = 'https://via.placeholder.com/150?text=No+Img';
         });
 
-      // レッスン画像
+      // B. レッスン画像
       fetch(`${GAS_URL}?userId=${userId}&type=img_latest`)
         .then(res => res.json())
         .then(data => {
@@ -253,7 +244,7 @@
         finishLoading();
         document.getElementById('loadingOverlay').style.display = 'none';
         document.getElementById('errorView').style.display = 'block';
-        // ID表示処理などは省略
+        document.getElementById('dispLineId').innerText = currentUserId;
         return;
       }
 
@@ -288,11 +279,10 @@
         renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト'], 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
       }
       
-      // ★ここで画面を表示★ (写真はまだでも画面を出す)
+      // ★ここでローディングを終了し、画面を表示★
       finishLoading();
     }
 
-    // (以下、checkBirthday, renderChart, copyLineId 関数は変更なし)
     function checkBirthday(dateStr, elementId) {
         if (!dateStr) return;
         const today = new Date();
