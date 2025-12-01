@@ -31,7 +31,7 @@
         .badge-section { background: #fff; margin-top: 20px; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; min-height: 80px;}
         .badge-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
         
-        /* 獲得したものだけ表示するため opacity制御などは削除 */
+        /* 獲得したものだけ表示 */
         .badge-item { width: 50px; height: 75px; display: flex; flex-direction: column; align-items: center; transition: transform 0.3s; }
         .badge-item:hover { transform: scale(1.1); }
         
@@ -58,7 +58,7 @@
         
         .badge-label { font-size: 0.6rem; color: #555; font-weight: bold; line-height: 1.1; }
 
-        /* Chart: 高さを180pxに変更 */
+        /* Chart */
         .chart-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-top: 20px; padding: 15px; }
         .chart-card canvas { height: 180px !important; }
         .chart-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -137,8 +137,8 @@
             <div class="badge-section">
                 <h6 style="color:#888; font-size:0.8rem; font-weight:bold;">マスタリーバッジ (5点×3連続)</h6>
                 <div id="badgeContainer" class="badge-grid">
-                    <div class="text-muted small mt-2" id="noBadgeMsg" style="display:none;">まだ獲得したバッジはありません</div>
-                </div>
+                    </div>
+                <div id="noBadgeMsg" class="text-muted small mt-3" style="display:none;">まだ獲得したバッジはありません</div>
             </div>
 
             <p class="text-muted small text-center mt-3">過去のレッスン評価の推移です。</p>
@@ -238,16 +238,20 @@
             const container = document.getElementById('badgeContainer');
             container.innerHTML = '';
             
+            // バッジがない場合の処理
             if (!earnedIndices || earnedIndices.length === 0) {
-                document.getElementById('noBadgeMsg').style.display = 'block';
+                // ★ ここでエラーが出ていました。要素を追加したので直ります。
+                const msgEl = document.getElementById('noBadgeMsg');
+                if(msgEl) msgEl.style.display = 'block';
                 return;
             } else {
-                document.getElementById('noBadgeMsg').style.display = 'none';
+                const msgEl = document.getElementById('noBadgeMsg');
+                if(msgEl) msgEl.style.display = 'none';
             }
             
             scoreLabels.forEach((label, idx) => {
                 const badgeNum = idx + 1; 
-                // ★ 獲得しているもののみ表示
+                // 獲得しているもののみ表示
                 if (!earnedIndices.includes(badgeNum)) return;
 
                 const color = chartColors[idx]; 
