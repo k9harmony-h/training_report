@@ -27,19 +27,21 @@
 
         .content-container { padding: 0 15px; }
         
-        /* --- デジタルバッジ (キラキラ効果) --- */
-        .badge-section { background: #fff; margin-top: 20px; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; }
+        /* --- デジタルバッジ --- */
+        .badge-section { background: #fff; margin-top: 20px; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; min-height: 80px;}
         .badge-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
-        .badge-item { width: 50px; height: 75px; display: flex; flex-direction: column; align-items: center; opacity: 0.3; transition: all 0.3s; }
-        .badge-item.earned { opacity: 1; transform: scale(1.05); }
+        
+        /* 獲得したものだけ表示するため opacity制御などは削除 */
+        .badge-item { width: 50px; height: 75px; display: flex; flex-direction: column; align-items: center; transition: transform 0.3s; }
+        .badge-item:hover { transform: scale(1.1); }
         
         .badge-icon { 
             width: 40px; height: 40px; 
-            background: var(--badge-gray); 
             border-radius: 50%; 
             display: flex; align-items: center; justify-content: center; 
             color: #fff; font-size: 1.2rem; margin-bottom: 5px; 
             position: relative; overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         
         /* キラキラアニメーション */
@@ -48,7 +50,7 @@
             50% { opacity: 1; }
             100% { transform: translateX(100%) rotate(45deg); opacity: 0; }
         }
-        .badge-item.earned .badge-icon::after {
+        .badge-icon::after {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
             animation: sparkle 3s infinite;
@@ -56,9 +58,9 @@
         
         .badge-label { font-size: 0.6rem; color: #555; font-weight: bold; line-height: 1.1; }
 
-        /* Chart */
+        /* Chart: 高さを180pxに変更 */
         .chart-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-top: 20px; padding: 15px; }
-        .chart-card canvas { height: 200px !important; }
+        .chart-card canvas { height: 180px !important; }
         .chart-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .chart-title { font-size: 1.1rem; font-weight: 700; color: var(--brand-color); margin-bottom: 5px; }
         .chart-status { font-size: 0.9rem; font-weight: 600; }
@@ -135,7 +137,8 @@
             <div class="badge-section">
                 <h6 style="color:#888; font-size:0.8rem; font-weight:bold;">マスタリーバッジ (5点×3連続)</h6>
                 <div id="badgeContainer" class="badge-grid">
-                    </div>
+                    <div class="text-muted small mt-2" id="noBadgeMsg" style="display:none;">まだ獲得したバッジはありません</div>
+                </div>
             </div>
 
             <p class="text-muted small text-center mt-3">過去のレッスン評価の推移です。</p>
@@ -235,20 +238,27 @@
             const container = document.getElementById('badgeContainer');
             container.innerHTML = '';
             
+            if (!earnedIndices || earnedIndices.length === 0) {
+                document.getElementById('noBadgeMsg').style.display = 'block';
+                return;
+            } else {
+                document.getElementById('noBadgeMsg').style.display = 'none';
+            }
+            
             scoreLabels.forEach((label, idx) => {
                 const badgeNum = idx + 1; 
-                const isEarned = earnedIndices.includes(badgeNum);
-                const color = chartColors[idx]; // グラフ色と同期
+                // ★ 獲得しているもののみ表示
+                if (!earnedIndices.includes(badgeNum)) return;
+
+                const color = chartColors[idx]; 
                 
                 const iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-star-fill" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>`;
                 
                 const div = document.createElement('div');
-                div.className = `badge-item ${isEarned ? 'earned' : ''}`;
-                // 獲得している場合のみ色を適用
-                const style = isEarned ? `background:${color}; box-shadow: 0 2px 5px ${color.replace('1)','0.4)')};` : '';
+                div.className = 'badge-item';
                 
                 div.innerHTML = `
-                    <div class="badge-icon" style="${style}">${iconHtml}</div>
+                    <div class="badge-icon" style="background:${color}; box-shadow: 0 2px 5px ${color.replace('1)','0.4)')};">${iconHtml}</div>
                     <div class="badge-label">${label}</div>
                 `;
                 container.appendChild(div);
@@ -299,7 +309,6 @@
             }
             listHistory.forEach(h => {
                 const comment = (h.comment && String(h.comment).trim()) ? h.comment : 'コメントなし';
-                // ★平均点算出
                 const avg = (h.scores.reduce((a,b)=>a+b,0) / h.scores.length).toFixed(1);
                 
                 lessonList.insertAdjacentHTML('beforeend', `
@@ -309,7 +318,7 @@
                             <span class="list-date">詳細 &gt;</span>
                         </div>
                         <div class="mt-2 p-2" style="background:#f7f7f7; border-radius:5px;">
-                            <div class="mb-1 fw-bold text-primary">Avg: ${avg}点</div>
+                            <div class="mb-1 fw-bold" style="color:var(--brand-color);">Avg: ${avg}点</div>
                             <p class="mb-1 small" style="white-space: pre-wrap; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><strong>コメント:</strong> ${comment}</p>
                         </div>
                     </div>`);
@@ -321,7 +330,6 @@
             document.getElementById('modalComment').innerText = (detail.comment && String(detail.comment).trim()) ? detail.comment : 'コメントなし';
             document.getElementById('modalHomework').innerText = (detail.homework && String(detail.homework).trim()) ? detail.homework : '宿題なし';
             
-            // ★モーダル平均点計算
             const s1 = detail.scores.slice(0,5).reduce((a,b)=>a+b,0)/5;
             const s2 = detail.scores.slice(5,10).reduce((a,b)=>a+b,0)/5;
             document.getElementById('modalAvgArea').innerHTML = `
