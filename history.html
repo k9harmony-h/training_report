@@ -6,6 +6,7 @@
     <title>レッスン履歴</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/medium-zoom/dist/medium-zoom.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -22,20 +23,56 @@
             color: var(--text-main);
             padding-bottom: 80px;
         }
+        
+        /* ★ 修正点 1: ヘッダーエリアのデザイン変更 ★ */
         .header-area { 
-            background: #fff; padding: 20px 20px 10px; border-bottom: 1px solid #eee;
+            background: #fff; 
+            padding: 15px 20px 20px; 
+            border-bottom: 1px solid #eee;
+            position: relative;
         }
-        .brand-title { color: var(--text-main); font-weight: 700; letter-spacing: 0.05em; font-size: 1.2rem; text-align: center; }
+        /* 戻るボタン（左上に固定） */
         .back-link { 
-            color: var(--brand-color); font-weight: bold; text-decoration: none; display: block; margin-top: 10px;
+            color: var(--brand-color); 
+            font-weight: bold; 
+            text-decoration: none; 
+            font-size: 0.9rem;
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            z-index: 10;
         }
+        /* プロフィール画像（センター配置） */
+        .profile-img-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .dog-profile-large {
+            width: 150px; 
+            height: 150px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            border: 4px solid var(--brand-color); 
+            padding: 2px; 
+            background: #fff;
+        }
+        /* タイトル（写真の下） */
+        .page-title {
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--text-main);
+            margin-top: 15px;
+            margin-bottom: 0;
+        }
+
         .content-container { padding: 0 15px; }
         
         /* グラフカード */
         .chart-card {
             background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-top: 20px; padding: 15px;
         }
-        /* グラフの高さを200pxに固定 */
         .chart-card canvas { height: 200px !important; }
         
         .chart-title { font-size: 1.1rem; font-weight: 700; color: var(--brand-color); margin-bottom: 5px; }
@@ -44,12 +81,32 @@
         .status-great { color: #FF6B6B; } 
         .status-steady { color: #555555; } 
         
+        /* ★ 復元: ギャラリーエリア ★ */
+        .gallery-section { margin-top: 30px; }
+        .section-title { font-size: 1.2rem; color: #555; margin-bottom: 10px; font-weight: 600; }
+        
+        .photo-scroll { 
+            display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; 
+            -ms-overflow-style: none; scrollbar-width: none; 
+        }
+        .photo-scroll::-webkit-scrollbar { display: none; }
+        
+        .gallery-img-wrapper {
+            width: 120px; height: 120px; border-radius: 8px; border: 1px solid #ddd; flex-shrink: 0; overflow: hidden; position: relative;
+        }
+        .gallery-img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .btn-drive-link { 
+            display: inline-block; font-size: 0.9rem; color: var(--brand-color); 
+            text-decoration: none; font-weight: bold; margin-top: 5px;
+        }
+        .btn-drive-link:hover { text-decoration: underline; color: #4aa3a2; }
+
         /* レッスン一覧 */
         .lesson-list { margin-top: 30px; }
         .list-group-item { 
             border: none; margin-bottom: 8px; border-radius: 8px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-            padding: 15px; 
-            cursor: pointer; 
+            padding: 15px; cursor: pointer; 
         }
         .list-header { font-weight: 700; color: var(--brand-color); }
         .list-date { font-size: 0.85rem; color: #888; }
@@ -60,55 +117,9 @@
         }
         .spinner-border-white { border-color: white; border-right-color: transparent; }
         
-        /* モーダル内のスタイル */
+        /* モーダル */
         .modal-score-item { margin-bottom: 5px; font-size: 1rem; }
         .modal-score-item strong { color: var(--brand-color); width: 80px; display: inline-block; }
-
-        /* ギャラリースタイル (修正版: 3枚+もっと見るボタン) */
-        .gallery-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px; /* 画像間の隙間 */
-        }
-        .gallery-item {
-            /* グリッドシステムを使わず、CSS Grid/Flexで制御 */
-            width: calc(50% - 5px); /* 2列表示 */
-            position: relative;
-            padding-top: 50%; /* 正方形比率を維持 */
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #eee;
-            background-color: #f8f8f8;
-        }
-        .gallery-item img {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        /* 「もっと見る」ボタンのデザイン */
-        .more-photos-btn {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.6); /* 半透明黒背景 */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 0.9rem;
-            text-decoration: none;
-            flex-direction: column;
-        }
-        .more-photos-btn:hover { color: #ddd; }
-        
-        /* 元データリンク (今回は「もっと見る」ボタンに統合するため非表示にするか、予備として残す) */
-        .btn-drive-link { 
-            display: none; /* ボタンに統合したので基本非表示 */
-            margin-top: 15px; text-align: right; font-size: 0.9rem; color: var(--brand-color); text-decoration: none; font-weight: bold; 
-        }
     </style>
 </head>
 <body>
@@ -118,22 +129,35 @@
     </div>
 
     <div class="header-area">
-        <div class="d-flex justify-content-between align-items-center">
-            <a href="index.html" class="back-link">&lt; 戻る</a>
-            <h1 class="brand-title">レッスン履歴</h1>
+        <a href="index.html" class="back-link">&lt; 戻る</a>
+        
+        <div class="profile-img-container">
+            <img id="dogProfileImg" src="https://via.placeholder.com/150?text=..." class="dog-profile-large" alt="愛犬">
         </div>
-        <h2 id="dogNameTitle" class="text-center mt-2" style="font-size: 1.5rem; font-weight: 600;">---</h2>
+        
+        <h1 id="pageTitle" class="page-title">---</h1>
     </div>
 
     <div class="content-container py-3">
         
         <p class="text-muted small text-center mt-3">過去のレッスン評価の推移です。</p>
         
-        <div id="chartArea">
+        <div id="chartArea"></div>
+
+        <div class="gallery-section">
+            <h3 class="section-title">ギャラリー</h3>
+            
+            <div id="mainGalleryContainer" class="photo-scroll">
+                <div class="text-muted small ms-3">読み込み中...</div>
             </div>
 
+            <div class="text-end">
+               <a href="#" id="historyDriveLink" class="btn-drive-link" target="_blank" style="display:none;">元データはこちら &gt;</a>
+            </div>
+        </div>
+
         <div class="lesson-list">
-            <h3 class="section-title" style="font-size: 1.2rem; color: #555;">過去のレッスン日一覧 (新しい順)</h3>
+            <h3 class="section-title">過去のレッスン日一覧 (新しい順)</h3>
             <div id="lessonList" class="list-group">
                 <div class="text-center text-muted small mt-4">履歴がありません。</div>
             </div>
@@ -141,7 +165,7 @@
 
     </div>
 
-    <div class="modal fade" id="historyDetailModal" tabindex="-1" aria-labelledby="historyDetailModalLabel" aria-hidden="true">
+    <div class="modal fade" id="historyDetailModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
@@ -150,21 +174,20 @@
           </div>
           <div class="modal-body">
             
-            <h6 class="mt-2 text-muted">評価スコア</h6>
-            <div id="modalScores">
-              </div>
-            
+            <h6 class="text-muted">本日のショット</h6>
+            <div id="modalGallery" class="row g-1">
+              <div class="col-12 text-center text-muted small">画像を読み込み中...</div>
+            </div>
+            <a href="#" id="driveLink" class="btn-drive-link" target="_blank" style="display:none;">元データはこちら &gt;</a>
+
+            <hr>
+
+            <h6 class="mt-3 text-muted">評価スコア</h6>
+            <div id="modalScores"></div>
             <h6 class="mt-4 text-muted">コメント</h6>
             <p id="modalComment" style="white-space: pre-wrap; background:#f7f7f7; padding:10px; border-radius:5px;"></p>
-            
             <h6 class="mt-4 text-muted">宿題</h6>
             <p id="modalHomework" style="white-space: pre-wrap; background:#f7f7f7; padding:10px; border-radius:5px;"></p>
-
-            <h6 class="mt-4 text-muted">写真ギャラリー</h6>
-            <div id="modalGallery" class="gallery-container">
-              <div class="col-12 text-center text-muted small" style="width:100%;">画像を読み込み中...</div>
-            </div>
-            <a href="#" id="driveLink" class="btn-drive-link" target="_blank">元データはこちら &gt;</a>
             
           </div>
           <div class="modal-footer">
@@ -175,73 +198,97 @@
     </div>
 
     <script>
-        // LIFF IDとGAS URLはindex.htmlと同じものを設定
         const LIFF_ID = '2008546673-MJY7j3ox'; 
-        // 最新のデプロイURL
+        // ★最新のGAS URLを使用★
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec'; 
         
-        const scoreLabels = [
-            '指示理解', '集中力', '報酬', 'ボディ', 'コンタクト',
-            '指示出し', '対応力', 'リード', 'ボディ', 'コンタクト'
-        ];
-        const chartColors = [
-            'rgba(255, 99, 132, 1)', 'rgba(255, 159, 64, 1)', 'rgba(255, 205, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(54, 162, 235, 1)',
-            'rgba(153, 102, 255, 1)', 'rgba(201, 203, 207, 1)', 'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)'
-        ];
+        const scoreLabels = [ '指示理解', '集中力', '報酬', 'ボディ', 'コンタクト', '指示出し', '対応力', 'リード', 'ボディ', 'コンタクト' ];
+        const chartColors = [ 'rgba(255, 99, 132, 1)', 'rgba(255, 159, 64, 1)', 'rgba(255, 205, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(54, 162, 235, 1)', 'rgba(153, 102, 255, 1)', 'rgba(201, 203, 207, 1)', 'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)' ];
 
         let allHistoryData = []; 
-        let customerData = {};
         let currentUserId = '';
+        let customerData = {};
 
-        window.onload = function() {
-            main();
-        };
+        window.onload = function() { main(); };
 
         async function main() {
             document.getElementById('loadingOverlay').style.display = 'flex';
             try {
                 await liff.init({ liffId: LIFF_ID });
-                if (!liff.isLoggedIn()) { 
-                    liff.login(); 
-                    return; 
-                }
+                if (!liff.isLoggedIn()) { liff.login(); return; }
                 const profile = await liff.getProfile();
                 currentUserId = profile.userId;
-                console.log('LIFF Success. User ID:', profile.userId); 
-                fetchData(profile.userId);
+                fetchTextData(profile.userId);
             } catch (err) {
-                console.error('LIFF/Init Error:', err);
+                console.error(err);
                 document.getElementById('loadingOverlay').style.display = 'none';
-                alert('アプリの起動エラーが発生しました。コンソールを確認してください。');
+                alert('アプリの起動エラーが発生しました。');
             }
         }
 
-        function fetchData(userId) {
-            const url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}`;
-            console.log('--- Fetching Data ---');
-            console.log('Request URL:', url);
+        function fetchTextData(userId) {
+            const url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
             
             fetch(url)
-                .then(res => {
-                    if (!res.ok) {
-                        return res.text().then(text => {
-                            console.error('Fetch HTTP Error Status:', res.status);
-                            console.error('Fetch HTTP Error Response Text:', text);
-                            throw new Error(`HTTP error! status: ${res.status}`);
-                        });
-                    }
-                    return res.json();
-                })
+                .then(res => { if (!res.ok) throw new Error(res.statusText); return res.json(); })
                 .then(data => {
-                    console.log('Fetch Success! Data:', data);
                     allHistoryData = data.score_history || []; 
-                    customerData = data.customer || {}; // 顧客情報を保存
+                    customerData = data.customer || {};
                     renderHistory(data);
+                    
+                    // ★テキスト表示後に最新レッスン画像を取得してギャラリーに表示 (Lazy Loading)
+                    if (!data.error && data.latest && data.latest.has_photos) {
+                        fetchGalleryImages(userId);
+                    } else {
+                         document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
+                    }
+                    // ★プロフィール画像取得 (Lazy Loading)
+                    if (!data.error) fetchProfileImage(userId);
                 })
                 .catch(err => {
-                    console.error('Fetch/GAS Error Details:', err);
                     document.getElementById('loadingOverlay').style.display = 'none';
-                    alert('データ取得エラーが発生しました。コンソールで詳細を確認してください。Load failed');
+                    alert('データ取得エラーが発生しました。Load failed');
+                });
+        }
+
+        function fetchProfileImage(userId) {
+             fetch(`${GAS_URL}?userId=${userId}&type=img_profile`)
+                .then(res => res.json())
+                .then(data => {
+                   if(data.image) document.getElementById('dogProfileImg').src = data.image;
+                   else document.getElementById('dogProfileImg').src = 'https://via.placeholder.com/150?text=No+Img';
+                })
+                .catch(e => console.log('Profile Image Error', e));
+        }
+
+        // ★ ギャラリー用画像取得関数 ★
+        function fetchGalleryImages(userId) {
+            fetch(`${GAS_URL}?userId=${userId}&type=img_latest`)
+                .then(res => res.json())
+                .then(data => {
+                   const gallery = document.getElementById('mainGalleryContainer');
+                   gallery.innerHTML = ''; 
+                   
+                   if (data.images && data.images.length > 0) {
+                       // 最大4枚まで表示
+                       const displayCount = Math.min(data.images.length, 4);
+                       for(let i=0; i<displayCount; i++) {
+                           const b64 = data.images[i];
+                           const imgHtml = `
+                               <div class="gallery-img-wrapper">
+                                   <img src="${b64}" class="gallery-img zoomable" alt="Photo">
+                               </div>
+                           `;
+                           gallery.insertAdjacentHTML('beforeend', imgHtml);
+                       }
+                       mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
+                   } else {
+                       gallery.innerHTML = '<div class="text-muted small ms-3">画像はありません</div>';
+                   }
+                })
+                .catch(err => {
+                    console.log('Gallery Image Fetch Error: ' + err);
+                    document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-danger small ms-3">読み込みエラー</div>';
                 });
         }
 
@@ -249,13 +296,21 @@
             document.getElementById('loadingOverlay').style.display = 'none';
             const chartArea = document.getElementById('chartArea');
             const lessonList = document.getElementById('lessonList');
-            
-            chartArea.innerHTML = ''; 
-            lessonList.innerHTML = ''; 
+            chartArea.innerHTML = ''; lessonList.innerHTML = ''; 
 
             const dogData = data.dog || {}; 
             const dogName = dogData.name || '愛犬';
-            document.getElementById('dogNameTitle').innerText = `${dogName}のレッスン履歴`; 
+            // ★ タイトル設定 ★
+            document.getElementById('pageTitle').innerText = `${dogName}のレッスン履歴`; 
+
+            // ★ 元データリンク表示制御 ★
+            const historyDriveLink = document.getElementById('historyDriveLink');
+            if (customerData.shared_folder_url) {
+                historyDriveLink.href = customerData.shared_folder_url;
+                historyDriveLink.style.display = 'inline-block';
+            } else {
+                historyDriveLink.style.display = 'none';
+            }
 
             if (!allHistoryData || allHistoryData.length < 1) {
                 chartArea.innerHTML = `<div class="text-center text-muted small mt-4">まだレッスン履歴がありません。</div>`;
@@ -264,112 +319,56 @@
             }
 
             const history = allHistoryData.sort((a, b) => {
-                const dateA = new Date(a.date);
-                const dateB = new Date(b.date);
-                if (dateA < dateB) return 1;
-                if (dateA > dateB) return -1;
-                return 0;
+                const dateA = new Date(a.date); const dateB = new Date(b.date);
+                if (dateA < dateB) return 1; if (dateA > dateB) return -1; return 0;
             });
             
+            // グラフ描画
             for (let i = 0; i < 10; i++) {
                 const itemLabel = scoreLabels[i];
                 const color = chartColors[i];
-                
                 const scores = history.map(h => h.scores[i]);
                 const dates = history.map(h => h.date);
-
                 const latestScore = scores[scores.length - 1];
                 const previousScore = scores.length > 1 ? scores[scores.length - 2] : null;
                 
-                let comparisonText = '';
-                let comparisonClass = '';
-                let specialComment = '';
-
-                if (latestScore === 5) {
-                    specialComment = '⭐️🐶⭐️';
-                }
-
+                let comparisonText = '', comparisonClass = '', specialComment = '';
+                if (latestScore === 5) specialComment = '⭐️🐶⭐️';
                 if (previousScore !== null) {
                     const diff = latestScore - previousScore;
-                    if (diff >= 1) {
-                        if (latestScore < 5) { 
-                            comparisonText = '素晴らしい！成長してます🐶';
-                            comparisonClass = 'status-great';
-                        }
-                    } else if (diff === 0) {
-                        comparisonText = '';
-                        comparisonClass = '';
-                    } else if (diff <= -1) {
-                        comparisonText = 'じっくり頑張ってます🐶';
-                        comparisonClass = 'status-steady';
-                    }
-                } else {
-                    comparisonText = '初回評価です！';
-                    comparisonClass = 'status-steady';
-                }
+                    if (diff >= 1) { if (latestScore < 5) { comparisonText = '素晴らしい！成長してます🐶'; comparisonClass = 'status-great'; } }
+                    else if (diff === 0) { comparisonText = ''; comparisonClass = ''; }
+                    else if (diff <= -1) { comparisonText = 'じっくり頑張ってます🐶'; comparisonClass = 'status-steady'; }
+                } else { comparisonText = '初回評価です！'; comparisonClass = 'status-steady'; }
 
                 const cardHtml = `
                     <div class="chart-card">
                         <div class="chart-meta">
                             <h4 class="chart-title">[${i + 1}] ${itemLabel}</h4>
-                            <div class="text-end">
-                                <span class="chart-status ${comparisonClass}">${comparisonText}</span>
-                                ${specialComment ? `<div style="font-size:1.2rem; font-weight:bold; color:gold; line-height:1;">${specialComment}</div>` : ''}
-                            </div>
+                            <div class="text-end"><span class="chart-status ${comparisonClass}">${comparisonText}</span>${specialComment ? `<div style="font-size:1.2rem; font-weight:bold; color:gold; line-height:1;">${specialComment}</div>` : ''}</div>
                         </div>
                         <canvas id="chart-${i}"></canvas>
-                    </div>
-                `;
+                    </div>`;
                 chartArea.insertAdjacentHTML('beforeend', cardHtml);
-
+                
                 new Chart(document.getElementById(`chart-${i}`), {
                     type: 'line',
                     data: {
-                        labels: dates, 
-                        datasets: [{
-                            label: itemLabel,
-                            data: scores, 
-                            borderColor: color,
-                            backgroundColor: color.replace('1)', '0.1)'),
-                            borderWidth: 2,
-                            pointRadius: 5,
-                            fill: true,
-                            tension: 0.2
+                        labels: dates, datasets: [{
+                            label: itemLabel, data: scores, borderColor: color, backgroundColor: color.replace('1)', '0.1)'), borderWidth: 2, pointRadius: 5, fill: true, tension: 0.2
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                min: 0,
-                                max: 5,
-                                ticks: { stepSize: 1, font: { size: 10 } },
-                                title: { display: true, text: '評価点', font: { size: 10 } }
-                            },
-                            x: {
-                                ticks: { font: { size: 10 } }
-                            }
-                        },
-                        plugins: { legend: { display: false } }
-                    }
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
                 });
             }
             
-            // 4. 過去のレッスン日一覧
-            const reversedHistory = [...history].reverse(); // 新しい順の配列を作成
+            const reversedHistory = [...history].reverse();
+            if (reversedHistory.length > 0) lessonList.innerHTML = ''; 
             
-            if (reversedHistory.length > 0) {
-                 lessonList.innerHTML = ''; 
-            } else {
-                 lessonList.innerHTML = `<div class="text-center text-muted small mt-4">履歴がありません。</div>`;
-            }
-
             reversedHistory.forEach(h => {
                 const comment = (h.comment && String(h.comment).trim()) ? h.comment : 'コメントなし';
                 const homework = (h.homework && String(h.homework).trim()) ? h.homework : '宿題なし';
-
-                 const listItem = `
+                const listItem = `
                     <div class="list-group-item" onclick="showLessonDetail('${h.id}', '${h.date}')">
                         <div class="d-flex w-100 justify-content-between list-header">
                             レッスン日: ${h.date}
@@ -379,21 +378,16 @@
                             <p class="mb-1 small" style="white-space: pre-wrap;"><strong>コメント:</strong> ${comment}</p>
                             <p class="mb-0 small" style="white-space: pre-wrap;"><strong>宿題:</strong> ${homework}</p>
                         </div>
-                    </div>
-                `;
+                    </div>`;
                 lessonList.insertAdjacentHTML('beforeend', listItem);
             });
         }
         
+        // ★ モーダル表示 (画像遅延読み込み付き) ★
         function showLessonDetail(id, date) {
             const detail = allHistoryData.find(h => h.id === id) || allHistoryData.find(h => h.date === date);
-            
-            if (!detail) {
-                alert('データが見つかりませんでした。');
-                return;
-            }
+            if (!detail) return;
 
-            // 1. タイトル、コメント、宿題をセット
             document.getElementById('modalDate').innerText = date;
             const modalCommentText = (detail.comment && String(detail.comment).trim()) ? detail.comment : 'コメントなし';
             const modalHomeworkText = (detail.homework && String(detail.homework).trim()) ? detail.homework : '宿題なし';
@@ -403,18 +397,20 @@
             const scoresContainer = document.getElementById('modalScores');
             scoresContainer.innerHTML = '';
             for (let i = 0; i < 10; i++) {
-                const scoreHtml = `
-                    <div class="modal-score-item">
-                        <strong>[${i + 1}] ${scoreLabels[i]}：</strong> 
-                        ${detail.scores[i]} 点
-                    </div>
-                `;
-                scoresContainer.insertAdjacentHTML('beforeend', scoreHtml);
+                scoresContainer.insertAdjacentHTML('beforeend', `<div class="modal-score-item"><strong>[${i + 1}] ${scoreLabels[i]}：</strong> ${detail.scores[i]} 点</div>`);
             }
-
+            
             // ギャラリー初期化
             const galleryContainer = document.getElementById('modalGallery');
-            galleryContainer.innerHTML = '<div class="col-12 text-center text-muted small" style="width:100%;">画像を読み込み中...</div>';
+            galleryContainer.innerHTML = '<div class="col-12 text-center text-muted small">画像を読み込み中...</div>';
+
+            const driveLinkBtn = document.getElementById('driveLink');
+            if (customerData.shared_folder_url) {
+                driveLinkBtn.href = customerData.shared_folder_url;
+                driveLinkBtn.style.display = 'block';
+            } else {
+                driveLinkBtn.style.display = 'none';
+            }
 
             const detailModal = new bootstrap.Modal(document.getElementById('historyDetailModal'));
             detailModal.show();
@@ -424,13 +420,9 @@
                 galleryContainer.innerHTML = '<div class="col-12 text-center text-muted small">画像ID不足のため表示できません</div>';
                 return;
             }
-            
-            // ★ 画像読み込み関数の呼び出し（userIdが必要なのでグローバル変数か引数で渡す）
-            // fetchLessonImagesByIdは非同期で実行され、完了後にDOMを更新する
             fetchLessonImagesById(currentUserId, detail.id);
         }
 
-        // ★ ギャラリー画像取得と表示（3枚+もっと見る） ★
         function fetchLessonImagesById(userId, lessonId) {
              if(!userId) userId = currentUserId; 
              
@@ -443,44 +435,19 @@
                    gallery.innerHTML = ''; 
                    
                    if (data.images && data.images.length > 0) {
-                       // 最大3枚まで表示
-                       const displayCount = Math.min(data.images.length, 3);
-                       
-                       // 1〜3枚目の画像を表示
+                       const displayCount = Math.min(data.images.length, 4);
                        for(let i=0; i<displayCount; i++) {
                            const b64 = data.images[i];
                            const imgHtml = `
-                               <div class="gallery-item">
-                                   <img src="${b64}" class="gallery-img zoomable" alt="Photo">
+                               <div class="col-6 p-1">
+                                   <div class="gallery-img-wrapper">
+                                       <img src="${b64}" class="gallery-img zoomable" alt="Photo">
+                                   </div>
                                </div>
                            `;
                            gallery.insertAdjacentHTML('beforeend', imgHtml);
                        }
-
-                       // ★ 4枚目がある場合、「もっと見る」ボタンを表示 ★
-                       // もっと見るボタンは4枚目の枠として表示し、タップするとGoogle Driveへ飛ぶ
-                       if (data.images.length > 3) {
-                            // 共有フォルダURLがある場合のみリンクとして機能させる
-                            const driveUrl = customerData.shared_folder_url || '#';
-                            const targetAttr = customerData.shared_folder_url ? 'target="_blank"' : '';
-                            const moreHtml = `
-                               <div class="gallery-item">
-                                   <a href="${driveUrl}" ${targetAttr} class="more-photos-btn">
-                                       <span>+${data.images.length - 3}</span>
-                                       <span style="font-size:0.7rem;">もっと見る</span>
-                                   </a>
-                               </div>
-                           `;
-                           gallery.insertAdjacentHTML('beforeend', moreHtml);
-                       }
-
-                       // ★ 画像表示後にZoom機能を適用 ★
-                       // Medium Zoomライブラリを使って画像を拡大表示できるようにする
-                       // .zoomable クラスがついた画像のみ対象
-                       if(typeof mediumZoom === 'function') {
-                           mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
-                       }
-
+                       mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
                    } else {
                        gallery.innerHTML = '<div class="col-12 text-center text-muted small">画像はありません</div>';
                    }
