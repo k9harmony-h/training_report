@@ -26,8 +26,19 @@
     .brand-title { color: var(--text-main); font-weight: 700; letter-spacing: 0.05em; font-size: 1.2rem; text-align: center; }
     
     .profile-card { margin-top: 20px; display: flex; align-items: center; }
-    /* 犬のプロフィール画像 */
-    .dog-img { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid var(--brand-color); padding: 2px; background: #fff; flex-shrink: 0; transition: opacity 0.5s; }
+    
+    /* プロフィール画像エリア（初期はテキスト表示用） */
+    #dogImgContainer {
+        width: 150px; height: 150px; 
+        border-radius: 50%; 
+        border: 4px solid var(--brand-color); 
+        background: #fff; 
+        flex-shrink: 0; 
+        display: flex; align-items: center; justify-content: center;
+        overflow: hidden;
+        font-size: 0.8rem; color: #aaa; text-align: center;
+    }
+    .dog-img { width: 100%; height: 100%; object-fit: cover; }
     
     .profile-info { margin-left: 20px; flex-grow: 1; }
     .birthday-msg { color: #FF6B6B; font-weight: bold; font-size: 0.8rem; margin-bottom: 0px; display: none; animation: pulse 1.5s infinite; }
@@ -61,6 +72,7 @@
     .btn-reserve { background: var(--brand-color); color: #fff; border: none; width: 100%; padding: 14px; border-radius: 30px; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 12px rgba(87, 195, 194, 0.4); display: block; text-decoration: none; }
     
     #errorView { text-align: center; margin-top: 50px; display: none; padding: 20px; }
+    .line-id-box { background: #eee; padding: 10px; border-radius: 5px; margin: 15px 0; font-family: monospace; font-weight: bold; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -74,7 +86,9 @@
     <div class="container">
       <div class="alert alert-warning text-center">
         <h5 class="fw-bold">未登録のユーザーです</h5>
-        <p class="small">IDが登録されていません。</p>
+        <p class="small">以下のIDをトレーナーにお伝えください。</p>
+        <div class="line-id-box" id="dispLineId">---</div>
+        <button class="btn btn-secondary btn-sm w-100" onclick="copyLineId()">IDをコピー</button>
       </div>
     </div>
   </div>
@@ -84,7 +98,10 @@
       <h1 class="brand-title">K9 Harmony</h1>
       
       <div class="profile-card">
-        <img id="dogImg" src="https://via.placeholder.com/150?text=Loading..." class="dog-img">
+        <div id="dogImgContainer">
+           読み込み中...
+        </div>
+        
         <div class="profile-info">
           <div id="custBirthdayMsg" class="birthday-msg">🎉Happy Birthday🍰</div>
           <p id="custName" class="cust-name">Loading...</p>
@@ -153,7 +170,6 @@
 
   <script>
     const LIFF_ID = '2008546673-MJY7j3ox'; 
-    // GAS URL (変更なし)
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
 
     const dogTips = [
@@ -191,7 +207,7 @@
         if (!liff.isLoggedIn()) { liff.login(); return; }
         const profile = await liff.getProfile();
         
-        // 1. テキストデータを取得 (高速)
+        // 1. テキストデータを取得
         fetchTextData(profile.userId);
 
       } catch (err) {
@@ -205,16 +221,21 @@
       const url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
       
       fetch(url)
-        .then(res => {
-             if (!res.ok) throw new Error(res.statusText);
-             return res.json();
-        })
+        .then(res => res.json())
         .then(data => {
-          renderTextData(data); // 画面表示 (Loading解除)
+          renderTextData(data);
           
-          // テキスト表示が完了したら、裏で画像を取得開始 (Step 2)
+          // テキスト表示後に画像取得を開始 (Lazy Loading)
           if (!data.error) {
-             fetchImages(userId, data.latest ? data.latest.has_photos : false);
+             // プロフィール画像
+             fetchProfileImage(userId);
+             
+             // レッスン画像 (フラグがある場合のみ)
+             if (data.latest && data.latest.has_photos) {
+                fetchLessonImages(userId);
+             } else {
+                document.getElementById('photoArea').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
+             }
           }
         })
         .catch(err => {
@@ -223,39 +244,45 @@
         });
     }
 
-    // --- Step 2: 画像データ取得 (修正版: typeを使用) ---
-    function fetchImages(userId, hasLessonPhotos) {
-      // A. プロフィール画像 (type=img_profile)
-      fetch(`${GAS_URL}?userId=${userId}&type=img_profile`) // ★修正: action -> type
+    // --- Step 2: 画像データ取得 ---
+    
+    // A. プロフィール画像
+    function fetchProfileImage(userId) {
+      fetch(`${GAS_URL}?userId=${userId}&type=img_profile`)
         .then(res => res.json())
         .then(data => {
-           if(data.image) document.getElementById('dogImg').src = data.image;
-           else document.getElementById('dogImg').src = 'https://via.placeholder.com/150?text=No+Img';
-        });
+           const container = document.getElementById('dogImgContainer');
+           if(data.image) {
+               // 画像があればimgタグを生成して挿入
+               container.innerHTML = `<img src="${data.image}" class="dog-img" alt="Dog Photo">`;
+           } else {
+               container.innerHTML = 'No Image';
+           }
+        })
+        .catch(e => console.log('Profile Image Error', e));
+    }
 
-      // B. レッスン画像 (type=img_latest)
-      if (hasLessonPhotos) {
-        fetch(`${GAS_URL}?userId=${userId}&type=img_latest`) // ★修正: action -> type
-          .then(res => res.json())
-          .then(data => {
-             const pArea = document.getElementById('photoArea');
-             pArea.innerHTML = ''; // 「読み込み中」を消す
-             
-             if (data.images && data.images.length > 0) {
-               data.images.forEach(b64 => {
-                 const img = document.createElement('img');
-                 img.src = b64;
-                 img.className = 'photo-item zoomable';
-                 pArea.appendChild(img);
-               });
-               mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
-             } else {
-               pArea.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
-             }
-          });
-      } else {
-          document.getElementById('photoArea').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
-      }
+    // B. レッスン画像
+    function fetchLessonImages(userId) {
+      fetch(`${GAS_URL}?userId=${userId}&type=img_latest`)
+        .then(res => res.json())
+        .then(data => {
+           const pArea = document.getElementById('photoArea');
+           pArea.innerHTML = ''; 
+           
+           if (data.images && data.images.length > 0) {
+             data.images.forEach(b64 => {
+               const img = document.createElement('img');
+               img.src = b64;
+               img.className = 'photo-item zoomable';
+               pArea.appendChild(img);
+             });
+             mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
+           } else {
+             pArea.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
+           }
+        })
+        .catch(e => console.log('Lesson Image Error', e));
     }
 
     function renderTextData(data) {
@@ -263,6 +290,7 @@
         finishLoading();
         document.getElementById('loadingOverlay').style.display = 'none';
         document.getElementById('errorView').style.display = 'block';
+        document.getElementById('dispLineId').innerText = 'ID取得中...'; 
         return;
       }
 
