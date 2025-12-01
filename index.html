@@ -81,7 +81,6 @@
     .footer-action { margin: 30px 20px 10px; text-align: center; }
     .btn-reserve { background: var(--brand-color); color: #fff; border: none; width: 100%; padding: 14px; border-radius: 30px; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 12px rgba(87, 195, 194, 0.4); display: block; text-decoration: none; }
     
-    /* 予約目安ボックス */
     .reminder-box {
         background: #fff3cd; border: 1px solid #ffeeba; color: #856404;
         padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem; font-weight: bold;
@@ -206,6 +205,7 @@
     let tipsTimer;
     function startTipsSlider() {
       const tipsText = document.getElementById('tipsText');
+      if(!tipsText) return;
       let currentTipIndex = Math.floor(Math.random() * dogTips.length);
       tipsText.innerText = dogTips[currentTipIndex];
       tipsTimer = setInterval(() => {
@@ -337,9 +337,19 @@
             document.getElementById('reminderArea').style.display = 'block';
         }
 
+        // ★ 詳細フィードバックを個別に表示
         let d1 = '', d2 = '';
-        for(let i=0; i<5; i++) if(l.details[i]) d1 += `[${i+1}] ${l.details[i]}\n`;
-        for(let i=5; i<10; i++) if(l.details[i]) d2 += `[${i+1}] ${l.details[i]}\n`;
+        // 項目1-5
+        for(let i=0; i<5; i++) {
+            const detailText = l.details[i] ? l.details[i] : 'なし';
+            d1 += `[${i+1}] ${detailText}\n`;
+        }
+        // 項目6-10
+        for(let i=5; i<10; i++) {
+            const detailText = l.details[i] ? l.details[i] : 'なし';
+            d2 += `[${i+1}] ${detailText}\n`;
+        }
+        
         document.getElementById('detail1').innerText = d1 || '特になし';
         document.getElementById('detail2').innerText = d2 || '特になし';
 
