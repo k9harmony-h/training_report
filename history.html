@@ -81,9 +81,6 @@
         .chart-container { position: relative; height: 220px; width: 100%; }
         .chart-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .chart-title { font-size: 1.1rem; font-weight: 700; color: var(--brand-color); margin-bottom: 0; }
-        .chart-status { font-size: 0.9rem; font-weight: 600; }
-        .status-great { color: #FF6B6B; }
-        .status-steady { color: #555555; }
 
         /* Gallery Section */
         .photo-scroll {
@@ -91,7 +88,7 @@
         }
         .photo-scroll::-webkit-scrollbar { display: none; }
         
-        /* 3.5 items logic (28vw) -> 3枚表示＋4枚目チラ見せ */
+        /* 3.5 items logic (28vw) */
         .gallery-item {
             flex: 0 0 28vw; width: 28vw; height: 28vw;
             border-radius: 12px; overflow: hidden; position: relative;
@@ -135,12 +132,10 @@
         }
         .modal-gallery-wrapper { width: 100%; height: 80px; border-radius: 8px; overflow: hidden; position: relative; }
 
-        /* Error Display */
+        /* Error Box */
         #errorContainer { display: none; padding: 20px; text-align: center; }
-        .error-box { background: #fff; padding: 20px; border-radius: 12px; border: 2px solid #ffcccc; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .error-title { color: #d9534f; font-weight: 700; margin-bottom: 10px; }
-        .error-msg { font-size: 0.9rem; color: #555; margin-bottom: 10px; }
-        .id-box { background: #eee; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; word-break: break-all; color: #333; margin: 10px 0; }
+        .error-box { background: #fff; padding: 20px; border-radius: 12px; border: 2px solid #ffcccc; }
+        .id-box { background: #eee; padding: 10px; font-family: monospace; font-size: 0.8rem; word-break: break-all; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -152,12 +147,10 @@
 
     <div id="errorContainer">
         <div class="error-box">
-            <h3 class="error-title">データが見つかりません</h3>
-            <p class="error-msg">サーバーへの接続は成功しましたが、データが取得できませんでした。</p>
-            <p class="small text-muted">使用中のLINE ID:</p>
+            <h5 style="color:#d9534f;font-weight:bold;">データ読み込みエラー</h5>
+            <p class="small text-muted">以下のIDをトレーナーにお伝えください</p>
             <div id="dispLineId" class="id-box">---</div>
             <p id="errorDetail" class="small text-danger"></p>
-            <button class="btn btn-secondary btn-sm mt-2" onclick="location.reload()">再読み込み</button>
         </div>
     </div>
 
@@ -198,24 +191,19 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    
                     <div class="detail-label">PHOTO</div>
                     <div id="modalPhotoArea" class="row g-2 mb-3">
-                        <div class="col-12 text-center text-muted small">画像を読み込み中...</div>
+                        <div class="col-12 text-center text-muted small">読み込み中...</div>
                     </div>
                     <div class="text-end">
                         <a href="#" id="driveLinkModal" class="btn-drive-link" target="_blank" style="display:none;">元データ &gt;</a>
                     </div>
-
                     <div class="detail-label">SCORES</div>
                     <div id="modalScoreArea" class="mb-3"></div>
-
                     <div class="detail-label">COMMENT</div>
                     <div id="modalComment" class="detail-text"></div>
-
                     <div class="detail-label">HOMEWORK</div>
                     <div id="modalHomework" class="detail-text"></div>
-
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">閉じる</button>
@@ -225,92 +213,94 @@
     </div>
 
     <script>
-        // --- Configuration ---
         const LIFF_ID = '2008546673-MJY7j3ox'; 
-        // ★ 最新のGAS URLを設定済み
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
 
         let allHistoryData = [];
         let currentUserId = null;
         let customerSharedFolder = null;
 
-        // --- Init ---
-        window.onload = async function() {
-            try {
-                if (typeof liff === 'undefined') throw new Error('LIFF SDK not loaded.');
-                await liff.init({ liffId: LIFF_ID });
-                
-                if (!liff.isLoggedIn()) { 
-                    liff.login(); 
-                    return; 
-                }
-                
-                const profile = await liff.getProfile();
-                currentUserId = profile.userId;
-                fetchHistoryData(currentUserId);
-            } catch (err) {
-                console.error(err);
-                showError('アプリ起動エラー', err.message);
+        // ★ index.htmlと全く同じ初期化フローを採用
+        window.onload = function() {
+            if (typeof liff === 'undefined') {
+                showError('SDK Error', 'LIFF SDK not loaded.');
+                return;
             }
+            main();
         };
 
-        // --- Fetch Data ---
-        async function fetchHistoryData(userId) {
-            const url = `${GAS_URL}?userId=${userId}&t=${Date.now()}`;
-            
+        async function main() {
             try {
-                const res = await fetch(url);
-                if (!res.ok) throw new Error(`Network response was not ok (Status: ${res.status})`);
-                const data = await res.json();
+                await liff.init({ liffId: LIFF_ID });
+                if (!liff.isLoggedIn()) { liff.login(); return; }
+                const profile = await liff.getProfile();
+                currentUserId = profile.userId;
                 
-                // GAS側からのエラーチェック
-                if (data.error) {
-                    showError('データ取得エラー', `サーバーからの応答: ${data.error}`, userId);
-                    return;
-                }
-
-                allHistoryData = data.score_history || [];
-                if(data.customer && data.customer.shared_folder_url) {
-                    customerSharedFolder = data.customer.shared_folder_url;
-                }
-                
-                // 描画
-                renderHeader(data);
-                renderChart(data.score_history);
-                renderList(data.score_history);
-                setupDriveLinks(data.customer);
-
-                // ロード完了
-                document.body.classList.add('loaded');
-                
-                // 画像遅延読み込み
-                if (allHistoryData.length > 0 || (data && data.latest)) {
-                    setTimeout(() => {
-                        loadImages(userId, data || {});
-                    }, 100);
-                }
+                // ★ index.htmlと同じ呼び出し方
+                fetchTextData(profile.userId);
 
             } catch (err) {
-                console.error('Fetch Error:', err);
-                showError('通信エラー', 'データの読み込みに失敗しました。', userId);
+                console.error(err);
+                showError('Init Error', err.message);
             }
         }
 
-        // --- Error Handling ---
+        // ★ index.htmlからロジックを移植（async/awaitではなくPromiseチェーンを使用）
+        function fetchTextData(userId) {
+            // キャッシュバスターを含めた全く同じURL構造
+            const url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
+            
+            fetch(url)
+                .then(res => {
+                    if (!res.ok) throw new Error(res.statusText); 
+                    return res.json();
+                })
+                .then(data => {
+                    // エラー判定
+                    if (data.error) {
+                        showError('Data Error', data.error, userId);
+                        return;
+                    }
+
+                    allHistoryData = data.score_history || [];
+                    if(data.customer && data.customer.shared_folder_url) {
+                        customerSharedFolder = data.customer.shared_folder_url;
+                    }
+
+                    // 描画
+                    renderHeader(data);
+                    renderChart(data.score_history);
+                    renderList(data.score_history);
+                    setupDriveLinks(data.customer);
+
+                    // 成功したのでローディング消去
+                    document.body.classList.add('loaded');
+
+                    // 画像読み込み開始
+                    if (allHistoryData.length > 0 || (data && data.latest)) {
+                        setTimeout(() => {
+                            loadImages(userId, data || {});
+                        }, 100);
+                    }
+                })
+                .catch(err => {
+                    console.error('Fetch Error:', err);
+                    showError('Connection Error', err.message, userId);
+                });
+        }
+
         function showError(title, msg, userId) {
-            document.body.classList.add('loaded'); // ローディング消去
+            document.body.classList.add('loaded');
             document.getElementById('mainHeader').style.display = 'none';
             document.getElementById('mainContent').style.display = 'none';
-            
             const errDiv = document.getElementById('errorContainer');
             errDiv.style.display = 'block';
-            
-            document.querySelector('.error-title').innerText = title;
-            document.getElementById('errorDetail').innerText = msg;
+            document.getElementById('errorDetail').innerText = `${title}: ${msg}`;
             if(userId) document.getElementById('dispLineId').innerText = userId;
         }
 
-        // --- Rendering ---
+        // --- 以下、UIレンダリング関数 (これらは正しく動作していたものを維持) ---
+
         function renderHeader(data) {
             const dogName = (data.dog && data.dog.name) ? data.dog.name : '愛犬';
             document.getElementById('pageTitle').innerText = `${dogName}のレッスン履歴`;
@@ -326,47 +316,30 @@
 
         function renderChart(history) {
             if (!history || history.length === 0) return;
-            
-            // グラフ用: 日付昇順（古い順）
-            const sortedForChart = [...history].sort((a, b) => {
-                const dateA = new Date(a.full_date || a.date);
-                const dateB = new Date(b.full_date || b.date);
-                return dateA - dateB; 
+            // 古い順（時系列）
+            const sorted = [...history].sort((a, b) => {
+                return new Date(a.full_date || a.date) - new Date(b.full_date || b.date);
             });
-            const recent10 = sortedForChart.slice(-10);
-
+            const recent10 = sorted.slice(-10);
             const ctx = document.getElementById('scoreChart').getContext('2d');
             const labels = recent10.map(h => h.date); 
-            const dataPoints = recent10.map(h => {
-                const sum = h.scores.reduce((a, b) => a + b, 0);
-                return (sum / h.scores.length).toFixed(1);
-            });
+            const dataPoints = recent10.map(h => (h.scores.reduce((a, b) => a + b, 0) / h.scores.length).toFixed(1));
 
             new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: '平均スコア',
-                        data: dataPoints,
-                        borderColor: '#57C3C2', 
-                        backgroundColor: 'rgba(87, 195, 194, 0.1)',
-                        borderWidth: 2,
-                        pointBackgroundColor: '#fff',
-                        pointBorderColor: '#57C3C2',
-                        pointRadius: 4,
-                        fill: true,
-                        tension: 0.3
+                        label: '平均スコア', data: dataPoints,
+                        borderColor: '#57C3C2', backgroundColor: 'rgba(87, 195, 194, 0.1)',
+                        borderWidth: 2, pointBackgroundColor: '#fff', pointBorderColor: '#57C3C2', pointRadius: 4,
+                        fill: true, tension: 0.3
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: {
-                        y: { min: 0, max: 5, ticks: { stepSize: 1 } },
-                        x: { grid: { display: false } }
-                    }
+                    scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } }, x: { grid: { display: false } } }
                 }
             });
         }
@@ -374,22 +347,17 @@
         function renderList(history) {
             const listEl = document.getElementById('historyList');
             listEl.innerHTML = '';
-
             if (!history || history.length === 0) {
                 listEl.innerHTML = '<div class="text-center text-muted small mt-3">履歴がありません</div>';
                 return;
             }
-
-            // リスト用: 日付降順（最新が上）
-            const sortedForList = [...history].sort((a, b) => {
-                const dateA = new Date(a.full_date || a.date);
-                const dateB = new Date(b.full_date || b.date);
-                return dateB - dateA; 
+            // 新しい順
+            const sorted = [...history].sort((a, b) => {
+                return new Date(b.full_date || b.date) - new Date(a.full_date || a.date);
             });
 
-            sortedForList.forEach(item => {
+            sorted.forEach(item => {
                 const avg = (item.scores.reduce((a, b) => a + b, 0) / item.scores.length).toFixed(1);
-                
                 const div = document.createElement('div');
                 div.className = 'list-group-item d-flex justify-content-between align-items-center';
                 div.onclick = () => openDetailModal(item.id);
@@ -404,65 +372,50 @@
             });
         }
 
-        // --- Lazy Load Images & Gallery UI ---
         function loadImages(userId, data) {
-            // Profile Image
+            // Profile
             fetch(`${GAS_URL}?userId=${userId}&type=img_profile`)
                 .then(res => res.json())
-                .then(d => {
-                    if(d.image) document.getElementById('dogProfileImg').src = d.image;
-                })
-                .catch(e => console.error('Profile Image Error:', e));
+                .then(d => { if(d.image) document.getElementById('dogProfileImg').src = d.image; })
+                .catch(console.error);
 
-            // Gallery Images
+            // Gallery
             const container = document.getElementById('galleryContainer');
-            
             if (data && data.latest && data.latest.has_photos) {
                 fetch(`${GAS_URL}?userId=${userId}&type=img_latest`)
                     .then(res => res.json())
                     .then(d => {
                         container.innerHTML = '';
-                        
                         if(d.images && d.images.length > 0) {
-                            // 3枚まで表示
+                            // 3枚まで
                             const displayImages = d.images.slice(0, 3);
-                            
                             displayImages.forEach(src => {
                                 const div = document.createElement('div');
                                 div.className = 'gallery-item';
                                 div.innerHTML = `<img src="${src}" class="gallery-img zoomable" alt="Photo">`;
                                 container.appendChild(div);
                             });
-                            
                             mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
 
-                            // 4枚目（もっと見る）カード
+                            // もっと見るカード
                             if (customerSharedFolder) {
                                 const moreCard = document.createElement('a');
                                 moreCard.href = customerSharedFolder;
                                 moreCard.target = '_blank';
                                 moreCard.className = 'gallery-item see-more-card';
-                                moreCard.innerHTML = `
-                                    <div class="see-more-icon">📂</div>
-                                    <div class="see-more-text">もっと見る</div>
-                                `;
+                                moreCard.innerHTML = `<div class="see-more-icon">📂</div><div class="see-more-text">もっと見る</div>`;
                                 container.appendChild(moreCard);
                             }
-
                         } else {
                             container.innerHTML = '<div class="text-muted small ms-2">画像なし</div>';
                         }
                     })
-                    .catch(e => {
-                        console.error('Gallery Error:', e);
-                        container.innerHTML = '<div class="text-muted small ms-2">読込エラー</div>';
-                    });
+                    .catch(() => container.innerHTML = '<div class="text-muted small ms-2">読込エラー</div>');
             } else {
                 container.innerHTML = '<div class="text-muted small ms-2">写真なし</div>';
             }
         }
 
-        // --- Modal Logic ---
         function openDetailModal(lessonId) {
             const item = allHistoryData.find(h => h.id === lessonId);
             if (!item) return;
@@ -471,48 +424,35 @@
             document.getElementById('modalComment').innerText = item.comment || 'なし';
             document.getElementById('modalHomework').innerText = item.homework || 'なし';
 
-            // Scores
+            const scoreArea = document.getElementById('modalScoreArea'); scoreArea.innerHTML = '';
             const labels = ['指示理解','集中力','報酬','ボディ','コンタクト','指示出し','対応力','リード','ボディ','コンタクト'];
-            const scoreArea = document.getElementById('modalScoreArea');
-            scoreArea.innerHTML = '';
-            item.scores.forEach((score, idx) => {
-                const span = document.createElement('span');
-                span.className = 'score-badge';
-                span.innerText = `${labels[idx] || '項目'}: ${score}`;
-                scoreArea.appendChild(span);
+            item.scores.forEach((s, i) => {
+                scoreArea.innerHTML += `<span class="score-badge">${labels[i] || '項目'}: ${s}</span>`;
             });
 
             const photoArea = document.getElementById('modalPhotoArea');
             photoArea.innerHTML = '<div class="col-12 text-center text-muted small">読み込み中...</div>';
-            
-            const myModal = new bootstrap.Modal(document.getElementById('detailModal'));
-            myModal.show();
+            new bootstrap.Modal(document.getElementById('detailModal')).show();
 
-            // Fetch Detail Images
             fetch(`${GAS_URL}?userId=${currentUserId}&type=img_lesson_detail&lessonId=${lessonId}`)
                 .then(res => res.json())
                 .then(d => {
                     photoArea.innerHTML = '';
                     if(d.images && d.images.length > 0) {
                         d.images.forEach(src => {
-                            const div = document.createElement('div');
-                            div.className = 'col-4'; 
-                            div.innerHTML = `
-                                <div class="modal-gallery-wrapper">
-                                    <img src="${src}" class="gallery-img zoomable-modal" alt="Detail">
-                                </div>
-                            `;
-                            photoArea.appendChild(div);
+                            photoArea.innerHTML += `
+                                <div class="col-4">
+                                    <div class="modal-gallery-wrapper">
+                                        <img src="${src}" class="gallery-img zoomable-modal">
+                                    </div>
+                                </div>`;
                         });
                         mediumZoom('.zoomable-modal', { margin: 24, background: 'rgba(0,0,0,0.8)' });
                     } else {
                         photoArea.innerHTML = '<div class="col-12 text-center text-muted small">写真はありません</div>';
                     }
                 })
-                .catch(e => {
-                    console.error('Detail Image Error:', e);
-                    photoArea.innerHTML = '<div class="col-12 text-center text-danger small">読込エラー</div>';
-                });
+                .catch(() => photoArea.innerHTML = '<div class="col-12 text-center text-danger small">読込エラー</div>');
         }
     </script>
 </body>
