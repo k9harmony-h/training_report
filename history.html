@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>レッスンの履歴</title>
+    <title>レッスンお履歴</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -24,10 +24,23 @@
         }
         .header-area { 
             background: #fff; padding: 20px 20px 10px; border-bottom: 1px solid #eee;
+            /* プロフィールカード風のデザイン調整 */
+            display: flex; align-items: center; gap: 15px;
         }
-        .brand-title { color: var(--text-main); font-weight: 700; letter-spacing: 0.05em; font-size: 1.2rem; text-align: center; }
+        /* 犬のプロフィール画像（遅延読み込み用） */
+        .dog-profile-thumb {
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--brand-color);
+            background-color: #eee;
+            flex-shrink: 0;
+        }
+        .header-text { flex-grow: 1; }
+
+        .brand-title { color: var(--text-main); font-weight: 700; letter-spacing: 0.05em; font-size: 1.2rem; margin: 0; }
         .back-link { 
-            color: var(--brand-color); font-weight: bold; text-decoration: none; display: block; margin-top: 10px;
+            color: var(--brand-color); font-weight: bold; text-decoration: none; display: block; font-size: 0.9rem; margin-bottom: 5px;
         }
         .content-container { padding: 0 15px; }
         
@@ -35,7 +48,7 @@
         .chart-card {
             background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-top: 20px; padding: 15px;
         }
-        .chart-card canvas { height: 200px !important; }
+        .chart-card canvas { height: 120px !important; }
         
         .chart-title { font-size: 1.1rem; font-weight: 700; color: var(--brand-color); margin-bottom: 5px; }
         .chart-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -59,30 +72,14 @@
         }
         .spinner-border-white { border-color: white; border-right-color: transparent; }
         
-        /* モーダル内 */
+        /* モーダル */
         .modal-score-item { margin-bottom: 5px; font-size: 1rem; }
         .modal-score-item strong { color: var(--brand-color); width: 80px; display: inline-block; }
-
-        /* ギャラリースタイル: スクエア表示 */
-        .gallery-item { padding: 5px; position: relative; }
-        .gallery-img { 
-            width: 100%;
-            aspect-ratio: 1 / 1; /* 正方形にする */
-            object-fit: cover;   /* 枠に合わせてトリミング */
-            border-radius: 8px;
-            border: 1px solid #eee;
-        }
-        /* 元データリンクボタン */
-        .btn-drive-link {
-            display: block;
-            margin-top: 15px;
-            text-align: right;
-            font-size: 0.9rem;
-            color: var(--brand-color);
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .btn-drive-link:hover { text-decoration: underline; color: #4aa3a2; }
+        
+        /* ギャラリー（次回実装用プレースホルダ） */
+        .gallery-item { padding: 5px; }
+        .gallery-item img { border-radius: 5px; object-fit: cover; height: 100px; width: 100%; }
+        .btn-drive-link { display: block; margin-top: 15px; text-align: right; font-size: 0.9rem; color: var(--brand-color); text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -92,18 +89,19 @@
     </div>
 
     <div class="header-area">
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="header-text">
             <a href="index.html" class="back-link">&lt; 戻る</a>
             <h1 class="brand-title">レッスン履歴</h1>
+            <div id="dogNameTitle" class="mt-1" style="font-size: 1.1rem; font-weight: 600;">---</div>
         </div>
-        <h2 id="dogNameTitle" class="text-center mt-2" style="font-size: 1.5rem; font-weight: 600;">---</h2>
+        <img id="dogProfileImg" src="https://via.placeholder.com/60?text=..." class="dog-profile-thumb" alt="愛犬">
     </div>
 
     <div class="content-container py-3">
+        
         <p class="text-muted small text-center mt-3">過去のレッスン評価の推移です。</p>
         
-        <div id="chartArea">
-            </div>
+        <div id="chartArea"></div>
 
         <div class="lesson-list">
             <h3 class="section-title" style="font-size: 1.2rem; color: #555;">過去のレッスン日一覧 (新しい順)</h3>
@@ -111,20 +109,21 @@
                 <div class="text-center text-muted small mt-4">履歴がありません。</div>
             </div>
         </div>
+
     </div>
 
-    <div class="modal fade" id="historyDetailModal" tabindex="-1" aria-labelledby="historyDetailModalLabel" aria-hidden="true">
+    <div class="modal fade" id="historyDetailModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="historyDetailModalLabel">レッスン詳細: <span id="modalDate"></span></h5>
+            <h5 class="modal-title">レッスン詳細: <span id="modalDate"></span></h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             
             <h6 class="text-muted">本日のショット</h6>
             <div id="modalGallery" class="row g-1">
-              <div class="col-12 text-center text-muted small">画像がありません。</div>
+              <div class="col-12 text-center text-muted small">※写真は詳細画面で確認できます</div>
             </div>
             <a href="#" id="driveLink" class="btn-drive-link" target="_blank" style="display:none;">元データはこちら &gt;</a>
 
@@ -132,10 +131,8 @@
 
             <h6 class="mt-3 text-muted">評価スコア</h6>
             <div id="modalScores"></div>
-            
             <h6 class="mt-4 text-muted">コメント</h6>
             <p id="modalComment" style="white-space: pre-wrap; background:#f7f7f7; padding:10px; border-radius:5px;"></p>
-            
             <h6 class="mt-4 text-muted">宿題</h6>
             <p id="modalHomework" style="white-space: pre-wrap; background:#f7f7f7; padding:10px; border-radius:5px;"></p>
             
@@ -148,8 +145,8 @@
     </div>
 
     <script>
-        // LIFF IDとGAS URL (最新)
         const LIFF_ID = '2008546673-MJY7j3ox'; 
+        // ★最新のGAS URLを使用★
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec'; 
         
         const scoreLabels = [
@@ -162,31 +159,29 @@
         ];
 
         let allHistoryData = []; 
-        let customerData = {}; // 顧客情報を保持
+        let customerData = {};
 
-        window.onload = function() {
-            main();
-        };
+        window.onload = function() { main(); };
 
         async function main() {
             document.getElementById('loadingOverlay').style.display = 'flex';
             try {
                 await liff.init({ liffId: LIFF_ID });
-                if (!liff.isLoggedIn()) { 
-                    liff.login(); 
-                    return; 
-                }
+                if (!liff.isLoggedIn()) { liff.login(); return; }
                 const profile = await liff.getProfile();
-                fetchData(profile.userId);
+                // テキストデータ取得 (高速)
+                fetchTextData(profile.userId);
             } catch (err) {
-                console.error('LIFF/Init Error:', err);
+                console.error(err);
                 document.getElementById('loadingOverlay').style.display = 'none';
                 alert('アプリの起動エラーが発生しました。');
             }
         }
 
-        function fetchData(userId) {
-            const url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}`;
+        function fetchTextData(userId) {
+            // action=text 指定は不要（デフォルトでテキストのみ返す仕様のため）
+            // キャッシュ回避の乱数付与
+            const url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
             
             fetch(url)
                 .then(res => {
@@ -194,17 +189,150 @@
                     return res.json();
                 })
                 .then(data => {
-                    console.log('Fetch Success! Data:', data);
                     allHistoryData = data.score_history || []; 
-                    customerData = data.customer || {}; // 顧客情報を保存
+                    customerData = data.customer || {};
                     renderHistory(data);
+
+                    // ★ここでテキスト表示完了後に、画像を裏で取得開始★
+                    if (!data.error) {
+                        fetchProfileImage(userId);
+                    }
                 })
                 .catch(err => {
-                    console.error('Fetch/GAS Error Details:', err);
+                    console.error(err);
                     document.getElementById('loadingOverlay').style.display = 'none';
                     alert('データ取得エラーが発生しました。Load failed');
                 });
         }
 
+        // ★追加: プロフィール画像取得関数★
+        function fetchProfileImage(userId) {
+            fetch(`${GAS_URL}?userId=${userId}&type=img_profile`)
+                .then(res => res.json())
+                .then(data => {
+                    if(data.image) {
+                        document.getElementById('dogProfileImg').src = data.image;
+                    } else {
+                        document.getElementById('dogProfileImg').src = 'https://via.placeholder.com/60?text=No+Img';
+                    }
+                })
+                .catch(e => console.log('Image fetch error:', e));
+        }
+
         function renderHistory(data) {
-            document.getElementById('loadingOverlay').style
+            document.getElementById('loadingOverlay').style.display = 'none';
+            const chartArea = document.getElementById('chartArea');
+            const lessonList = document.getElementById('lessonList');
+            chartArea.innerHTML = ''; lessonList.innerHTML = ''; 
+
+            const dogData = data.dog || {}; 
+            const dogName = dogData.name || '愛犬';
+            document.getElementById('dogNameTitle').innerText = `${dogName}のレッスン履歴`; 
+
+            if (!allHistoryData || allHistoryData.length < 1) {
+                chartArea.innerHTML = `<div class="text-center text-muted small mt-4">まだレッスン履歴がありません。</div>`;
+                return;
+            }
+
+            // 日付順ソート
+            const history = allHistoryData.sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                if (dateA < dateB) return 1; if (dateA > dateB) return -1; return 0;
+            });
+            
+            // グラフ描画
+            for (let i = 0; i < 10; i++) {
+                const itemLabel = scoreLabels[i];
+                const color = chartColors[i];
+                const scores = history.map(h => h.scores[i]);
+                const dates = history.map(h => h.date);
+                const latestScore = scores[scores.length - 1];
+                const previousScore = scores.length > 1 ? scores[scores.length - 2] : null;
+                
+                let comparisonText = '', comparisonClass = '', specialComment = '';
+                if (latestScore === 5) specialComment = '⭐️🐶⭐️';
+                if (previousScore !== null) {
+                    const diff = latestScore - previousScore;
+                    if (diff >= 1) { if (latestScore < 5) { comparisonText = '素晴らしい！成長してます🐶'; comparisonClass = 'status-great'; } }
+                    else if (diff <= -1) { comparisonText = 'じっくり頑張ってます🐶'; comparisonClass = 'status-steady'; }
+                } else { comparisonText = '初回評価です！'; comparisonClass = 'status-steady'; }
+
+                const cardHtml = `
+                    <div class="chart-card">
+                        <div class="chart-meta">
+                            <h4 class="chart-title">[${i + 1}] ${itemLabel}</h4>
+                            <div class="text-end"><span class="chart-status ${comparisonClass}">${comparisonText}</span>${specialComment ? `<div style="font-size:1.2rem; font-weight:bold; color:gold; line-height:1;">${specialComment}</div>` : ''}</div>
+                        </div>
+                        <canvas id="chart-${i}"></canvas>
+                    </div>`;
+                chartArea.insertAdjacentHTML('beforeend', cardHtml);
+                
+                new Chart(document.getElementById(`chart-${i}`), {
+                    type: 'line',
+                    data: {
+                        labels: dates, datasets: [{
+                            label: itemLabel, data: scores, borderColor: color, backgroundColor: color.replace('1)', '0.1)'), borderWidth: 2, pointRadius: 5, fill: true, tension: 0.2
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
+                });
+            }
+            
+            // レッスン一覧
+            if (history.length > 0) {
+                 lessonList.innerHTML = ''; 
+            } else {
+                 lessonList.innerHTML = `<div class="text-center text-muted small mt-4">履歴がありません。</div>`;
+            }
+
+            history.forEach(h => {
+                const comment = (h.comment && String(h.comment).trim()) ? h.comment : 'コメントなし';
+                const homework = (h.homework && String(h.homework).trim()) ? h.homework : '宿題なし';
+                const listItem = `
+                    <div class="list-group-item" onclick="showLessonDetail('${h.date}')">
+                        <div class="d-flex w-100 justify-content-between list-header">
+                            レッスン日: ${h.date}
+                            <span class="list-date">タップで詳細</span>
+                        </div>
+                        <div class="mt-2 p-2" style="background:#f7f7f7; border-radius:5px;">
+                            <p class="mb-1 small" style="white-space: pre-wrap;"><strong>コメント:</strong> ${comment}</p>
+                            <p class="mb-0 small" style="white-space: pre-wrap;"><strong>宿題:</strong> ${homework}</p>
+                        </div>
+                    </div>`;
+                lessonList.insertAdjacentHTML('beforeend', listItem);
+            });
+        }
+        
+        function showLessonDetail(date) {
+            const detail = allHistoryData.find(h => h.date === date);
+            if (!detail) return;
+
+            document.getElementById('modalDate').innerText = date;
+            const modalCommentText = (detail.comment && String(detail.comment).trim()) ? detail.comment : 'コメントなし';
+            const modalHomeworkText = (detail.homework && String(detail.homework).trim()) ? detail.homework : '宿題なし';
+            document.getElementById('modalComment').innerText = modalCommentText;
+            document.getElementById('modalHomework').innerText = modalHomeworkText;
+
+            const scoresContainer = document.getElementById('modalScores');
+            scoresContainer.innerHTML = '';
+            for (let i = 0; i < 10; i++) {
+                const scoreHtml = `<div class="modal-score-item"><strong>[${i + 1}] ${scoreLabels[i]}：</strong> ${detail.scores[i]} 点</div>`;
+                scoresContainer.insertAdjacentHTML('beforeend', scoreHtml);
+            }
+            
+            // ギャラリーなどはまだ非表示
+            const driveLinkBtn = document.getElementById('driveLink');
+            if (customerData.shared_folder_url) {
+                driveLinkBtn.href = customerData.shared_folder_url;
+                driveLinkBtn.style.display = 'block';
+            } else {
+                driveLinkBtn.style.display = 'none';
+            }
+
+            const detailModal = new bootstrap.Modal(document.getElementById('historyDetailModal'));
+            detailModal.show();
+        }
+    </script>
+</body>
+</html>
