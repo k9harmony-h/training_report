@@ -91,7 +91,7 @@
         }
         .photo-scroll::-webkit-scrollbar { display: none; }
         
-        /* 3.5 items logic (28vw) */
+        /* 3.5 items logic (28vw) -> 3枚表示＋4枚目チラ見せ */
         .gallery-item {
             flex: 0 0 28vw; width: 28vw; height: 28vw;
             border-radius: 12px; overflow: hidden; position: relative;
@@ -101,7 +101,7 @@
 
         .see-more-card {
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background: linear-gradient(135deg, rgba(87, 195, 194, 0.8), rgba(87, 195, 194, 0.1));
+            background: linear-gradient(135deg, rgba(87, 195, 194, 0.9), rgba(87, 195, 194, 0.3));
             text-decoration: none; color: var(--brand-color); border: 2px solid var(--brand-color);
         }
         .see-more-text { font-size: 0.8rem; font-weight: 700; margin-top: 5px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
@@ -153,8 +153,8 @@
     <div id="errorContainer">
         <div class="error-box">
             <h3 class="error-title">データが見つかりません</h3>
-            <p class="error-msg">ご登録のLINE IDと連携されたデータが見つかりませんでした。</p>
-            <p class="small text-muted">以下のIDをトレーナーにお伝えください：</p>
+            <p class="error-msg">サーバーへの接続は成功しましたが、データが取得できませんでした。</p>
+            <p class="small text-muted">使用中のLINE ID:</p>
             <div id="dispLineId" class="id-box">---</div>
             <p id="errorDetail" class="small text-danger"></p>
             <button class="btn btn-secondary btn-sm mt-2" onclick="location.reload()">再読み込み</button>
@@ -227,7 +227,8 @@
     <script>
         // --- Configuration ---
         const LIFF_ID = '2008546673-MJY7j3ox'; 
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIqH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec';
+        // ★ 最新のGAS URLを設定済み
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
 
         let allHistoryData = [];
         let currentUserId = null;
@@ -262,7 +263,7 @@
                 if (!res.ok) throw new Error(`Network response was not ok (Status: ${res.status})`);
                 const data = await res.json();
                 
-                // ★エラーチェック: GASがエラーを返している場合
+                // GAS側からのエラーチェック
                 if (data.error) {
                     showError('データ取得エラー', `サーバーからの応答: ${data.error}`, userId);
                     return;
@@ -273,7 +274,7 @@
                     customerSharedFolder = data.customer.shared_folder_url;
                 }
                 
-                // 成功時は描画
+                // 描画
                 renderHeader(data);
                 renderChart(data.score_history);
                 renderList(data.score_history);
@@ -297,7 +298,7 @@
 
         // --- Error Handling ---
         function showError(title, msg, userId) {
-            document.body.classList.add('loaded'); // ローディングを消す
+            document.body.classList.add('loaded'); // ローディング消去
             document.getElementById('mainHeader').style.display = 'none';
             document.getElementById('mainContent').style.display = 'none';
             
@@ -435,7 +436,7 @@
                             
                             mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
 
-                            // 4枚目（もっと見る）
+                            // 4枚目（もっと見る）カード
                             if (customerSharedFolder) {
                                 const moreCard = document.createElement('a');
                                 moreCard.href = customerSharedFolder;
