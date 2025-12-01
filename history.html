@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>レッスンも履歴</title>
+    <title>レッスンの履歴</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght=400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -35,7 +35,6 @@
         .chart-card {
             background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-top: 20px; padding: 15px;
         }
-        /* グラフの高さ: 200px維持 */
         .chart-card canvas { height: 200px !important; }
         
         .chart-title { font-size: 1.1rem; font-weight: 700; color: var(--brand-color); margin-bottom: 5px; }
@@ -60,18 +59,30 @@
         }
         .spinner-border-white { border-color: white; border-right-color: transparent; }
         
-        /* モーダル内のスタイル */
+        /* モーダル内 */
         .modal-score-item { margin-bottom: 5px; font-size: 1rem; }
         .modal-score-item strong { color: var(--brand-color); width: 80px; display: inline-block; }
 
-        /* ギャラリースタイル */
-        .gallery-item { padding: 5px; }
-        .gallery-item img { 
-            border-radius: 5px; 
-            object-fit: cover; 
-            height: 100px; /* 画像の高さを統一 */
-            width: 100%; 
+        /* ギャラリースタイル: スクエア表示 */
+        .gallery-item { padding: 5px; position: relative; }
+        .gallery-img { 
+            width: 100%;
+            aspect-ratio: 1 / 1; /* 正方形にする */
+            object-fit: cover;   /* 枠に合わせてトリミング */
+            border-radius: 8px;
+            border: 1px solid #eee;
         }
+        /* 元データリンクボタン */
+        .btn-drive-link {
+            display: block;
+            margin-top: 15px;
+            text-align: right;
+            font-size: 0.9rem;
+            color: var(--brand-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .btn-drive-link:hover { text-decoration: underline; color: #4aa3a2; }
     </style>
 </head>
 <body>
@@ -89,7 +100,6 @@
     </div>
 
     <div class="content-container py-3">
-        
         <p class="text-muted small text-center mt-3">過去のレッスン評価の推移です。</p>
         
         <div id="chartArea">
@@ -101,7 +111,6 @@
                 <div class="text-center text-muted small mt-4">履歴がありません。</div>
             </div>
         </div>
-
     </div>
 
     <div class="modal fade" id="historyDetailModal" tabindex="-1" aria-labelledby="historyDetailModalLabel" aria-hidden="true">
@@ -113,20 +122,22 @@
           </div>
           <div class="modal-body">
             
-            <h6 class="mt-2 text-muted">評価スコア</h6>
-            <div id="modalScores">
-              </div>
+            <h6 class="text-muted">本日のショット</h6>
+            <div id="modalGallery" class="row g-1">
+              <div class="col-12 text-center text-muted small">画像がありません。</div>
+            </div>
+            <a href="#" id="driveLink" class="btn-drive-link" target="_blank" style="display:none;">元データはこちら &gt;</a>
+
+            <hr>
+
+            <h6 class="mt-3 text-muted">評価スコア</h6>
+            <div id="modalScores"></div>
             
             <h6 class="mt-4 text-muted">コメント</h6>
             <p id="modalComment" style="white-space: pre-wrap; background:#f7f7f7; padding:10px; border-radius:5px;"></p>
             
             <h6 class="mt-4 text-muted">宿題</h6>
             <p id="modalHomework" style="white-space: pre-wrap; background:#f7f7f7; padding:10px; border-radius:5px;"></p>
-
-            <h6 class="mt-4 text-muted">写真ギャラリー</h6>
-            <div id="modalGallery" class="row g-2">
-              <div class="col-12 text-center text-muted small">画像がありません。</div>
-            </div>
             
           </div>
           <div class="modal-footer">
@@ -137,9 +148,8 @@
     </div>
 
     <script>
-        // LIFF IDとGAS URLはindex.htmlと同じものを設定
+        // LIFF IDとGAS URL (最新)
         const LIFF_ID = '2008546673-MJY7j3ox'; 
-        // 最新のデプロイURL
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec'; 
         
         const scoreLabels = [
@@ -152,6 +162,7 @@
         ];
 
         let allHistoryData = []; 
+        let customerData = {}; // 顧客情報を保持
 
         window.onload = function() {
             main();
@@ -166,30 +177,26 @@
                     return; 
                 }
                 const profile = await liff.getProfile();
-                console.log('LIFF Success. User ID:', profile.userId); 
                 fetchData(profile.userId);
             } catch (err) {
                 console.error('LIFF/Init Error:', err);
                 document.getElementById('loadingOverlay').style.display = 'none';
-                alert('アプリの起動エラーが発生しました。コンソールを確認してください。');
+                alert('アプリの起動エラーが発生しました。');
             }
         }
 
         function fetchData(userId) {
             const url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}`;
-            console.log('--- Fetching Data ---');
             
             fetch(url)
                 .then(res => {
-                    if (!res.ok) {
-                        return res.text().then(text => { throw new Error(`HTTP error! status: ${res.status}`); });
-                    }
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                     return res.json();
                 })
                 .then(data => {
                     console.log('Fetch Success! Data:', data);
-                    // データをグローバル変数に格納
                     allHistoryData = data.score_history || []; 
+                    customerData = data.customer || {}; // 顧客情報を保存
                     renderHistory(data);
                 })
                 .catch(err => {
@@ -200,198 +207,4 @@
         }
 
         function renderHistory(data) {
-            document.getElementById('loadingOverlay').style.display = 'none';
-            const chartArea = document.getElementById('chartArea');
-            const lessonList = document.getElementById('lessonList');
-            
-            chartArea.innerHTML = ''; 
-            lessonList.innerHTML = ''; 
-
-            // 名前表示 (敬称なし)
-            const dogData = data.dog || {}; 
-            const dogName = dogData.name || '愛犬';
-            document.getElementById('dogNameTitle').innerText = `${dogName}のレッスン履歴`; 
-
-            if (!allHistoryData || allHistoryData.length < 1) {
-                chartArea.innerHTML = `<div class="text-center text-muted small mt-4">まだレッスン履歴がありません。</div>`;
-                lessonList.innerHTML = `<div class="text-center text-muted small mt-4">履歴がありません。</div>`;
-                return;
-            }
-
-            // ★ 修正点: レッスン日を新しい順（降順）に強制ソートする ★
-            // 注: 日付の比較に失敗している可能性があるため、いったんreverse()に戻します。
-            // reverse()は元の配列の順序（通常は古い順）の逆順になるため、データが取得された順に依存します。
-            // データが常に古い順で取得されていることを前提に、reverse()を使用します。
-            const history = allHistoryData;
-            const reversedHistory = [...history].reverse(); 
-            
-            // グラフ描画ロジックは変更なし (ここではhistoryを使う)
-            for (let i = 0; i < 10; i++) {
-                const itemLabel = scoreLabels[i];
-                const color = chartColors[i];
-                
-                const scores = history.map(h => h.scores[i]);
-                const dates = history.map(h => h.date);
-                // ... (グラフ描画ロジック省略) ...
-                 const latestScore = scores[scores.length - 1];
-                const previousScore = scores.length > 1 ? scores[scores.length - 2] : null;
-                
-                let comparisonText = '';
-                let comparisonClass = '';
-                let specialComment = '';
-
-                if (latestScore === 5) {
-                    specialComment = '⭐️🐶⭐️';
-                }
-
-                if (previousScore !== null) {
-                    const diff = latestScore - previousScore;
-                    
-                    if (diff >= 1) { 
-                        if (latestScore < 5) { 
-                            comparisonText = '素晴らしい！成長してます🐶';
-                            comparisonClass = 'status-great';
-                        }
-                    } else if (diff === 0) { 
-                        comparisonText = '';
-                        comparisonClass = '';
-                    } else if (diff <= -1) { 
-                        comparisonText = 'じっくり頑張ってます🐶';
-                        comparisonClass = 'status-steady';
-                    }
-                } else {
-                    comparisonText = '初回評価です！';
-                    comparisonClass = 'status-steady';
-                }
-
-                const cardHtml = `
-                    <div class="chart-card">
-                        <div class="chart-meta">
-                            <h4 class="chart-title">[${i + 1}] ${itemLabel}</h4>
-                            <div class="text-end">
-                                <span class="chart-status ${comparisonClass}">${comparisonText}</span>
-                                ${specialComment ? `<div style="font-size:1.2rem; font-weight:bold; color:gold; line-height:1;">${specialComment}</div>` : ''}
-                            </div>
-                        </div>
-                        <canvas id="chart-${i}"></canvas>
-                    </div>
-                `;
-                chartArea.insertAdjacentHTML('beforeend', cardHtml);
-
-                new Chart(document.getElementById(`chart-${i}`), {
-                    type: 'line',
-                    data: {
-                        labels: dates, datasets: [{
-                            label: itemLabel, data: scores, borderColor: color,
-                            backgroundColor: color.replace('1)', '0.1)'),
-                            borderWidth: 2, pointRadius: 5, fill: true, tension: 0.2
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        scales: { y: { min: 0, max: 5, ticks: { stepSize: 1, font: { size: 10 } } },
-                            x: { ticks: { font: { size: 10 } } }
-                        },
-                        plugins: { legend: { display: false } }
-                    }
-                });
-            }
-            
-            // 4. 過去のレッスン日一覧 (reversedHistoryを使う)
-            if (reversedHistory.length > 0) {
-                 lessonList.innerHTML = ''; 
-            } else {
-                 lessonList.innerHTML = `<div class="text-center text-muted small mt-4">履歴がありません。</div>`;
-            }
-
-            reversedHistory.forEach(h => {
-                // コメントと宿題の表示ロジックは維持
-                const comment = (h.comment && h.comment.trim()) ? h.comment : 'コメントなし';
-                const homework = (h.homework && h.homework.trim()) ? h.homework : '宿題なし';
-
-                 const listItem = `
-                    <div class="list-group-item" onclick="showLessonDetail('${h.date}')">
-                        <div class="d-flex w-100 justify-content-between list-header">
-                            レッスン日: ${h.date}
-                            <span class="list-date">タップで詳細</span>
-                        </div>
-                        <div class="mt-2 p-2" style="background:#f7f7f7; border-radius:5px;">
-                            <p class="mb-1 small" style="white-space: pre-wrap;"><strong>コメント:</strong> ${comment}</p>
-                            <p class="mb-0 small" style="white-space: pre-wrap;"><strong>宿題:</strong> ${homework}</p>
-                        </div>
-                    </div>
-                `;
-                lessonList.insertAdjacentHTML('beforeend', listItem);
-            });
-        }
-        
-        function showLessonDetail(date) {
-            const detail = allHistoryData.find(h => h.date === date);
-            
-            if (!detail) {
-                alert('データが見つかりませんでした。');
-                return;
-            }
-
-            // 1. タイトル、コメント、宿題をセット
-            document.getElementById('modalDate').innerText = date;
-            
-            // モーダル内のコメント・宿題表示 (ロジックは維持)
-            const modalCommentText = (detail.comment && detail.comment.trim()) ? detail.comment : 'コメントなし';
-            const modalHomeworkText = (detail.homework && detail.homework.trim()) ? detail.homework : '宿題なし';
-            
-            document.getElementById('modalComment').innerText = modalCommentText;
-            document.getElementById('modalHomework').innerText = modalHomeworkText;
-
-
-            // 2. スコアリストを生成
-            const scoresContainer = document.getElementById('modalScores');
-            scoresContainer.innerHTML = '';
-            
-            for (let i = 0; i < 10; i++) {
-                const scoreHtml = `
-                    <div class="modal-score-item">
-                        <strong>[${i + 1}] ${scoreLabels[i]}：</strong> 
-                        ${detail.scores[i]} 点
-                    </div>
-                `;
-                scoresContainer.insertAdjacentHTML('beforeend', scoreHtml);
-            }
-            
-            // ★ 修正点: 3. ギャラリー機能の実装 ★
-            const galleryContainer = document.getElementById('modalGallery');
-            galleryContainer.innerHTML = '';
-            
-            let photoCount = 0;
-            let galleryHtml = '';
-
-            for (let i = 1; i <= 5; i++) {
-                // キー名: training_photo_1, training_photo_2, ...
-                const key = `training_photo_${i}`;
-                const photoUrl = detail[key]; 
-                
-                // 画像URLが存在し、空でない場合に表示
-                if (photoUrl && photoUrl.trim()) {
-                    photoCount++;
-                    // Bootstrap grid (col-6: 2列表示) を使用
-                    galleryHtml += `
-                        <div class="col-6 gallery-item">
-                            <img src="${photoUrl}" class="img-fluid" alt="レッスン写真${i}" onerror="this.onerror=null;this.src=''">
-                        </div>
-                    `;
-                }
-            }
-            
-            if (photoCount > 0) {
-                galleryContainer.innerHTML = galleryHtml;
-            } else {
-                galleryContainer.innerHTML = `<div class="col-12 text-center text-muted small">画像がありません。</div>`;
-            }
-            
-            // 4. モーダルを表示
-            const detailModal = new bootstrap.Modal(document.getElementById('historyDetailModal'));
-            detailModal.show();
-        }
-    </script>
-</body>
-</html>
+            document.getElementById('loadingOverlay').style
