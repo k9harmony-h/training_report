@@ -81,9 +81,10 @@
     .footer-action { margin: 30px 20px 10px; text-align: center; }
     .btn-reserve { background: var(--brand-color); color: #fff; border: none; width: 100%; padding: 14px; border-radius: 30px; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 12px rgba(87, 195, 194, 0.4); display: block; text-decoration: none; }
     
+    /* 予約目安ボックス */
     .reminder-box {
         background: #fff3cd; border: 1px solid #ffeeba; color: #856404;
-        padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem; font-weight: bold;
+        padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem; font-weight: bold;
     }
 
     #errorView { text-align: center; margin-top: 50px; display: none; padding: 20px; }
@@ -116,7 +117,7 @@
         <div id="dogImgContainer">
            読み込み中...
         </div>
-        1834
+        
         <div class="profile-info">
           <div id="custBirthdayMsg" class="birthday-msg">🎉Happy Birthday🍰</div>
           <p id="custName" class="cust-name">Loading...</p>
@@ -142,21 +143,22 @@
       </div>
     </div>
 
-    <div class="section-title accent">次回目標 (Next Goal)</div>
-    <div class="next-goal-box" id="nextGoalText">
-       ---
-    </div>
-
     <div class="section-title">本日のテーマ・目標</div>
     <div class="feedback-box" id="goalText">---</div>
     <div class="section-title">できたこと (Done)</div>
     <div class="feedback-box" id="doneText">---</div>
     <div class="section-title">課題 (Unable)</div>
     <div class="feedback-box" id="unableText">---</div>
+    
     <div class="section-title">宿題 (Homework)</div>
     <div class="homework-box">
       <div class="homework-badge">HOMEWORK</div>
       <div id="homeworkText">---</div>
+    </div>
+
+    <div class="section-title accent">次回目標 (Next Goal)</div>
+    <div class="next-goal-box" id="nextGoalText">
+       ---
     </div>
     
     <div class="section-title">詳細フィードバック</div>
@@ -181,11 +183,12 @@
     </div>
 
     <div class="footer-action">
+      <a href="#" class="btn-reserve">予約する / Reserve</a>
+      
       <div id="reminderArea" class="reminder-box" style="display:none;">
           次回予約目安: <span id="reminderDate">--/-- 〜 --/--</span>
       </div>
 
-      <a href="#" class="btn-reserve">予約する / Reserve</a>
       <div class="text-muted small mt-2">
         チケット残数: <span id="ticketCount" class="fw-bold" style="font-size:1.2rem;">-</span> 回
       </div>
@@ -239,7 +242,6 @@
       }
     }
 
-    // --- Step 1: テキストデータ取得 ---
     function fetchTextData(userId) {
       const url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
       
@@ -263,7 +265,6 @@
         });
     }
 
-    // --- Step 2: 画像データ取得 ---
     function fetchProfileImage(userId) {
       fetch(`${GAS_URL}?userId=${userId}&type=img_profile`)
         .then(res => res.json())
@@ -314,10 +315,7 @@
       const c = data.customer || {};
       const d = data.dog || {};
       document.getElementById('custName').innerText = c.name + ' 様';
-      
-      // ★敬称付きの名前を使用
       document.getElementById('dogName').innerText = d.name_disp || d.name || 'Your Dog';
-      
       document.getElementById('ticketCount').innerText = data.ticket_count;
 
       checkBirthday(c.birth_date, 'custBirthdayMsg'); 
@@ -332,10 +330,8 @@
         document.getElementById('homeworkText').innerText = l.homework;
         document.getElementById('trainerComment').innerText = l.comment;
         
-        // ★次回目標の反映
         document.getElementById('nextGoalText').innerText = l.next_goal || 'トレーナーと相談しましょう';
 
-        // ★予約リマインダーの反映
         if (l.recommend_date) {
             document.getElementById('reminderDate').innerText = l.recommend_date;
             document.getElementById('reminderArea').style.display = 'block';
