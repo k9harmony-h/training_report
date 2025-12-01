@@ -14,221 +14,264 @@
             --alert-color: #d9534f;
             --mask-color: #f0f0f0;
         }
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f8f9fa; color: #333; padding-bottom: 200px; /* デバッグ表示用余白 */ }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f8f9fa; color: #333; padding-bottom: 50px; }
 
         /* --- VERSION STAMP --- */
         .version-stamp {
-            position: fixed;
-            top: 0;
-            right: 0;
-            background: #ff0000;
-            color: white;
-            font-size: 10px;
-            padding: 2px 5px;
-            z-index: 9999;
-            font-family: monospace;
-            opacity: 0.8;
+            position: fixed; top: 0; right: 0; background: #6da06f; color: white; font-size: 10px; padding: 2px 5px; z-index: 9999; font-family: monospace; opacity: 0.8;
         }
 
-        /* --- DEBUG CONSOLE --- */
+        /* --- DEBUG CONSOLE (Hidden by default) --- */
+        #debug-console-container { display: none; margin-top: 30px; }
         #debug-console {
-            background-color: #000;
-            color: #0f0;
-            font-family: monospace;
-            font-size: 10px;
-            padding: 10px;
-            margin-top: 20px;
-            border-radius: 8px;
-            white-space: pre-wrap;
-            word-break: break-all;
-            border: 2px solid #333;
+            background-color: #222; color: #0f0; font-family: monospace; font-size: 11px; padding: 15px; border-radius: 8px; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto;
         }
 
-        /* --- SCREEN MODE --- */
-        .card-section {
-            background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid var(--primary-color);
-        }
-        .section-title {
-            font-size: 1.1rem; font-weight: bold; color: var(--primary-color);
-            border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px;
-        }
-        .info-label { font-weight: bold; color: #555; display: block; font-size: 0.8rem; }
-        .info-value { font-size: 1rem; min-height: 20px; word-break: break-all; }
-        .loading { text-align: center; padding: 20px; color: #666; }
+        /* --- COMMON STYLES --- */
+        .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); height: 100%; }
+        .section-title { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 15px; }
+        .info-label { font-weight: bold; color: #666; display: block; font-size: 0.85rem; margin-bottom: 2px; }
+        .info-value { font-size: 1rem; min-height: 24px; word-break: break-word; font-weight: 500; }
+        .loading { text-align: center; padding: 40px; color: #666; }
         
-        .masked-text { letter-spacing: 2px; color: #aaa; background: var(--mask-color); padding: 2px 8px; border-radius: 4px; user-select: none; }
-        .real-text { display: none; font-weight: bold; color: #333; }
-        .btn-toggle-mask {
-            font-size: 0.75rem; padding: 2px 8px; margin-left: 10px;
-            border-radius: 12px; border: 1px solid var(--alert-color);
-            color: var(--alert-color); background: white; cursor: pointer;
+        /* Dog Photo */
+        #d_photo_container {
+            width: 200px; height: 200px; background-color: #f8f9fa; border-radius: 12px; border: 3px solid var(--accent-color); overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
+        .dog-profile-img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Masking UI */
+        .masked-wrapper { background: var(--mask-color); padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; }
+        .masked-text { letter-spacing: 3px; color: #aaa; user-select: none; margin-right: 10px; font-family: monospace; }
+        .real-text { display: none; font-weight: bold; color: #333; margin-right: 10px; }
+        .btn-toggle-mask {
+            font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--alert-color); color: var(--alert-color); background: white; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-toggle-mask:hover { background: var(--alert-color); color: white; }
         .btn-toggle-mask.active { background: var(--alert-color); color: white; }
 
+        /* Certificate Button */
         .btn-cert-view {
-            font-size: 0.8rem; padding: 4px 12px; margin-left: 10px;
-            border-radius: 4px; background-color: var(--primary-color);
-            color: white; border: none; text-decoration: none; cursor: pointer;
+            font-size: 0.85rem; padding: 6px 15px; margin-left: auto; border-radius: 6px; background-color: var(--primary-color); color: white; border: none; cursor: pointer; transition: opacity 0.2s; display: inline-flex; align-items: center; gap: 5px;
         }
+        .btn-cert-view:hover { opacity: 0.9; color: white; }
 
-        .no-print-area { margin: 20px; text-align: center; }
-        .btn-print {
-            background-color: var(--primary-color); color: white;
-            padding: 10px 30px; border-radius: 50px; border: none; font-weight: bold;
+        /* UI Elements */
+        .no-print-area { margin: 20px 0 30px; text-align: center; }
+        .btn-print { background-color: var(--primary-color); color: white; padding: 12px 40px; border-radius: 50px; border: none; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(109, 160, 111, 0.3); transition: transform 0.1s; }
+        .btn-print:active { transform: scale(0.98); }
+        .disclaimer-footer { font-size: 0.8rem; color: #999; margin-top: 40px; padding-bottom: 20px; border-top: 1px solid #eee; padding-top: 20px; }
+
+        /* Screen-only layout adjustments */
+        @media screen {
+            .info-row { margin-bottom: 12px; }
+            /* 横並びレイアウト用 */
+            .screen-two-col-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+            .screen-two-col-layout > .print-block { flex: 1 1 400px; /* 幅が足りなければ縦並びになる */ }
         }
-        .disclaimer-footer { font-size: 0.8rem; color: #999; margin-top: 30px; padding-bottom: 20px; }
 
         /* --- PRINT MODE --- */
         @media print {
-            @page { size: A4 landscape; margin: 10mm; }
-            body { background: white; -webkit-print-color-adjust: exact; padding-bottom: 0; }
-            .no-print-area, header, .btn-toggle-mask, .btn-cert-view, .modal-backdrop, .modal, .version-stamp, #debug-console { display: none !important; }
+            @page { size: A4 landscape; margin: 8mm; }
+            body { background: white; -webkit-print-color-adjust: exact; padding: 0; font-size: 10pt; }
+            .no-print-area, header, .btn-toggle-mask, .btn-cert-view, .modal-backdrop, .modal, .version-stamp, #debug-console-container { display: none !important; }
+            .masked-wrapper { background: none; padding: 0; display: block; }
             .masked-text { display: none !important; }
-            .real-text { display: block !important; }
+            .real-text { display: block !important; color: #000; }
+            #d_photo_container { border: 2px solid #ddd; }
+            .card-section { box-shadow: none; padding: 15px; border: 1px solid #ddd; height: auto; }
+            .section-title { border-bottom: 1px solid #ccc; color: #000; margin-bottom: 10px; }
+            .info-value { border-bottom: 1px dotted #ccc; padding-bottom: 2px; }
 
-            .print-container {
-                display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
-                height: 180mm; gap: 10mm;
-            }
-            .print-block {
-                border: 2px solid #333; border-radius: 8px; padding: 10px; overflow: hidden; position: relative;
-            }
-            .print-block h3 {
-                font-size: 14pt; background: #eee; text-align: center;
-                margin: -10px -10px 10px -10px; padding: 5px; border-bottom: 1px solid #333; color: #000;
-            }
-            .p-label { font-size: 8pt; color: #666; margin-top: 5px; }
-            .p-value { font-size: 11pt; font-weight: bold; border-bottom: 1px dotted #ccc; }
-            .alert-box { border: 2px solid red; padding: 5px; margin-top: 5px; border-radius: 4px; }
-            .alert-title { color: red; font-weight: bold; font-size: 9pt; }
-            .card-section { border: none; box-shadow: none; padding: 0; margin: 0; border-left: none; }
-            .print-footer { position: fixed; bottom: 0; left: 0; width: 100%; text-align: center; font-size: 8pt; color: #666; }
-        }
-        @media screen {
-            .print-container { display: block; } .print-block { display: contents; }
-            .print-only-header, .print-footer { display: none; }
+            /* Print Grid Layout */
+            .print-container { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 15px; }
+            .print-block { break-inside: avoid; }
+            /* 印刷時は強制的に横並びを解除してグリッドに任せる */
+            .screen-two-col-layout { display: contents; }
+            
+            .print-footer { position: fixed; bottom: 0; left: 0; width: 100%; text-align: center; font-size: 9pt; color: #666; background: white; padding: 5px; }
         }
     </style>
 </head>
 <body>
 
-    <div class="version-stamp">v002-DEBUG</div>
+    <div class="version-stamp">v2025.12.02-LAYOUT-FIX</div>
 
-    <div class="container py-3 no-print-area">
-        <h4 class="text-center mb-3">⛑️ うちの子医療・防災手帳</h4>
-        <div id="loading" class="loading">
-            <div class="spinner-border text-success" role="status"></div>
-            <p class="mt-2">データを読み込んでいます...</p>
+    <div class="container py-4">
+        <div class="no-print-area">
+            <h4 class="fw-bold mb-3" style="color: var(--primary-color);">⛑️ うちの子医療・防災手帳</h4>
+            <div id="loading" class="loading">
+                <div class="spinner-border text-success" role="status" style="width: 3rem; height: 3rem;"></div>
+                <p class="mt-3 fw-bold">データを読み込んでいます...</p>
+            </div>
+            <div id="content-controls" style="display:none;">
+                <p class="text-muted mb-4">緊急時に備え、この情報を印刷して携帯、またはスクリーンショットで保存してください。</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <button onclick="window.print()" class="btn btn-print">🖨️ 手帳を印刷する</button>
+                    <button onclick="window.location.href='index.html'" class="btn btn-outline-secondary px-4 rounded-pill fw-bold">戻る</button>
+                </div>
+            </div>
         </div>
-        <div id="content" style="display:none;">
-            <p class="text-center small text-muted">緊急時に備え、この情報を印刷して携帯してください。</p>
-            <div class="d-flex justify-content-center gap-2">
-                <button onclick="window.print()" class="btn btn-print">🖨️ 手帳を印刷する</button>
-                <button onclick="window.location.href='index.html'" class="btn btn-outline-secondary" style="border-radius:50px;">戻る</button>
+
+        <div id="main-display" style="display:none;">
+            <div class="print-container">
+                
+                <div class="print-block">
+                    <div class="card-section">
+                        <div class="section-title">基本情報 / Owner Info</div>
+                        <div class="d-flex gap-4 align-items-start">
+                            <div id="d_photo_container">
+                                <div class="spinner-border text-secondary" role="status"></div>
+                            </div>
+                            
+                            <div class="flex-grow-1">
+                                <div class="row info-row">
+                                    <div class="col-7"><span class="info-label">お名前 (Dog Name)</span><div class="info-value fs-4 fw-bold" id="d_name">-</div></div>
+                                    <div class="col-5"><span class="info-label">犬種 (Breed)</span><div class="info-value" id="d_breed">-</div></div>
+                                </div>
+                                <div class="row info-row">
+                                    <div class="col-4"><span class="info-label">性別</span><div class="info-value" id="d_gender">-</div></div>
+                                    <div class="col-4"><span class="info-label">誕生日</span><div class="info-value" id="d_birth">-</div></div>
+                                    <div class="col-4"><span class="info-label">年齢</span><div class="info-value" id="d_age">-</div></div>
+                                </div>
+                                <hr class="my-3" style="border-color: var(--accent-color);">
+                                <div class="info-row">
+                                    <span class="info-label">飼い主様 (Owner)</span><div class="info-value fw-bold" id="c_name">-</div>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">住所 (Address)</span>
+                                    <div class="masked-wrapper">
+                                        <span class="masked-text" id="c_address_masked">***</span>
+                                        <span class="real-text" id="c_address_real">-</span>
+                                        <button class="btn-toggle-mask" onclick="toggleMask(this, '住所')">表示</button>
+                                    </div>
+                                </div>
+                                <div class="info-row mb-0">
+                                    <span class="info-label">電話番号 (Phone)</span>
+                                    <div class="masked-wrapper">
+                                        <span class="masked-text">***-****-****</span>
+                                        <span class="real-text" id="c_phone">-</span>
+                                        <button class="btn-toggle-mask" onclick="toggleMask(this, '電話番号')">表示</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="screen-two-col-layout">
+                    <div class="print-block">
+                        <div class="card-section">
+                            <div class="section-title" style="color: var(--alert-color); border-bottom-color: #f8d7da;">緊急連絡先 / Emergency</div>
+                            <div class="info-row">
+                                <span class="info-label">緊急連絡先 (Emergency Contact)</span><div class="info-value fw-bold" id="c_em_name">-</div>
+                                <div class="masked-wrapper mt-1">
+                                    <span class="masked-text">***-****-****</span><span class="real-text" id="c_em_phone">-</span>
+                                    <button class="btn-toggle-mask" onclick="toggleMask(this, '連絡先')">表示</button>
+                                </div>
+                            </div>
+                            <div class="info-row p-3 rounded" style="background-color: #fff3cd; border: 1px solid #ffeeba;">
+                                <span class="info-label text-danger">代理引受人 (Proxy Person)</span>
+                                <div class="small text-muted mb-1" style="font-size:0.75rem;">※飼い主不在時に犬を保護する人</div>
+                                <div class="info-value fw-bold" id="c_proxy_name">-</div>
+                                <div class="masked-wrapper mt-1" style="background: rgba(255,255,255,0.7);">
+                                    <span class="masked-text">***-****-****</span><span class="real-text" id="c_proxy_phone">-</span>
+                                    <button class="btn-toggle-mask" onclick="toggleMask(this, '連絡先')">表示</button>
+                                </div>
+                            </div>
+                            <div class="info-row mb-0">
+                                <span class="info-label">指定避難所 (Evacuation Site)</span><div class="info-value" id="c_evac">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="print-block">
+                        <div class="card-section">
+                            <div class="section-title">ケア情報 / Care Info</div>
+                            <div class="info-row p-3 rounded border border-danger" style="background-color: #fff5f5;">
+                                <span class="info-label text-danger">⚠️ アレルギー (Allergies)</span>
+                                <div class="info-value fw-bold text-danger" id="d_allergy">-</div>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">食べているフード (Food)</span><div class="info-value" id="d_food">-</div>
+                            </div>
+                            <div class="info-row mb-0">
+                                <span class="info-label">性格・注意事項 (Caution)</span><div class="info-value" id="d_caution">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="print-block">
+                    <div class="card-section">
+                        <div class="section-title">医療情報 / Medical</div>
+                        <div class="info-row">
+                            <span class="info-label">かかりつけ動物病院 (Vet)</span><div class="info-value fw-bold fs-5" id="d_vet">-</div>
+                        </div>
+                        <div class="row info-row">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <div class="p-3 rounded" style="background: var(--accent-color);">
+                                    <span class="info-label">狂犬病予防接種</span>
+                                    <div class="d-flex align-items-center justify-content-between mt-2">
+                                        <span id="d_rabies_status" class="fw-bold">-</span>
+                                        <button id="btn_rabies_img" class="btn-cert-view" style="display:none;">📷 証明書を見る</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 rounded" style="background: var(--accent-color);">
+                                    <span class="info-label">混合ワクチン</span>
+                                    <div class="d-flex align-items-center justify-content-between mt-2">
+                                        <span id="d_vaccine_status" class="fw-bold">-</span>
+                                        <button id="btn_vaccine_img" class="btn-cert-view" style="display:none;">📷 証明書を見る</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row info-row">
+                            <div class="col-md-6">
+                                <span class="info-label">既往歴 (Medical History)</span><div class="info-value" id="d_history">-</div>
+                            </div>
+                            <div class="col-md-6">
+                                <span class="info-label">常備薬 (Medicine)</span><div class="info-value text-danger fw-bold" id="d_medicine">-</div>
+                            </div>
+                        </div>
+                        <div class="info-row mb-0 bg-light p-2 rounded">
+                            <span class="info-label">鑑札番号 / マイクロチップ</span>
+                            <div class="info-value" style="font-family: monospace;"><span id="d_license"></span> / <span id="d_chip"></span></div>
+                        </div>
+                        <div class="mt-3 text-end">
+                            <small class="text-muted">発行日 (Date): <span id="print_date"></span></small>
+                        </div>
+                    </div>
+                </div>
             </div>
+            
+            <div class="print-footer">【ご注意】本カードは公的証明書ではありません。狂犬病予防法に基づく手続き等では、必ず原本をご提示ください。K9 Harmony Portal</div>
         </div>
-    </div>
 
-    <div class="container" id="main-display" style="display:none;">
-        <div class="print-container">
-            <div class="print-block">
-                <h3 class="print-only-header">基本情報 / Owner Info</h3>
-                <div class="card-section">
-                    <div class="section-title d-none d-print-none">基本情報</div>
-                    <div class="row">
-                        <div class="col-6"><span class="p-label info-label">お名前 (Dog Name)</span><div class="p-value info-value" id="d_name">-</div></div>
-                        <div class="col-6"><span class="p-label info-label">犬種 (Breed)</span><div class="p-value info-value" id="d_breed">-</div></div>
-                    </div>
-                    <div class="row mt-2">
-                        <div class="col-4"><span class="p-label info-label">性別</span><div class="p-value info-value" id="d_gender">-</div></div>
-                        <div class="col-4"><span class="p-label info-label">誕生日</span><div class="p-value info-value" id="d_birth">-</div></div>
-                        <div class="col-4"><span class="p-label info-label">年齢</span><div class="p-value info-value" id="d_age">-</div></div>
-                    </div>
-                    <hr>
-                    <span class="p-label info-label">飼い主様 (Owner)</span><div class="p-value info-value" id="c_name">-</div>
-                    <span class="p-label info-label">住所 (Address)</span><div class="p-value info-value" id="c_address" style="font-size: 9pt;">-</div>
-                    <span class="p-label info-label">電話番号 (Phone)</span>
-                    <div class="p-value info-value">
-                        <span class="masked-text">***-****-****</span><span class="real-text" id="c_phone">-</span>
-                        <button class="btn-toggle-mask" onclick="toggleMask(this)">表示</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="print-block">
-                <h3 class="print-only-header">緊急連絡先 / Emergency</h3>
-                <div class="card-section">
-                    <div class="section-title d-none d-print-none">緊急連絡先</div>
-                    <div class="mb-3">
-                        <span class="p-label info-label">緊急連絡先 (Emergency Contact)</span><div class="p-value info-value" id="c_em_name">-</div>
-                        <div class="p-value info-value">
-                            <span class="masked-text">***-****-****</span><span class="real-text" id="c_em_phone">-</span>
-                            <button class="btn-toggle-mask" onclick="toggleMask(this)">表示</button>
-                        </div>
-                    </div>
-                    <div class="mb-3" style="background-color: #fff3cd; padding: 5px; border-radius: 5px;">
-                        <span class="p-label info-label text-danger">代理引受人 (Proxy Person)</span>
-                        <div class="small text-muted d-print-none" style="font-size:8pt;">※飼い主不在時に犬を保護する人</div>
-                        <div class="p-value info-value fw-bold" id="c_proxy_name">-</div>
-                        <div class="p-value info-value">
-                            <span class="masked-text">***-****-****</span><span class="real-text" id="c_proxy_phone">-</span>
-                            <button class="btn-toggle-mask" onclick="toggleMask(this)">表示</button>
-                        </div>
-                    </div>
-                    <div><span class="p-label info-label">指定避難所 (Evacuation Site)</span><div class="p-value info-value" id="c_evac">-</div></div>
-                </div>
-            </div>
-
-            <div class="print-block">
-                <h3 class="print-only-header">医療情報 / Medical</h3>
-                <div class="card-section">
-                    <div class="section-title d-none d-print-none">医療情報</div>
-                    <span class="p-label info-label">かかりつけ動物病院 (Vet)</span><div class="p-value info-value" id="d_vet">-</div>
-                    <div class="row mt-2">
-                        <div class="col-6">
-                            <span class="p-label info-label">狂犬病予防接種</span>
-                            <div class="p-value info-value d-flex align-items-center"><span id="d_rabies_status">-</span><button id="btn_rabies_img" class="btn-cert-view" style="display:none;">📷</button></div>
-                        </div>
-                        <div class="col-6">
-                            <span class="p-label info-label">混合ワクチン</span>
-                            <div class="p-value info-value d-flex align-items-center"><span id="d_vaccine_status">-</span><button id="btn_vaccine_img" class="btn-cert-view" style="display:none;">📷</button></div>
-                        </div>
-                    </div>
-                    <div class="mt-2"><span class="p-label info-label">既往歴 (Medical History)</span><div class="p-value info-value" id="d_history">-</div></div>
-                    <div class="mt-2"><span class="p-label info-label">常備薬 (Medicine)</span><div class="p-value info-value" id="d_medicine" style="color:red;">-</div></div>
-                    <div class="mt-2"><span class="p-label info-label">鑑札番号 / マイクロチップ</span><div class="p-value info-value" style="font-size:9pt;"><span id="d_license"></span> / <span id="d_chip"></span></div></div>
-                </div>
-            </div>
-
-            <div class="print-block">
-                <h3 class="print-only-header">ケア情報 / Care Info</h3>
-                <div class="card-section">
-                    <div class="section-title d-none d-print-none">食事・ケア</div>
-                    <div class="alert-box"><span class="alert-title">⚠️ アレルギー (Allergies)</span><div class="p-value info-value" id="d_allergy">-</div></div>
-                    <div class="mt-2"><span class="p-label info-label">食べているフード (Food)</span><div class="p-value info-value" id="d_food">-</div></div>
-                    <div class="mt-2"><span class="p-label info-label">性格・注意事項 (Caution)</span><div class="p-value info-value" id="d_caution">-</div></div>
-                    <div class="mt-3 text-end"><small style="font-size:8pt; color:#999;">K9 Harmony Portal - Data Generated: <span id="print_date"></span></small></div>
-                </div>
-            </div>
-            <div class="print-footer">【ご注意】本カードは公的証明書ではありません。狂犬病予防法に基づく手続き等では、必ず原本をご提示ください。</div>
-        </div>
-        <footer class="disclaimer-footer no-print-area text-center"><hr><p>【免責事項・ご注意】<br>本アプリおよび出力されたカードは、公的な証明書ではありません。<br>掲載情報は最終更新日時点のものです。</p></footer>
+        <footer class="disclaimer-footer no-print-area text-center">
+            <p>【免責事項・ご注意】<br>本アプリおよび出力されたカードは、公的な証明書ではありません。<br>掲載情報は最終更新日時点のものです。<br>© K9 Harmony</p>
+            <button onclick="document.getElementById('debug-console-container').style.display='block'" class="btn btn-sm btn-link text-muted" style="text-decoration: none; opacity: 0.5;">⚙️</button>
+        </footer>
         
-        <div class="container no-print-area">
-            <h6 class="text-danger fw-bold">⚠️ Debug Console</h6>
+        <div id="debug-console-container" class="container no-print-area">
+            <h6 class="text-danger fw-bold mb-2">⚠️ Debug Console <button onclick="this.parentElement.parentElement.style.display='none'" class="btn btn-sm btn-outline-secondary float-end">Close</button></h6>
             <div id="debug-console">Initializing...</div>
         </div>
     </div>
 
     <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">証明書プレビュー</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body text-center">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">証明書プレビュー</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-4" style="background: #f0f0f0;">
                     <div id="modalLoading" class="spinner-border text-primary" role="status" style="display:none;"></div>
-                    <img id="modalImage" src="" class="img-fluid" alt="Certificate" onload="document.getElementById('modalLoading').style.display='none';">
-                    <div class="mt-2 text-muted small">※画像を長押しして保存できます</div>
+                    <img id="modalImage" src="" class="img-fluid rounded shadow-sm" style="max-height: 70vh;" alt="Certificate" onload="document.getElementById('modalLoading').style.display='none';">
+                    <div class="mt-3 text-muted small">※画像を長押しなどで保存してください</div>
                 </div>
             </div>
         </div>
@@ -236,15 +279,16 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // ▼▼▼ 正しいAPI URL ▼▼▼
         const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
         const LIFF_ID = "2008546673-MJY7j3ox";
         let imageModal;
+        let currentUserId, currentDogId;
 
-        // DEBUG LOGGER
         function log(msg) {
             const el = document.getElementById('debug-console');
             const time = new Date().toLocaleTimeString();
-            el.innerHTML += `[${time}] ${msg}\n`;
+            el.innerHTML = `[${time}] ${msg}\n` + el.innerHTML;
             console.log(msg);
         }
 
@@ -253,53 +297,39 @@
             try {
                 log('Starting LIFF init...');
                 await liff.init({ liffId: LIFF_ID });
-                if (!liff.isLoggedIn()) { 
-                    log('Not logged in. Calling login().');
-                    liff.login(); 
-                    return; 
-                }
+                if (!liff.isLoggedIn()) { liff.login(); return; }
                 const profile = await liff.getProfile();
-                log('Logged in as: ' + profile.userId);
+                currentUserId = profile.userId;
                 
                 const urlParams = new URLSearchParams(window.location.search);
-                const dogId = urlParams.get('dogId');
-                log('DogID from URL: ' + (dogId ? dogId : 'None'));
+                currentDogId = urlParams.get('dogId');
+                log(`User: ${currentUserId.substring(0,5)}..., DogID: ${currentDogId || 'Auto'}`);
 
-                fetchData(profile.userId, dogId);
+                fetchData(currentUserId, currentDogId);
             } catch (err) {
                 log('FATAL ERROR: ' + err.message);
-                document.getElementById('loading').innerHTML = `<p class="text-danger">初期化エラー: ${err.message}</p>`;
+                document.getElementById('loading').innerHTML = `<p class="text-danger fw-bold">初期化エラーが発生しました。<br><small>${err.message}</small></p>`;
             }
         };
 
         function fetchData(userId, dogId) {
             let url = `${API_URL}?userId=${userId}`;
             if(dogId) url += `&dogId=${dogId}`;
-            
-            log('Fetching API: ' + url);
-
+            log('Fetching main data...');
             fetch(url).then(res => res.json()).then(data => {
-                log('Response received.');
-                
-                // DATA INSPECTION
-                log('Customer Data: ' + JSON.stringify(data.customer, null, 2));
-                log('Dog Data: ' + JSON.stringify(data.dog, null, 2));
-
                 if (data.error) { 
                     log('API Error: ' + data.error);
-                    document.getElementById('loading').innerHTML = `<p class="text-danger">${data.error}</p>`; 
-                    return; 
+                    document.getElementById('loading').innerHTML = `<p class="text-danger fw-bold">${data.error}</p>`; return; 
                 }
                 if (data.multiple_dogs) { 
-                    log('Multiple dogs found, selection needed.');
-                    document.getElementById('loading').innerHTML = `<p class="text-warning">犬を選択してください</p>`; 
-                    return; 
+                    document.getElementById('loading').innerHTML = `<p class="text-warning fw-bold">犬を選択してください（index.htmlから選択）</p>`; return; 
                 }
-                
                 renderData(data);
+                // データ表示後に犬の画像を非同期で取得
+                fetchDogImage(userId, data.dog.id);
             }).catch(err => {
                 log('Fetch Error: ' + err.message);
-                document.getElementById('loading').innerHTML = `<p class="text-danger">通信エラー: ${err.message}</p>`;
+                document.getElementById('loading').innerHTML = `<p class="text-danger fw-bold">通信エラーが発生しました。</p>`;
             });
         }
 
@@ -315,59 +345,104 @@
             setText('d_age', d.age);
             
             setText('c_name', c.name);
-            setText('c_address', c.address);
-            setText('c_phone', c.phone);
+            // 住所マスキング処理
+            setMaskedText('c_address', c.address, maskAddress(c.address));
+            setMaskedText('c_phone', c.phone, null); // 電話は単純マスク
             
             setText('c_em_name', c.em_name);
-            setText('c_em_phone', c.em_phone);
-            setText('c_proxy_name', c.proxy_name || '未登録');
-            setText('c_proxy_phone', c.proxy_phone);
-            setText('c_evac', c.evac_site || '未登録');
+            setMaskedText('c_em_phone', c.em_phone, null);
+            setText('c_proxy_name', c.proxy_name);
+            setMaskedText('c_proxy_phone', c.proxy_phone, null);
+            setText('c_evac', c.evac_site);
+
+            setText('d_allergy', d.allergy);
+            setText('d_food', d.food);
+            setText('d_caution', d.caution);
 
             setText('d_vet', d.vet_name);
             setText('d_history', d.history);
             setText('d_medicine', d.medicine);
             setText('d_license', d.license_no);
             setText('d_chip', d.microchip);
-            setText('d_allergy', d.allergy);
-            setText('d_food', d.food);
-            setText('d_caution', d.caution);
 
             setupCertButton('d_rabies_status', 'btn_rabies_img', d.has_rabies, d.rabies_img_ref);
             setupCertButton('d_vaccine_status', 'btn_vaccine_img', d.has_vaccine, d.vaccine_img_ref);
 
-            const today = new Date();
-            setText('print_date', today.toLocaleDateString('ja-JP'));
+            setText('print_date', new Date().toLocaleDateString('ja-JP'));
 
             document.getElementById('loading').style.display = 'none';
-            document.getElementById('content').style.display = 'block';
+            document.getElementById('content-controls').style.display = 'block';
             document.getElementById('main-display').style.display = 'block';
             log('Render complete.');
         }
 
-        function setText(id, text) {
-            const el = document.getElementById(id);
-            if (el) el.textContent = text || '-';
+        // 犬のプロフィール画像を非同期取得
+        function fetchDogImage(userId, dogId) {
+            const imgContainer = document.getElementById('d_photo_container');
+            let url = `${API_URL}?userId=${userId}&type=img_profile&dogId=${dogId}`;
+            log('Fetching dog image...');
+            fetch(url).then(res => res.json()).then(data => {
+                if(data.image) {
+                    imgContainer.innerHTML = `<img src="${data.image}" class="dog-profile-img" alt="Dog Photo">`;
+                    imgContainer.style.border = 'none';
+                } else {
+                    imgContainer.innerHTML = '<span class="text-muted fw-bold small">No Image</span>';
+                }
+            }).catch(e => {
+                log('Dog Image Error: ' + e.message);
+                imgContainer.innerHTML = '<span class="text-danger small">Error</span>';
+            });
         }
 
-        function toggleMask(btn) {
-            const container = btn.parentElement;
-            const masked = container.querySelector('.masked-text');
-            const real = container.querySelector('.real-text');
-            if (real.style.display === 'inline') {
-                real.style.display = 'none'; masked.style.display = 'inline'; btn.textContent = '表示'; btn.classList.remove('active');
+        // 住所を簡易マスキング（都道府県以降を隠す）
+        function maskAddress(address) {
+            if (!address || address === '記載なし') return address;
+            const match = address.match(/(.*?[都道府県])/);
+            if (match) {
+                return match[1] + ' *** (以降非表示)';
+            }
+            // 都道府県が見つからない場合は適当に隠す
+            return address.substring(0, 4) + ' ***';
+        }
+
+        function setText(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = (text === undefined || text === null || text === '') ? '-' : text;
+        }
+        
+        function setMaskedText(baseId, realText, maskedText) {
+            const realEl = document.getElementById(baseId + '_real');
+            const maskedEl = document.getElementById(baseId + '_masked');
+            const btn = realEl.parentElement.querySelector('.btn-toggle-mask');
+
+            if (!realText || realText === '記載なし') {
+                realEl.textContent = '記載なし'; maskedEl.style.display = 'none'; realEl.style.display = 'block';
+                if(btn) btn.style.display = 'none';
+                return;
+            }
+            realEl.textContent = realText;
+            maskedEl.textContent = maskedText || '***-****-****'; // 指定がなければ電話用マスク
+            if(btn) btn.style.display = 'inline-block';
+        }
+
+        function toggleMask(btn, label) {
+            const wrapper = btn.parentElement;
+            const masked = wrapper.querySelector('.masked-text');
+            const real = wrapper.querySelector('.real-text');
+            if (real.style.display === 'block') {
+                real.style.display = 'none'; masked.style.display = 'block'; btn.textContent = '表示'; btn.classList.remove('active');
             } else {
-                if(confirm('周囲に人がいないことを確認してください。\n情報を表示しますか？')) {
-                    real.style.display = 'inline'; masked.style.display = 'none'; btn.textContent = '隠す'; btn.classList.add('active');
+                if(confirm(`周囲に人がいないことを確認してください。\n${label}を表示しますか？`)) {
+                    real.style.display = 'block'; masked.style.display = 'none'; btn.textContent = '隠す'; btn.classList.add('active');
                 }
             }
         }
 
         function setupCertButton(statusId, btnId, hasCert, imgRef) {
-            document.getElementById(statusId).textContent = hasCert ? '接種済み' : '未登録';
+            document.getElementById(statusId).textContent = hasCert ? '接種済み' : '未登録/期限切れ';
             const btn = document.getElementById(btnId);
             if (hasCert && imgRef) {
-                btn.style.display = 'inline-block';
+                btn.style.display = 'inline-flex';
                 btn.onclick = () => openImageModal(imgRef);
             } else { btn.style.display = 'none'; }
         }
