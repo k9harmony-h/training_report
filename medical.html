@@ -14,11 +14,17 @@
             --alert-color: #d9534f;
             --mask-color: #f0f0f0;
         }
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f8f9fa; color: #333; padding-bottom: 50px; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f8f9fa; color: #333; padding-bottom: 200px; /* デバッグ用余白 */ }
 
         /* --- VERSION STAMP --- */
         .version-stamp {
-            position: fixed; top: 0; right: 0; background: #6da06f; color: white; font-size: 10px; padding: 2px 5px; z-index: 9999; font-family: monospace; opacity: 0.8;
+            position: fixed; top: 0; right: 0; background: #d9534f; color: white; font-size: 10px; padding: 2px 5px; z-index: 9999; font-family: monospace; opacity: 0.9;
+        }
+
+        /* --- DEBUG CONSOLE (Always Visible for Safety) --- */
+        #debug-console-container { display: block; margin-top: 30px; }
+        #debug-console {
+            background-color: #000; color: #0f0; font-family: monospace; font-size: 11px; padding: 15px; border-radius: 8px; white-space: pre-wrap; word-break: break-all; border: 2px solid #555;
         }
 
         /* --- COMMON STYLES --- */
@@ -70,11 +76,11 @@
         @media print {
             @page { size: A4 landscape; margin: 8mm; }
             body { background: white; -webkit-print-color-adjust: exact; padding: 0; font-size: 10pt; }
-            .no-print-area, header, .btn-toggle-mask, .btn-cert-view, .modal-backdrop, .modal, .version-stamp { display: none !important; }
+            .no-print-area, header, .btn-toggle-mask, .btn-cert-view, .modal-backdrop, .modal, .version-stamp, #debug-console-container { display: none !important; }
             .masked-wrapper { background: none; padding: 0; display: block; }
             .masked-text { display: none !important; }
             .real-text { display: block !important; color: #000; }
-            #d_photo_container { border: 2px solid #ddd; width: 140px; height: 140px; } /* 印刷時は少し小さく */
+            #d_photo_container { border: 2px solid #ddd; width: 140px; height: 140px; }
             .card-section { box-shadow: none; padding: 12px; border: 1px solid #ddd; height: auto; }
             .section-title { border-bottom: 1px solid #ccc; color: #000; margin-bottom: 8px; font-size: 11pt; }
             .info-value { border-bottom: 1px dotted #ccc; padding-bottom: 2px; }
@@ -89,7 +95,7 @@
 </head>
 <body>
 
-    <div class="version-stamp">v2025.12.02-MAP-QR</div>
+    <div class="version-stamp">v2025.12.02-FIX-BACK-BTN</div>
 
     <div class="container py-4">
         <div class="no-print-area">
@@ -102,7 +108,7 @@
                 <p class="text-muted mb-4">緊急時に備え、この情報を印刷して携帯してください。</p>
                 <div class="d-flex justify-content-center gap-3">
                     <button onclick="window.print()" class="btn btn-print">🖨️ 手帳を印刷する</button>
-                    <button onclick="window.location.href='index.html'" class="btn btn-outline-secondary px-4 rounded-pill fw-bold">戻る</button>
+                    <button onclick="goBack()" class="btn btn-outline-secondary px-4 rounded-pill fw-bold">戻る</button>
                 </div>
             </div>
         </div>
@@ -179,7 +185,6 @@
                                     スマホで読み取るとGoogleマップが開きます
                                 </div>
                             </div>
-
                         </div>
                     </div>
 
@@ -244,6 +249,11 @@
         <footer class="disclaimer-footer no-print-area text-center">
             <p>【免責事項・ご注意】<br>本アプリおよび出力されたカードは、公的な証明書ではありません。<br>掲載情報は最終更新日時点のものです。<br>© K9 Harmony</p>
         </footer>
+        
+        <div id="debug-console-container" class="container no-print-area">
+            <h6 class="text-danger fw-bold mb-2">⚠️ Debug Console</h6>
+            <div id="debug-console">Initializing...</div>
+        </div>
     </div>
 
     <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
@@ -260,84 +270,120 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // 正しいURL
         const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
         const LIFF_ID = "2008546673-MJY7j3ox";
         let imageModal;
+        let currentUserId, currentDogId;
+
+        function log(msg) {
+            const el = document.getElementById('debug-console');
+            const time = new Date().toLocaleTimeString();
+            el.innerHTML = `[${time}] ${msg}\n` + el.innerHTML;
+            console.log(msg);
+        }
+
+        // Back Button Logic
+        function goBack() {
+            let url = 'index.html';
+            if (currentDogId) {
+                url += `?dogId=${currentDogId}`;
+            }
+            window.location.href = url;
+        }
 
         window.onload = async function() {
             imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
             try {
+                log('Starting LIFF init...');
                 await liff.init({ liffId: LIFF_ID });
                 if (!liff.isLoggedIn()) { liff.login(); return; }
                 const profile = await liff.getProfile();
+                currentUserId = profile.userId;
+                
                 const urlParams = new URLSearchParams(window.location.search);
-                fetchData(profile.userId, urlParams.get('dogId'));
+                currentDogId = urlParams.get('dogId');
+                log(`User: ${currentUserId.substring(0,5)}..., DogID: ${currentDogId || 'Auto'}`);
+
+                fetchData(currentUserId, currentDogId);
             } catch (err) {
-                document.getElementById('loading').innerHTML = `<p class="text-danger fw-bold">エラー: ${err.message}</p>`;
+                log('FATAL ERROR: ' + err.message);
+                document.getElementById('loading').innerHTML = `<p class="text-danger fw-bold">初期化エラーが発生しました。<br><small>${err.message}</small></p>`;
             }
         };
 
         function fetchData(userId, dogId) {
             let url = `${API_URL}?userId=${userId}`;
             if(dogId) url += `&dogId=${dogId}`;
+            log('Fetching main data...');
             fetch(url).then(res => res.json()).then(data => {
-                if (data.error) { document.getElementById('loading').innerHTML = `<p class="text-danger fw-bold">${data.error}</p>`; return; }
-                if (data.multiple_dogs) { document.getElementById('loading').innerHTML = `<p class="text-warning fw-bold">犬を選択してください</p>`; return; }
-                
+                if (data.error) { 
+                    log('API Error: ' + data.error);
+                    document.getElementById('loading').innerHTML = `<p class="text-danger fw-bold">${data.error}</p>`; return; 
+                }
+                if (data.multiple_dogs) { 
+                    document.getElementById('loading').innerHTML = `<p class="text-warning fw-bold">犬を選択してください（index.htmlから選択）</p>`; return; 
+                }
                 renderData(data);
                 fetchDogImage(userId, data.dog.id);
             }).catch(err => {
-                document.getElementById('loading').innerHTML = `<p class="text-danger fw-bold">通信エラー</p>`;
+                log('Fetch Error: ' + err.message);
+                document.getElementById('loading').innerHTML = `<p class="text-danger fw-bold">通信エラー: ${err.message}</p>`;
             });
         }
 
         function renderData(data) {
-            const c = data.customer || {};
-            const d = data.dog || {};
+            log('Rendering data...');
+            try {
+                const c = data.customer || {};
+                const d = data.dog || {};
+                currentDogId = d.id; // Update Current Dog ID for Back Button
 
-            setText('d_name', d.name_disp);
-            setText('d_breed', d.breed);
-            setText('d_gender', d.gender);
-            setText('d_birth', d.birth_date);
-            setText('d_age', d.age);
-            
-            setText('c_name', c.name);
-            setMaskedText('c_address', c.address, maskAddress(c.address));
-            setMaskedText('c_phone', c.phone, null);
-            
-            setText('c_em_name', c.em_name);
-            setMaskedText('c_em_phone', c.em_phone, null);
-            setText('c_proxy_name', c.proxy_name);
-            setMaskedText('c_proxy_phone', c.proxy_phone, null);
-            setText('c_evac', c.evac_site);
+                setText('d_name', d.name_disp);
+                setText('d_breed', d.breed);
+                setText('d_gender', d.gender);
+                setText('d_birth', d.birth_date);
+                setText('d_age', d.age);
+                
+                setText('c_name', c.name);
+                setMaskedText('c_address', c.address, maskAddress(c.address));
+                setMaskedText('c_phone', c.phone, null);
+                
+                setText('c_em_name', c.em_name);
+                setMaskedText('c_em_phone', c.em_phone, null);
+                setText('c_proxy_name', c.proxy_name);
+                setMaskedText('c_proxy_phone', c.proxy_phone, null);
+                setText('c_evac', c.evac_site);
 
-            // ★ Generate Map QR Code
-            if (c.evac_site && c.evac_site !== '記載なし') {
-                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.evac_site)}`;
-                // Use a reliable QR Code API (e.g., QR Server)
-                const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(mapUrl)}`;
-                document.getElementById('map-qr-img').src = qrSrc;
-                document.getElementById('qr-container').style.display = 'flex';
+                // ★ QR Code Logic (Fixed: HTTPS & Syntax)
+                if (c.evac_site && c.evac_site !== '記載なし') {
+                    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.evac_site)}`;
+                    const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(mapUrl)}`;
+                    document.getElementById('map-qr-img').src = qrSrc;
+                    document.getElementById('qr-container').style.display = 'flex';
+                }
+
+                setText('d_allergy', d.allergy);
+                setText('d_food', d.food);
+                setText('d_caution', d.caution);
+                setText('d_vet', d.vet_name);
+                setText('d_history', d.history);
+                setText('d_medicine', d.medicine);
+                setText('d_license', d.license_no);
+                setText('d_chip', d.microchip);
+
+                setupCertButton('d_rabies_status', 'btn_rabies_img', d.has_rabies, d.rabies_img_ref);
+                setupCertButton('d_vaccine_status', 'btn_vaccine_img', d.has_vaccine, d.vaccine_img_ref);
+
+                setText('print_date', new Date().toLocaleDateString('ja-JP'));
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content-controls').style.display = 'block';
+                document.getElementById('main-display').style.display = 'block';
+                log('Render complete.');
+            } catch (e) {
+                log('Render Error: ' + e.message);
+                console.error(e);
             }
-
-            setText('d_allergy', d.allergy);
-            setText('d_food', d.food);
-            setText('d_caution', d.caution);
-            setText('d_vet', d.vet_name);
-            setText('d_history', d.history);
-            setText('d_medicine', d.medicine);
-            setText('d_license', d.license_no);
-            setText('d_chip', d.microchip);
-
-            setupCertButton('d_rabies_status', 'btn_rabies_img', d.has_rabies, d.rabies_img_ref);
-            setupCertButton('d_vaccine_status', 'btn_vaccine_img', d.has_vaccine, d.vaccine_img_ref);
-
-            setText('print_date', new Date().toLocaleDateString('ja-JP'));
-
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('content-controls').style.display = 'block';
-            document.getElementById('main-display').style.display = 'block';
         }
 
         function fetchDogImage(userId, dogId) {
