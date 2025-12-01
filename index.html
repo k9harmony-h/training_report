@@ -26,7 +26,7 @@
     .brand-title { color: var(--text-main); font-weight: 700; letter-spacing: 0.05em; font-size: 1.2rem; text-align: center; }
     
     .profile-card { margin-top: 20px; display: flex; align-items: center; }
-    /* 写真のスタイル */
+    /* 犬のプロフィール画像 */
     .dog-img { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid var(--brand-color); padding: 2px; background: #fff; flex-shrink: 0; transition: opacity 0.5s; }
     
     .profile-info { margin-left: 20px; flex-grow: 1; }
@@ -143,7 +143,7 @@
 
     <div class="section-title">本日のショット</div>
     <div class="photo-scroll" id="photoArea">
-      <div class="text-muted small ms-3">画像を読み込み中...</div>
+      <div class="text-muted small ms-3" id="photoLoadingMsg">画像を読み込み中...</div>
     </div>
 
     <div class="footer-action">
@@ -156,7 +156,7 @@
 
   <script>
     const LIFF_ID = '2008546673-MJY7j3ox'; 
-    // ★最新のGAS URL (action対応版) を使用★
+    // ★最新のGAS URLを使用してください★
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
 
     const dogTips = [
@@ -217,12 +217,11 @@
           renderTextData(data); // 画面表示 (Loading解除)
           
           // テキスト表示が完了したら、裏で画像を取得開始 (Step 2)
-          // エラーがなく、データがある場合のみ画像取得へ
           if (!data.error) {
-             // 犬の写真は常にあるはずなので取得
+             // ★ プロフィール画像を遅延読み込み
              fetchProfileImage(userId);
              
-             // レッスン写真は、has_photosフラグがtrueの時だけ取得
+             // レッスン画像は、has_photosフラグがある場合のみ取得
              if (data.latest && data.latest.has_photos) {
                 fetchLessonImages(userId);
              } else {
@@ -243,8 +242,11 @@
       fetch(`${GAS_URL}?userId=${userId}&action=image_profile`)
         .then(res => res.json())
         .then(data => {
-           if(data.image) document.getElementById('dogImg').src = data.image;
-           else document.getElementById('dogImg').src = 'https://via.placeholder.com/150?text=No+Img';
+           if(data.image) {
+               document.getElementById('dogImg').src = data.image;
+           } else {
+               document.getElementById('dogImg').src = 'https://via.placeholder.com/150?text=No+Img';
+           }
         })
         .catch(e => console.log('Profile Image Error', e));
     }
@@ -255,7 +257,7 @@
         .then(res => res.json())
         .then(data => {
            const pArea = document.getElementById('photoArea');
-           pArea.innerHTML = ''; 
+           pArea.innerHTML = ''; // 「読み込み中」を消す
            
            if (data.images && data.images.length > 0) {
              data.images.forEach(b64 => {
@@ -278,7 +280,7 @@
         finishLoading();
         document.getElementById('loadingOverlay').style.display = 'none';
         document.getElementById('errorView').style.display = 'block';
-        document.getElementById('dispLineId').innerText = 'ID取得中...'; // ※IDはLIFF profileから取得する必要があるが、一旦省略
+        document.getElementById('dispLineId').innerText = 'ID取得中...'; // ※必要ならLIFF profileから取得
         return;
       }
 
@@ -313,7 +315,7 @@
         renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト'], 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
       }
       
-      // ★ここでローディングを終了し、画面を表示★
+      // ★ここで画面を表示★ (写真はまだでも画面を出す)
       finishLoading();
     }
 
