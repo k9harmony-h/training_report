@@ -18,7 +18,6 @@
     }
 
     /* --- スクロールのための「長さ」を作る不可視コンテナ --- */
-    /* ここを長くすると、アニメーションがゆっくりになります */
     #scroll-track {
       height: 350vh; /* 画面の3.5倍の高さ */
       width: 100%;
@@ -88,16 +87,44 @@
       z-index: 1;
     }
 
+    /* --- Scene 3: Cityscape (Buildings) --- */
+    /* 黒い背景の代わりに、ビルを下から生やすコンテナ */
     #bg-city {
       position: absolute;
       bottom: 0;
       left: 0;
       width: 100%;
-      height: 40%;
-      background: linear-gradient(to top, #1a1a1a, transparent); /* ダミーの街並み影 */
-      opacity: 0; /* 最初は隠れている */
+      height: 100%; /* 全画面覆えるように */
       z-index: 2;
-      transition: opacity 0.3s;
+      opacity: 0; /* 最初は隠す */
+      transition: opacity 0.5s;
+      pointer-events: none;
+      /* 下揃えにする設定 */
+      display: flex;
+      align-items: flex-end; 
+      overflow: hidden;
+    }
+
+    /* ビル単体のスタイル (JSで生成) */
+    .city-block {
+      background-color: #111; /* ビルの色 (ほぼ黒) */
+      position: relative;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5); /* 影 */
+      /* 少し隙間を空ける */
+      margin-right: 2px; 
+      border-top-left-radius: 2px;
+      border-top-right-radius: 2px;
+    }
+
+    /* ビルの窓（アクセント） */
+    .city-block::after {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 20%;
+      width: 60%;
+      height: 20%;
+      background: rgba(255, 255, 255, 0.1); /* 窓の光（うっすら） */
     }
 
     /* --- Main Object: パラコード (Cord) --- */
@@ -195,6 +222,7 @@
     </div>
 
     <div id="bg-paper"></div>
+    
     <div id="bg-city"></div>
 
     <div id="cord-base">
@@ -219,6 +247,39 @@
   </div>
 
   <script>
+    // --- 街並み生成機能 (City Builder) ---
+    function buildCity() {
+      const cityContainer = document.getElementById('bg-city');
+      const windowWidth = window.innerWidth;
+      let currentWidth = 0;
+
+      // 画面幅がいっぱいになるまでビルを足していく
+      while (currentWidth < windowWidth) {
+        const block = document.createElement('div');
+        block.classList.add('city-block');
+
+        // 幅をランダムに決める (20px 〜 50px)
+        const w = Math.floor(Math.random() * 30) + 20;
+        
+        // 高さをランダムに決める (画面の 15% 〜 45% の高さ)
+        // ※テキストとかぶらないよう調整
+        const hPercent = Math.floor(Math.random() * 30) + 15; 
+
+        block.style.width = `${w}px`;
+        block.style.height = `${hPercent}%`;
+
+        // まれに「高いタワー」を作る演出
+        if (Math.random() > 0.95) {
+           block.style.height = '60%';
+           block.style.zIndex = '3'; // 手前に出す
+           block.style.backgroundColor = '#1a1a1a'; // 少し色を変える
+        }
+
+        cityContainer.appendChild(block);
+        currentWidth += w;
+      }
+    }
+
     // --- スクロール連動ロジック (Scrollytelling Engine) ---
     
     window.addEventListener('scroll', () => {
@@ -292,6 +353,9 @@
       }
 
     });
+
+    // アプリ起動時にビルを建設する
+    buildCity();
   </script>
 </body>
 </html>
