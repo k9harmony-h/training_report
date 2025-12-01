@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 
   <style>
-    /* CSSは既存のまま */
+    /* CSSは変更なし */
     :root { --brand-color: #57C3C2; --brand-bg: #E0F7FA; --text-main: #333333; --accent-color: #F2A679; }
     body { font-family: 'Montserrat', 'Noto Sans JP', sans-serif; background-color: #fafafa; color: var(--text-main); padding-bottom: 80px; overflow-x: hidden; }
     #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; transition: opacity 0.5s ease-out, visibility 0.5s ease-out; }
@@ -21,7 +21,6 @@
     body.loaded #loadingOverlay { opacity: 0; visibility: hidden; }
     #mainContent { opacity: 0; transform: scale(0.95); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
     body.loaded #mainContent { opacity: 1; transform: scale(1); }
-    
     .header-area { padding: 20px 20px 10px; background: #fff; }
     .brand-title { color: var(--text-main); font-weight: 700; letter-spacing: 0.05em; font-size: 1.2rem; text-align: center; }
     .profile-card { margin-top: 20px; display: flex; align-items: center; }
@@ -54,10 +53,9 @@
     .footer-action { margin: 30px 20px 10px; text-align: center; }
     .btn-reserve { background: var(--brand-color); color: #fff; border: none; width: 100%; padding: 14px; border-radius: 30px; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 12px rgba(87, 195, 194, 0.4); display: block; text-decoration: none; }
     .reminder-box { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem; font-weight: bold; }
+    
     #errorView { text-align: center; margin-top: 50px; display: none; padding: 20px; }
     .line-id-box { background: #eee; padding: 10px; border-radius: 5px; margin: 15px 0; font-family: monospace; font-weight: bold; word-break: break-all; }
-    
-    /* 犬選択モーダル */
     .dog-select-btn { width: 100%; margin-bottom: 10px; padding: 15px; font-weight: bold; font-size: 1.1rem; border-radius: 12px; background: #f8f9fa; border: 2px solid var(--brand-color); color: var(--brand-color); transition: all 0.2s; }
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
   </style>
@@ -72,10 +70,10 @@
   <div id="errorView">
     <div class="container">
       <div class="alert alert-warning text-center">
-        <h5 class="fw-bold">未登録のユーザーです</h5>
-        <p class="small">以下のIDをトレーナーにお伝えください。</p>
-        <div class="line-id-box" id="dispLineId">---</div>
-        <button class="btn btn-secondary btn-sm w-100" onclick="copyLineId()">IDをコピー</button>
+        <h5 class="fw-bold" id="errorTitle">エラーが発生しました</h5>
+        <p class="small" id="errorMessage">---</p>
+        <div class="line-id-box" id="dispLineId" style="display:none;"></div>
+        <button class="btn btn-secondary btn-sm w-100 mt-2" onclick="location.reload()">再読み込み</button>
       </div>
     </div>
   </div>
@@ -142,8 +140,7 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center">わんちゃんを選択</h5></div>
-        <div class="modal-body" id="dogSelectBody">
-          </div>
+        <div class="modal-body" id="dogSelectBody"></div>
       </div>
     </div>
   </div>
@@ -158,10 +155,13 @@
 
     let tipsTimer;
     let currentUserId = null;
-    let currentDogId = null; // ★ 選択された犬ID
+    let currentDogId = null;
+    let chartInstance1 = null; // ★ チャートインスタンス保持用
+    let chartInstance2 = null;
 
     function startTipsSlider() {
       const tipsText = document.getElementById('tipsText');
+      if(!tipsText) return;
       let currentTipIndex = Math.floor(Math.random() * dogTips.length);
       tipsText.innerText = dogTips[currentTipIndex];
       tipsTimer = setInterval(() => {
@@ -178,7 +178,7 @@
 
     window.onload = function() {
       startTipsSlider();
-      if (typeof liff === 'undefined') { alert('LIFF SDK Load Error'); finishLoading(); return; }
+      if (typeof liff === 'undefined') { showError('SDK Error', 'LIFF SDK not loaded.'); return; }
       main();
     };
 
@@ -190,8 +190,7 @@
         currentUserId = profile.userId;
         fetchTextData(currentUserId);
       } catch (err) {
-        alert('LIFF Error: ' + err);
-        finishLoading();
+        showError('LIFF Init Error', err.message);
       }
     }
 
@@ -202,48 +201,53 @@
       fetch(url)
         .then(res => res.json())
         .then(data => {
-          
-          // ★ 複数犬の判定
           if (data.multiple_dogs) {
               showDogSelectModal(data.multiple_dogs);
-              return; // ここで中断して選択を待つ
+              return;
+          }
+          if (data.error) {
+              if (data.error === 'Unregistered') {
+                  showError('未登録のユーザーです', 'IDをトレーナーにお伝えください', userId);
+              } else {
+                  showError('データ取得エラー', data.error);
+              }
+              return;
           }
 
-          renderTextData(data);
-          
-          if (!data.error) {
-             currentDogId = data.dog.id || null; // ID保持
-             updateHistoryLink(); // 履歴リンク更新
+          // ★ レンダー処理をtry-catchで保護
+          try {
+              renderTextData(data);
+              
+              currentDogId = data.dog.id || null;
+              updateHistoryLink();
 
-             // 画像取得にもdogIdを渡す
-             fetchProfileImage(userId, currentDogId);
-             if (data.latest && data.latest.has_photos) {
-                fetchLessonImages(userId, currentDogId);
-             } else {
-                document.getElementById('photoArea').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
-             }
+              fetchProfileImage(userId, currentDogId);
+              if (data.latest && data.latest.has_photos) {
+                  fetchLessonImages(userId, currentDogId);
+              } else {
+                  document.getElementById('photoArea').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
+              }
+          } catch (e) {
+              console.error(e);
+              showError('描画エラー', 'データの表示中に問題が発生しました: ' + e.message);
           }
         })
         .catch(err => {
-          alert('通信エラー: ' + err);
-          finishLoading();
+          showError('通信エラー', err.message);
         });
     }
 
-    // ★ 犬選択モーダル表示
     function showDogSelectModal(dogs) {
         const body = document.getElementById('dogSelectBody');
         body.innerHTML = '';
         dogs.forEach(dog => {
             const btn = document.createElement('button');
             btn.className = 'dog-select-btn';
-            btn.innerText = dog.name; // "ポチくん" など
+            btn.innerText = dog.name; 
             btn.onclick = () => selectDog(dog.id);
             body.appendChild(btn);
         });
         
-        // モーダル表示 (ローディングは維持したまま、モーダルを重ねるか、一旦ローディング消すか)
-        // 今回はTipsローディングを一旦消してモーダルを出す
         document.getElementById('loadingOverlay').style.opacity = 0;
         setTimeout(() => { document.getElementById('loadingOverlay').style.visibility = 'hidden'; }, 500);
         
@@ -251,12 +255,10 @@
     }
 
     function selectDog(dogId) {
-        // モーダルを閉じてローディング再開
         const modalEl = document.getElementById('dogSelectModal');
         const modal = bootstrap.Modal.getInstance(modalEl);
         modal.hide();
         
-        // ローディング再表示
         document.getElementById('loadingOverlay').style.visibility = 'visible';
         document.getElementById('loadingOverlay').style.opacity = 1;
         
@@ -313,15 +315,6 @@
     }
 
     function renderTextData(data) {
-      if (data.error === 'Unregistered') {
-        finishLoading();
-        document.getElementById('loadingOverlay').style.display = 'none';
-        document.getElementById('errorView').style.display = 'block';
-        document.getElementById('dispLineId').innerText = 'ID取得中...'; 
-        return;
-      }
-      if (data.error) { finishLoading(); return; }
-
       const c = data.customer || {};
       const d = data.dog || {};
       document.getElementById('custName').innerText = c.name + ' 様';
@@ -344,6 +337,8 @@
         if (l.recommend_date) {
             document.getElementById('reminderDate').innerText = l.recommend_date;
             document.getElementById('reminderArea').style.display = 'block';
+        } else {
+            document.getElementById('reminderArea').style.display = 'none';
         }
 
         let d1 = '', d2 = '';
@@ -352,9 +347,17 @@
         document.getElementById('detail1').innerText = d1 || '特になし';
         document.getElementById('detail2').innerText = d2 || '特になし';
 
-        renderChart('chart1', l.scores.slice(0, 5), ['指示理解','集中力','報酬','ボディ','コンタクト'], 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 1)');
-        renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト'], 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
+        // ★ チャート描画 (既存があれば破壊してから再描画)
+        if (chartInstance1) chartInstance1.destroy();
+        if (chartInstance2) chartInstance2.destroy();
+
+        chartInstance1 = renderChart('chart1', l.scores.slice(0, 5), ['指示理解','集中力','報酬','ボディ','コンタクト'], 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 1)');
+        chartInstance2 = renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト'], 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
+      } else {
+          // レッスン履歴がない場合
+          document.getElementById('lessonDate').innerText = 'レッスン履歴なし';
       }
+      
       finishLoading();
     }
 
@@ -366,10 +369,47 @@
             document.getElementById(elementId).style.display = 'block';
         }
     }
+
     function renderChart(id, data, labels, bgColor, borderColor) {
-      new Chart(document.getElementById(id), { type: 'radar', data: { labels: labels, datasets: [{ data: data, backgroundColor: bgColor, borderColor: borderColor, pointBackgroundColor: borderColor, borderWidth: 2 }] }, options: { scales: { r: { min: 0, max: 5, ticks: { display: false }, pointLabels: { font: { size: 11 } } } }, plugins: { legend: { display: false } } } });
+      const ctx = document.getElementById(id);
+      return new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: bgColor, borderColor: borderColor, pointBackgroundColor: borderColor, borderWidth: 2
+          }]
+        },
+        options: {
+          scales: { r: { min: 0, max: 5, ticks: { display: false }, pointLabels: { font: { size: 11 } } } },
+          plugins: { legend: { display: false } }
+        }
+      });
     }
-    function copyLineId() { /*...*/ }
+
+    // エラー表示関数
+    function showError(title, msg, userId) {
+        finishLoading();
+        document.getElementById('loadingOverlay').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'none';
+        
+        const errDiv = document.getElementById('errorView');
+        errDiv.style.display = 'block';
+        document.getElementById('errorTitle').innerText = title;
+        document.getElementById('errorMessage').innerText = msg;
+        
+        if (userId) {
+            const idBox = document.getElementById('dispLineId');
+            idBox.innerText = userId;
+            idBox.style.display = 'block';
+        }
+    }
+    
+    function copyLineId() {
+        const idText = document.getElementById('dispLineId').innerText;
+        navigator.clipboard.writeText(idText).then(() => alert('IDをコピーしました'));
+    }
   </script>
 </body>
 </html>
