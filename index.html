@@ -2,6 +2,14 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <script>
+    (function() {
+      // URLに ?page=medical がついていたら、即座に手帳ページへ転送
+      if (new URLSearchParams(window.location.search).get('page') === 'medical') {
+        window.location.replace('medical.html'); 
+      }
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>K9 Harmony Portal</title>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
