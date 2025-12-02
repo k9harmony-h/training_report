@@ -13,44 +13,38 @@
     <style>
         :root { --primary-color: #88b08b; --accent-color: #e8f5e9; --alert-color: #e07a5f; --text-color: #333; --mask-color: #f0f0f0; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 300px; }
-        .version-stamp { position: fixed; top: 0; right: 0; background: #20c997; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
+        .version-stamp { position: fixed; top: 0; right: 0; background: #0d6efd; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
+        
+        /* COMMON UI */
         .no-print-area { margin: 20px 0 30px; text-align: center; }
         .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; border: 1px solid #eee; }
         .section-title { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 15px; }
-        
         .info-row { margin-bottom: 8px; }
         .info-label { font-weight: bold; color: #666; font-size: 0.8rem; display: block; margin-bottom: 1px; }
-        .info-value { font-size: 1rem; font-weight: 500; min-height: 24px; word-break: break-all; }
         
-        /* Masking */
+        /* Masking Elements */
         .masked-wrapper { display: flex; align-items: center; gap: 10px; }
-        .masked-text { letter-spacing: 2px; color: #aaa; background: var(--mask-color); padding: 2px 8px; border-radius: 4px; }
+        .masked-text { display: inline-block; letter-spacing: 2px; color: #aaa; background: var(--mask-color); padding: 2px 8px; border-radius: 4px; font-family: monospace; }
         .real-text { display: none; font-weight: bold; color: #333; }
-        .btn-toggle-mask { font-size: 0.7rem; padding: 2px 10px; border: 1px solid var(--alert-color); color: var(--alert-color); background: white; border-radius: 20px; }
+        .btn-toggle-mask { font-size: 0.7rem; padding: 2px 10px; border: 1px solid var(--alert-color); color: var(--alert-color); background: white; border-radius: 20px; cursor: pointer; }
         .btn-toggle-mask:active { background: var(--alert-color); color: white; }
-        
+
         #d_photo_container { width: 200px; height: 200px; background: #fff; border-radius: 12px; border: 4px solid var(--accent-color); overflow: hidden; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; }
         .dog-profile-img { width: 100%; height: 100%; object-fit: cover; }
         .btn-cert-view { font-size: 0.8rem; padding: 4px 12px; border-radius: 6px; background-color: var(--primary-color); color: white; border: none; width: 100%; margin-top: 5px; }
-        #generating-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 10000; display: none; flex-direction: column; justify-content: center; align-items: center; }
-        #debug-console-container { display: block; margin-top: 30px; padding: 0 10px; }
-        #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 11px; padding: 15px; border-radius: 8px; }
-        
-        #poster-display, #crate-display { display: none; }
-        #generated-image-preview { width: 100%; height: auto; border: 2px solid #ccc; border-radius: 4px; }
 
         /* LOGO STYLES */
         .screen-logo-top { width: 120px; margin-bottom: 15px; }
         .screen-logo-footer { width: 100px; margin-top: 20px; margin-bottom: 10px; opacity: 0.8; }
 
-        /* ★★★ POSTER DESIGN (REFINED) ★★★ */
+        /* ★★★ POSTER DESIGN (A4 FULL SIZE & NO TRIM) ★★★ */
         .poster-container {
-            width: 210mm; min-height: 297mm; background: white; padding: 15mm; text-align: center; 
-            border: 1px solid #ddd; box-sizing: border-box; margin: 0 auto; position: relative;
+            width: 210mm; height: 297mm; /* A4 Fixed Size */
+            background: white; margin: 0 auto; position: relative; overflow: hidden;
         }
         .poster-inner-border {
-            flex: 1; border: 6px solid #ff0000; padding: 5mm;
-            display: flex; flex-direction: column; align-items: center; height: 100%;
+            width: 100%; height: 100%; border: 6px solid #ff0000; padding: 10mm; /* Internal padding for design */
+            box-sizing: border-box; display: flex; flex-direction: column; align-items: center;
         }
         .poster-title {
             color: #ff0000; font-size: 42pt; font-weight: 900;
@@ -59,21 +53,20 @@
         .poster-date-line { font-size: 16pt; font-weight: bold; color: #333; margin-bottom: 20px; width: 100%; text-align: left; }
         .handwrite-space { border-bottom: 2px solid #333; display: inline-block; margin: 0 2px; }
         
-        /* ★ 3:4 Photo Frame */
+        /* Photo: Maintain aspect ratio, contain within area */
         .poster-photo-frame {
-            width: 80%; aspect-ratio: 3/4; /* 3:4 Aspect Ratio */
+            width: 90%; height: 35%; /* Adjust height ratio */
             border: 3px solid #333; margin-bottom: 20px;
             background: #eee; display: flex; justify-content: center; align-items: center; overflow: hidden;
         }
-        .poster-photo-img { width: 100%; height: 100%; object-fit: cover; /* Trim to fill */ }
+        .poster-photo-img { width: 100%; height: 100%; object-fit: contain; /* Maintain aspect ratio */ }
 
         .poster-info-table { width: 100%; border-collapse: collapse; font-size: 16pt; margin-bottom: 20px; text-align: left; }
         .poster-info-table th { width: 25%; padding: 8px; border-bottom: 2px solid #ff0000; color: #ff0000; font-weight: bold; }
         .poster-info-table td { padding: 8px; border-bottom: 1px solid #ccc; font-weight: bold; color: #000; }
 
         .poster-message {
-            font-size: 16pt; /* Increased */
-            text-align: left; line-height: 1.5; margin-bottom: 20px; font-weight: 600;
+            font-size: 16pt; text-align: left; line-height: 1.5; margin-bottom: 20px; font-weight: 600;
         }
 
         .poster-contact-box { width: 100%; border: 4px solid #ff0000; padding: 10px; background: #fff5f5; margin-bottom: 15px; }
@@ -98,7 +91,11 @@
         .crate-main-name { font-size: 32pt; font-weight: 900; color: #333; line-height: 1; }
         .crate-alert-bar { background-color: var(--alert-color); color: white; font-weight: bold; font-size: 14pt; padding: 5px; border-radius: 8px; margin-bottom: 10px; }
         .crate-write-area { border: 2px dashed #88b08b; border-radius: 8px; padding: 5px; text-align: left; height: 80px; }
-        .crate-footer { margin-top: auto; border-top: 2px solid var(--primary-color); padding-top: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        #poster-display, #crate-display, #generating-overlay, #debug-console-container { display: none; }
+        #generating-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 10000; flex-direction: column; justify-content: center; align-items: center; }
+        #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 11px; padding: 15px; border-radius: 8px; margin-top: 30px; }
+        #generated-image-preview { width: 100%; height: auto; border: 2px solid #ccc; border-radius: 4px; }
 
         @media print {
             .no-print-area, #debug-console-container, .version-stamp, #generating-overlay, .modal-backdrop { display: none !important; }
@@ -114,7 +111,7 @@
 </head>
 <body class="mode-handbook">
 
-    <div class="version-stamp">v2025.12.02-FINAL-DESIGN</div>
+    <div class="version-stamp">v2025.12.03-FINAL-FIX</div>
 
     <div id="generating-overlay">
         <div class="spinner-border text-primary"></div><h4 class="mt-3">作成中...</h4>
@@ -170,7 +167,6 @@
                     <div class="col-6"><div class="p-2 border rounded text-center"><span class="info-label">狂犬病予防</span><div id="d_rabies_status" class="fw-bold small">-</div><button id="btn-rabies-img" class="btn-cert-view" style="display:none;">証明書</button></div></div>
                     <div class="col-6"><div class="p-2 border rounded text-center"><span class="info-label">混合ワクチン</span><div id="d_vaccine_status" class="fw-bold small">-</div><button id="btn-vaccine-img" class="btn-cert-view" style="display:none;">証明書</button></div></div>
                 </div>
-                <div class="k9-logo-footer"><img id="logo_img_2" class="k9-logo-img k9-logo-common" src="" alt="K9 Logo"></div>
             </div>
             <div class="card-section"><div class="section-title" style="color:var(--alert-color); border-color:#f8d7da;">緊急時情報</div><div class="info-row"><span class="info-label">緊急連絡先 (氏名)</span><div id="c_em_name">-</div></div><div class="info-row"><span class="info-label">緊急連絡先 (電話)</span><div class="masked-wrapper"><span id="c_em_phone_masked" class="masked-text">***</span><span id="c_em_phone_real" class="real-text">-</span><button class="btn-toggle-mask" onclick="toggleMask('c_em_phone')">表示</button></div></div><hr><div class="info-row"><span class="info-label">代理人 (氏名)</span><div id="c_proxy_name">-</div></div><div class="info-row"><span class="info-label">代理人 (電話)</span><div class="masked-wrapper"><span id="c_proxy_phone_masked" class="masked-text">***</span><span id="c_proxy_phone_real" class="real-text">-</span><button class="btn-toggle-mask" onclick="toggleMask('c_proxy_phone')">表示</button></div></div><hr><div class="info-row mb-0"><span class="info-label">指定避難所</span><div id="c_evac" class="fw-bold">-</div></div></div>
             <div class="card-section"><div class="section-title">ケア・生活情報</div><div class="info-row"><span class="info-label">フード</span><div id="d_food">-</div></div><div class="info-row mb-0"><span class="info-label text-danger">性格・注意事項</span><div id="d_caution" class="text-danger fw-bold">-</div></div></div>
@@ -251,14 +247,14 @@
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
         const LIFF_ID = "2008546673-MJY7j3ox";
-        // ★ LOGO DATA: Paste your Base64 string here
+        // ★ LOGO DATA: Base64 string
         const LOGO_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."; 
 
         let outputModal, imageModal;
 
         function log(msg) {
             const el = document.getElementById('debug-console');
-            if(el) el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}\n` + el.innerHTML;
+            if(el) { el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}\n` + el.innerHTML; el.parentElement.style.display = 'block'; }
             console.log(msg);
         }
 
@@ -268,9 +264,7 @@
                 imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
             }
             
-            document.querySelectorAll('.k9-logo-common').forEach(el => {
-                el.src = LOGO_DATA_URI;
-            });
+            document.querySelectorAll('.k9-logo-common').forEach(el => { el.src = LOGO_DATA_URI; });
 
             try {
                 await liff.init({ liffId: LIFF_ID });
@@ -329,7 +323,6 @@
             setText('poster_name', d.name_disp);
             setText('poster_gender_age', `${d.gender || '-'}, ${d.age || '-'}歳`);
             setText('poster_breed_color', `${d.breed || '-'} / ${d.color || '-'}`);
-            setText('poster_desc', d.caution || '-');
             setText('poster_owner', c.name);
             setText('poster_phone', c.phone);
 
@@ -376,12 +369,13 @@
             await new Promise(r => setTimeout(r, 500));
 
             try {
+                // Fixed A4 Size rendering
                 const canvas = await html2canvas(target, { scale: 2, useCORS: true, allowTaint: true, windowWidth: 1200 });
                 const imgData = canvas.toDataURL('image/jpeg', 0.90);
                 
                 document.getElementById('generated-image-preview').src = imgData;
                 
-                const pdfBlob = new window.jspdf.jsPDF(mode==='handbook'?'l':'p','mm','a4').output('blob'); // Simple blob gen for button
+                const pdfBlob = new window.jspdf.jsPDF(mode==='handbook'?'l':'p','mm','a4').output('blob');
                 const pdfUrl = URL.createObjectURL(pdfBlob);
                 
                 const viewPdfBtn = document.getElementById('btn-view-pdf-blob');
@@ -396,9 +390,8 @@
                         const { jsPDF } = window.jspdf;
                         const orient = (mode === 'handbook') ? 'l' : 'p';
                         const doc = new jsPDF(orient, 'mm', 'a4');
-                        const a4w = (orient === 'l') ? 297 : 210;
-                        const pdfHeight = (canvas.height * a4w) / canvas.width;
-                        doc.addImage(imgData, 'JPEG', 0, 0, a4w, pdfHeight);
+                        // Full A4 size image
+                        doc.addImage(imgData, 'JPEG', 0, 0, orient==='l'?297:210, orient==='l'?210:297);
                         doc.save(`K9_${mode}.pdf`);
                     };
                 } else { btnDownload.style.display = 'none'; }
@@ -411,14 +404,47 @@
                 overlay.style.display = 'none';
             }
         }
-        function maskAddress(addr) { if(!addr) return; const m = addr.match(/(.*?[都道府県].*?[市区町村])/); return m ? m[0]+' ***' : addr.substring(0,5)+' ***'; }
+
+        function maskAddress(addr) { if(!addr) return; const m = addr.match(/(.*?[都道府県].*?[市区町村])/); return m ? m[0]+' ***' : addr.substring(0,8)+' ***'; }
         function maskPhone(tel) { if(!tel) return; return tel.substring(0,3)+'-****-****'; }
-        function setMaskedText(baseId, realVal, maskedVal) { /* Omitted */ }
-        function toggleMask(baseId) { /* Omitted */ }
+        function setMaskedText(baseId, realVal, maskedVal) {
+            const rEl = document.getElementById(baseId + '_real');
+            const mEl = document.getElementById(baseId + '_masked');
+            const btn = rEl ? rEl.parentElement.querySelector('.btn-toggle-mask') : null;
+            if(!rEl || !mEl) return;
+            if(!realVal) {
+                rEl.textContent = '記載なし'; mEl.style.display='none'; rEl.style.display='inline';
+                if(btn) btn.style.display='none';
+            } else {
+                rEl.textContent = realVal; mEl.textContent = maskedVal;
+                mEl.style.display='inline'; rEl.style.display='none';
+                if(btn) btn.style.display='inline-block';
+            }
+        }
+        function toggleMask(baseId) {
+            const rEl = document.getElementById(baseId + '_real');
+            const mEl = document.getElementById(baseId + '_masked');
+            if(rEl.style.display === 'none') {
+                if(confirm('表示しますか？')) { rEl.style.display='inline'; mEl.style.display='none'; }
+            } else {
+                rEl.style.display='none'; mEl.style.display='inline';
+            }
+        }
         function setText(id, txt) { const el = document.getElementById(id); if(el) el.textContent = txt || '-'; }
         function setSrc(id, src) { const el = document.getElementById(id); if(el) el.src = src; }
         function setImg(cid, src) { const el = document.getElementById(cid); if(el) { el.innerHTML = `<img src="${src}" class="dog-profile-img">`; el.style.border='none'; } }
-        function setupCertButton(statId, btnId, has, ref) { /* Omitted */ }
+        function setupCertButton(statId, btnId, has, ref) {
+            document.getElementById(statId).textContent = has ? '確認済み' : '未確認/無し';
+            const btn = document.getElementById(btnId);
+            if(has && ref) {
+                btn.style.display='inline-block';
+                btn.onclick = () => {
+                    const src = (ref.indexOf('http')===-1) ? `https://drive.google.com/uc?export=view&id=${ref}` : ref;
+                    document.getElementById('modalImage').src = src;
+                    imageModal.show();
+                };
+            } else { btn.style.display='none'; }
+        }
     </script>
 </body>
 </html>
