@@ -13,36 +13,35 @@
     
     <style>
         :root {
-            --primary-color: #88b08b; /* Sage Green */
+            --primary-color: #88b08b;
             --accent-color: #e8f5e9;
-            --alert-color: #e07a5f; /* Terracotta Orange */
+            --alert-color: #e07a5f;
             --text-color: #333;
         }
 
         body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 300px; }
 
-        /* スタンプ & ログ */
-        .version-stamp { position: fixed; top: 0; right: 0; background: var(--primary-color); color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
+        .version-stamp { position: fixed; top: 0; right: 0; background: #007bff; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
         #debug-console-container { display: block; margin-top: 30px; padding: 0 10px; }
         #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 11px; padding: 15px; border-radius: 8px; }
 
-        /* UIパーツ */
         .no-print-area { margin: 20px 0 30px; text-align: center; }
-        .btn-print { width: 100%; margin-bottom: 10px; padding: 12px; font-weight: bold; border-radius: 8px; border: none; color: white; }
         .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
         
-        /* 写真 (画面用) */
-        #d_photo_container { width: 150px; height: 150px; background: #fff; border-radius: 12px; border: 4px solid var(--accent-color); overflow: hidden; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; }
-        .dog-profile-img { width: 100%; height: 100%; object-fit: cover; }
+        /* Generating Overlay */
+        #generating-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9); z-index: 10000;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+        }
 
         /* --- DISPLAY MODES --- */
         #poster-display, #crate-display { display: none; }
 
-        /* --- TASK-1: POSTER STYLE --- */
+        /* POSTER STYLE */
         .poster-container {
             width: 210mm; min-height: 297mm; background: #fffaf0; padding: 15mm; text-align: center; border: 8px solid #dc3545; box-sizing: border-box; margin: 0 auto;
         }
-        /* (ポスターCSSは前回のまま維持) */
         .poster-header { color: #dc3545; font-size: 40pt; font-weight: 900; margin-bottom: 10mm; }
         .poster-photo { width: 70%; aspect-ratio: 1/1; object-fit: cover; border: 6px solid #333; margin-bottom: 10mm; background: #ddd; }
         .poster-table { width: 100%; border-collapse: collapse; font-size: 14pt; margin-bottom: 10mm; text-align: left; }
@@ -50,78 +49,42 @@
         .poster-table td { border-bottom: 1px solid #ccc; padding: 5px; font-weight: bold; }
         .poster-contact { background: #dc3545; color: white; padding: 15px; border-radius: 15px; font-size: 16pt; font-weight: bold; }
 
-        /* --- TASK-2: CRATE TAG STYLE (Tent) --- */
+        /* CRATE TAG STYLE */
         .crate-container {
-            width: 210mm; height: 297mm; /* A4 Portrait */
-            background: white; position: relative; overflow: hidden;
-            box-sizing: border-box; border: 1px dashed #ccc; /* Cut line guide */
-            margin: 0 auto;
+            width: 210mm; height: 297mm; background: white; position: relative; overflow: hidden;
+            box-sizing: border-box; border: 1px dashed #ccc; margin: 0 auto;
         }
+        .crate-fold-line { position: absolute; top: 50%; left: 0; width: 100%; height: 0; border-top: 2px dashed #88b08b; z-index: 10; }
+        .crate-fold-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 0 10px; color: #88b08b; font-size: 10pt; }
         
-        /* Center Fold Line */
-        .crate-fold-line {
-            position: absolute; top: 50%; left: 0; width: 100%; height: 0;
-            border-top: 2px dashed #88b08b; z-index: 10;
-        }
-        .crate-fold-text {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: white; padding: 0 10px; color: #88b08b; font-size: 10pt;
-        }
-
-        /* BACK SIDE (Top Half - Rotated 180) */
         .crate-back {
-            position: absolute; top: 0; left: 0; width: 100%; height: 50%;
-            padding: 10mm; box-sizing: border-box;
-            transform: rotate(180deg); /* 逆さまにする */
-            display: flex; flex-direction: column; justify-content: space-between;
-            background-color: #fdfdfd;
+            position: absolute; top: 0; left: 0; width: 100%; height: 50%; padding: 10mm; box-sizing: border-box;
+            transform: rotate(180deg); display: flex; flex-direction: column; justify-content: space-between; background-color: #fdfdfd;
         }
         .crate-owner-section { border: 3px solid #333; padding: 10px; border-radius: 8px; }
-        .crate-owner-title { font-weight: bold; background: #333; color: white; display: inline-block; padding: 2px 10px; border-radius: 4px; margin-bottom: 5px; }
         .crate-food-list { font-size: 10pt; display: flex; gap: 10px; }
         .crate-food-box { border: 1px solid #ccc; padding: 5px; flex: 1; border-radius: 5px; }
-        .crate-commands { font-size: 10pt; margin-top: 10px; }
-        .crate-command-item { border: 1px solid #888; padding: 2px 5px; display: inline-block; margin: 2px; border-radius: 4px; }
-
-        /* FRONT SIDE (Bottom Half) */
+        
         .crate-front {
-            position: absolute; top: 50%; left: 0; width: 100%; height: 50%;
-            padding: 10mm; box-sizing: border-box;
-            text-align: center;
+            position: absolute; top: 50%; left: 0; width: 100%; height: 50%; padding: 10mm; box-sizing: border-box; text-align: center;
         }
-        .crate-main-photo {
-            width: 140px; height: 140px; object-fit: cover;
-            border-radius: 50%; border: 5px solid var(--alert-color);
-            margin: 0 auto 10px; display: block;
-        }
+        .crate-main-photo { width: 140px; height: 140px; object-fit: cover; border-radius: 50%; border: 5px solid var(--alert-color); margin: 0 auto 10px; display: block; }
         .crate-main-name { font-size: 32pt; font-weight: 900; color: #333; line-height: 1; }
-        .crate-main-breed { font-size: 14pt; font-weight: bold; color: #666; margin-bottom: 10px; }
-        
-        .crate-alert-bar {
-            background-color: var(--alert-color); color: white;
-            font-weight: bold; font-size: 14pt; padding: 5px;
-            border-radius: 8px; margin-bottom: 10px;
-        }
-        
-        .crate-write-area {
-            border: 2px dashed #88b08b; border-radius: 8px; padding: 5px;
-            text-align: left; height: 80px;
-        }
-        .crate-bottom-msg {
-            margin-top: 10px; font-weight: bold; font-size: 10pt; color: var(--primary-color);
-        }
+        .crate-alert-bar { background-color: var(--alert-color); color: white; font-weight: bold; font-size: 14pt; padding: 5px; border-radius: 8px; margin-bottom: 10px; }
+        .crate-write-area { border: 2px dashed #88b08b; border-radius: 8px; padding: 5px; text-align: left; height: 80px; }
 
-        /* 印刷時設定 */
+        /* HANDBOOK STYLE (Reused parts) */
+        #d_photo_container { width: 150px; height: 150px; background: #fff; border-radius: 12px; border: 4px solid var(--accent-color); overflow: hidden; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; }
+        .dog-profile-img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* PRINT SETTINGS (Keep existing for browser print fallback) */
         @media print {
-            .no-print-area, #debug-console-container, .version-stamp { display: none !important; }
+            .no-print-area, #debug-console-container, .version-stamp, #generating-overlay { display: none !important; }
             body { background: white; }
-            
             body.mode-handbook #main-display { display: block; }
             body.mode-handbook #poster-display, body.mode-handbook #crate-display { display: none; }
-
             body.mode-poster #poster-display { display: block; }
             body.mode-poster #main-display, body.mode-poster #crate-display { display: none; }
-
             body.mode-crate #crate-display { display: block; }
             body.mode-crate #main-display, body.mode-crate #poster-display { display: none; }
         }
@@ -129,7 +92,13 @@
 </head>
 <body class="mode-handbook">
 
-    <div class="version-stamp">v2025.12.02-TASK-2</div>
+    <div class="version-stamp">v2025.12.02-TASK-3-PDF</div>
+
+    <div id="generating-overlay">
+        <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;"></div>
+        <h4 class="mt-3 fw-bold">PDFを作成中...</h4>
+        <p class="text-muted">この処理には数秒かかります<br>閉じずにそのままお待ちください</p>
+    </div>
 
     <div class="container py-3">
         <div class="no-print-area">
@@ -140,21 +109,19 @@
             </div>
 
             <div id="controls" style="display:none; max-width: 500px; margin: 0 auto;">
-                <button onclick="switchMode('handbook')" class="btn btn-print" style="background-color: #88b08b;">
-                    <i class="fa-solid fa-book"></i> 手帳モード (通常)
+                <p class="text-muted small mb-2 text-start">必要な形式を選択してください：</p>
+                <button onclick="generatePDF('handbook')" class="btn btn-print" style="background-color: #88b08b; width:100%; color:white; margin-bottom:10px;">
+                    <i class="fa-solid fa-book-medical"></i> 1. 防災手帳 (A4横・保存用)
                 </button>
-                <button onclick="switchMode('poster')" class="btn btn-print" style="background-color: #dc3545;">
-                    <i class="fa-solid fa-bullhorn"></i> 迷子ポスター (TASK-1)
+                <button onclick="generatePDF('crate')" class="btn btn-print" style="background-color: #e07a5f; width:100%; color:white; margin-bottom:10px;">
+                    <i class="fa-solid fa-tent"></i> 2. クレート掲示タグ (A4縦)
                 </button>
-                <button onclick="switchMode('crate')" class="btn btn-print" style="background-color: #e07a5f;">
-                    <i class="fa-solid fa-tent"></i> クレートタグ (TASK-2)
+                <button onclick="generatePDF('poster')" class="btn btn-print" style="background-color: #dc3545; width:100%; color:white; margin-bottom:10px;">
+                    <i class="fa-solid fa-bullhorn"></i> 3. 迷子ポスター (A4縦)
                 </button>
                 
                 <hr>
-                <button onclick="window.print()" class="btn btn-secondary w-100 rounded-pill">
-                    <i class="fa-solid fa-print"></i> 印刷 / PDF保存
-                </button>
-                <div class="mt-2 small text-muted">※印刷ボタンを押すと、現在表示中のモードで出力されます。</div>
+                <button onclick="window.location.href='index.html'" class="btn btn-outline-secondary w-100 rounded-pill">戻る</button>
             </div>
         </div>
 
@@ -168,8 +135,8 @@
                     <div class="col-12"><h2 id="d_name_main" class="fw-bold">-</h2></div>
                     <div class="col-12 text-muted" id="d_breed_main">-</div>
                 </div>
-                <div class="alert alert-warning small">
-                    <i class="fa-solid fa-circle-info"></i> 印刷プレビュー機能は実装中です。各ボタンでモードを切り替えてから印刷してください。
+                <div class="alert alert-info small">
+                    <i class="fa-solid fa-circle-info"></i> 上記のボタンからPDFを作成し、スマホに保存してください。
                 </div>
             </div>
         </div>
@@ -193,62 +160,35 @@
             <div class="crate-container">
                 <div class="crate-fold-line"></div>
                 <div class="crate-fold-text">------ 山折り (FOLD HERE) ------</div>
-
                 <div class="crate-back">
                     <div class="crate-owner-section">
-                        <div class="crate-owner-title">緊急連絡先 (Emergency Contact)</div>
+                        <div class="crate-owner-title">緊急連絡先</div>
                         <div class="fs-5 fw-bold">Owner: <span id="crate_owner">-</span></div>
                         <div class="fs-4 fw-bold"><i class="fa-solid fa-phone"></i> <span id="crate_phone">-</span></div>
                         <hr style="margin:5px 0;">
                         <div class="small">代理人: <span id="crate_proxy">-</span> (<span id="crate_proxy_tel">-</span>)</div>
-                        <div class="small">かかりつけ医: <span id="crate_vet">-</span></div>
                     </div>
-
                     <div class="mt-2">
-                        <strong>🆘 サバイバルフード (Human Food OK/NG)</strong>
+                        <strong>🆘 サバイバルフード</strong>
                         <div class="crate-food-list">
                             <div class="crate-food-box bg-light">
-                                <span class="text-success fw-bold">⭕️ OK</span><br>
-                                白米・パン(具なし)<br>サツマイモ・鶏肉<br>バナナ・リンゴ
+                                <span class="text-success fw-bold">⭕️ OK</span><br>白米・パン(具なし)<br>サツマイモ・鶏肉
                             </div>
                             <div class="crate-food-box bg-light">
-                                <span class="text-danger fw-bold">❌ NG</span><br>
-                                ネギ・玉ねぎ・チョコ<br>ブドウ・キシリトール<br>鳥の骨・カフェイン
+                                <span class="text-danger fw-bold">❌ NG</span><br>ネギ・チョコ<br>ブドウ・キシリトール
                             </div>
                         </div>
                     </div>
-
-                    <div class="mt-2">
-                        <strong>🐕 コマンド (Commands)</strong><br>
-                        <span class="crate-command-item">オスワリ/Sit</span>
-                        <span class="crate-command-item">マテ/Wait</span>
-                        <span class="crate-command-item">ハウス/House</span>
-                        <span class="crate-command-item">オイデ/Come</span>
-                    </div>
                 </div>
-
                 <div class="crate-front">
                     <img id="crate_img" class="crate-main-photo" src="">
                     <div id="crate_name" class="crate-main-name">NAME</div>
                     <div id="crate_breed" class="crate-main-breed">Breed / Age</div>
-
-                    <div id="crate_alert" class="crate-alert-bar">
-                        ⚠️ <span id="crate_caution">-</span>
-                    </div>
-
-                    <div style="text-align:left; font-size:10pt; font-weight:bold; color:#555;">
-                        🍚 食事・投薬ログ (Food/Meds Log)
-                    </div>
-                    <div class="crate-write-area">
-                        <span class="small text-muted">※ここに給餌時間や体調を手書きしてください</span>
-                    </div>
-
-                    <div class="crate-bottom-msg">
-                        <i class="fa-solid fa-arrow-up"></i> 緊急連絡先は裏面(内側)を確認してください <i class="fa-solid fa-arrow-up"></i>
-                    </div>
-                    
+                    <div id="crate_alert" class="crate-alert-bar">⚠️ <span id="crate_caution">-</span></div>
+                    <div style="text-align:left; font-size:10pt; font-weight:bold; color:#555;">🍚 食事・投薬ログ</div>
+                    <div class="crate-write-area"><span class="small text-muted">※手書き記入欄</span></div>
                     <div class="mt-3 text-start small border-top pt-2">
-                        <label><input type="checkbox" style="transform:scale(1.5);"> 緊急時の獣医処置を一任します (Authorize Vet Care)</label>
+                        <label><input type="checkbox" style="transform:scale(1.5);"> 緊急時の獣医処置を一任します</label>
                     </div>
                 </div>
             </div>
@@ -260,9 +200,35 @@
         </div>
     </div>
 
+    <div class="modal fade" id="completeModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-success"><i class="fa-solid fa-check-circle"></i> PDF生成完了</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small">ブラウザのダウンロードフォルダにPDFが保存されました。</p>
+                    <div class="alert alert-warning small fw-bold">
+                        <i class="fa-solid fa-triangle-exclamation"></i>【最重要】<br>
+                        PDFファイルを開き、スクリーンショットや「画像を保存」で、必ず<strong>写真アプリ</strong>にも保存してください。<br>
+                        (災害時にPDFビューアが開けない場合に備えるため)
+                    </div>
+                    <hr>
+                    <h6 class="fw-bold small">コンビニプリントの方法</h6>
+                    <p class="small text-muted">保存したPDFまたは画像を、コンビニのマルチコピー機アプリ（netprintなど）を使って印刷してください。</p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-secondary w-100 rounded-pill" data-bs-dismiss="modal">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
         const LIFF_ID = "2008546673-MJY7j3ox";
+        let completeModal;
 
         function log(msg) {
             const el = document.getElementById('debug-console');
@@ -271,14 +237,13 @@
         }
 
         window.onload = async function() {
+            completeModal = new bootstrap.Modal(document.getElementById('completeModal'));
             try {
-                log('Init LIFF...');
                 await liff.init({ liffId: LIFF_ID });
                 if (!liff.isLoggedIn()) { liff.login(); return; }
                 const profile = await liff.getProfile();
                 const urlParams = new URLSearchParams(window.location.search);
                 const dogId = urlParams.get('dogId');
-                
                 log(`User: ${profile.userId}, DogID: ${dogId}`);
                 fetchData(profile.userId, dogId);
             } catch (err) {
@@ -289,86 +254,125 @@
         function fetchData(userId, dogId) {
             let url = `${API_URL}?userId=${userId}`;
             if(dogId) url += `&dogId=${dogId}`;
-            fetch(url)
-                .then(res => res.json())
-                .then(data => {
-                    if(data.error) { log('API Error: ' + data.error); return; }
-                    renderData(data);
-                    if(data.dog && data.dog.id) fetchImage(userId, data.dog.id);
-                })
-                .catch(e => log('Fetch Error: ' + e.message));
+            fetch(url).then(res => res.json()).then(data => {
+                if(data.error) { log('API Error: ' + data.error); return; }
+                renderData(data);
+                if(data.dog && data.dog.id) fetchImage(userId, data.dog.id);
+            }).catch(e => log('Fetch Error: ' + e.message));
         }
 
         function renderData(data) {
             const c = data.customer || {};
             const d = data.dog || {};
 
-            // 1. Handbook
+            // Handbook
             setText('d_name_main', d.name_disp);
             setText('d_breed_main', `${d.breed} / ${d.age}`);
 
-            // 2. Poster
+            // Poster
             setText('poster_name', d.name_disp);
             setText('poster_desc', `${d.breed} / ${d.gender} / ${d.age}`);
             setText('poster_phone', c.phone);
 
-            // 3. Crate Tag (TASK-2)
+            // Crate
             setText('crate_name', d.name_disp);
             setText('crate_breed', `${d.breed} (${d.gender})`);
-            setText('crate_caution', d.caution || '特になし (None)');
+            setText('crate_caution', d.caution || 'None');
             setText('crate_owner', c.name);
             setText('crate_phone', c.phone);
             setText('crate_proxy', c.proxy_name);
             setText('crate_proxy_tel', c.proxy_phone);
-            setText('crate_vet', d.vet_name);
 
             document.getElementById('loading').style.display = 'none';
             document.getElementById('controls').style.display = 'block';
             document.getElementById('main-display').style.display = 'block';
-            log('Render Complete.');
         }
 
         function fetchImage(userId, dogId) {
             let url = `${API_URL}?userId=${userId}&type=img_profile&dogId=${dogId}`;
             fetch(url).then(res => res.json()).then(data => {
                 if(data.image) {
-                    setImg('d_photo_container', data.image); // Handbook
-                    setSrc('poster_img', data.image);       // Poster
-                    setSrc('crate_img', data.image);        // Crate
-                    log('Image loaded.');
+                    setImg('d_photo_container', data.image);
+                    setSrc('poster_img', data.image);
+                    setSrc('crate_img', data.image);
                 }
             });
         }
 
-        // Helpers
-        function setText(id, txt) {
-            const el = document.getElementById(id);
-            if(el) el.textContent = (txt && txt !== '') ? txt : '-';
-        }
-        function setSrc(id, src) {
-            const el = document.getElementById(id);
-            if(el) el.src = src;
-        }
-        function setImg(containerId, src) {
-            const el = document.getElementById(containerId);
-            if(el) {
-                el.innerHTML = `<img src="${src}" class="dog-profile-img">`;
-                el.style.border = 'none';
+        // --- TASK-3: PDF GENERATION LOGIC ---
+        async function generatePDF(mode) {
+            log(`Starting PDF Gen: ${mode}`);
+            const overlay = document.getElementById('generating-overlay');
+            overlay.style.display = 'flex'; // Show Loading
+
+            // 1. Select Target
+            let targetId = 'main-display'; // default handbook
+            if (mode === 'poster') targetId = 'poster-display';
+            if (mode === 'crate') targetId = 'crate-display';
+
+            const target = document.getElementById(targetId);
+            if(!target) {
+                log('Target not found');
+                overlay.style.display = 'none';
+                return;
+            }
+
+            // 2. Temporarily show target for rendering
+            const prevDisplay = target.style.display;
+            target.style.display = 'block'; // Make visible for html2canvas
+            
+            // Wait a moment for DOM to settle
+            await new Promise(r => setTimeout(r, 500));
+
+            try {
+                // 3. Capture
+                const canvas = await html2canvas(target, {
+                    scale: 2, // High resolution
+                    useCORS: true, // Needed for Base64 images often
+                    allowTaint: true
+                });
+
+                // 4. Create PDF
+                const { jsPDF } = window.jspdf;
+                // Landscape for Handbook, Portrait for others
+                const orient = (mode === 'handbook') ? 'l' : 'p';
+                const doc = new jsPDF(orient, 'mm', 'a4');
+
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                
+                // A4 dimensions in mm
+                const a4w = (orient === 'l') ? 297 : 210;
+                const a4h = (orient === 'l') ? 210 : 297;
+
+                // Fit image to page
+                const imgProps = doc.getImageProperties(imgData);
+                const pdfWidth = a4w;
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+                doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                
+                // 5. Save
+                const fname = `K9_${mode.toUpperCase()}_${new Date().getTime()}.pdf`;
+                doc.save(fname);
+                log('PDF Saved: ' + fname);
+
+                // 6. Complete
+                completeModal.show();
+
+            } catch (err) {
+                log('PDF Gen Error: ' + err.message);
+                alert('PDF作成に失敗しました: ' + err.message);
+            } finally {
+                // Restore UI
+                target.style.display = prevDisplay;
+                overlay.style.display = 'none';
             }
         }
 
-        // モード切替
-        window.switchMode = function(mode) {
-            document.body.className = ''; // Reset
-            document.body.classList.add('mode-' + mode);
-            
-            // Toggle Display manually for safety
-            document.getElementById('main-display').style.display = (mode === 'handbook') ? 'block' : 'none';
-            document.getElementById('poster-display').style.display = (mode === 'poster') ? 'block' : 'none';
-            document.getElementById('crate-display').style.display = (mode === 'crate') ? 'block' : 'none';
-            
-            alert(`${mode.toUpperCase()} モードに切り替えました。\n「印刷」ボタンを押すとプレビューが表示されます。`);
-        };
+        // Helpers
+        function setText(id, txt) { const el = document.getElementById(id); if(el) el.textContent = txt || '-'; }
+        function setSrc(id, src) { const el = document.getElementById(id); if(el) el.src = src; }
+        function setImg(cid, src) { const el = document.getElementById(cid); if(el) { el.innerHTML = `<img src="${src}" class="dog-profile-img">`; el.style.border='none'; } }
     </script>
 </body>
 </html>
