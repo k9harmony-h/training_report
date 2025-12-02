@@ -14,14 +14,14 @@
             --alert-color: #d9534f;
             --mask-color: #f0f0f0;
         }
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f8f9fa; color: #333; padding-bottom: 200px; /* デバッグ用余白 */ }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f8f9fa; color: #333; padding-bottom: 200px; }
 
         /* --- VERSION STAMP --- */
         .version-stamp {
-            position: fixed; top: 0; right: 0; background: #d9534f; color: white; font-size: 10px; padding: 2px 5px; z-index: 9999; font-family: monospace; opacity: 0.9;
+            position: fixed; top: 0; right: 0; background: #0d6efd; color: white; font-size: 10px; padding: 2px 5px; z-index: 9999; font-family: monospace; opacity: 0.9;
         }
 
-        /* --- DEBUG CONSOLE (Always Visible for Safety) --- */
+        /* --- DEBUG CONSOLE --- */
         #debug-console-container { display: block; margin-top: 30px; }
         #debug-console {
             background-color: #000; color: #0f0; font-family: monospace; font-size: 11px; padding: 15px; border-radius: 8px; white-space: pre-wrap; word-break: break-all; border: 2px solid #555;
@@ -95,8 +95,8 @@
 </head>
 <body>
 
-    <div class="version-stamp">v2025.12.02-FIX-BACK-BTN</div>
-1300
+    <div class="version-stamp">v2025.12.02-FIX-ID-ERROR</div>
+
     <div class="container py-4">
         <div class="no-print-area">
             <h4 class="fw-bold mb-3" style="color: var(--primary-color);">⛑️ うちの子医療・防災手帳</h4>
@@ -146,7 +146,8 @@
                                 <div class="info-row mb-0">
                                     <span class="info-label">電話番号 (Phone)</span>
                                     <div class="masked-wrapper">
-                                        <span class="masked-text">***-****-****</span><span class="real-text" id="c_phone">-</span>
+                                        <span class="masked-text" id="c_phone_masked">***-****-****</span>
+                                        <span class="real-text" id="c_phone_real">-</span>
                                         <button class="btn-toggle-mask" onclick="toggleMask(this, '電話番号')">表示</button>
                                     </div>
                                 </div>
@@ -162,7 +163,8 @@
                             <div class="info-row">
                                 <span class="info-label">緊急連絡先 (Emergency Contact)</span><div class="info-value fw-bold" id="c_em_name">-</div>
                                 <div class="masked-wrapper mt-1">
-                                    <span class="masked-text">***-****-****</span><span class="real-text" id="c_em_phone">-</span>
+                                    <span class="masked-text" id="c_em_phone_masked">***-****-****</span>
+                                    <span class="real-text" id="c_em_phone_real">-</span>
                                     <button class="btn-toggle-mask" onclick="toggleMask(this, '連絡先')">表示</button>
                                 </div>
                             </div>
@@ -170,7 +172,8 @@
                                 <span class="info-label text-danger">代理引受人 (Proxy Person)</span>
                                 <div class="info-value fw-bold" id="c_proxy_name">-</div>
                                 <div class="masked-wrapper mt-1" style="background: rgba(255,255,255,0.7);">
-                                    <span class="masked-text">***-****-****</span><span class="real-text" id="c_proxy_phone">-</span>
+                                    <span class="masked-text" id="c_proxy_phone_masked">***-****-****</span>
+                                    <span class="real-text" id="c_proxy_phone_real">-</span>
                                     <button class="btn-toggle-mask" onclick="toggleMask(this, '連絡先')">表示</button>
                                 </div>
                             </div>
@@ -282,7 +285,6 @@
             console.log(msg);
         }
 
-        // Back Button Logic
         function goBack() {
             let url = 'index.html';
             if (currentDogId) {
@@ -307,7 +309,7 @@
                 fetchData(currentUserId, currentDogId);
             } catch (err) {
                 log('FATAL ERROR: ' + err.message);
-                document.getElementById('loading').innerHTML = `<p class="text-danger fw-bold">初期化エラーが発生しました。<br><small>${err.message}</small></p>`;
+                document.getElementById('loading').innerHTML = `<p class="text-danger fw-bold">初期化エラー発生<br><small>${err.message}</small></p>`;
             }
         };
 
@@ -321,7 +323,7 @@
                     document.getElementById('loading').innerHTML = `<p class="text-danger fw-bold">${data.error}</p>`; return; 
                 }
                 if (data.multiple_dogs) { 
-                    document.getElementById('loading').innerHTML = `<p class="text-warning fw-bold">犬を選択してください（index.htmlから選択）</p>`; return; 
+                    document.getElementById('loading').innerHTML = `<p class="text-warning fw-bold">犬を選択してください</p>`; return; 
                 }
                 renderData(data);
                 fetchDogImage(userId, data.dog.id);
@@ -336,7 +338,7 @@
             try {
                 const c = data.customer || {};
                 const d = data.dog || {};
-                currentDogId = d.id; // Update Current Dog ID for Back Button
+                currentDogId = d.id;
 
                 setText('d_name', d.name_disp);
                 setText('d_breed', d.breed);
@@ -346,6 +348,7 @@
                 
                 setText('c_name', c.name);
                 setMaskedText('c_address', c.address, maskAddress(c.address));
+                // ★FIXED: Calls match new HTML IDs
                 setMaskedText('c_phone', c.phone, null);
                 
                 setText('c_em_name', c.em_name);
@@ -354,7 +357,6 @@
                 setMaskedText('c_proxy_phone', c.proxy_phone, null);
                 setText('c_evac', c.evac_site);
 
-                // ★ QR Code Logic (Fixed: HTTPS & Syntax)
                 if (c.evac_site && c.evac_site !== '記載なし') {
                     const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.evac_site)}`;
                     const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(mapUrl)}`;
@@ -409,17 +411,32 @@
             if (el) el.textContent = (text === undefined || text === null || text === '') ? '-' : text;
         }
         
+        // ★FIX: Error Handling Added
         function setMaskedText(baseId, realText, maskedText) {
-            const realEl = document.getElementById(baseId + '_real');
-            const maskedEl = document.getElementById(baseId + '_masked');
-            const btn = realEl.parentElement.querySelector('.btn-toggle-mask');
-            if (!realText || realText === '記載なし') {
-                realEl.textContent = '記載なし'; maskedEl.style.display = 'none'; realEl.style.display = 'block';
-                if(btn) btn.style.display = 'none'; return;
+            try {
+                const realEl = document.getElementById(baseId + '_real');
+                const maskedEl = document.getElementById(baseId + '_masked');
+                
+                if(!realEl || !maskedEl) {
+                    log('Warning: Element missing for ID ' + baseId);
+                    return;
+                }
+
+                const btn = realEl.parentElement.querySelector('.btn-toggle-mask');
+
+                if (!realText || realText === '記載なし') {
+                    realEl.textContent = '記載なし'; 
+                    maskedEl.style.display = 'none'; 
+                    realEl.style.display = 'block';
+                    if(btn) btn.style.display = 'none'; 
+                    return;
+                }
+                realEl.textContent = realText;
+                maskedEl.textContent = maskedText || '***-****-****';
+                if(btn) btn.style.display = 'inline-block';
+            } catch(e) {
+                log('Error in setMaskedText: ' + e.message);
             }
-            realEl.textContent = realText;
-            maskedEl.textContent = maskedText || '***-****-****';
-            if(btn) btn.style.display = 'inline-block';
         }
 
         function toggleMask(btn, label) {
