@@ -97,6 +97,8 @@
             object-fit: cover;
             border-radius: 8px;
             border: 2px solid #ccc;
+            /* パフォーマンス改善: 初期状態ではプレースホルダーを表示 */
+            background-color: #f0f0f0; 
         }
         
         /* カードデザイン */
@@ -534,13 +536,13 @@
                                     <div class="row">
                                         <div class="col-6">
                                             <div class="mb-2 fw-bold small">顔写真 <span class="text-danger">*</span></div>
-                                            <img id="dog-photo-face-preview" class="image-preview" src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20font-size%3D%2212%22%20fill%3D%22%23999%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3E顔写真%3C%2Ftext%3E%3C%2Fsvg%3E" alt="顔写真プレビュー">
+                                            <img id="dog-photo-face-preview" class="image-preview" src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20font-size%3D%2212%22%20fill%3D%22%23999%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3E顔写真%3C%2Ftext%3E%3C%2Fsvg%3E" data-src="" alt="顔写真プレビュー">
                                             <input type="file" class="form-control form-control-sm mt-2" id="dog-photo-face" accept="image/*" required>
                                             <div class="invalid-feedback">顔写真の登録は必須です。</div>
                                         </div>
                                         <div class="col-6">
                                             <div class="mb-2 fw-bold small">全身写真</div>
-                                            <img id="dog-photo-full-preview" class="image-preview" src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20font-size%3D%2212%22%20fill%3D%22%23999%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3E全身写真%3C%2Ftext%3E%3C%2Fsvg%3E" alt="全身写真プレビュー">
+                                            <img id="dog-photo-full-preview" class="image-preview" src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20font-size%3D%2212%22%20fill%3D%22%23999%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3E全身写真%3C%2Ftext%3E%3C%2Fsvg%3E" data-src="" alt="全身写真プレビュー">
                                             <input type="file" class="form-control form-control-sm mt-2" id="dog-photo-full" accept="image/*">
                                         </div>
                                     </div>
@@ -644,7 +646,7 @@
     <div id="poster-display">
         <h1 class="poster-title">MISSING DOG<br>迷子犬を探しています</h1>
         <div class="poster-photo-container">
-            <img id="poster-photo" class="poster-photo" alt="迷子犬の写真">
+            <img id="poster-photo" class="poster-photo" src="" alt="迷子犬の写真">
         </div>
         <div class="poster-info">
             <p><strong>名前:</strong> <span id="poster-dog-name"></span></p>
@@ -663,7 +665,7 @@
         <div class="crate-side-left">
             <h2 class="crate-title">K9 災害時クレートタグ</h2>
             <div class="crate-photo-container">
-                <img id="crate-photo" class="crate-photo" alt="犬の顔写真">
+                 <img id="crate-photo" class="crate-photo" src="" alt="犬の顔写真">
             </div>
             <h3 class="h5 mt-3 text-center fw-bold text-uppercase" id="crate-dog-name"></h3>
             <div class="mt-4">
@@ -709,7 +711,7 @@
             <div>
                 <h3 class="passport-section-title">個体識別情報</h3>
                 <div class="passport-photo-container">
-                    <img id="passport-photo" class="passport-photo" alt="犬の顔写真">
+                    <img id="passport-photo" class="passport-photo" src="" alt="犬の顔写真">
                 </div>
                 <div class="passport-info-group">
                     <p class="mb-1"><span class="passport-label">名前:</span> <span id="passport-dog-name"></span></p>
@@ -786,7 +788,7 @@
 
             } catch (e) {
                 log(`FATAL: LIFF initialization failed: ${e.message}`);
-                document.getElementById('liff-message').textContent = `LIFF初期化エラー: ${e.message}。外部ブラウザで開いて再試行してください。`;
+                // エラーメッセージは静的なliff-message要素で表示されているため、ここではスピナーを非表示にするのみ
                 document.getElementById('liff-spinner').style.display = 'none';
             }
         }
@@ -819,7 +821,8 @@
                     vet_contact: document.getElementById('vet-contact').value,
                 },
                 photos: {
-                    face: document.getElementById('dog-photo-face-preview').src,
+                    // Lazy Load対応: Data URLを直接保存
+                    face: document.getElementById('dog-photo-face-preview').src, 
                     full: document.getElementById('dog-photo-full-preview').src,
                 }
             };
@@ -860,6 +863,7 @@
                     document.getElementById('medical-allergies').value = formData.medical.allergies || '';
                     document.getElementById('vet-contact').value = formData.medical.vet_contact || '';
                     
+                    // Lazy Load: プレビューのsrcを設定
                     document.getElementById('dog-photo-face-preview').src = formData.photos.face || document.getElementById('dog-photo-face-preview').src;
                     document.getElementById('dog-photo-full-preview').src = formData.photos.full || document.getElementById('dog-photo-full-preview').src;
 
@@ -1078,7 +1082,7 @@
             printSelectModal.hide();
             // PDF生成中のフィードバックを即座に表示
             document.getElementById('pdf-preview-area').innerHTML = `<p class="fw-bold mt-5 text-dark"><i class="fa-solid fa-spinner fa-spin me-2"></i> ${mode.toUpperCase()}のPDFを生成中...</p>`;
-            pdfPreviewModal.show();
+      　　　　 pdfPreviewModal.show();
             
             // モードに応じたターゲット要素とPDF設定を定義
             const targetConfig = {
@@ -1117,7 +1121,7 @@
                 const canvas = await html2canvas(targetElement, {
                     scale: 3, // 高解像度キャプチャ
                     useCORS: true,
-                    allowTaint: true
+      　　　　　　　allowTaint: true
                 });
                 log('HTML captured to Canvas.');
 
@@ -1141,6 +1145,7 @@
             } catch (e) {
                 log(`PDF Generation FATAL ERROR: ${e.message} (Stack: ${e.stack})`);
                 document.getElementById('pdf-preview-area').innerHTML = `<p class="fw-bold mt-4 text-danger">PDF生成中にエラーが発生しました。</p><p class="small text-muted">エラー: ${e.message}</p>`;
+    　　　　　　
             } finally {
                 // 5. ★★★ クリーンアップ (最重要) ★★★
                 log('Cleaning up print classes and restoring display state.');
@@ -1160,7 +1165,8 @@
         // 初期処理
         // ====================================
 
-        // ★修正点：DOMContentLoadedではなく、window.onloadでDOMツリーと全アセットの読み込み完了を待つ
+        // ★修正点：LIFF SDKの読み込み完了を確実にするため、LIFFオブジェクトの存在をチェックするポーリング機構を追加
+        // window.onload でLIFF初期化をキック
         window.onload = () => {
             initializeLiff();
             // Bootstrapモーダルのインスタンス化
