@@ -9,37 +9,33 @@
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     
     <style>
+        /* ★★★ BRANDING UPDATE: K9 Harmony Shelter Colors ★★★ */
         :root {
-            --primary-color: #6da06f;
-            --accent-color: #e7f3e8;
-            --alert-color: #d9534f;
+            --primary-color: #88b08b; /* Sage Green (メイン: 鎮静効果) */
+            --accent-color: #e8f5e9; /* Light Pale Green (背景の淡いアクセント) */
+            --alert-color: #e07a5f; /* Terracotta Orange (警告・注意色) */
             --mask-color: #f0f0f0;
         }
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f8f9fa; color: #333; padding-bottom: 200px; }
+        /* ★★★ END BRANDING UPDATE ★★★ */
 
-        .version-stamp { position: fixed; top: 0; right: 0; background: #6da06f; color: white; font-size: 10px; padding: 2px 5px; z-index: 9999; font-family: monospace; opacity: 0.9; }
+        body { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif; background-color: #f9fbf9; color: #333; padding-bottom: 200px; }
+
+        .version-stamp { position: fixed; top: 0; right: 0; background: var(--primary-color); color: white; font-size: 10px; padding: 2px 5px; z-index: 9999; font-family: monospace; opacity: 0.9; }
 
         /* DEBUG CONSOLE */
         #debug-console-container { display: block; margin-top: 30px; }
         #debug-console { background-color: #000; color: #0f0; font-family: monospace; font-size: 11px; padding: 15px; border-radius: 8px; white-space: pre-wrap; word-break: break-all; border: 2px solid #555; }
 
         /* COMMON STYLES */
-        .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); height: 100%; position: relative; }
+        .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); height: 100%; border: 1px solid #eee; }
         .section-title { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 15px; }
         .info-label { font-weight: bold; color: #666; display: block; font-size: 0.85rem; margin-bottom: 2px; }
         .info-value { font-size: 1rem; min-height: 24px; word-break: break-word; font-weight: 500; }
         .loading { text-align: center; padding: 40px; color: #666; }
         
-        /* Dog Photo (Square 200px) */
+        /* Dog Photo */
         #d_photo_container {
-            width: 200px; height: 200px; 
-            background-color: #f8f9fa; 
-            border-radius: 12px; /* Soft square */
-            border: 4px solid var(--accent-color); 
-            overflow: hidden; 
-            display: flex; align-items: center; justify-content: center; 
-            margin: 0 auto 15px auto;
-            flex-shrink: 0;
+            width: 200px; height: 200px; background-color: #fff; border-radius: 12px; border: 4px solid var(--accent-color); overflow: hidden; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto; flex-shrink: 0;
         }
         .dog-profile-img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -65,7 +61,8 @@
         .dog-select-btn:active { background: var(--primary-color); color: #fff; transform: scale(0.98); }
 
         .no-print-area { margin: 20px 0 30px; text-align: center; }
-        .btn-print { background-color: var(--primary-color); color: white; padding: 12px 40px; border-radius: 50px; border: none; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(109, 160, 111, 0.3); transition: transform 0.1s; }
+        .btn-print { background-color: var(--primary-color); color: white; padding: 12px 30px; border-radius: 50px; border: none; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 10px rgba(136, 176, 139, 0.4); transition: transform 0.1s; width: 100%; margin-bottom: 10px; }
+        .btn-print-crate { background-color: var(--alert-color); color: white; }
         .disclaimer-footer { font-size: 0.8rem; color: #999; margin-top: 40px; padding-bottom: 20px; border-top: 1px solid #eee; padding-top: 20px; }
 
         /* Screen Layout */
@@ -73,40 +70,72 @@
             .info-row { margin-bottom: 12px; }
             .screen-two-col-layout { display: flex; gap: 20px; flex-wrap: wrap; }
             .screen-two-col-layout > .print-block { flex: 1 1 400px; }
-            /* Center layout on screen */
             .basic-info-wrapper { display: flex; flex-direction: column; text-align: center; align-items: center; }
             .basic-info-text { width: 100%; text-align: left; }
         }
 
-        /* --- PRINT MODE --- */
+        /* --- PRINT MEDIA QUERIES --- */
         @media print {
-            @page { size: A4 landscape; margin: 8mm; }
+            @page { size: A4 landscape; margin: 5mm; }
             body { background: white; -webkit-print-color-adjust: exact; padding: 0; font-size: 10pt; }
-            .no-print-area, header, .btn-toggle-mask, .btn-cert-view, .modal-backdrop, .modal, .version-stamp, #debug-console-container { display: none !important; }
+            .no-print-area, header, .btn-toggle-mask, .btn-cert-view, .modal, .version-stamp, #debug-console-container { display: none !important; }
             .masked-wrapper { background: none; padding: 0; display: block; }
             .masked-text { display: none !important; }
             .real-text { display: block !important; color: #000; }
-            
-            #d_photo_container { border: 2px solid #ddd; width: 200px; height: 200px; margin-right: 20px; border-radius: 12px; }
-            .card-section { box-shadow: none; padding: 12px; border: 1px solid #ddd; height: auto; }
-            .section-title { border-bottom: 1px solid #ccc; color: #000; margin-bottom: 8px; font-size: 11pt; }
-            .info-value { border-bottom: 1px dotted #ccc; padding-bottom: 2px; }
 
-            .print-container { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 15px; }
-            .print-block { break-inside: avoid; }
-            .screen-two-col-layout { display: contents; }
-            
-            /* Print Layout for Photo: Side by Side */
-            .basic-info-wrapper { display: flex; flex-direction: row; text-align: left; align-items: flex-start; }
-            .basic-info-text { flex-grow: 1; }
+            /* MODE SWITCHING */
+            body.print-mode-handbook #crate-tag-display { display: none; }
+            body.print-mode-handbook #main-display { display: block; }
 
-            .print-footer { position: fixed; bottom: 0; left: 0; width: 100%; text-align: center; font-size: 9pt; color: #666; background: white; padding: 5px; }
+            body.print-mode-crate #main-display { display: none; }
+            body.print-mode-crate #crate-tag-display { display: block; width: 100%; height: 100%; }
+
+            /* HANDBOOK LAYOUT (4-Split) */
+            body.print-mode-handbook .print-container { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 10mm; height: 180mm; }
+            body.print-mode-handbook #d_photo_container { width: 140px; height: 140px; margin-right: 15px; border: 2px solid #333; }
+            body.print-mode-handbook .card-section { box-shadow: none; border: 2px solid #333; padding: 10px; height: 100%; page-break-inside: avoid; }
+            body.print-mode-handbook .basic-info-wrapper { display: flex; flex-direction: row; text-align: left; }
+
+            /* CRATE TAG LAYOUT */
+            .crate-container {
+                border: 4px solid var(--primary-color);
+                border-radius: 20px; padding: 20px; height: 190mm; display: grid; grid-template-columns: 30% 70%; gap: 20px;
+            }
+            .crate-left { text-align: center; border-right: 2px dashed #ccc; padding-right: 20px; }
+            .crate-right { display: flex; flex-direction: column; gap: 15px; }
+            
+            .crate-photo-box {
+                width: 100%; aspect-ratio: 1; border: 4px solid var(--alert-color); border-radius: 15px; overflow: hidden; margin-bottom: 10px;
+            }
+            .crate-photo-img { width: 100%; height: 100%; object-fit: cover; }
+            
+            .crate-name { font-size: 32pt; font-weight: 900; color: #000; line-height: 1.1; margin-bottom: 10px; }
+            .crate-breed { font-size: 14pt; color: #555; font-weight: bold; }
+            
+            .crate-alert-box {
+                border: 3px solid var(--alert-color); background-color: #fff5f5; padding: 10px; border-radius: 10px;
+            }
+            .crate-alert-title { color: var(--alert-color); font-weight: bold; font-size: 12pt; display: block; border-bottom: 1px solid var(--alert-color); margin-bottom: 5px; }
+            .crate-alert-content { font-size: 16pt; font-weight: bold; color: #000; }
+
+            .crate-write-box {
+                border: 2px solid #888; border-radius: 8px; padding: 5px; flex-grow: 1; min-height: 60px;
+            }
+            .crate-label { font-size: 10pt; font-weight: bold; color: var(--primary-color); display: block; margin-bottom: 2px; }
+            .crate-write-line { border-bottom: 1px solid #ccc; height: 25px; margin-top: 15px; }
+            
+            .crate-footer {
+                margin-top: auto; border-top: 2px solid var(--primary-color); padding-top: 10px; display: flex; justify-content: space-between; align-items: center;
+            }
+            .crate-checkbox {
+                border: 2px solid #333; width: 20px; height: 20px; display: inline-block; margin-right: 5px; vertical-align: middle;
+            }
         }
     </style>
 </head>
-<body>
+<body class="print-mode-handbook">
 
-    <div class="version-stamp">v2025.12.02-FINAL-FIX</div>
+    <div class="version-stamp">v2025.12.02-COLOR-FIX</div>
 
     <div class="container py-4">
         <div class="no-print-area">
@@ -119,12 +148,23 @@
                 <div class="spinner-border text-success" role="status" style="width: 3rem; height: 3rem;"></div>
                 <p class="mt-3 fw-bold">データを読み込んでいます...</p>
             </div>
-            <div id="content-controls" style="display:none;">
-                <p class="text-muted mb-4">緊急時に備え、この情報を印刷して携帯してください。</p>
-                <div class="d-flex justify-content-center gap-3">
-                    <button onclick="window.print()" class="btn btn-print">🖨️ 手帳を印刷する</button>
-                    <button onclick="goBack()" class="btn btn-outline-secondary px-4 rounded-pill fw-bold">戻る</button>
+
+            <div id="content-controls" style="display:none; max-width: 500px; margin: 0 auto;">
+                <p class="text-muted mb-3 small">以下から用途に合わせて印刷してください。</p>
+                
+                <div class="row g-2">
+                    <div class="col-6">
+                        <button onclick="printMode('handbook')" class="btn btn-print">
+                            <i class="fa-solid fa-book-medical"></i><br>防災手帳<br><span style="font-size:0.7rem; font-weight:normal;">持ち歩き用 (4分割)</span>
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button onclick="printMode('crate')" class="btn btn-print btn-print-crate">
+                            <i class="fa-solid fa-house-chimney-medical"></i><br>ハウス掲示<br><span style="font-size:0.7rem; font-weight:normal;">ケージ貼付用 (A4)</span>
+                        </button>
+                    </div>
                 </div>
+                <button onclick="goBack()" class="btn btn-outline-secondary px-4 rounded-pill fw-bold mt-3">戻る</button>
             </div>
         </div>
 
@@ -170,7 +210,6 @@
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
 
@@ -201,10 +240,7 @@
                             
                             <div id="qr-container" class="qr-section" style="display:none;">
                                 <img id="map-qr-img" class="qr-img" src="" alt="QR">
-                                <div class="qr-text">
-                                    <strong>🗺️ 避難所・病院マップ</strong><br>
-                                    スマホで読み取るとGoogleマップが開きます
-                                </div>
+                                <div class="qr-text"><strong>🗺️ 避難所・病院マップ</strong><br>Googleマップが開きます</div>
                             </div>
                         </div>
                     </div>
@@ -263,8 +299,78 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="print-footer">【ご注意】本カードは公的証明書ではありません。狂犬病予防法に基づく手続き等では、必ず原本をご提示ください。K9 Harmony Portal</div>
+            <div class="print-footer">【ご注意】本カードは公的証明書ではありません。K9 Harmony Portal</div>
+        </div>
+
+        <div id="crate-tag-display">
+            <div class="crate-container">
+                <div class="crate-left">
+                    <div class="crate-photo-box">
+                        <img id="crate_dog_img" class="crate-photo-img" src="" alt="Dog">
+                    </div>
+                    <div class="crate-name" id="crate_d_name">NAME</div>
+                    <div class="crate-breed" id="crate_d_breed">Breed</div>
+                    <div class="mt-4 text-start">
+                        <div class="small fw-bold">飼い主 (Owner)</div>
+                        <div class="fs-5 fw-bold" id="crate_c_name">-</div>
+                        <div class="fs-6 mt-1" id="crate_c_phone">-</div>
+                    </div>
+                    <div class="mt-4 text-start">
+                        <div class="small fw-bold">代理人 (Proxy)</div>
+                        <div class="fs-6 fw-bold" id="crate_proxy_name">-</div>
+                        <div class="fs-6" id="crate_proxy_phone">-</div>
+                    </div>
+                </div>
+                
+                <div class="crate-right">
+                    <div class="crate-alert-box">
+                        <span class="crate-alert-title">⚠️ 性格・注意事項 (Caution)</span>
+                        <div class="crate-alert-content" id="crate_caution">-</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="crate-write-box">
+                                <span class="crate-label">アレルギー (Allergies)</span>
+                                <div id="crate_allergy" class="fw-bold">-</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="crate-write-box">
+                                <span class="crate-label">既往歴・持病 (History)</span>
+                                <div id="crate_history">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="crate-write-box" style="flex-grow:1;">
+                        <span class="crate-label">食事・給餌ログ (Food Log) - 災害時は手書きで修正してください</span>
+                        <div class="d-flex justify-content-between text-muted small mt-1">
+                            <span>通常時: <span id="crate_food">-</span></span>
+                        </div>
+                        <div class="crate-write-line"></div>
+                        <div class="crate-write-line"></div>
+                        <div class="crate-write-line"></div>
+                    </div>
+
+                    <div class="crate-write-box" style="flex-grow:1;">
+                        <span class="crate-label">投薬・ケアログ (Meds/Care)</span>
+                        <div class="d-flex justify-content-between text-muted small mt-1">
+                            <span>通常時: <span id="crate_medicine">-</span></span>
+                        </div>
+                        <div class="crate-write-line"></div>
+                        <div class="crate-write-line"></div>
+                        <div class="crate-write-line"></div>
+                    </div>
+
+                    <div class="crate-footer">
+                        <div class="small text-muted">発行日: <span id="crate_print_date"></span></div>
+                        <div class="fw-bold" style="font-size:11pt;">
+                            <span class="crate-checkbox"></span> 緊急時の獣医処置を一任します (Emergency Care Authorized)
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <footer class="disclaimer-footer no-print-area text-center">
@@ -277,51 +383,9 @@
         </div>
     </div>
 
-    <div class="modal fade" id="helpModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold" style="color: var(--primary-color);">この手帳について</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="small text-muted mb-3">K9 Harmony Portal - Disaster & Medical Card</p>
-                    <h6 class="fw-bold">目的</h6>
-                    <p class="small">災害時や飼い主様の急病時など、第三者がわんちゃんの情報を即座に把握し、命を守るための「身分証兼カルテ」です。</p>
-                    <h6 class="fw-bold">使い方</h6>
-                    <ul class="small ps-3">
-                        <li>「手帳を印刷する」ボタンからA4用紙に印刷し、防災バッグに入れてください。</li>
-                        <li>四つ折りにすると、お財布に入るカードサイズになります。</li>
-                        <li>緊急時はQRコードから避難所マップを表示できます。</li>
-                    </ul>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4" data-bs-dismiss="modal">閉じる</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center">わんちゃんを選択</h5></div>
-                <div class="modal-body" id="dogSelectBody"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title fw-bold">証明書プレビュー</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body text-center p-4" style="background: #f0f0f0;">
-                    <div id="modalLoading" class="spinner-border text-primary" role="status" style="display:none;"></div>
-                    <img id="modalImage" src="" class="img-fluid rounded shadow-sm" style="max-height: 70vh;" alt="Certificate" onload="document.getElementById('modalLoading').style.display='none';">
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="modal fade" id="helpModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header border-0 pb-0"><h5 class="modal-title fw-bold" style="color: var(--primary-color);">この手帳について</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p class="small text-muted mb-3">K9 Harmony Portal</p><h6 class="fw-bold">2つの印刷モード</h6><ul class="small ps-3"><li><strong>防災手帳:</strong> お財布に入る四つ折りサイズ。</li><li><strong>ハウス掲示 (NEW):</strong> 避難所のクレートに貼るA4一枚サイズ。手書き欄があり、変化する状況に対応できます。</li></ul></div><div class="modal-footer border-0 pt-0"><button type="button" class="btn btn-secondary btn-sm rounded-pill px-4" data-bs-dismiss="modal">閉じる</button></div></div></div></div>
+    <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center">わんちゃんを選択</h5></div><div class="modal-body" id="dogSelectBody"></div></div></div></div>
+    <div class="modal fade" id="imageModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><div class="modal-body text-center p-4" style="background:#f0f0f0;"><img id="modalImage" src="" class="img-fluid rounded" style="max-height:70vh;"><button class="btn btn-secondary mt-3 rounded-pill" data-bs-dismiss="modal">閉じる</button></div></div></div></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -339,10 +403,18 @@
 
         function goBack() {
             let url = 'index.html';
-            if (currentDogId) {
-                url += `?dogId=${currentDogId}`;
-            }
+            if (currentDogId) url += `?dogId=${currentDogId}`;
             window.location.href = url;
+        }
+
+        function printMode(mode) {
+            document.body.classList.remove('print-mode-handbook', 'print-mode-crate');
+            if(mode === 'crate') {
+                document.body.classList.add('print-mode-crate');
+            } else {
+                document.body.classList.add('print-mode-handbook');
+            }
+            window.print();
         }
 
         window.onload = async function() {
@@ -376,8 +448,6 @@
                     log('API Error: ' + data.error);
                     document.getElementById('loading').innerHTML = `<p class="text-danger fw-bold">${data.error}</p>`; return; 
                 }
-                
-                // ★ Multiple Dogs handling
                 if (data.multiple_dogs) { 
                     log('Multiple dogs found. Showing selector.');
                     showDogSelectModal(data.multiple_dogs);
@@ -392,7 +462,6 @@
             });
         }
 
-        // Show Selection Modal
         function showDogSelectModal(dogs) {
             const body = document.getElementById('dogSelectBody');
             body.innerHTML = '';
@@ -407,7 +476,6 @@
             dogSelectModal.show();
         }
 
-        // Handle Selection
         function selectDog(dogId) {
             dogSelectModal.hide();
             document.getElementById('loading').style.display = 'block';
@@ -422,22 +490,35 @@
                 const d = data.dog || {};
                 currentDogId = d.id;
 
+                // --- Handbook Data ---
                 setText('d_name', d.name_disp);
                 setText('d_breed', d.breed);
                 setText('d_gender', d.gender);
                 setText('d_birth', d.birth_date);
-                setText('d_age', d.age);
-                
+                setText('d_age', d.age); // Y-M format
                 setText('c_name', c.name);
                 setMaskedText('c_address', c.address, maskAddress(c.address));
                 setMaskedText('c_phone', c.phone, null);
-                
                 setText('c_em_name', c.em_name);
                 setMaskedText('c_em_phone', c.em_phone, null);
                 setText('c_proxy_name', c.proxy_name);
                 setMaskedText('c_proxy_phone', c.proxy_phone, null);
                 setText('c_evac', c.evac_site);
 
+                // --- Crate Tag Data ---
+                setText('crate_d_name', d.name_disp);
+                setText('crate_d_breed', d.breed);
+                setText('crate_c_name', c.name);
+                setText('crate_c_phone', c.phone);
+                setText('crate_proxy_name', c.proxy_name);
+                setText('crate_proxy_phone', c.proxy_phone);
+                setText('crate_caution', d.caution);
+                setText('crate_allergy', d.allergy);
+                setText('crate_history', d.history);
+                setText('crate_food', d.food);
+                setText('crate_medicine', d.medicine);
+
+                // --- QR Code ---
                 if (c.evac_site && c.evac_site !== '記載なし') {
                     const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.evac_site)}`;
                     const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(mapUrl)}`;
@@ -445,19 +526,12 @@
                     document.getElementById('qr-container').style.display = 'flex';
                 }
 
-                setText('d_allergy', d.allergy);
-                setText('d_food', d.food);
-                setText('d_caution', d.caution);
-                setText('d_vet', d.vet_name);
-                setText('d_history', d.history);
-                setText('d_medicine', d.medicine);
-                setText('d_license', d.license_no);
-                setText('d_chip', d.microchip);
-
                 setupCertButton('d_rabies_status', 'btn_rabies_img', d.has_rabies, d.rabies_img_ref);
                 setupCertButton('d_vaccine_status', 'btn_vaccine_img', d.has_vaccine, d.vaccine_img_ref);
 
-                setText('print_date', new Date().toLocaleDateString('ja-JP'));
+                const now = new Date().toLocaleDateString('ja-JP');
+                setText('print_date', now);
+                setText('crate_print_date', now);
 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('content-controls').style.display = 'block';
@@ -470,13 +544,15 @@
         }
 
         function fetchDogImage(userId, dogId) {
-            const imgContainer = document.getElementById('d_photo_container');
             let url = `${API_URL}?userId=${userId}&type=img_profile&dogId=${dogId}`;
             fetch(url).then(res => res.json()).then(data => {
                 if(data.image) {
-                    imgContainer.innerHTML = `<img src="${data.image}" class="dog-profile-img" alt="Dog Photo">`;
-                    imgContainer.style.border = 'none';
-                } else { imgContainer.innerHTML = '<span class="text-muted fw-bold small">No Image</span>'; }
+                    document.getElementById('d_photo_container').innerHTML = `<img src="${data.image}" class="dog-profile-img">`;
+                    document.getElementById('d_photo_container').style.border = 'none';
+                    document.getElementById('crate_dog_img').src = data.image;
+                } else {
+                    document.getElementById('d_photo_container').innerHTML = '<span class="text-muted small">No Image</span>';
+                }
             });
         }
 
@@ -532,7 +608,10 @@
             const btn = document.getElementById(btnId);
             if (hasCert && imgRef) {
                 btn.style.display = 'inline-flex';
-                btn.onclick = () => openImageModal(imgRef);
+                btn.onclick = () => {
+                    document.getElementById('modalImage').src = (imgRef.indexOf('http')===-1) ? `https://drive.google.com/uc?export=view&id=${imgRef}` : imgRef;
+                    imageModal.show();
+                };
             } else { btn.style.display = 'none'; }
         }
 
