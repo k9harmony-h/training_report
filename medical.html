@@ -13,81 +13,79 @@
     <style>
         :root { --primary-color: #88b08b; --accent-color: #e8f5e9; --alert-color: #e07a5f; --text-color: #333; --mask-color: #f0f0f0; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 300px; }
-        .version-stamp { position: fixed; top: 0; right: 0; background: #dc3545; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
-        
-        /* COMMON UI */
+        .version-stamp { position: fixed; top: 0; right: 0; background: #20c997; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
         .no-print-area { margin: 20px 0 30px; text-align: center; }
         .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; border: 1px solid #eee; }
         .section-title { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 15px; }
+        
         .info-row { margin-bottom: 8px; }
         .info-label { font-weight: bold; color: #666; font-size: 0.8rem; display: block; margin-bottom: 1px; }
-        #d_photo_container { width: 200px; height: 200px; background: #fff; border-radius: 12px; border: 4px solid var(--accent-color); overflow: hidden; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; }
-        .dog-profile-img { width: 100%; height: 100%; object-fit: cover; }
+        .info-value { font-size: 1rem; font-weight: 500; min-height: 24px; word-break: break-all; }
+        
+        /* Masking */
         .masked-wrapper { display: flex; align-items: center; gap: 10px; }
         .masked-text { letter-spacing: 2px; color: #aaa; background: var(--mask-color); padding: 2px 8px; border-radius: 4px; }
         .real-text { display: none; font-weight: bold; color: #333; }
         .btn-toggle-mask { font-size: 0.7rem; padding: 2px 10px; border: 1px solid var(--alert-color); color: var(--alert-color); background: white; border-radius: 20px; }
+        .btn-toggle-mask:active { background: var(--alert-color); color: white; }
+        
+        #d_photo_container { width: 200px; height: 200px; background: #fff; border-radius: 12px; border: 4px solid var(--accent-color); overflow: hidden; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; }
+        .dog-profile-img { width: 100%; height: 100%; object-fit: cover; }
         .btn-cert-view { font-size: 0.8rem; padding: 4px 12px; border-radius: 6px; background-color: var(--primary-color); color: white; border: none; width: 100%; margin-top: 5px; }
         #generating-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 10000; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        #debug-console-container { display: block; margin-top: 30px; padding: 0 10px; }
+        #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 11px; padding: 15px; border-radius: 8px; }
+        
+        #poster-display, #crate-display { display: none; }
         #generated-image-preview { width: 100%; height: auto; border: 2px solid #ccc; border-radius: 4px; }
 
-        /* LOGO STYLES (Screen) */
+        /* LOGO STYLES */
         .screen-logo-top { width: 120px; margin-bottom: 15px; }
         .screen-logo-footer { width: 100px; margin-top: 20px; margin-bottom: 10px; opacity: 0.8; }
 
-        /* --- HIDDEN OUTPUT LAYOUTS --- */
-        #poster-display, #crate-display { display: none; }
-
-        /* ★★★ MAIGO POSTER DESIGN (NEW LAYOUT) ★★★ */
+        /* ★★★ POSTER DESIGN (REFINED) ★★★ */
         .poster-container {
-            width: 210mm; min-height: 297mm; background: white; padding: 10mm;
-            box-sizing: border-box; margin: 0 auto; border: 1px solid #ddd;
-            display: flex; flex-direction: column;
+            width: 210mm; min-height: 297mm; background: white; padding: 15mm; text-align: center; 
+            border: 1px solid #ddd; box-sizing: border-box; margin: 0 auto; position: relative;
         }
         .poster-inner-border {
             flex: 1; border: 6px solid #ff0000; padding: 5mm;
-            display: flex; flex-direction: column; align-items: center;
+            display: flex; flex-direction: column; align-items: center; height: 100%;
         }
-        /* 赤字極太巨大文字 */
         .poster-title {
             color: #ff0000; font-size: 42pt; font-weight: 900;
             margin-bottom: 20px; font-family: sans-serif; line-height: 1;
         }
-        /* 手書きスペース S=3, M=6, L=12 全角 */
         .poster-date-line { font-size: 16pt; font-weight: bold; color: #333; margin-bottom: 20px; width: 100%; text-align: left; }
-        .handwrite-space { border-bottom: 2px solid #333; display: inline-block; }
+        .handwrite-space { border-bottom: 2px solid #333; display: inline-block; margin: 0 2px; }
         
-        /* 写真(特大・比率保持) */
+        /* ★ 3:4 Photo Frame */
         .poster-photo-frame {
-            width: 100%; height: 40%; /* Page height ratio */
-            border: 3px solid #333; margin-bottom: 15px;
-            background: #eee; display: flex; justify-content: center; align-items: center;
+            width: 80%; aspect-ratio: 3/4; /* 3:4 Aspect Ratio */
+            border: 3px solid #333; margin-bottom: 20px;
+            background: #eee; display: flex; justify-content: center; align-items: center; overflow: hidden;
         }
-        .poster-photo-img { width: 100%; height: 100%; object-fit: contain; }
+        .poster-photo-img { width: 100%; height: 100%; object-fit: cover; /* Trim to fill */ }
 
-        /* 情報テーブル */
-        .poster-info-table { width: 100%; border-collapse: collapse; font-size: 16pt; margin-bottom: 15px; text-align: left; }
-        .poster-info-table th { width: 30%; padding: 5px; border-bottom: 2px solid #ff0000; color: #ff0000; font-weight: bold; }
-        .poster-info-table td { padding: 5px; border-bottom: 1px solid #ccc; font-weight: bold; }
+        .poster-info-table { width: 100%; border-collapse: collapse; font-size: 16pt; margin-bottom: 20px; text-align: left; }
+        .poster-info-table th { width: 25%; padding: 8px; border-bottom: 2px solid #ff0000; color: #ff0000; font-weight: bold; }
+        .poster-info-table td { padding: 8px; border-bottom: 1px solid #ccc; font-weight: bold; color: #000; }
 
-        /* 固定文章 */
-        .poster-message { font-size: 12pt; text-align: left; margin-bottom: 15px; line-height: 1.4; }
+        .poster-message {
+            font-size: 16pt; /* Increased */
+            text-align: left; line-height: 1.5; margin-bottom: 20px; font-weight: 600;
+        }
 
-        /* 連絡先 */
-        .poster-contact-box { width: 100%; border: 3px solid #ff0000; padding: 10px; background: #fff5f5; margin-bottom: 15px; }
+        .poster-contact-box { width: 100%; border: 4px solid #ff0000; padding: 10px; background: #fff5f5; margin-bottom: 15px; }
         .poster-contact-name { font-size: 18pt; font-weight: bold; }
-        .poster-contact-phone { font-size: 28pt; font-weight: 900; color: #ff0000; }
+        .poster-contact-phone { font-size: 32pt; font-weight: 900; color: #ff0000; }
 
-        /* フッター (避難所 + ロゴ) */
-        .poster-footer-section {
-            width: 100%; display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;
-        }
+        .poster-footer-section { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; }
         .poster-shelter-area { font-size: 14pt; font-weight: bold; flex: 1; text-align: left; }
-        .poster-logo-area { width: 35mm; }
+        .poster-logo-area { width: 40mm; }
         .poster-logo-img { width: 100%; height: auto; }
 
-
-        /* --- CRATE TAG STYLE (Keep as is) --- */
+        /* CRATE TAG STYLE */
         .crate-container { width: 210mm; height: 297mm; background: white; position: relative; overflow: hidden; box-sizing: border-box; border: 1px dashed #ccc; margin: 0 auto; }
         .crate-fold-line { position: absolute; top: 50%; left: 0; width: 100%; height: 0; border-top: 2px dashed #88b08b; z-index: 10; }
         .crate-fold-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 0 10px; color: #88b08b; font-size: 10pt; }
@@ -100,11 +98,11 @@
         .crate-main-name { font-size: 32pt; font-weight: 900; color: #333; line-height: 1; }
         .crate-alert-bar { background-color: var(--alert-color); color: white; font-weight: bold; font-size: 14pt; padding: 5px; border-radius: 8px; margin-bottom: 10px; }
         .crate-write-area { border: 2px dashed #88b08b; border-radius: 8px; padding: 5px; text-align: left; height: 80px; }
+        .crate-footer { margin-top: auto; border-top: 2px solid var(--primary-color); padding-top: 10px; display: flex; justify-content: space-between; align-items: center; }
 
         @media print {
             .no-print-area, #debug-console-container, .version-stamp, #generating-overlay, .modal-backdrop { display: none !important; }
             body { background: white; }
-            /* Print modes */
             body.print-handbook #main-display { display: block; }
             body.print-handbook #poster-display, body.print-handbook #crate-display { display: none; }
             body.print-poster #poster-display { display: block; }
@@ -116,7 +114,7 @@
 </head>
 <body class="mode-handbook">
 
-    <div class="version-stamp">v2025.12.02-POSTER-LAYOUT-FIX</div>
+    <div class="version-stamp">v2025.12.02-FINAL-DESIGN</div>
 
     <div id="generating-overlay">
         <div class="spinner-border text-primary"></div><h4 class="mt-3">作成中...</h4>
@@ -134,7 +132,10 @@
         <div id="main-display" style="display:none;">
             <div class="card-section">
                 <div class="section-title">基本情報</div>
-                <div id="d_photo_container"><div class="spinner-border spinner-border-sm text-secondary"></div></div>
+                <div id="d_photo_container">
+                    <div class="spinner-border spinner-border-sm text-secondary"></div>
+                    <span class="small ms-2">写真読み込み中...</span>
+                </div>
                 <div class="text-center mb-3"><h2 id="d_name" class="fw-bold mb-1">-</h2></div>
                 <div class="row text-center mb-2">
                     <div class="col-6 border-end"><span class="info-label">犬種</span><div id="d_breed">-</div></div>
@@ -169,57 +170,50 @@
                     <div class="col-6"><div class="p-2 border rounded text-center"><span class="info-label">狂犬病予防</span><div id="d_rabies_status" class="fw-bold small">-</div><button id="btn-rabies-img" class="btn-cert-view" style="display:none;">証明書</button></div></div>
                     <div class="col-6"><div class="p-2 border rounded text-center"><span class="info-label">混合ワクチン</span><div id="d_vaccine_status" class="fw-bold small">-</div><button id="btn-vaccine-img" class="btn-cert-view" style="display:none;">証明書</button></div></div>
                 </div>
+                <div class="k9-logo-footer"><img id="logo_img_2" class="k9-logo-img k9-logo-common" src="" alt="K9 Logo"></div>
             </div>
             <div class="card-section"><div class="section-title" style="color:var(--alert-color); border-color:#f8d7da;">緊急時情報</div><div class="info-row"><span class="info-label">緊急連絡先 (氏名)</span><div id="c_em_name">-</div></div><div class="info-row"><span class="info-label">緊急連絡先 (電話)</span><div class="masked-wrapper"><span id="c_em_phone_masked" class="masked-text">***</span><span id="c_em_phone_real" class="real-text">-</span><button class="btn-toggle-mask" onclick="toggleMask('c_em_phone')">表示</button></div></div><hr><div class="info-row"><span class="info-label">代理人 (氏名)</span><div id="c_proxy_name">-</div></div><div class="info-row"><span class="info-label">代理人 (電話)</span><div class="masked-wrapper"><span id="c_proxy_phone_masked" class="masked-text">***</span><span id="c_proxy_phone_real" class="real-text">-</span><button class="btn-toggle-mask" onclick="toggleMask('c_proxy_phone')">表示</button></div></div><hr><div class="info-row mb-0"><span class="info-label">指定避難所</span><div id="c_evac" class="fw-bold">-</div></div></div>
             <div class="card-section"><div class="section-title">ケア・生活情報</div><div class="info-row"><span class="info-label">フード</span><div id="d_food">-</div></div><div class="info-row mb-0"><span class="info-label text-danger">性格・注意事項</span><div id="d_caution" class="text-danger fw-bold">-</div></div></div>
 
             <div class="no-print-area mt-3 mb-2 text-center">
-                <img src="" class="screen-logo-footer k9-logo-common" alt="K9 Logo">
+                <img src="" class="screen-logo-footer k9-logo-common" alt="K9 Harmony">
             </div>
         </div>
 
         <div id="poster-display">
             <div class="poster-container">
                 <div class="poster-inner-border">
-                    
                     <div class="poster-title">うちの子探してます！</div>
-                    
                     <div class="poster-date-line">
                         <span class="handwrite-space">　　　</span> 月
                         <span class="handwrite-space">　　　</span> 日
                         <span class="handwrite-space">　　　　　　</span> 時頃<br>
-                        <span class="handwrite-space" style="width: 80%;">　　　　　　　　　　　　</span> 周辺でいなくなりました。
+                        <span class="handwrite-space" style="width: 75%;">　　　　　　　　　　　　</span> 周辺でいなくなりました。
                     </div>
-
                     <div class="poster-photo-frame">
                         <img id="poster_img" class="poster-photo-img" src="" alt="NO PHOTO">
                     </div>
-
                     <table class="poster-info-table">
-                        <tr><th>お名前</th><td id="poster_name" style="font-size:24pt;">-</td></tr>
+                        <tr><th>名前</th><td id="poster_name" style="font-size:24pt;">-</td></tr>
                         <tr><th>性別・年齢</th><td id="poster_gender_age">-</td></tr>
                         <tr><th>犬種・毛色</th><td id="poster_breed_color">-</td></tr>
                     </table>
-
                     <div class="poster-message">
                         大切な愛犬が迷子になってしまいました。情報提供をお願いします。<br>
                         保護をしてくださった方、保護につながる情報をくださった方にはお礼をさせていただきます。下記までご連絡ください。
                     </div>
-
                     <div class="poster-contact-box">
                         <div id="poster_owner" class="poster-contact-name">-</div>
                         <div id="poster_phone" class="poster-contact-phone">-</div>
                     </div>
-
                     <div class="poster-footer-section">
                         <div class="poster-shelter-area">
-                            避難所: <span class="handwrite-space" style="width:60%">　　　　　　</span> (手書き)
+                            避難所: <span class="handwrite-space" style="width:60%">　　　　　　</span>
                         </div>
                         <div class="poster-logo-area">
                             <img src="" class="poster-logo-img k9-logo-common" alt="Logo">
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
@@ -230,9 +224,11 @@
                 <div class="crate-back">
                     <div class="crate-owner-section"><div class="crate-owner-title">緊急連絡先</div><div class="fs-5 fw-bold">Owner: <span id="crate_owner">-</span></div><div class="fs-4 fw-bold"><i class="fa-solid fa-phone"></i> <span id="crate_phone">-</span></div><hr style="margin:5px 0;"><div class="small">代理人: <span id="crate_proxy">-</span> (<span id="crate_proxy_tel">-</span>)</div></div>
                     <div class="mt-2"><strong>🆘 サバイバルフード</strong><div class="crate-food-list"><div class="crate-food-box bg-light"><span class="text-success fw-bold">⭕️ OK</span><br>白米・パン</div><div class="crate-food-box bg-light"><span class="text-danger fw-bold">❌ NG</span><br>ネギ・チョコ</div></div></div>
+                    <div class="k9-logo-footer"><img class="k9-logo-img k9-logo-common" src="" alt="Logo"></div>
                 </div>
                 <div class="crate-front">
-                    <img id="crate_img" class="crate-main-photo" src=""><div id="crate_name" class="crate-main-name">NAME</div><div id="crate_breed" class="crate-main-breed">Breed / Age</div><div id="crate_alert" class="crate-alert-bar">⚠️ <span id="crate_caution">-</span></div><div style="text-align:left; font-size:10pt; font-weight:bold; color:#555;">🍚 食事・投薬ログ</div><div class="crate-write-area"><span class="small text-muted">※手書き記入欄</span></div><div class="mt-3 text-start small border-top pt-2"><label><input type="checkbox" style="transform:scale(1.5);"> 緊急時の獣医処置を一任します</label></div>
+                    <img id="crate_img" class="crate-main-photo" src=""><div id="crate_name" class="crate-main-name">NAME</div><div id="crate_breed" class="crate-main-breed">Breed / Age</div><div id="crate_alert" class="crate-alert-bar">⚠️ <span id="crate_caution">-</span></div><div style="text-align:left; font-size:10pt; font-weight:bold; color:#555;">🍚 食事・投薬ログ</div><div class="crate-write-area"><span class="small text-muted">※手書き記入欄</span></div>
+                    <div class="mt-3 text-start small border-top pt-2"><label><input type="checkbox" style="transform:scale(1.5);"> 緊急時の獣医処置を一任します</label></div>
                 </div>
             </div>
         </div>
@@ -245,39 +241,18 @@
             <button onclick="window.location.href='index.html'" class="btn btn-outline-secondary w-100 rounded-pill mt-3">戻る</button>
         </div>
 
-        <div id="debug-console-container" class="no-print-area">
-            <h6 class="text-danger fw-bold">⚠️ Debug Console</h6>
-            <div id="debug-console">Initializing...</div>
-        </div>
+        <div id="debug-console-container" class="no-print-area"><h6 class="text-danger fw-bold">⚠️ Debug Console</h6><div id="debug-console">Initializing...</div></div>
     </div>
 
-    <div class="modal fade" id="outputModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header border-0"><h5 class="modal-title fw-bold text-success">作成完了</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body text-center">
-                    <p class="small text-start alert alert-primary"><strong>iPhoneの方へ:</strong> 下の画像を長押しして「写真に保存」してください。</p>
-                    <img id="generated-image-preview" src="">
-                    <div class="mt-3 d-grid gap-2">
-                        <a id="btn-view-pdf-blob" href="#" target="_blank" class="btn btn-primary fw-bold"><i class="fa-solid fa-file-pdf"></i> PDFファイルを開く (保存用)</a>
-                        <button id="btn-download-pdf" class="btn btn-outline-secondary btn-sm" style="display:none;">PC用: PDFダウンロード</button>
-                    </div>
-                </div>
-                <div class="modal-footer border-0"><button type="button" class="btn btn-secondary w-100 rounded-pill" data-bs-dismiss="modal">閉じる</button></div>
-            </div>
-        </div>
-    </div>
-
+    <div class="modal fade" id="outputModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><div class="modal-header border-0"><h5 class="modal-title fw-bold text-success">作成完了</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><p class="small text-start alert alert-primary"><strong>iPhoneの方へ:</strong> 下の画像を長押しして「写真に保存」してください。</p><img id="generated-image-preview" src=""><div class="mt-3 d-grid gap-2"><a id="btn-view-pdf-blob" href="#" target="_blank" class="btn btn-primary fw-bold"><i class="fa-solid fa-file-pdf"></i> PDFファイルを開く (保存用)</a><button id="btn-download-pdf" class="btn btn-outline-secondary btn-sm" style="display:none;">PC用: PDFダウンロード</button></div></div><div class="modal-footer border-0"><button type="button" class="btn btn-secondary w-100 rounded-pill" data-bs-dismiss="modal">閉じる</button></div></div></div></div>
     <div class="modal fade" id="imageModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><div class="modal-body text-center p-4" style="background:#f0f0f0;"><img id="modalImage" src="" class="img-fluid rounded"><button class="btn btn-secondary mt-3 rounded-pill" data-bs-dismiss="modal">閉じる</button></div></div></div></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
         const LIFF_ID = "2008546673-MJY7j3ox";
-        
-        // ★★★重要: ここに変換したBase64データを貼り付けてください★★★
-        // 例: const LOGO_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...";
-        const LOGO_DATA_URI = "data:image/png;base64,ここに変換した長い文字列を貼り付け"; 
+        // ★ LOGO DATA: Paste your Base64 string here
+        const LOGO_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."; 
 
         let outputModal, imageModal;
 
@@ -293,7 +268,6 @@
                 imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
             }
             
-            // Set Logos using Base64 Data URI
             document.querySelectorAll('.k9-logo-common').forEach(el => {
                 el.src = LOGO_DATA_URI;
             });
@@ -323,47 +297,43 @@
             const c = data.customer || {};
             const d = data.dog || {};
 
+            // Handbook
             setText('d_name', d.name_disp);
             setText('d_breed', d.breed);
             setText('d_color', d.color);
             setText('d_age', d.age);
             setText('d_gender', d.gender);
             setText('d_neutered', d.neutered);
-            
             setText('c_name', c.name);
             setMaskedText('c_address', c.address, maskAddress(c.address));
             setMaskedText('c_phone', c.phone, maskPhone(c.phone));
-
             setText('c_em_name', c.em_name);
             setMaskedText('c_em_phone', c.em_phone, maskPhone(c.em_phone));
             setText('c_proxy_name', c.proxy_name);
             setMaskedText('c_proxy_phone', c.proxy_phone, maskPhone(c.proxy_phone));
             setText('c_evac', c.evac_site);
-            
             setText('d_vet_name', d.vet_name);
             setText('d_vet_address', d.vet_address);
             setText('d_vet_phone', d.vet_phone);
-            
             setText('d_history', d.history);
             setText('d_medicine', d.medicine);
             setText('d_allergy', d.allergy);
             setText('d_license', d.license_no);
             setText('d_chip', d.microchip);
-            
             setupCertButton('d_rabies_status', 'btn-rabies-img', d.has_rabies, d.rabies_img_ref);
             setupCertButton('d_vaccine_status', 'btn-vaccine-img', d.has_vaccine, d.vaccine_img_ref);
-
             setText('d_food', d.food);
             setText('d_caution', d.caution);
 
-            // Fill Poster Data
+            // Poster
             setText('poster_name', d.name_disp);
-            setText('poster_gender_age', `${d.gender || '-'} / ${d.age || '-'}`);
+            setText('poster_gender_age', `${d.gender || '-'}, ${d.age || '-'}歳`);
             setText('poster_breed_color', `${d.breed || '-'} / ${d.color || '-'}`);
+            setText('poster_desc', d.caution || '-');
             setText('poster_owner', c.name);
             setText('poster_phone', c.phone);
 
-            // Fill Crate Data
+            // Crate
             setText('crate_name', d.name_disp);
             setText('crate_breed', `${d.breed} (${d.gender})`);
             setText('crate_caution', d.caution);
@@ -381,10 +351,9 @@
             let url = `${API_URL}?userId=${userId}&type=img_profile&dogId=${dogId}`;
             fetch(url).then(res => res.json()).then(data => {
                 if(data.image) {
-                    document.getElementById('d_photo_container').innerHTML = `<img src="${data.image}" class="dog-profile-img">`;
-                    document.getElementById('d_photo_container').style.border = 'none';
-                    document.getElementById('poster_img').src = data.image;
-                    document.getElementById('crate_img').src = data.image;
+                    setImg('d_photo_container', data.image);
+                    setSrc('poster_img', data.image);
+                    setSrc('crate_img', data.image);
                 } else {
                     document.getElementById('d_photo_container').innerHTML = '<span class="text-muted small">No Image</span>';
                 }
@@ -392,77 +361,64 @@
         }
 
         async function generateOutput(mode) {
-            log(`Gen: ${mode}`);
             const overlay = document.getElementById('generating-overlay');
             overlay.style.display = 'flex';
-
             let targetId = 'main-display';
             if (mode === 'poster') targetId = 'poster-display';
             if (mode === 'crate') targetId = 'crate-display';
-
             const target = document.getElementById(targetId);
-            if(!target) { overlay.style.display = 'none'; return; }
+            if(!target) { overlay.style.display='none'; return; }
 
             const prevDisplay = target.style.display;
             target.style.display = 'block';
             document.body.className = '';
             document.body.classList.add(`print-${mode}`);
-
             await new Promise(r => setTimeout(r, 500));
 
             try {
-                // Force windowWidth to ensure no cropping on mobile
                 const canvas = await html2canvas(target, { scale: 2, useCORS: true, allowTaint: true, windowWidth: 1200 });
                 const imgData = canvas.toDataURL('image/jpeg', 0.90);
                 
                 document.getElementById('generated-image-preview').src = imgData;
                 
-                // Generate PDF Blob
-                const { jsPDF } = window.jspdf;
-                const orient = (mode === 'handbook') ? 'l' : 'p';
-                const doc = new jsPDF(orient, 'mm', 'a4');
-                const a4w = (orient === 'l') ? 297 : 210;
-                const pdfHeight = (canvas.height * a4w) / canvas.width;
-                doc.addImage(imgData, 'JPEG', 0, 0, a4w, pdfHeight);
-                
-                const pdfBlob = doc.output('blob');
+                const pdfBlob = new window.jspdf.jsPDF(mode==='handbook'?'l':'p','mm','a4').output('blob'); // Simple blob gen for button
                 const pdfUrl = URL.createObjectURL(pdfBlob);
                 
-                // Set up iPhone PDF View Button
                 const viewPdfBtn = document.getElementById('btn-view-pdf-blob');
                 viewPdfBtn.href = pdfUrl;
-                // iPhone doesn't support download attribute well for blobs in new tabs, 
-                // but setting it might help some browsers. Main reliance is on user action in new tab.
-                viewPdfBtn.download = `K9_${mode}_${new Date().getTime()}.pdf`; 
+                viewPdfBtn.download = `K9_${mode}.pdf`;
 
-                // Set up PC Download Button
                 const btnDownload = document.getElementById('btn-download-pdf');
                 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                 if (!isMobile) {
                     btnDownload.style.display = 'inline-block';
-                    btnDownload.onclick = function() { doc.save(`K9_${mode}.pdf`); };
-                } else {
-                    btnDownload.style.display = 'none';
-                }
+                    btnDownload.onclick = function() {
+                        const { jsPDF } = window.jspdf;
+                        const orient = (mode === 'handbook') ? 'l' : 'p';
+                        const doc = new jsPDF(orient, 'mm', 'a4');
+                        const a4w = (orient === 'l') ? 297 : 210;
+                        const pdfHeight = (canvas.height * a4w) / canvas.width;
+                        doc.addImage(imgData, 'JPEG', 0, 0, a4w, pdfHeight);
+                        doc.save(`K9_${mode}.pdf`);
+                    };
+                } else { btnDownload.style.display = 'none'; }
                 
                 outputModal.show();
-
-            } catch (err) {
-                log('Gen Error: ' + err.message);
-                alert('作成失敗: ' + err.message);
-            } finally {
+            } catch (err) { alert('作成失敗: ' + err.message); } 
+            finally {
                 target.style.display = prevDisplay;
                 document.body.className = 'mode-handbook';
                 overlay.style.display = 'none';
             }
         }
-
         function maskAddress(addr) { if(!addr) return; const m = addr.match(/(.*?[都道府県].*?[市区町村])/); return m ? m[0]+' ***' : addr.substring(0,5)+' ***'; }
         function maskPhone(tel) { if(!tel) return; return tel.substring(0,3)+'-****-****'; }
-        function setMaskedText(baseId, realVal, maskedVal) { /* (Omitted for brevity) */ }
-        function toggleMask(baseId) { /* (Omitted for brevity) */ }
+        function setMaskedText(baseId, realVal, maskedVal) { /* Omitted */ }
+        function toggleMask(baseId) { /* Omitted */ }
         function setText(id, txt) { const el = document.getElementById(id); if(el) el.textContent = txt || '-'; }
-        function setupCertButton(statId, btnId, has, ref) { /* (Omitted for brevity) */ }
+        function setSrc(id, src) { const el = document.getElementById(id); if(el) el.src = src; }
+        function setImg(cid, src) { const el = document.getElementById(cid); if(el) { el.innerHTML = `<img src="${src}" class="dog-profile-img">`; el.style.border='none'; } }
+        function setupCertButton(statId, btnId, has, ref) { /* Omitted */ }
     </script>
 </body>
 </html>
