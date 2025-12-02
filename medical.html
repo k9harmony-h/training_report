@@ -13,8 +13,9 @@
     <style>
         :root { --primary-color: #88b08b; --accent-color: #e8f5e9; --alert-color: #e07a5f; --text-color: #333; --mask-color: #f0f0f0; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 300px; }
-        .version-stamp { position: fixed; top: 0; right: 0; background: #dc3545; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
+        .version-stamp { position: fixed; top: 0; right: 0; background: #0dcaf0; color: black; font-size: 10px; padding: 2px 6px; z-index: 9999; }
         
+        /* COMMON UI */
         .no-print-area { margin: 20px 0 30px; text-align: center; }
         .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; border: 1px solid #eee; }
         .section-title { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 15px; }
@@ -54,7 +55,7 @@
         .poster-logo-area { margin-top: auto; text-align: center; width: 100%; }
         .poster-logo-img { width: 40mm; height: auto; }
 
-        /* ★★★ CRATE TAG DESIGN (REVISION B) ★★★ */
+        /* CRATE TAG STYLES */
         .crate-container { width: 210mm; height: 297mm; background: white; position: relative; overflow: hidden; box-sizing: border-box; border: 1px dashed #aaa; margin: 0 auto; }
         .crate-fold-line { position: absolute; top: 45%; left: 0; width: 100%; height: 0; border-top: 2px dashed #88b08b; z-index: 10; }
         
@@ -65,15 +66,29 @@
             transform: rotate(180deg);
             display: flex; gap: 15px; background-color: #fff; border-bottom: 1px dashed #ccc;
         }
-        .crate-a-left { width: 48%; border-right: 2px solid #ddd; padding-right: 10px; display:flex; flex-direction:column; }
-        .crate-a-right { width: 48%; padding-left: 10px; position: relative; }
+        /* SWAPPED LEFT/RIGHT for Area A */
+        .crate-a-left { width: 48%; border-right: 2px solid #ddd; padding-right: 10px; position: relative; }
+        .crate-a-right { width: 48%; padding-left: 10px; display:flex; flex-direction:column; }
+        
         .crate-header-a { font-size: 14pt; font-weight: bold; color: #555; border-bottom: 3px solid #88b08b; margin-bottom: 8px; display: block; }
+        
+        /* Command Dict (Now Left) */
+        .cmd-example { font-size: 10pt; color: #666; margin-bottom: 5px; font-style: italic; background:#eee; padding:2px 5px; border-radius:4px; }
+        .cmd-row { font-size: 13pt; margin-bottom: 5px; border-bottom: 1px dotted #ccc; display: flex; align-items: center; }
+        .cmd-key { width: 80px; font-weight: bold; }
+        .cmd-val { flex-grow: 1; font-weight: bold; color: #000; min-height:20px; }
+        .cmd-footer { margin-top: auto; font-size: 10pt; font-weight: bold; text-align: center; background: #e8f5e9; padding: 3px; border-radius: 4px; color: #88b08b; }
+        
+        /* Survival Food (Now Right) */
         .food-grid { display: flex; gap: 5px; margin-bottom: 10px; }
         .food-box { flex: 1; border: 1px solid #ccc; border-radius: 5px; padding: 5px; font-size: 10pt; font-weight: bold; }
         .food-title-ok { color: #198754; display:block; margin-bottom:3px; }
         .food-title-ng { color: #dc3545; display:block; margin-bottom:3px; }
+        .allergy-area { margin-top: auto; border-top: 2px solid #333; padding-top: 5px; color: #dc3545; font-weight: bold; font-size: 12pt; min-height: 40px; }
         
-        /* AREA B: FRONT SIDE (Middle 40%) - REVISED LAYOUT */
+        .crate-logo-placeholder { position: absolute; bottom: 0; right: 0; color: #ccc; padding: 2px 5px; }
+
+        /* AREA B: FRONT SIDE (Middle 40%) */
         .crate-area-b {
             position: absolute; top: 45%; left: 0; width: 100%; height: 40%;
             padding: 5mm 10mm; box-sizing: border-box; display: flex; flex-direction: column;
@@ -86,14 +101,12 @@
         .crate-caution-box { background: #fff0f0; border: 2px solid #dc3545; border-radius: 6px; padding: 5px 10px; font-size: 14pt; font-weight: bold; color: #333; margin: 8px 0; }
         
         .crate-write-box-sm { border: 2px dashed #88b08b; border-radius: 6px; height: 40px; padding: 5px; font-size: 10pt; text-align: left; color: #666; margin-bottom: 8px; }
-        
-        /* New Medical Grid for B */
         .crate-med-grid { display: flex; height: 60px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; }
         .crate-med-left { width: 50%; border-right: 1px solid #ccc; padding: 5px; font-size: 9pt; font-weight: bold; }
         .crate-med-right { width: 50%; display: flex; flex-direction: column; }
         .crate-med-right-top { height: 50%; border-bottom: 1px solid #ccc; padding: 2px 5px; font-size: 9pt; font-weight: bold; }
         .crate-med-right-bottom { height: 50%; padding: 2px 5px; font-size: 9pt; font-weight: bold; color: #dc3545; }
-
+        
         .crate-consent-area { margin-top: 5px; padding-top: 2px; border-top: 1px solid #eee; }
         .crate-consent-text { font-size: 10pt; font-weight: bold; display: block; margin-top: 2px; color: #555; }
         .crate-msg-bottom { margin-top: auto; text-align: center; background: #88b08b; color: white; font-weight: bold; font-size: 11pt; padding: 3px; border-radius: 0 0 8px 8px; }
@@ -106,13 +119,6 @@
         .vet-grid { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #ccc; padding-top: 5px; }
         .vet-info { font-size: 11pt; font-weight: bold; }
         .shelter-write { border-bottom: 1px solid #333; width: 120px; display: inline-block; }
-
-        .crate-logo-placeholder { position: absolute; bottom: 0; right: 0; color: #ccc; padding: 2px 5px; }
-        .cmd-example { font-size: 10pt; color: #666; margin-bottom: 5px; font-style: italic; background:#eee; padding:2px 5px; border-radius:4px; }
-        .cmd-row { font-size: 13pt; margin-bottom: 5px; border-bottom: 1px dotted #ccc; display: flex; align-items: center; }
-        .cmd-key { width: 80px; font-weight: bold; }
-        .cmd-val { flex-grow: 1; font-weight: bold; color: #000; min-height:20px; }
-        .cmd-footer { margin-top: auto; font-size: 10pt; font-weight: bold; text-align: center; background: #e8f5e9; padding: 3px; border-radius: 4px; color: #88b08b; }
 
         /* Hide Elements */
         #poster-display, #crate-display, #generating-overlay, #debug-console-container { display: none; }
@@ -134,7 +140,7 @@
 </head>
 <body class="mode-handbook">
 
-    <div class="version-stamp">v2025.12.03-CRATE-B-UPDATE</div>
+    <div class="version-stamp">v2025.12.03-CRATE-AREA-A-FIX</div>
 
     <div id="generating-overlay">
         <div class="spinner-border text-primary"></div><h4 class="mt-3">作成中...</h4>
@@ -163,16 +169,19 @@
                 
                 <div class="crate-area-a">
                     <div class="crate-a-left">
-                        <span class="crate-header-a">🆘 サバイバルフード</span>
-                        <div class="food-grid"><div class="food-box"><span class="food-title-ok">⭕️ OK</span>白米・パン<br>芋・鶏肉</div><div class="food-box"><span class="food-title-ng">❌ NG</span>ネギ・チョコ<br>ブドウ</div></div>
-                    </div>
-                    <div class="crate-a-right">
                         <span class="crate-header-a">🐕 コマンド辞書</span>
                         <div class="cmd-example">例: マテ = Wait!(ウェイト)</div>
                         <div class="cmd-row"><span class="cmd-key">マテ</span> <span class="cmd-val"></span></div>
                         <div class="cmd-row"><span class="cmd-key">オスワリ</span> <span class="cmd-val"></span></div>
                         <div class="cmd-row"><span class="cmd-key">ハウス</span> <span class="cmd-val"></span></div>
                         <div class="cmd-footer">私の家ではこうやって伝えてます！</div>
+                    </div>
+                    <div class="crate-a-right">
+                        <span class="crate-header-a">🆘 サバイバルフード</span>
+                        <div class="food-grid"><div class="food-box"><span class="food-title-ok">⭕️ OK</span>白米・パン<br>芋・鶏肉</div><div class="food-box"><span class="food-title-ng">❌ NG</span>ネギ・チョコ<br>ブドウ</div></div>
+                        <div class="allergy-area">
+                            アレルギー: <span id="crate_allergy_content" style="color:#000;">-</span>
+                        </div>
                         <div class="crate-logo-placeholder"><img class="k9-logo-common" style="width:60px;" alt="Logo"></div>
                     </div>
                 </div>
@@ -197,7 +206,7 @@
                         <div class="crate-med-left">既往歴:<br><span id="crate_history_content" style="font-weight:normal;">-</span></div>
                         <div class="crate-med-right">
                             <div class="crate-med-right-top">常備薬: <span id="crate_medicine_content" style="font-weight:normal;">-</span></div>
-                            <div class="crate-med-right-bottom">アレルギー: <span id="crate_allergy_content">-</span></div>
+                            <div class="crate-med-right-bottom">アレルギー: <span id="crate_allergy_content_b">-</span></div>
                         </div>
                     </div>
 
@@ -294,6 +303,7 @@
             setText('crate_breed', `${d.breed} / ${d.gender} / ${d.neutered}`);
             setText('crate_caution', d.caution);
             setText('crate_allergy_content', d.allergy);
+            setText('crate_allergy_content_b', d.allergy); // For Area B
             setText('crate_history_content', d.history);
             setText('crate_medicine_content', d.medicine);
             setText('crate_owner', c.name);
@@ -369,8 +379,7 @@
                 overlay.style.display = 'none';
             }
         }
-        
-        // Helpers
+
         function maskAddress(addr) { if(!addr) return; const m = addr.match(/(.*?[都道府県].*?[市区町村])/); return m ? m[0]+' ***' : addr.substring(0,5)+' ***'; }
         function maskPhone(tel) { if(!tel) return; return tel.substring(0,3)+'-****-****'; }
         function setMaskedText(baseId, realVal, maskedVal) { /* (Masking logic same) */ const rEl = document.getElementById(baseId + '_real'); const mEl = document.getElementById(baseId + '_masked'); const btn = rEl ? rEl.parentElement.querySelector('.btn-toggle-mask') : null; if(!rEl || !mEl) return; if(!realVal) { rEl.textContent = '記載なし'; mEl.style.display='none'; rEl.style.display='inline'; if(btn) btn.style.display='none'; } else { rEl.textContent = realVal; mEl.textContent = maskedVal; mEl.style.display='inline'; rEl.style.display='none'; if(btn) btn.style.display='inline-block'; } }
