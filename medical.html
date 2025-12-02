@@ -12,17 +12,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        /* (CSSは変更なし - 省略せず記述します) */
+        /* (CSSは変更なし - 省略せず記述) */
         :root { --primary-color: #88b08b; --accent-color: #e8f5e9; --alert-color: #e07a5f; --text-color: #333; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 300px; }
-        .version-stamp { position: fixed; top: 0; right: 0; background: #dc3545; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
+        .version-stamp { position: fixed; top: 0; right: 0; background: #28a745; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
         #debug-console-container { display: block; margin-top: 30px; padding: 0 10px; }
         #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 11px; padding: 15px; border-radius: 8px; }
         .no-print-area { margin: 20px 0 30px; text-align: center; }
         .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        #generating-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); z-index: 10000; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        #generating-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); z-index: 10000; display: none; flex-direction: column; justify-content: center; align-items: center; }
         #poster-display, #crate-display { display: none; }
-        /* ... (Other CSS styles kept same) ... */
+        
+        /* Layouts (Keep existing) */
         .poster-container { width: 210mm; min-height: 297mm; background: #fffaf0; padding: 15mm; text-align: center; border: 8px solid #dc3545; box-sizing: border-box; margin: 0 auto; }
         .poster-header { color: #dc3545; font-size: 40pt; font-weight: 900; margin-bottom: 10mm; }
         .poster-photo { width: 70%; aspect-ratio: 1/1; object-fit: cover; border: 6px solid #333; margin-bottom: 10mm; background: #ddd; }
@@ -30,6 +31,7 @@
         .poster-table th { border-bottom: 2px solid #dc3545; color: #dc3545; padding: 5px; }
         .poster-table td { border-bottom: 1px solid #ccc; padding: 5px; font-weight: bold; }
         .poster-contact { background: #dc3545; color: white; padding: 15px; border-radius: 15px; font-size: 16pt; font-weight: bold; }
+        
         .crate-container { width: 210mm; height: 297mm; background: white; position: relative; overflow: hidden; box-sizing: border-box; border: 1px dashed #ccc; margin: 0 auto; }
         .crate-fold-line { position: absolute; top: 50%; left: 0; width: 100%; height: 0; border-top: 2px dashed #88b08b; z-index: 10; }
         .crate-fold-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 0 10px; color: #88b08b; font-size: 10pt; }
@@ -42,10 +44,12 @@
         .crate-main-name { font-size: 32pt; font-weight: 900; color: #333; line-height: 1; }
         .crate-alert-bar { background-color: var(--alert-color); color: white; font-weight: bold; font-size: 14pt; padding: 5px; border-radius: 8px; margin-bottom: 10px; }
         .crate-write-area { border: 2px dashed #88b08b; border-radius: 8px; padding: 5px; text-align: left; height: 80px; }
+        
         #d_photo_container { width: 150px; height: 150px; background: #fff; border-radius: 12px; border: 4px solid var(--accent-color); overflow: hidden; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; }
         .dog-profile-img { width: 100%; height: 100%; object-fit: cover; }
+
         @media print {
-            .no-print-area, #debug-console-container, .version-stamp, #generating-overlay { display: none !important; }
+            .no-print-area, #debug-console-container, .version-stamp, #generating-overlay, .modal-backdrop { display: none !important; }
             body { background: white; }
             body.mode-handbook #main-display { display: block; }
             body.mode-handbook #poster-display, body.mode-handbook #crate-display { display: none; }
@@ -58,12 +62,12 @@
 </head>
 <body class="mode-handbook">
 
-    <div class="version-stamp">v2025.12.02-FIX-BOOTSTRAP</div>
+    <div class="version-stamp">v2025.12.02-IPHONE-FIX</div>
 
     <div id="generating-overlay">
         <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;"></div>
         <h4 class="mt-3 fw-bold">PDFを作成中...</h4>
-        <p class="text-muted">この処理には数秒かかります<br>閉じずにそのままお待ちください</p>
+        <p class="text-muted small">画像処理を行っています。<br>そのままお待ちください。</p>
     </div>
 
     <div class="container py-3">
@@ -100,9 +104,6 @@
                     <div class="col-12"><h2 id="d_name_main" class="fw-bold">-</h2></div>
                     <div class="col-12 text-muted" id="d_breed_main">-</div>
                 </div>
-                <div class="alert alert-info small">
-                    <i class="fa-solid fa-circle-info"></i> 上記のボタンからPDFを作成し、スマホに保存してください。
-                </div>
             </div>
         </div>
 
@@ -136,12 +137,8 @@
                     <div class="mt-2">
                         <strong>🆘 サバイバルフード</strong>
                         <div class="crate-food-list">
-                            <div class="crate-food-box bg-light">
-                                <span class="text-success fw-bold">⭕️ OK</span><br>白米・パン(具なし)<br>サツマイモ・鶏肉
-                            </div>
-                            <div class="crate-food-box bg-light">
-                                <span class="text-danger fw-bold">❌ NG</span><br>ネギ・チョコ<br>ブドウ・キシリトール
-                            </div>
+                            <div class="crate-food-box bg-light"><span class="text-success fw-bold">⭕️ OK</span><br>白米・パン</div>
+                            <div class="crate-food-box bg-light"><span class="text-danger fw-bold">❌ NG</span><br>ネギ・チョコ</div>
                         </div>
                     </div>
                 </div>
@@ -165,18 +162,23 @@
         </div>
     </div>
 
-    <div class="modal fade" id="completeModal" tabindex="-1">
+    <div class="modal fade" id="pdfReadyModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold text-success"><i class="fa-solid fa-check-circle"></i> PDF生成完了</h5>
+                    <h5 class="modal-title fw-bold text-success"><i class="fa-solid fa-file-pdf"></i> PDF作成完了</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <p class="small">ブラウザのダウンロードフォルダにPDFが保存されました。</p>
-                    <div class="alert alert-warning small fw-bold">
-                        <i class="fa-solid fa-triangle-exclamation"></i>【最重要】<br>
-                        PDFファイルを開き、スクリーンショットや「画像を保存」で、必ず<strong>写真アプリ</strong>にも保存してください。
+                <div class="modal-body text-center">
+                    <p class="small text-muted mb-3">準備ができました。下のボタンを押してPDFを開き、保存してください。</p>
+                    
+                    <a id="btn-open-pdf" href="#" target="_blank" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm mb-3">
+                        <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> PDFを開く / 保存する
+                    </a>
+
+                    <div class="alert alert-warning text-start small">
+                        <strong><i class="fa-solid fa-mobile-screen"></i> iPhoneの方へ:</strong><br>
+                        開いた画面の下部にある共有ボタン <i class="fa-solid fa-arrow-up-from-bracket"></i> から<strong>「"ファイル"に保存」</strong>を選択してください。
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
@@ -190,7 +192,7 @@
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
         const LIFF_ID = "2008546673-MJY7j3ox";
-        let completeModal;
+        let pdfReadyModal; // Modal Instance
 
         function log(msg) {
             const el = document.getElementById('debug-console');
@@ -199,13 +201,9 @@
         }
 
         window.onload = async function() {
-            // ★ Bootstrap Init Check
             if (typeof bootstrap !== 'undefined') {
-                completeModal = new bootstrap.Modal(document.getElementById('completeModal'));
-            } else {
-                log('Error: Bootstrap not loaded yet.');
+                pdfReadyModal = new bootstrap.Modal(document.getElementById('pdfReadyModal'));
             }
-
             try {
                 await liff.init({ liffId: LIFF_ID });
                 if (!liff.isLoggedIn()) { liff.login(); return; }
@@ -262,6 +260,7 @@
             });
         }
 
+        // --- TASK-3 FIX: iPhone Safe PDF Generation ---
         async function generatePDF(mode) {
             log(`Starting PDF Gen: ${mode}`);
             const overlay = document.getElementById('generating-overlay');
@@ -283,21 +282,29 @@
                 const { jsPDF } = window.jspdf;
                 const orient = (mode === 'handbook') ? 'l' : 'p';
                 const doc = new jsPDF(orient, 'mm', 'a4');
-                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                const imgData = canvas.toDataURL('image/jpeg', 0.90); // Compress slightly
+                
                 const a4w = (orient === 'l') ? 297 : 210;
                 const pdfWidth = a4w;
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
                 doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-                const fname = `K9_${mode.toUpperCase()}_${new Date().getTime()}.pdf`;
-                doc.save(fname);
-                log('PDF Saved: ' + fname);
                 
-                if(completeModal) completeModal.show();
+                // ★ FIX: Instead of doc.save(), create Blob URL and show button
+                const pdfBlob = doc.output('blob');
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                
+                const openBtn = document.getElementById('btn-open-pdf');
+                openBtn.href = pdfUrl;
+                // iOS Safari sometimes ignores download attr, but we set it just in case
+                openBtn.download = `K9_${mode.toUpperCase()}_${new Date().getTime()}.pdf`;
+                
+                log('PDF Blob created. Showing Modal.');
+                pdfReadyModal.show();
 
             } catch (err) {
                 log('PDF Gen Error: ' + err.message);
-                alert('PDF作成に失敗しました: ' + err.message);
+                alert('作成失敗: ' + err.message);
             } finally {
                 target.style.display = prevDisplay;
                 overlay.style.display = 'none';
