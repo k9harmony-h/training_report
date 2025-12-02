@@ -9,19 +9,27 @@
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     
     <style>
-        /* (CSSは変更なし) */
-        :root { --primary-color: #88b08b; --accent-color: #e8f5e9; --alert-color: #e07a5f; --text-color: #333; }
+        :root {
+            --primary-color: #88b08b; /* Sage Green */
+            --accent-color: #e8f5e9;
+            --alert-color: #e07a5f; /* Terracotta Orange */
+            --text-color: #333;
+        }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 300px; }
-        .version-stamp { position: fixed; top: 0; right: 0; background: #198754; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
+        .version-stamp { position: fixed; top: 0; right: 0; background: #0dcaf0; color: black; font-size: 10px; padding: 2px 6px; z-index: 9999; }
+        
+        /* Debug Console */
         #debug-console-container { display: block; margin-top: 30px; padding: 0 10px; }
         #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 11px; padding: 15px; border-radius: 8px; }
+        
         .no-print-area { margin: 20px 0 30px; text-align: center; }
         .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        #generating-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); z-index: 10000; display: none; flex-direction: column; justify-content: center; align-items: center; }
-        #poster-display, #crate-display { display: none; }
-        /* Modal Image Preview */
-        #generated-image-preview { width: 100%; height: auto; border: 2px solid #ccc; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         
+        #generating-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); z-index: 10000; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        
+        #poster-display, #crate-display { display: none; }
+        #generated-image-preview { width: 100%; height: auto; border: 2px solid #ccc; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+
         /* Layouts */
         .poster-container { width: 210mm; min-height: 297mm; background: #fffaf0; padding: 15mm; text-align: center; border: 8px solid #dc3545; box-sizing: border-box; margin: 0 auto; }
         .poster-header { color: #dc3545; font-size: 40pt; font-weight: 900; margin-bottom: 10mm; }
@@ -47,6 +55,7 @@
         #d_photo_container { width: 150px; height: 150px; background: #fff; border-radius: 12px; border: 4px solid var(--accent-color); overflow: hidden; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; }
         .dog-profile-img { width: 100%; height: 100%; object-fit: cover; }
 
+        /* Print Settings */
         @media print {
             .no-print-area, #debug-console-container, .version-stamp, #generating-overlay, .modal-backdrop { display: none !important; }
             body { background: white; }
@@ -61,7 +70,7 @@
 </head>
 <body class="mode-handbook">
 
-    <div class="version-stamp">v2025.12.02-PERF-DATA-FIX</div>
+    <div class="version-stamp">v2025.12.02-STEP-1.5</div>
 
     <div id="generating-overlay">
         <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;"></div>
@@ -72,21 +81,40 @@
     <div class="container py-3">
         <div class="no-print-area">
             <h4 class="fw-bold mb-3" style="color: var(--primary-color);">⛑️ うちの子医療・防災手帳</h4>
+            
             <div id="loading" class="loading">
                 <div class="spinner-border text-success"></div><p>Loading...</p>
             </div>
+
+            <div id="controls" style="display:none; max-width: 500px; margin: 0 auto;">
+                </div>
         </div>
 
         <div id="main-display" style="display:none;">
             <div class="card-section">
                 <div class="section-title">基本情報</div>
                 <div class="text-center">
-                    <div id="d_photo_container"><span class="small">No Photo</span></div>
+                    <div id="d_photo_container">
+                        <div class="spinner-border spinner-border-sm text-secondary"></div>
+                        <span class="small ms-2">写真読み込み中...</span>
+                    </div>
                 </div>
                 <div class="row text-center mb-3">
                     <div class="col-12"><h2 id="d_name_main" class="fw-bold">-</h2></div>
                     <div class="col-12 text-muted" id="d_breed_main">-</div>
                 </div>
+                <div class="mb-2"><strong>飼い主:</strong> <span id="c_name_main">-</span></div>
+                <div class="mb-2"><strong>電話番号:</strong> <span id="c_phone_main">-</span></div>
+            </div>
+            
+            <div class="card-section">
+                <div class="section-title">医療情報</div>
+                <div class="mb-2"><span class="fw-bold text-muted small">かかりつけ医</span><div id="d_vet_main" class="fs-5">-</div></div>
+                <div class="row">
+                    <div class="col-6 mb-2"><span class="fw-bold text-muted small">アレルギー</span><div id="d_allergy_main" class="text-danger fw-bold">-</div></div>
+                    <div class="col-6 mb-2"><span class="fw-bold text-muted small">常備薬</span><div id="d_medicine_main" class="text-danger fw-bold">-</div></div>
+                </div>
+                <div class="mb-2"><span class="fw-bold text-muted small">既往歴</span><div id="d_history_main">-</div></div>
             </div>
         </div>
 
@@ -238,13 +266,20 @@
             // 1. Handbook
             setText('d_name_main', d.name_disp);
             setText('d_breed_main', `${d.breed} / ${d.age}`);
+            setText('c_name_main', c.name);
+            setText('c_phone_main', c.phone);
+            // Restored Medical Info
+            setText('d_vet_main', d.vet_name);
+            setText('d_allergy_main', d.allergy);
+            setText('d_medicine_main', d.medicine);
+            setText('d_history_main', d.history);
 
-            // 2. Poster Data (STEP 2: Data Linking)
+            // 2. Poster
             setText('poster_name', d.name_disp);
-            setText('poster_desc', `${d.breed} / ${d.gender} / ${d.age} / ${d.color || ''}`);
-            setText('poster_phone', c.phone); // Ensure phone is linked
+            setText('poster_desc', `${d.breed} / ${d.gender} / ${d.age}`);
+            setText('poster_phone', c.phone);
 
-            // 3. Crate Data (STEP 2: Data Linking)
+            // 3. Crate
             setText('crate_name', d.name_disp);
             setText('crate_breed', `${d.breed} (${d.gender})`);
             setText('crate_caution', d.caution || 'None');
@@ -265,6 +300,9 @@
                     setImg('d_photo_container', data.image);
                     setSrc('poster_img', data.image);
                     setSrc('crate_img', data.image);
+                } else {
+                    const el = document.getElementById('d_photo_container');
+                    if(el) el.innerHTML = '<span class="small">No Photo</span>';
                 }
             });
         }
@@ -286,17 +324,18 @@
             await new Promise(r => setTimeout(r, 500));
 
             try {
-                // Image Generation
+                // 1. Capture as Image
                 const canvas = await html2canvas(target, { scale: 2, useCORS: true, allowTaint: true });
                 const imgData = canvas.toDataURL('image/jpeg', 0.90);
                 
-                // Show in Modal
+                // 2. Set Image to Modal
                 const previewImg = document.getElementById('generated-image-preview');
                 previewImg.src = imgData;
 
-                // PC Download Option
+                // 3. Prepare PDF Download (PC Only)
                 const btnDownload = document.getElementById('btn-download-pdf');
                 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                
                 if (!isMobile) {
                     btnDownload.style.display = 'inline-block';
                     btnDownload.onclick = function() {
