@@ -8,6 +8,9 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <style>
         /* ★★★ BRANDING UPDATE: K9 Harmony Shelter Colors ★★★ */
         :root {
@@ -16,7 +19,6 @@
             --alert-color: #e07a5f; /* Terracotta Orange */
             --mask-color: #f0f0f0;
         }
-        /* (CSS省略 - 以前のバージョンと同じ) */
 
         body { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif; background-color: #f9fbf9; color: #333; padding-bottom: 200px; }
 
@@ -80,14 +82,13 @@
 
         /* --- PRINT MEDIA QUERIES --- */
         @media print {
-            @page { size: A4 portrait; margin: 5mm; } /* ポスターはA4縦 */
+            @page { size: A4 portrait; margin: 5mm; }
             body { background: white; -webkit-print-color-adjust: exact; padding: 0; font-size: 10pt; }
             .no-print-area, header, .btn-toggle-mask, .btn-cert-view, .modal, .version-stamp, #debug-console-container { display: none !important; }
             .masked-wrapper { background: none; padding: 0; display: block; }
             .masked-text { display: none !important; }
             .real-text { display: block !important; color: #000; }
 
-            /* MODE SWITCHING */
             body.print-mode-handbook #crate-tag-display, body.print-mode-handbook #poster-display { display: none; }
             body.print-mode-handbook #main-display { display: block; }
             body.print-mode-crate #main-display, body.print-mode-crate #poster-display { display: none; }
@@ -96,10 +97,10 @@
             body.print-mode-poster #poster-display { display: block; width: 100%; height: 100%; }
 
             /* HANDBOOK LAYOUT (4-Split) */
-            body.print-mode-handbook { width: 297mm; height: 210mm; } /* A4横に強制 */
+            body.print-mode-handbook { width: 297mm; height: 210mm; }
             body.print-mode-handbook .print-container { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 10mm; height: 180mm; }
             body.print-mode-handbook #d_photo_container { width: 140px; height: 140px; margin-right: 15px; border: 2px solid #333; }
-            body.print-mode-handbook .card-section { box-shadow: none; border: 2px solid #333; padding: 10px; height: 100%; page-break-inside: avoid; }
+            .card-section { box-shadow: none; border: 2px solid #333; padding: 10px; height: 100%; page-break-inside: avoid; }
             body.print-mode-handbook .basic-info-wrapper { display: flex; flex-direction: row; text-align: left; }
             body.print-mode-handbook .print-footer { font-size: 8pt; color: #999; margin-top: 5mm; text-align: center; }
 
@@ -138,11 +139,14 @@
 
         <div id="main-display" style="display:none;">
             <div class="print-container">
+                
                 <div class="print-block">
                     <div class="card-section">
                         <div class="section-title">基本情報 / Owner Info</div>
+                        
                         <div class="basic-info-wrapper">
                             <div id="d_photo_container"><div class="spinner-border text-secondary" role="status"></div></div>
+                            
                             <div class="basic-info-text">
                                 <div class="row info-row">
                                     <div class="col-7"><span class="info-label">お名前 (Dog Name)</span><div class="info-value fs-5 fw-bold" id="d_name">-</div></div>
@@ -240,7 +244,7 @@
                                     <span class="info-label">狂犬病予防接種</span>
                                     <div class="d-flex align-items-center justify-content-between mt-1">
                                         <span id="d_rabies_status" class="fw-bold small">-</span>
-                                        <button id="btn_rabies_img" class="btn-cert-view" style="display:none;">📷</button>
+                                        <button id="btn-rabies-img" class="btn-cert-view" style="display:none;">📷</button>
                                     </div>
                                 </div>
                             </div>
@@ -419,13 +423,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const jsPDFScript = document.createElement('script');
-        jsPDFScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-        document.head.appendChild(jsPDFScript);
-        const html2canvasScript = document.createElement('script');
-        html2canvasScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        document.head.appendChild(html2canvasScript);
-
         const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
         const LIFF_ID = "2008546673-MJY7j3ox";
         let imageModal, dogSelectModal, printSelectModal, pdfPreviewModal;
@@ -489,8 +486,8 @@
 
             const imgData = canvas.toDataURL('image/jpeg', 1.0);
             const isLandscape = (mode === 'handbook' || mode === 'crate');
-            const doc = new jsPDF(isLandscape ? 'l' : 'p', 'mm', 'a4'); // A4サイズ
-            const imgWidth = isLandscape ? 297 : 210; // A4 width/height in mm
+            const doc = new jsPDF(isLandscape ? 'l' : 'p', 'mm', 'a4');
+            const imgWidth = isLandscape ? 297 : 210;
             const imgHeight = canvas.height * imgWidth / canvas.width;
 
             doc.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
@@ -582,7 +579,7 @@
                 setText('d_breed', d.breed);
                 setText('d_gender', d.gender);
                 setText('d_birth', d.birth_date);
-                setText('d_age', d.age); 
+                setText('d_age', d.age);
                 setText('c_name', c.name);
                 setMaskedText('c_address', c.address, maskAddress(c.address));
                 setMaskedText('c_phone', c.phone, null);
@@ -609,8 +606,8 @@
                     document.getElementById('qr-container').style.display = 'flex';
                 }
 
-                setupCertButton('d_rabies_status', 'btn_rabies_img', d.has_rabies, d.rabies_img_ref);
-                setupCertButton('d_vaccine_status', 'btn_vaccine_img', d.has_vaccine, d.vaccine_img_ref);
+                setupCertButton('d_rabies_status', 'btn-rabies-img', d.has_rabies, d.rabies_img_ref);
+                setupCertButton('d_vaccine_status', 'btn-vaccine-img', d.has_vaccine, d.vaccine_img_ref);
 
                 const now = new Date().toLocaleDateString('ja-JP');
                 setText('print_date', now);
@@ -692,15 +689,24 @@
         }
 
         function setupCertButton(statusId, btnId, hasCert, imgRef) {
-            document.getElementById(statusId).textContent = hasCert ? '接種済み' : '未登録';
-            const btn = document.getElementById(btnId);
+            const statusEl = document.getElementById(statusId);
+            const btnEl = document.getElementById(btnId);
+            
+            // ★ Safety check: Check if elements exist before accessing .style
+            if (!statusEl || !btnEl) {
+                log(`Warning: Certificate elements missing for ${statusId}`);
+                return; 
+            }
+            
+            statusEl.textContent = hasCert ? '接種済み' : '未登録';
+            
             if (hasCert && imgRef) {
-                btn.style.display = 'inline-flex';
-                btn.onclick = () => {
+                btnEl.style.display = 'inline-flex';
+                btnEl.onclick = () => {
                     document.getElementById('modalImage').src = (imgRef.indexOf('http')===-1) ? `https://drive.google.com/uc?export=view&id=${imgRef}` : imgRef;
                     imageModal.show();
                 };
-            } else { btn.style.display = 'none'; }
+            } else { btnEl.style.display = 'none'; }
         }
 
         function openImageModal(ref) {
