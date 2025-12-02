@@ -26,12 +26,18 @@
             --body-bg: #f4f7f6;
         }
 
-        /* ... (既存のCSS省略) ... */
+        body {
+            font-family: var(--font-family-base);
+            background-color: var(--body-bg);
+            padding-bottom: 120px; /* ログエリア分のスペースを確保 */
+        }
         
+        /* ... (既存のCSS省略) ... */
+
         /* デバッグログ表示エリアのスタイル（LIFFに依存せず表示） */
         #debug-log-area {
             position: fixed;
-            bottom: 0;
+            bottom: 25px; /* フッターの上 */
             left: 0;
             width: 100%;
             background: #222;
@@ -39,7 +45,7 @@
             font-family: monospace;
             font-size: 10px;
             padding: 5px;
-            max-height: 100px;
+            max-height: 80px; /* 表示エリアを固定 */
             overflow-y: scroll;
             z-index: 9999;
             border-top: 2px solid #555;
@@ -62,7 +68,7 @@
     </style>
 </head>
 <body>
-    <p id="log-stamp-static">1810-001</p> 
+    <p id="log-stamp-static">INIT-001</p> 
     
     <div class="liff-app-container">
         <header class="p-3 bg-white shadow-sm sticky-top">
@@ -419,7 +425,6 @@
                 // ログスタンプの動的更新 (hhmm-001形式)
                 const hh = String(date.getHours()).padStart(2, '0');
                 const mm = String(date.getMinutes()).padStart(2, '0');
-                // NOTE: ビルド/デプロイ時間ではないため、ここでは実行時の時刻として更新
                 document.getElementById('log-stamp-static').textContent = `${hh}${mm}-001`;
 
                 logContent.innerHTML = `[${now}] ${message}<br>` + logContent.innerHTML;
@@ -431,10 +436,11 @@
         // ====================================
         async function initializeLiff() {
             try {
-                const LIFF_ID = '2008546673-MJY7j3ox'; // ユーザーから提供されたLIFF IDを使用
+                const LIFF_ID = '2008546673-MJY7j3ox'; 
                 
                 log('Step 1/4: LIFF initialization started.');
-                
+                document.getElementById('liff-spinner').style.display = 'inline-block';
+
                 // LIFF SDKの読み込み後に直接initを実行する
                 await liff.init({ liffId: LIFF_ID });
                 log('Step 2/4: LIFF initialized successfully.');
@@ -450,7 +456,7 @@
                     loadData(profile.userId);
                 } else {
                     log('Step 3/4: User not logged in. Prompting login.');
-                    document.getElementById('liff-message').textContent = 'LINEでログインしてください。';
+                    document.getElementById('liff-message').textContent = 'LIFF認証エラー: ログインしてください。';
                     document.getElementById('liff-spinner').style.display = 'none';
                     document.getElementById('liff-user-info').textContent = 'ユーザーID: 未認証';
                 }
@@ -471,17 +477,16 @@
         // ====================================
 
         document.addEventListener('DOMContentLoaded', () => {
-            // DOMContentLoadedでLIFF初期化をキック（LIFFエラー解消とDOM操作の安定化のため）
-            initializeLiff();
+            // DOMContentLoadedでLIFF初期化をキック
+            log('DOM fully loaded. Starting initialization cycle.');
             
-            // Bootstrapモーダルのインスタンス化は、DOMContentLoadedで安全に実行
+            // Bootstrapモーダルのインスタンス化をDOMContentLoaded内で実行
             const printSelectModalEl = document.getElementById('printSelectModal');
             printSelectModal = new bootstrap.Modal(printSelectModalEl);
             const pdfPreviewModalEl = document.getElementById('pdfPreviewModal');
             pdfPreviewModal = new bootstrap.Modal(pdfPreviewModalEl);
 
-            // ログスタンプの初期表示（LIFFが動作しなくても最低限の時刻を表示）
-            log('DOM fully loaded. Starting initialization cycle.');
+            initializeLiff();
         });
     </script>
 </body>
