@@ -12,7 +12,7 @@
       margin: 0; padding: 0; background-color: #000;
       font-family: 'Shippori Mincho', serif; overflow-x: hidden; color: #fff;
     }
-    #scroll-track { height: 550vh; width: 100%; position: relative; z-index: 1; }
+    #scroll-track { height: 600vh; width: 100%; position: relative; z-index: 1; }
     #stage {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       overflow: hidden; z-index: 2; pointer-events: none; perspective: 1000px;
@@ -23,7 +23,7 @@
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: linear-gradient(135deg, #4a3b2a, #2e2315);
       display: flex; flex-direction: column; justify-content: center; align-items: center;
-      transform-origin: left center; transition: transform 0.1s ease-out; z-index: 30;
+      transform-origin: left center; transition: transform 0.1s ease-out; z-index: 50;
     }
     .title-gold {
       font-family: 'Dancing Script', cursive; font-size: 3.5rem;
@@ -37,16 +37,30 @@
       opacity: 0; animation: floatIn 2s ease 1s forwards;
     }
 
-    /* --- Scene 2: 背景 --- */
+    /* --- Scene 2: 背景 (紙) --- */
     #bg-paper {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background-color: #f5f1e6; z-index: 1;
     }
 
+    /* --- Scene 3: 背景 (空・グラデーション) --- */
+    /* 夕焼け (Orange) */
+    #bg-sky-sunset {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(to top, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+      z-index: 2; opacity: 0; transition: opacity 0.1s;
+    }
+    /* 夜空 (Purple -> Navy) */
+    #bg-sky-night {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(to top, #0f2027 0%, #203a43 50%, #2c5364 100%);
+      z-index: 3; opacity: 0; transition: opacity 0.1s;
+    }
+
     /* --- Scene 3: 街並み --- */
     #bg-city {
       position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
-      z-index: 2; opacity: 0; pointer-events: none;
+      z-index: 4; opacity: 0; pointer-events: none;
       display: flex; align-items: flex-end; overflow: hidden;
     }
     .city-block {
@@ -58,28 +72,41 @@
       background: rgba(255, 255, 255, 0.1);
     }
 
-    /* --- Scene 4 & 5: 切り絵 (Silhouette) --- */
-    .silhouette {
-      position: absolute; bottom: 0; z-index: 10;
-      filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
-    }
-    .silhouette path { fill: #000; }
-
-    #human-silhouette {
-      left: 10%; width: 25vh; height: auto;
+    /* --- Scene 4 & 5: 白い人形 (Actor) --- */
+    /* 位置制御用のラッパー */
+    .actor-wrapper {
+      position: absolute; bottom: 0; z-index: 20;
       opacity: 0; transform: translateY(20px);
     }
-    #dog-silhouette {
-      left: 35%; width: 15vh; height: auto; opacity: 0;
-      transform-origin: bottom center; transform: rotateX(90deg);
+
+    /* アニメーション用のSVG本体 */
+    .actor-body {
+      filter: drop-shadow(0 0 8px rgba(255,255,255,0.6)); /* 白い発光 */
+      animation: sway 3s infinite ease-in-out; /* ゆらゆら揺れる */
+      transform-origin: bottom center;
     }
+    .actor-body path { fill: #fff; } /* 真っ白 */
+
+    /* 歩いているような揺れアニメーション */
+    @keyframes sway {
+      0% { transform: rotate(-3deg); }
+      50% { transform: rotate(3deg); }
+      100% { transform: rotate(-3deg); }
+    }
+
+    /* 人間 */
+    #human-wrapper { left: 15%; width: 18vh; height: auto; }
+    /* 犬 (人間より少し小さく、横に) */
+    #dog-wrapper { left: 30%; width: 12vh; height: auto; }
+    /* 犬は少しリズムをずらす */
+    #dog-wrapper .actor-body { animation-delay: 0.5s; }
 
     /* --- Main Object: パラコード --- */
     #cord-base {
       position: absolute; top: -100px; right: 40px; width: 30px; height: 120%;
       background: repeating-linear-gradient(45deg, #f0f0f0, #f0f0f0 10px, #e0e0e0 10px, #e0e0e0 20px);
-      box-shadow: 5px 0 10px rgba(0,0,0,0.2); border-radius: 15px;
-      z-index: 15; transform: translateY(0);
+      box-shadow: 5px 0 10px rgba(0,0,0,0.5); border-radius: 15px;
+      z-index: 25; transform: translateY(0);
     }
     #cord-color-mask {
       position: absolute; top: 0; left: 0; width: 100%; height: 0%; overflow: hidden;
@@ -92,17 +119,18 @@
     .milestone-stitch {
       position: absolute; top: 40%; left: 50%; transform: translateX(-50%);
       width: 80%; height: 4px; background-color: gold; box-shadow: 0 0 5px gold;
-      z-index: 16; opacity: 0;
+      z-index: 26; opacity: 0;
     }
 
     /* --- Texts --- */
     .story-text {
       position: absolute; left: 30px; color: #333; font-size: 1.2rem; line-height: 2;
-      opacity: 0; transform: translateX(-20px); z-index: 25; width: 60%;
+      opacity: 0; transform: translateX(-20px); z-index: 30; width: 60%;
+      text-shadow: 0 0 10px rgba(255,255,255,0.8);
     }
     #text-1 { top: 20%; }
     #text-2 { top: 60%; color: #fff; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
-    #text-3 { top: 40%; left: 50%; color: #fff; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
+    #text-3 { top: 40%; left: 45%; color: #fff; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
     #text-4 { top: 70%; left: 10%; color: #fff; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
 
     @keyframes floatIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -119,15 +147,24 @@
     </div>
 
     <div id="bg-paper"></div>
+    
+    <div id="bg-sky-sunset"></div>
+    <div id="bg-sky-night"></div>
+
     <div id="bg-city"></div>
 
-    <svg id="human-silhouette" class="silhouette" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
-      <path d="M50,15 C58,15 65,22 65,30 C65,38 58,45 50,45 C42,45 35,38 35,30 C35,22 42,15 50,15 Z M50,50 C65,50 80,60 85,80 C88,95 85,130 85,130 L75,130 L75,190 L60,190 L60,140 L40,140 L40,190 L25,190 L25,130 C25,130 22,95 25,80 C30,60 40,50 50,50 Z" />
-    </svg>
+    <div id="human-wrapper" class="actor-wrapper">
+      <svg class="actor-body" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50,20 C65,20 75,35 75,50 C75,65 65,75 50,75 C35,75 25,65 25,50 C25,35 35,20 50,20 Z 
+                 M50,80 C70,80 85,90 90,110 C92,120 90,140 90,140 L80,140 L80,185 C80,195 70,195 70,185 L70,140 L30,140 L30,185 C30,195 20,195 20,185 L20,140 C20,140 18,120 20,110 C25,90 40,80 50,80 Z" />
+      </svg>
+    </div>
 
-    <svg id="dog-silhouette" class="silhouette" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-       <path d="M30,65 C30,65 20,55 20,40 C20,25 35,20 45,25 C55,20 70,25 70,40 C70,55 60,65 60,65 L65,85 L55,85 L50,70 L40,70 L35,85 L25,85 L30,65 Z M70,35 C75,30 85,30 90,35 L85,45 C80,40 75,40 70,45 Z" />
-    </svg>
+    <div id="dog-wrapper" class="actor-wrapper">
+      <svg class="actor-body" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+         <path d="M35,60 C35,60 25,50 25,40 C25,30 35,25 45,30 C55,25 65,25 65,40 C65,50 55,60 55,60 L60,80 L50,80 L45,70 L40,70 L35,80 L25,80 L35,60 Z M65,35 C70,30 80,30 85,35 L80,45 C75,40 70,40 65,45 Z" />
+      </svg>
+    </div>
 
     <div id="cord-base">
       <div id="cord-color-mask"><div id="cord-color-content"></div></div>
@@ -157,7 +194,7 @@
         const w = Math.floor(Math.random() * 50) + 40;
         const hPercent = Math.floor(Math.random() * 45) + 35; 
         block.style.width = `${w}px`; block.style.height = `${hPercent}%`;
-        if (Math.random() > 0.9) block.style.zIndex = '3';
+        if (Math.random() > 0.9) block.style.zIndex = '5'; // 空より手前
         cityContainer.appendChild(block); currentWidth += w;
       }
     }
@@ -175,9 +212,12 @@
       const cordBase = document.getElementById('cord-base');
       const colorMask = document.getElementById('cord-color-mask');
       const bgCity = document.getElementById('bg-city');
+      const bgSunset = document.getElementById('bg-sky-sunset');
+      const bgNight = document.getElementById('bg-sky-night');
       const stitch = document.getElementById('ms-gold');
-      const human = document.getElementById('human-silhouette');
-      const dog = document.getElementById('dog-silhouette');
+      
+      const humanWrapper = document.getElementById('human-wrapper');
+      const dogWrapper = document.getElementById('dog-wrapper');
 
       // 1. 表紙 & 2. パラコード
       cover.style.transform = `rotateY(-${Math.min(scrollY / 4, 100)}deg)`;
@@ -191,33 +231,51 @@
         text1.style.transform = `translateX(${-20 + (t1 * 20)}px)`;
       } else if (scrollY >= 700) text1.style.opacity = Math.max(0, 1 - (scrollY - 700) / 200);
 
-      // 4. 中盤
-      if (scrollY > 800) bgCity.style.opacity = Math.min((scrollY - 800) / 400, 1);
+      // --- 4. 中盤: 街と夕焼け (Orange) ---
+      // 800px あたりから街と夕焼け開始
+      if (scrollY > 800) {
+        let cityProg = Math.min((scrollY - 800) / 400, 1);
+        bgCity.style.opacity = cityProg;
+        bgSunset.style.opacity = cityProg; // 夕焼け出現
+      }
+
+      // 紐の色づき
       if (scrollY > 600) colorMask.style.height = `${Math.min((scrollY - 600) / 1200 * 100, 100)}%`;
 
+      // テキスト2
       if (scrollY > 900 && scrollY < 1600) {
         let t2 = (scrollY - 900) / 300;
         text2.style.opacity = stitch.style.opacity = Math.min(Math.max(t2, 0), 1);
         text2.style.transform = `translateX(${-20 + (t2 * 20)}px)`;
       } else if (scrollY >= 1600) text2.style.opacity = Math.max(0, 1 - (scrollY - 1600) / 200);
 
-      // 5. 終盤 (人間 & テキスト3)
-      if (scrollY > 1500 && scrollY < 2200) {
-        let hProg = (scrollY - 1500) / 400;
-        human.style.opacity = text3.style.opacity = Math.min(Math.max(hProg, 0), 1);
-        human.style.transform = `translateY(${20 - (hProg * 20)}px)`;
-      } else if (scrollY >= 2200) {
-         human.style.opacity = text3.style.opacity = Math.max(0.5, 1 - (scrollY - 2200) / 300);
+      // --- 5. 終盤: 人間出現 & 夜空へ変化 (Purple -> Navy) ---
+      // 1600px あたりから
+      if (scrollY > 1600) {
+        // 人間
+        let hProg = Math.min(Math.max((scrollY - 1600) / 400, 0), 1);
+        humanWrapper.style.opacity = text3.style.opacity = hProg;
+        humanWrapper.style.transform = `translateY(${20 - (hProg * 20)}px)`;
+
+        // 夕焼け(Orange) をフェードアウトさせつつ、夜空(Navy) をフェードイン
+        // 夕焼けの上に夜空を重ねることでグラデーション変化させる
+        bgNight.style.opacity = hProg; 
+      }
+      
+      if (scrollY >= 2300) {
+         // テキスト3フェードアウト
+         text3.style.opacity = Math.max(0, 1 - (scrollY - 2300) / 300);
       }
 
-      // --- 6. ラストシーン (犬 & テキスト4) ---
-      if (scrollY > 2000) {
-        let dProg = (scrollY - 2000) / 500;
-        dog.style.opacity = Math.min(Math.max(dProg, 0), 1);
-        text4.style.opacity = Math.min(Math.max(dProg, 0), 1);
+      // --- 6. ラストシーン: 犬出現 ---
+      if (scrollY > 2200) {
+        let dProg = Math.min(Math.max((scrollY - 2200) / 500, 0), 1);
         
-        let rotateX = 90 - (dProg * 90);
-        dog.style.transform = `rotateX(${rotateX}deg)`;
+        // 人間と同じように下から浮き上がる
+        dogWrapper.style.opacity = dProg;
+        dogWrapper.style.transform = `translateY(${20 - (dProg * 20)}px)`;
+        
+        text4.style.opacity = dProg;
       }
     });
 
