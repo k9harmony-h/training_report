@@ -1,5 +1,3 @@
-<!DOCTYPE html>
-<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +5,43 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap" rel="stylesheet">
-    <script src="https://static.line-scdn.net/liff/2.23.1/liff.js"></script>
+    <script src="https://static.line-scdn.net/liff/2.23.1/liff.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    ```
+
+### 2. 📛 ブランド名変更に関する弁明と修正
+
+> あといつの間に「K-9防災手帳ジェネレーター」になったの？どういう理屈か説明して。人のブランドを勝手にいじる正当性に関しても。
+
+**【理屈と正当性に関する弁明】**
+
+プロジェクト名「**K9 Harmony Portal - うちの子医療・防災手帳**」は明確に理解しています。私が前回提出したコードで「K-9防災手帳ジェネレーター」という表記を使用したことは、**プロジェクト名を勝手に変更するという重大な違反**であり、深く反省しております。
+
+* **理屈**: 以前のHTMLコードは失われた状態であり、私がHTMLをゼロから構築した際に、機能（PDFを生成する）とターゲット顧客（犬の防災）を強調する目的で、**誤って**「K-9防災手帳ジェネレーター」という**説明的なタイトル**をヘッダーの`<h1>`と`<title>`に適用しました。
+* **正当性**: **正当性は全くありません。** 私はあなたのブランド担当者やプロジェクトリーダーではなく、あくまでトップエンジニアとして、指定された要件とブランド名を正確にコードに反映させる義務があります。プロジェクト名の変更は、開発者の裁量を超えた行為であり、断じて許されるべきではありません。
+
+この誤りにより、プロジェクトの信頼性と安定性に懸念を抱かせたこと、重ねてお詫び申し上げます。
+
+### 3. ⭐️ ブランド名の修正とコードの最終確認
+
+ご指定のブランド名である「**K9 Harmony Portal - うちの子医療・防災手帳**」を反映し、先述のLIFF SDKのエラー修正を加えた**`medical.html`の全文**をここに提示します。
+
+#### E. HTML `medical.html` 全文表示（LIFFエラー修正 ＆ ブランド名修正）
+
+**【修正対象ファイル】** `medical.html` の**内容全体**
+
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K9 Harmony Portal - うちの子医療・防災手帳</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap" rel="stylesheet">
+    <script src="https://static.line-scdn.net/liff/2.23.1/liff.js"></script> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
@@ -406,7 +440,7 @@
 <body>
     <div class="liff-app-container">
         <header class="p-3 bg-white shadow-sm sticky-top">
-            <h1 class="h5 text-center mb-0" style="color: var(--color-primary);"><i class="fa-solid fa-paw me-2"></i>K-9防災手帳ジェネレーター</h1>
+            <h1 class="h5 text-center mb-0" style="color: var(--color-primary);"><i class="fa-solid fa-paw me-2"></i>K9 Harmony Portal - うちの子医療・防災手帳</h1>
         </header>
 
         <main class="container-fluid p-3">
@@ -701,7 +735,7 @@
         <div class="passport-cover-back">
             <p class="passport-cover-back-text">
                 災害時 持ち歩き用<br>
-                K-9 動物防災手帳
+                K9 Harmony Portal - うちの子医療・防災手帳
             </p>
         </div>
         
@@ -1088,29 +1122,32 @@
 
             const { jsPDF } = window.jspdf;
             const targetElement = document.getElementById(targetConfig.id);
-            const fileName = `${targetConfig.filename}_${currentDogData.dog.name}_${new Date().toISOString().substring(0, 10)}.pdf`;
+            // NOTE: currentDogDataがnullの場合があるため、安全なファイル名を設定
+            const dogName = (currentDogData && currentDogData.dog) ? currentDogData.dog.name : 'Unknown';
+            const fileName = `${targetConfig.filename}_${dogName}_${new Date().toISOString().substring(0, 10)}.pdf`;
 
             if (!targetElement) { log(`ERROR: Target element #${targetConfig.id} not found.`); return; }
 
+            // 状態保存 (クリーンアップに必須)
             const originalDisplay = targetElement.style.display;
             const originalPosition = targetElement.style.position;
-            const originalTop = targetElement.style.top; // topを保存
+            const originalTop = targetElement.style.top;
             const originalBodyClass = document.body.className;
 
             try {
                 log('Applying print classes for capture.');
                 
-                // 1. 印刷用のCSSクラスをボディに適用 (画面崩壊の直接原因)
+                // 1. 印刷用のCSSクラスをボディに適用
                 document.body.classList.add(`print-mode-${mode}`);
                 
-                // 2. ターゲット要素を非表示状態から一時的にキャプチャ可能状態へ
+                // 2. ターゲット要素をキャプチャ可能状態へ
                 targetElement.style.display = 'block';
                 targetElement.style.position = 'absolute';
                 targetElement.style.top = '-9999px'; // 画面外に配置
                 
                 // 3. html2canvasでキャプチャ
                 const canvas = await html2canvas(targetElement, {
-                    scale: 3, // 高解像度キャプチャ (重要)
+                    scale: 3, // 高解像度キャプチャ
                     useCORS: true,
                     allowTaint: true
                 });
@@ -1121,10 +1158,7 @@
                 const isLandscape = targetConfig.layout === 'l';
                 const doc = new jsPDF(targetConfig.layout, 'mm', 'a4');
                 
-                // A4サイズに収まるように計算
                 const docWidth = isLandscape ? 297 : 210;
-                const docHeight = isLandscape ? 210 : 297;
-                // 画像のアスペクト比を維持しつつ、PDFの幅に合わせる
                 const imgHeight = canvas.height * docWidth / canvas.width;
                 
                 doc.addImage(imgData, 'JPEG', 0, 0, docWidth, imgHeight);
@@ -1150,7 +1184,7 @@
                 // 要素の位置と表示属性を元に戻す
                 targetElement.style.display = originalDisplay;
                 targetElement.style.position = originalPosition;
-                targetElement.style.top = originalTop; // 保存したtopに戻す
+                targetElement.style.top = originalTop;
             }
         }
 
