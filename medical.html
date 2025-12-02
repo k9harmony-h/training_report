@@ -406,7 +406,7 @@
 <body>
     <div class="liff-app-container">
         <header class="p-3 bg-white shadow-sm sticky-top">
-            <h1 class="h5 text-center mb-0" style="color: var(--color-primary);">K9 Harmony Portal - うちの子医療・防災手帳</h1>
+            <h1 class="h5 text-center mb-0" style="color: var(--color-primary);"><i class="fa-solid fa-paw me-2"></i>K9 Harmony Portal - うちの子医療・防災手帳</h1>
         </header>
 
         <main class="container-fluid p-3">
@@ -750,7 +750,7 @@
         // ====================================
         function log(message) {
             console.log(`[APP LOG] ${message}`);
-            // UIに表示するログ（デバッグコンソールがあればそこに）
+            // デバッグコンソールにログを出力する機能（現在はコンソールのみ）
         }
 
         // ====================================
@@ -1136,7 +1136,7 @@
                 log(`PDF generated and saved as: ${fileName}`);
                 
                 // 画面フィードバックを更新
-                document.getElementById('pdf-preview-area').innerHTML = `<p class="fw-bold mt-4 text-dark">PDFが<span class="text-success">ブラウザのダウンロードフォルダ</span>に生成されました。</p><p class="small text-muted">ファイル名: ${fileName}</p>`;
+      　　　　 document.getElementById('pdf-preview-area').innerHTML = `<p class="fw-bold mt-4 text-dark">PDFが<span class="text-success">ブラウザのダウンロードフォルダ</span>に生成されました。</p><p class="small text-muted">ファイル名: ${fileName}</p>`;
 
             } catch (e) {
                 log(`PDF Generation FATAL ERROR: ${e.message} (Stack: ${e.stack})`);
@@ -1144,7 +1144,7 @@
             } finally {
                 // 5. ★★★ クリーンアップ (最重要) ★★★
                 log('Cleaning up print classes and restoring display state.');
-                
+      　　　　　
                 // CSSクラスを削除し、元のクラスに戻す
                 document.body.classList.remove(`print-mode-${mode}`);
                 document.body.className = originalBodyClass;
@@ -1160,8 +1160,8 @@
         // 初期処理
         // ====================================
 
-        // ★修正点：DOMContentLoadedでLIFF初期化をキック
-        document.addEventListener('DOMContentLoaded', () => {
+        // ★修正点：DOMContentLoadedではなく、window.onloadでDOMツリーと全アセットの読み込み完了を待つ
+        window.onload = () => {
             initializeLiff();
             // Bootstrapモーダルのインスタンス化
             const printSelectModalEl = document.getElementById('printSelectModal');
@@ -1171,7 +1171,7 @@
 
             // フォームのバリデーションを無効にする機能を追加 (開発用)
             // document.getElementById('dog-data-form').setAttribute('novalidate', '');
-        });
+        };
     </script>
 </body>
 </html>
