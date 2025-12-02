@@ -13,26 +13,26 @@
     <style>
         :root { --primary-color: #88b08b; --accent-color: #e8f5e9; --alert-color: #e07a5f; --text-color: #333; --mask-color: #f0f0f0; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 300px; }
-        .version-stamp { position: fixed; top: 0; right: 0; background: #20c997; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
+        .version-stamp { position: fixed; top: 0; right: 0; background: #6610f2; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
         
+        /* COMMON UI */
         .no-print-area { margin: 20px 0 30px; text-align: center; }
         .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; border: 1px solid #eee; }
         .section-title { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 15px; }
+        .info-row { margin-bottom: 8px; }
         .info-label { font-weight: bold; color: #666; font-size: 0.8rem; display: block; margin-bottom: 1px; }
         .masked-wrapper { display: flex; align-items: center; gap: 10px; }
         .masked-text { display: inline-block; letter-spacing: 2px; color: #aaa; background: var(--mask-color); padding: 2px 8px; border-radius: 4px; font-family: monospace; }
         .real-text { display: none; font-weight: bold; color: #333; }
         .btn-toggle-mask { font-size: 0.7rem; padding: 2px 10px; border: 1px solid var(--alert-color); color: var(--alert-color); background: white; border-radius: 20px; cursor: pointer; }
         .btn-toggle-mask:active { background: var(--alert-color); color: white; }
-        
         #d_photo_container { width: 200px; height: 200px; background: #fff; border-radius: 12px; border: 4px solid var(--accent-color); overflow: hidden; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; }
         .dog-profile-img { width: 100%; height: 100%; object-fit: cover; }
         .btn-cert-view { font-size: 0.8rem; padding: 4px 12px; border-radius: 6px; background-color: var(--primary-color); color: white; border: none; width: 100%; margin-top: 5px; }
-        
-        /* SCREEN LOGO */
         .screen-logo-top { width: 120px; margin-bottom: 15px; }
-        
-        /* POSTER STYLES (Keep Previous) */
+        .screen-logo-footer { width: 100px; margin-top: 20px; margin-bottom: 10px; opacity: 0.8; }
+
+        /* POSTER STYLES */
         .poster-container { width: 210mm; height: 297mm; background: white; margin: 0 auto; position: relative; overflow: hidden; }
         .poster-inner-border { width: 100%; height: 100%; border: 6px solid #ff0000; padding: 10mm; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
         .poster-title { color: #ff0000; font-size: 42pt; font-weight: 900; margin-bottom: 15px; font-family: sans-serif; line-height: 1; }
@@ -55,74 +55,71 @@
         .poster-logo-area { margin-top: auto; text-align: center; width: 100%; }
         .poster-logo-img { width: 40mm; height: auto; }
 
-        /* ★★★ CRATE TAG DESIGN (A, B, C Areas) ★★★ */
-        .crate-container {
-            width: 210mm; height: 297mm; background: white; position: relative; overflow: hidden;
-            box-sizing: border-box; border: 1px dashed #aaa; margin: 0 auto;
-        }
+        /* ★★★ CRATE TAG DESIGN (REVISION) ★★★ */
+        .crate-container { width: 210mm; height: 297mm; background: white; position: relative; overflow: hidden; box-sizing: border-box; border: 1px dashed #aaa; margin: 0 auto; }
         .crate-fold-line { position: absolute; top: 45%; left: 0; width: 100%; height: 0; border-top: 2px dashed #88b08b; z-index: 10; }
         
-        /* === AREA A: BACK SIDE (Top 45%) === */
+        /* AREA A: BACK SIDE (Top 45%) */
         .crate-area-a {
             position: absolute; top: 0; left: 0; width: 100%; height: 45%;
             padding: 10mm 10mm 5mm 10mm; box-sizing: border-box;
             transform: rotate(180deg); /* Inverted */
-            display: flex; flex-direction: column;
+            display: flex; gap: 15px;
             background-color: #fff; border-bottom: 1px dashed #ccc;
         }
-        .crate-logo-top { width: 40mm; margin: 0 auto 10px auto; display: block; }
+        .crate-a-left { width: 48%; border-right: 2px solid #ddd; padding-right: 10px; display:flex; flex-direction:column; }
+        .crate-a-right { width: 48%; padding-left: 10px; position: relative; }
         
-        .crate-a-content { display: flex; height: 100%; gap: 15px; }
-        .crate-a-left { width: 50%; border-right: 2px solid #ddd; padding-right: 10px; }
-        .crate-a-right { width: 50%; padding-left: 10px; }
+        .crate-header-a { font-size: 14pt; font-weight: bold; color: #555; border-bottom: 3px solid #88b08b; margin-bottom: 8px; display: block; }
         
-        .crate-header-a { font-size: 16pt; font-weight: bold; color: #555; border-bottom: 3px solid #88b08b; margin-bottom: 10px; display: block; }
+        /* Survival Food (New Layout) */
+        .food-grid { display: flex; gap: 5px; margin-bottom: 10px; }
+        .food-box { flex: 1; border: 1px solid #ccc; border-radius: 5px; padding: 5px; font-size: 10pt; font-weight: bold; }
+        .food-title-ok { color: #198754; display:block; margin-bottom:3px; }
+        .food-title-ng { color: #dc3545; display:block; margin-bottom:3px; }
         
-        .command-row { font-size: 14pt; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        .command-key { font-weight: bold; color: #333; }
-        .command-val { font-weight: normal; color: #666; }
+        .allergy-area { margin-top: auto; border-top: 2px solid #333; padding-top: 5px; color: #dc3545; font-weight: bold; font-size: 12pt; min-height: 40px; }
 
-        .food-section { margin-bottom: 15px; }
-        .food-ng-title { color: white; background: #dc3545; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 14pt; }
-        .food-ok-title { color: white; background: #198754; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 14pt; }
-        .food-list { font-size: 12pt; font-weight: bold; margin-top: 5px; line-height: 1.3; }
+        /* Command Dict */
+        .cmd-example { font-size: 10pt; color: #666; margin-bottom: 5px; font-style: italic; background:#eee; padding:2px 5px; border-radius:4px; }
+        .cmd-row { font-size: 13pt; margin-bottom: 5px; border-bottom: 1px dotted #ccc; display: flex; align-items: center; }
+        .cmd-key { width: 80px; font-weight: bold; }
+        .cmd-val { flex-grow: 1; font-weight: bold; color: #000; min-height:20px; }
+        .cmd-footer { margin-top: auto; font-size: 10pt; font-weight: bold; text-align: center; background: #e8f5e9; padding: 3px; border-radius: 4px; color: #88b08b; }
+        .crate-logo-placeholder { position: absolute; bottom: 0; right: 0; color: #ccc; border: 1px dashed #ccc; padding: 2px 5px; font-size: 9pt; }
 
-        /* === AREA B: FRONT SIDE (Middle 40%) === */
+        /* AREA B: FRONT SIDE (Middle 40%) */
         .crate-area-b {
             position: absolute; top: 45%; left: 0; width: 100%; height: 40%;
-            padding: 5mm 10mm; box-sizing: border-box;
-            display: flex; flex-direction: column;
+            padding: 5mm 10mm; box-sizing: border-box; display: flex; flex-direction: column;
         }
-        .crate-b-main { display: flex; align-items: center; margin-bottom: 10px; }
-        .crate-b-photo { width: 160px; height: 160px; object-fit: contain; border-radius: 10px; border: 5px solid #88b08b; background: #eee; flex-shrink: 0; }
-        .crate-b-info { padding-left: 20px; flex-grow: 1; }
+        .crate-b-main { display: flex; align-items: flex-start; margin-bottom: 5px; }
+        .crate-b-photo { width: 140px; height: 140px; object-fit: contain; border-radius: 10px; border: 5px solid #88b08b; background: #eee; flex-shrink: 0; margin-right: 15px; }
+        .crate-b-info { flex-grow: 1; }
         
-        .crate-name-huge { font-size: 42pt; font-weight: 900; line-height: 1; color: #333; margin-bottom: 5px; }
-        .crate-info-large { font-size: 18pt; font-weight: bold; color: #555; margin-bottom: 10px; }
+        .crate-name-huge { font-size: 36pt; font-weight: 900; line-height: 1; color: #333; margin-bottom: 5px; }
+        .crate-info-sub { font-size: 14pt; font-weight: bold; color: #555; border-bottom: 1px solid #ccc; padding-bottom: 2px; }
         
-        .crate-caution-box {
-            background: #fff0f0; border: 3px solid #dc3545; border-radius: 8px; padding: 8px;
-            font-size: 18pt; font-weight: bold; color: #333; margin-bottom: 10px;
-        }
-        .crate-caution-title { color: #dc3545; font-weight: 900; margin-right: 10px; }
+        .crate-caution-box { background: #fff0f0; border: 2px solid #dc3545; border-radius: 6px; padding: 5px 10px; font-size: 14pt; font-weight: bold; color: #333; margin: 8px 0; }
+        .crate-write-box { border: 2px dashed #88b08b; border-radius: 6px; height: 60px; padding: 5px; font-size: 10pt; text-align: left; color: #666; }
+        
+        .crate-consent-area { margin-top: 5px; border-top: 1px solid #ccc; padding-top: 5px; }
+        .crate-consent-text { font-size: 10pt; font-weight: bold; display: block; margin-top: 2px; color: #555; }
 
-        .crate-msg-bottom {
-            margin-top: auto; text-align: center;
-            background: #88b08b; color: white; font-weight: bold; font-size: 12pt;
-            padding: 5px; border-radius: 0 0 10px 10px;
-        }
+        .crate-msg-bottom { margin-top: auto; text-align: center; background: #88b08b; color: white; font-weight: bold; font-size: 11pt; padding: 3px; border-radius: 0 0 8px 8px; }
 
-        /* === AREA C: CONTACT (Bottom 15%) === */
+        /* AREA C: CONTACT (Bottom 15%) */
         .crate-area-c {
             position: absolute; bottom: 0; left: 0; width: 100%; height: 15%;
             border-top: 2px dashed #333; background-color: #f8f9fa;
             padding: 10px 20px; box-sizing: border-box;
-            display: flex; flex-direction: column; justify-content: center;
         }
-        .crate-c-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 5px; }
-        .crate-c-item { font-size: 12pt; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 2px; }
-        .crate-c-label { font-size: 9pt; color: #666; display: block; }
-        .crate-c-vet { text-align: center; font-size: 12pt; font-weight: bold; border-top: 1px solid #ccc; padding-top: 5px; }
+        .contact-grid { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .contact-item { width: 48%; font-size: 11pt; font-weight: bold; border-bottom: 1px solid #ccc; }
+        .contact-label { font-size: 8pt; color: #666; display: block; }
+        .vet-grid { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #ccc; padding-top: 5px; }
+        .vet-info { font-size: 11pt; font-weight: bold; }
+        .shelter-write { border-bottom: 1px solid #333; width: 120px; display: inline-block; }
 
         /* Hide Elements */
         #poster-display, #crate-display, #generating-overlay, #debug-console-container { display: none; }
@@ -144,7 +141,7 @@
 </head>
 <body class="mode-handbook">
 
-    <div class="version-stamp">v2025.12.03-CRATE-ABC-LAYOUT</div>
+    <div class="version-stamp">v2025.12.03-CRATE-REVISION</div>
 
     <div id="generating-overlay">
         <div class="spinner-border text-primary"></div><h4 class="mt-3">作成中...</h4>
@@ -152,15 +149,13 @@
 
     <div class="container py-3">
         <div class="no-print-area">
-            <div class="text-center">
-                <img src="" class="screen-logo-top k9-logo-common" alt="K9 Logo">
-            </div>
+            <div class="text-center"><img src="" class="screen-logo-top k9-logo-common" alt="K9 Logo"></div>
             <h4 class="fw-bold mb-3" style="color: var(--primary-color);">うちの子医療・防災手帳</h4>
             <div id="loading" class="text-center py-5"><div class="spinner-border text-success"></div><p>Loading...</p></div>
         </div>
 
         <div id="main-display" style="display:none;">
-            <div class="card-section"><div class="section-title">基本情報</div><div id="d_photo_container"><div class="spinner-border spinner-border-sm text-secondary"></div></div><div class="text-center mb-3"><h2 id="d_name" class="fw-bold mb-1">-</h2></div><div class="row text-center mb-2"><div class="col-6 border-end"><span class="info-label">犬種</span><div id="d_breed">-</div></div><div class="col-6"><span class="info-label">毛色</span><div id="d_color">-</div></div></div><div class="row text-center mb-3"><div class="col-4 border-end"><span class="info-label">年齢</span><div id="d_age">-</div></div><div class="col-4 border-end"><span class="info-label">性別</span><div id="d_gender">-</div></div><div class="col-4"><span class="info-label">去勢</span><div id="d_neutered">-</div></div></div><hr class="my-3"><div class="info-row"><span class="info-label">飼い主名</span><div id="c_name" class="fw-bold">-</div></div><div class="info-row"><span class="info-label">住所</span><div class="masked-wrapper"><span id="c_address_masked" class="masked-text">***</span><span id="c_address_real" class="real-text">-</span><button class="btn-toggle-mask" onclick="toggleMask('c_address')">表示</button></div></div><div class="info-row"><span class="info-label">電話番号</span><div class="masked-wrapper"><span id="c_phone_masked" class="masked-text">***</span><span id="c_phone_real" class="real-text">-</span><button class="btn-toggle-mask" onclick="toggleMask('c_phone')">表示</button></div></div></div>
+             <div class="card-section"><div class="section-title">基本情報</div><div id="d_photo_container"><div class="spinner-border spinner-border-sm text-secondary"></div></div><div class="text-center mb-3"><h2 id="d_name" class="fw-bold mb-1">-</h2></div><div class="row text-center mb-2"><div class="col-6 border-end"><span class="info-label">犬種</span><div id="d_breed">-</div></div><div class="col-6"><span class="info-label">毛色</span><div id="d_color">-</div></div></div><div class="row text-center mb-3"><div class="col-4 border-end"><span class="info-label">年齢</span><div id="d_age">-</div></div><div class="col-4 border-end"><span class="info-label">性別</span><div id="d_gender">-</div></div><div class="col-4"><span class="info-label">去勢</span><div id="d_neutered">-</div></div></div><hr class="my-3"><div class="info-row"><span class="info-label">飼い主名</span><div id="c_name" class="fw-bold">-</div></div><div class="info-row"><span class="info-label">住所</span><div class="masked-wrapper"><span id="c_address_masked" class="masked-text">***</span><span id="c_address_real" class="real-text">-</span><button class="btn-toggle-mask" onclick="toggleMask('c_address')">表示</button></div></div><div class="info-row"><span class="info-label">電話番号</span><div class="masked-wrapper"><span id="c_phone_masked" class="masked-text">***</span><span id="c_phone_real" class="real-text">-</span><button class="btn-toggle-mask" onclick="toggleMask('c_phone')">表示</button></div></div></div>
              <div class="card-section"><div class="section-title">医療情報</div><div class="mb-3 p-2 bg-light rounded border"><h6 class="fw-bold small text-muted mb-2"><i class="fa-solid fa-hospital"></i> かかりつけ動物病院</h6><div class="info-row"><span class="info-label">病院名</span><div id="d_vet_name" class="fw-bold fs-5">-</div></div><div class="info-row"><span class="info-label">住所</span><div id="d_vet_address" class="small">-</div></div><div class="info-row"><span class="info-label">電話番号</span><div id="d_vet_phone">-</div></div></div><div class="info-row"><span class="info-label">既往歴</span><div id="d_history">-</div></div><div class="info-row"><span class="info-label">常用薬</span><div id="d_medicine" class="text-danger">-</div></div><div class="info-row"><span class="info-label">アレルギー</span><div id="d_allergy" class="text-danger fw-bold">-</div></div></div>
              <div class="no-print-area mt-3 mb-2 text-center"><img class="screen-logo-footer k9-logo-common" alt="K9 Harmony"></div>
         </div>
@@ -174,35 +169,33 @@
                 <div class="crate-fold-line"></div>
                 
                 <div class="crate-area-a">
-                    <img class="crate-logo-top k9-logo-common" alt="Logo">
-                    <div class="crate-a-content">
-                        <div class="crate-a-left">
-                            <span class="crate-header-a">🐕 コマンド辞書</span>
-                            <div class="command-row"><span class="command-key">マテ = </span> <span class="command-val" style="border-bottom:1px solid #aaa; display:inline-block; width:60px;">(手書き)</span></div>
-                            <div class="command-row"><span class="command-key">オスワリ = </span> <span class="command-val" style="border-bottom:1px solid #aaa; display:inline-block; width:50px;">(手書き)</span></div>
-                            <div class="command-row"><span class="command-key">ハウス = </span> <span class="command-val" style="border-bottom:1px solid #aaa; display:inline-block; width:50px;">(手書き)</span></div>
-                            <div class="command-row"><span class="command-key">オイデ = </span> <span class="command-val" style="border-bottom:1px solid #aaa; display:inline-block; width:50px;">(手書き)</span></div>
+                    <div class="crate-a-left">
+                        <span class="crate-header-a">🆘 サバイバルフード</span>
+                        <div class="food-grid">
+                            <div class="food-box"><span class="food-title-ok">⭕️ OK</span>白米・パン<br>芋・鶏肉</div>
+                            <div class="food-box"><span class="food-title-ng">❌ NG</span>ネギ・チョコ<br>ブドウ</div>
                         </div>
-                        <div class="crate-a-right">
-                            <span class="crate-header-a">🆘 サバイバルフード</span>
-                            <div class="food-section">
-                                <span class="food-ng-title">❌ NG</span>
-                                <div class="food-list">ネギ・チョコ・ブドウ<br>キシリトール</div>
-                            </div>
-                            <div class="food-section">
-                                <span class="food-ok-title">⭕️ OK</span>
-                                <div class="food-list">白米・パン(具なし)<br>芋・キャベツ・鶏肉</div>
-                            </div>
+                        <div class="allergy-area">
+                            アレルギー: <span id="crate_allergy_content" style="color:#000;">-</span>
                         </div>
+                    </div>
+                    <div class="crate-a-right">
+                        <span class="crate-header-a">🐕 コマンド辞書</span>
+                        <div class="cmd-example">例: マテ = Wait!(ウェイト)</div>
+                        <div class="cmd-row"><span class="cmd-key">マテ</span> <span class="cmd-val"></span></div>
+                        <div class="cmd-row"><span class="cmd-key">オスワリ</span> <span class="cmd-val"></span></div>
+                        <div class="cmd-row"><span class="cmd-key">ハウス</span> <span class="cmd-val"></span></div>
+                        <div class="cmd-footer">私の家ではこうやって伝えてます！</div>
+                        <div class="crate-logo-placeholder">[Logo]</div>
                     </div>
                 </div>
 
                 <div class="crate-area-b">
                     <div class="crate-b-main">
-                        <img id="crate_img" class="crate-b-photo" src="">
+                        <img id="crate_img" class="crate-main-photo" src="">
                         <div class="crate-b-info">
                             <div id="crate_name" class="crate-name-huge">NAME</div>
-                            <div id="crate_breed" class="crate-info-large">Breed / Age / Sex</div>
+                            <div id="crate_breed" class="crate-info-sub">Breed / Age / Sex / Neutered</div>
                         </div>
                     </div>
                     
@@ -211,8 +204,16 @@
                         <span id="crate_caution">-</span>
                     </div>
 
-                    <div style="border:2px dashed #88b08b; border-radius:8px; padding:5px; height:100px; flex-grow:1;">
-                         <div style="font-size:10pt; font-weight:bold; color:#555;">🍚 食事・投薬ログ (手書き)</div>
+                    <div class="crate-write-box">
+                        🍚 食事・投薬ログ (手書き)
+                    </div>
+
+                    <div class="crate-consent-area">
+                        <div class="d-flex align-items-center">
+                            <input type="checkbox" style="transform:scale(2.0); margin-right:10px;">
+                            <span style="font-weight:bold; font-size:12pt;">応急処置一任</span>
+                        </div>
+                        <span class="crate-consent-text">万が一の怪我、体調不良の際は応急処置を有識者に一任します。</span>
                     </div>
 
                     <div class="crate-msg-bottom">
@@ -221,20 +222,25 @@
                 </div>
 
                 <div class="crate-area-c">
-                    <div class="crate-c-grid">
-                        <div class="crate-c-item">
-                            <span class="crate-c-label">飼い主 (Owner)</span>
-                            <span id="crate_c_name">-</span> <br>
-                            <span id="crate_c_phone" style="font-size:11pt;">-</span>
+                    <div class="contact-grid">
+                        <div class="contact-item">
+                            <span class="contact-label">飼い主 (Owner)</span>
+                            <span id="crate_owner">-</span><br><span id="crate_phone">-</span>
                         </div>
-                        <div class="crate-c-item">
-                            <span class="crate-c-label">代理人 (Proxy)</span>
-                            <span id="crate_proxy_name">-</span> <br>
-                            <span id="crate_proxy_phone" style="font-size:11pt;">-</span>
+                        <div class="contact-item">
+                            <span class="contact-label">代理人 (Proxy)</span>
+                            <span id="crate_proxy">-</span><br><span id="crate_proxy_tel">-</span>
                         </div>
                     </div>
-                    <div class="crate-c-vet">
-                        かかりつけ医: <span id="crate_vet">-</span>
+                    <div class="vet-grid">
+                        <div class="vet-info">
+                            <i class="fa-solid fa-hospital"></i> <span id="crate_vet">-</span><br>
+                            <span id="crate_vet_tel" style="font-size:10pt;">03-xxxx-xxxx</span>
+                        </div>
+                        <div class="shelter-info">
+                            <span class="contact-label">居住エリア</span>
+                            <span class="shelter-write"></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -289,54 +295,23 @@
             const c = data.customer || {};
             const d = data.dog || {};
 
-            // Handbook
-            setText('d_name', d.name_disp);
-            setText('d_breed', d.breed);
-            setText('d_color', d.color);
-            setText('d_age', d.age);
-            setText('d_gender', d.gender);
-            setText('d_neutered', d.neutered);
-            setText('c_name', c.name);
-            setMaskedText('c_address', c.address, maskAddress(c.address));
-            setMaskedText('c_phone', c.phone, maskPhone(c.phone));
-            setText('c_em_name', c.em_name);
-            setMaskedText('c_em_phone', c.em_phone, maskPhone(c.em_phone));
-            setText('c_proxy_name', c.proxy_name);
-            setMaskedText('c_proxy_phone', c.proxy_phone, maskPhone(c.proxy_phone));
-            setText('c_evac', c.evac_site);
-            setText('d_vet_name', d.vet_name);
-            setText('d_vet_address', d.vet_address);
-            setText('d_vet_phone', d.vet_phone);
-            setText('d_history', d.history);
-            setText('d_medicine', d.medicine);
-            setText('d_allergy', d.allergy);
-            setText('d_license', d.license_no);
-            setText('d_chip', d.microchip);
-            setText('d_food', d.food);
-            setText('d_caution', d.caution);
-
-            // Poster
-            setText('poster_name', d.name_disp);
-            setText('poster_gender_age', `${d.gender || '-'} / ${d.age || '-'}歳`);
-            setText('poster_breed_color', `${d.breed || '-'} / ${d.color || '-'}`);
-            setText('poster_owner', c.name);
-            setText('poster_phone', c.phone);
-            if (c.evac_site && c.evac_site !== '記載なし') {
-                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.evac_site)}`;
-                const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(mapUrl)}`;
-                document.getElementById('poster-qr-img').src = qrSrc;
-                document.getElementById('poster-qr-img').style.display = 'block';
-            }
-
-            // Crate
+            // Handbook & Poster (Omitted, same)
+            // ...
+            // Crate Data Update
             setText('crate_name', d.name_disp);
-            setText('crate_breed', `${d.breed} (${d.gender})`);
+            setText('crate_breed', `${d.breed} / ${d.gender} / ${d.neutered}`); // Updated format
             setText('crate_caution', d.caution);
-            setText('crate_c_name', c.name);
-            setText('crate_c_phone', c.phone);
-            setText('crate_proxy_name', c.proxy_name);
-            setText('crate_proxy_phone', c.proxy_phone);
+            setText('crate_allergy_content', d.allergy); // Filled
+            setText('crate_owner', c.name);
+            setText('crate_phone', c.phone);
+            setText('crate_proxy', c.proxy_name);
+            setText('crate_proxy_tel', c.proxy_phone);
             setText('crate_vet', d.vet_name);
+            setText('crate_vet_tel', d.vet_phone || '-'); // Added phone
+
+            // ... (Existing Poster/Handbook Logic)
+            setText('d_name', d.name_disp); setText('d_breed', d.breed); setText('d_color', d.color); setText('d_age', d.age); setText('d_gender', d.gender); setText('d_neutered', d.neutered); setText('c_name', c.name); setMaskedText('c_address', c.address, maskAddress(c.address)); setMaskedText('c_phone', c.phone, maskPhone(c.phone)); setText('c_em_name', c.em_name); setMaskedText('c_em_phone', c.em_phone, maskPhone(c.em_phone)); setText('c_proxy_name', c.proxy_name); setMaskedText('c_proxy_phone', c.proxy_phone, maskPhone(c.proxy_phone)); setText('c_evac', c.evac_site); setText('d_vet_name', d.vet_name); setText('d_vet_address', d.vet_address); setText('d_vet_phone', d.vet_phone); setText('d_history', d.history); setText('d_medicine', d.medicine); setText('d_allergy', d.allergy); setText('d_license', d.license_no); setText('d_chip', d.microchip); setupCertButton('d_rabies_status', 'btn-rabies-img', d.has_rabies, d.rabies_img_ref); setupCertButton('d_vaccine_status', 'btn-vaccine-img', d.has_vaccine, d.vaccine_img_ref); setText('d_food', d.food); setText('d_caution', d.caution);
+            setText('poster_name', d.name_disp); setText('poster_gender_age', `${d.gender || '-'} / ${d.age || '-'}歳`); setText('poster_breed_color', `${d.breed || '-'} / ${d.color || '-'}`); setText('poster_owner', c.name); setText('poster_phone', c.phone); if (c.evac_site && c.evac_site !== '記載なし') { const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.evac_site)}`; const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(mapUrl)}`; document.getElementById('poster-qr-img').src = qrSrc; document.getElementById('poster-qr-img').style.display = 'block'; }
 
             document.getElementById('loading').style.display = 'none';
             document.getElementById('controls').style.display = 'block';
@@ -347,12 +322,10 @@
             let url = `${API_URL}?userId=${userId}&type=img_profile&dogId=${dogId}`;
             fetch(url).then(res => res.json()).then(data => {
                 if(data.image) {
-                    document.getElementById('d_photo_container').innerHTML = `<img src="${data.image}" class="dog-profile-img">`;
-                    document.getElementById('poster_img').src = data.image;
-                    document.getElementById('crate_img').src = data.image;
-                } else {
-                    document.getElementById('d_photo_container').innerHTML = '<span class="text-muted small">No Image</span>';
-                }
+                    setImg('d_photo_container', data.image);
+                    setSrc('poster_img', data.image);
+                    setSrc('crate_img', data.image);
+                } else { document.getElementById('d_photo_container').innerHTML = '<span class="text-muted small">No Image</span>'; }
             });
         }
 
@@ -375,11 +348,9 @@
                 const canvas = await html2canvas(target, { scale: 2, useCORS: true, allowTaint: true, windowWidth: 1200 });
                 const imgData = canvas.toDataURL('image/jpeg', 0.90);
                 document.getElementById('generated-image-preview').src = imgData;
-                
                 const pdfBlob = new window.jspdf.jsPDF(mode==='handbook'?'l':'p','mm','a4').output('blob');
                 const pdfUrl = URL.createObjectURL(pdfBlob);
                 document.getElementById('btn-view-pdf-blob').href = pdfUrl;
-
                 const btnDownload = document.getElementById('btn-download-pdf');
                 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                 if (!isMobile) {
@@ -400,32 +371,16 @@
                 overlay.style.display = 'none';
             }
         }
-
+        
+        // Helpers
         function maskAddress(addr) { if(!addr) return; const m = addr.match(/(.*?[都道府県].*?[市区町村])/); return m ? m[0]+' ***' : addr.substring(0,5)+' ***'; }
         function maskPhone(tel) { if(!tel) return; return tel.substring(0,3)+'-****-****'; }
-        function setMaskedText(baseId, realVal, maskedVal) {
-            const rEl = document.getElementById(baseId + '_real');
-            const mEl = document.getElementById(baseId + '_masked');
-            const btn = rEl ? rEl.parentElement.querySelector('.btn-toggle-mask') : null;
-            if(!rEl || !mEl) return;
-            if(!realVal) {
-                rEl.textContent = '記載なし'; mEl.style.display='none'; rEl.style.display='inline';
-                if(btn) btn.style.display='none';
-            } else {
-                rEl.textContent = realVal; mEl.textContent = maskedVal;
-                mEl.style.display='inline'; rEl.style.display='none';
-                if(btn) btn.style.display='inline-block';
-            }
-        }
-        function toggleMask(baseId) {
-            const rEl = document.getElementById(baseId + '_real');
-            const mEl = document.getElementById(baseId + '_masked');
-            if(rEl.style.display === 'none') { if(confirm('表示しますか？')) { rEl.style.display='inline'; mEl.style.display='none'; } } else { rEl.style.display='none'; mEl.style.display='inline'; }
-        }
+        function setMaskedText(baseId, realVal, maskedVal) { /* (Masking logic same) */ const rEl = document.getElementById(baseId + '_real'); const mEl = document.getElementById(baseId + '_masked'); const btn = rEl ? rEl.parentElement.querySelector('.btn-toggle-mask') : null; if(!rEl || !mEl) return; if(!realVal) { rEl.textContent = '記載なし'; mEl.style.display='none'; rEl.style.display='inline'; if(btn) btn.style.display='none'; } else { rEl.textContent = realVal; mEl.textContent = maskedVal; mEl.style.display='inline'; rEl.style.display='none'; if(btn) btn.style.display='inline-block'; } }
+        function toggleMask(baseId) { const rEl = document.getElementById(baseId + '_real'); const mEl = document.getElementById(baseId + '_masked'); if(rEl.style.display === 'none') { if(confirm('表示しますか？')) { rEl.style.display='inline'; mEl.style.display='none'; } } else { rEl.style.display='none'; mEl.style.display='inline'; } }
         function setText(id, txt) { const el = document.getElementById(id); if(el) el.textContent = txt || '-'; }
         function setSrc(id, src) { const el = document.getElementById(id); if(el) el.src = src; }
         function setImg(cid, src) { const el = document.getElementById(cid); if(el) { el.innerHTML = `<img src="${src}" class="dog-profile-img">`; el.style.border='none'; } }
-        function setupCertButton(statId, btnId, has, ref) { /* Omitted */ }
+        function setupCertButton(statId, btnId, has, ref) { /* (Cert logic same) */ document.getElementById(statId).textContent = has ? '確認済み' : '未確認/無し'; const btn = document.getElementById(btnId); if(has && ref) { btn.style.display='inline-block'; btn.onclick = () => { const src = (ref.indexOf('http')===-1) ? `https://drive.google.com/uc?export=view&id=${ref}` : ref; document.getElementById('modalImage').src = src; imageModal.show(); }; } else { btn.style.display='none'; } }
     </script>
 </body>
 </html>
