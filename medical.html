@@ -30,9 +30,16 @@
         .info-value { font-size: 1rem; min-height: 24px; word-break: break-word; font-weight: 500; }
         .loading { text-align: center; padding: 40px; color: #666; }
         
-        /* Dog Photo (Center Layout) */
+        /* Dog Photo (Square 200px) */
         #d_photo_container {
-            width: 150px; height: 150px; background-color: #f8f9fa; border-radius: 50%; border: 4px solid var(--accent-color); overflow: hidden; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;
+            width: 200px; height: 200px; 
+            background-color: #f8f9fa; 
+            border-radius: 12px; /* Soft square */
+            border: 4px solid var(--accent-color); 
+            overflow: hidden; 
+            display: flex; align-items: center; justify-content: center; 
+            margin: 0 auto 15px auto;
+            flex-shrink: 0;
         }
         .dog-profile-img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -53,6 +60,10 @@
         .btn-help { border: none; background: none; color: #999; font-size: 1.2rem; cursor: pointer; transition: color 0.2s; }
         .btn-help:hover { color: var(--primary-color); }
 
+        /* Dog Select Modal Button */
+        .dog-select-btn { width: 100%; margin-bottom: 10px; padding: 15px; font-weight: bold; font-size: 1.1rem; border-radius: 12px; background: #f8f9fa; border: 2px solid var(--primary-color); color: var(--primary-color); transition: all 0.2s; }
+        .dog-select-btn:active { background: var(--primary-color); color: #fff; transform: scale(0.98); }
+
         .no-print-area { margin: 20px 0 30px; text-align: center; }
         .btn-print { background-color: var(--primary-color); color: white; padding: 12px 40px; border-radius: 50px; border: none; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(109, 160, 111, 0.3); transition: transform 0.1s; }
         .disclaimer-footer { font-size: 0.8rem; color: #999; margin-top: 40px; padding-bottom: 20px; border-top: 1px solid #eee; padding-top: 20px; }
@@ -62,11 +73,9 @@
             .info-row { margin-bottom: 12px; }
             .screen-two-col-layout { display: flex; gap: 20px; flex-wrap: wrap; }
             .screen-two-col-layout > .print-block { flex: 1 1 400px; }
-            /* Force vertical layout for basic info on screen */
-            .basic-info-wrapper { display: flex; flex-direction: column; text-align: center; }
+            /* Center layout on screen */
+            .basic-info-wrapper { display: flex; flex-direction: column; text-align: center; align-items: center; }
             .basic-info-text { width: 100%; text-align: left; }
-            /* Align items in basic info text */
-            .basic-info-text .info-row { justify-content: flex-start; }
         }
 
         /* --- PRINT MODE --- */
@@ -78,7 +87,7 @@
             .masked-text { display: none !important; }
             .real-text { display: block !important; color: #000; }
             
-            #d_photo_container { border: 2px solid #ddd; width: 140px; height: 140px; margin-right: 15px; border-radius: 12px; }
+            #d_photo_container { border: 2px solid #ddd; width: 200px; height: 200px; margin-right: 20px; border-radius: 12px; }
             .card-section { box-shadow: none; padding: 12px; border: 1px solid #ddd; height: auto; }
             .section-title { border-bottom: 1px solid #ccc; color: #000; margin-bottom: 8px; font-size: 11pt; }
             .info-value { border-bottom: 1px dotted #ccc; padding-bottom: 2px; }
@@ -87,7 +96,7 @@
             .print-block { break-inside: avoid; }
             .screen-two-col-layout { display: contents; }
             
-            /* Keep Side-by-Side for Print to save vertical space */
+            /* Print Layout for Photo: Side by Side */
             .basic-info-wrapper { display: flex; flex-direction: row; text-align: left; align-items: flex-start; }
             .basic-info-text { flex-grow: 1; }
 
@@ -97,7 +106,7 @@
 </head>
 <body>
 
-    <div class="version-stamp">v2025.12.02-LAYOUT-UPDATE</div>
+    <div class="version-stamp">v2025.12.02-FINAL-FIX</div>
 
     <div class="container py-4">
         <div class="no-print-area">
@@ -213,6 +222,7 @@
                             <div class="info-row mb-0">
                                 <span class="info-label">性格・注意事項 (Caution)</span><div class="info-value" id="d_caution">-</div>
                             </div>
+                            <div class="mt-3 text-end"><small class="text-muted" style="font-size:0.7rem;">最終更新日: <span id="print_date"></span></small></div>
                         </div>
                     </div>
                 </div>
@@ -250,7 +260,6 @@
                         <div class="info-row mb-0 bg-light p-1 rounded">
                             <span class="info-label">鑑札 / Chip</span><div class="info-value" style="font-family: monospace; font-size: 0.9rem;"><span id="d_license"></span> / <span id="d_chip"></span></div>
                         </div>
-                        <div class="mt-2 text-end"><small class="text-muted" style="font-size:0.7rem;">Data: <span id="print_date"></span></small></div>
                     </div>
                 </div>
             </div>
@@ -279,22 +288,25 @@
                     <p class="small text-muted mb-3">K9 Harmony Portal - Disaster & Medical Card</p>
                     <h6 class="fw-bold">目的</h6>
                     <p class="small">災害時や飼い主様の急病時など、第三者がわんちゃんの情報を即座に把握し、命を守るための「身分証兼カルテ」です。</p>
-                    
                     <h6 class="fw-bold">使い方</h6>
                     <ul class="small ps-3">
                         <li>「手帳を印刷する」ボタンからA4用紙に印刷し、防災バッグに入れてください。</li>
                         <li>四つ折りにすると、お財布に入るカードサイズになります。</li>
                         <li>緊急時はQRコードから避難所マップを表示できます。</li>
                     </ul>
-
-                    <div class="alert alert-warning small mt-3">
-                        <strong>【ご注意】</strong><br>
-                        本アプリは公的な証明書ではありません。行政手続きや施設の利用には、必ず原本をご提示ください。
-                    </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4" data-bs-dismiss="modal">閉じる</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center">わんちゃんを選択</h5></div>
+                <div class="modal-body" id="dogSelectBody"></div>
             </div>
         </div>
     </div>
@@ -315,7 +327,7 @@
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
         const LIFF_ID = "2008546673-MJY7j3ox";
-        let imageModal;
+        let imageModal, dogSelectModal;
         let currentUserId, currentDogId;
 
         function log(msg) {
@@ -335,6 +347,8 @@
 
         window.onload = async function() {
             imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+            dogSelectModal = new bootstrap.Modal(document.getElementById('dogSelectModal'));
+            
             try {
                 log('Starting LIFF init...');
                 await liff.init({ liffId: LIFF_ID });
@@ -362,15 +376,43 @@
                     log('API Error: ' + data.error);
                     document.getElementById('loading').innerHTML = `<p class="text-danger fw-bold">${data.error}</p>`; return; 
                 }
+                
+                // ★ Multiple Dogs handling
                 if (data.multiple_dogs) { 
-                    document.getElementById('loading').innerHTML = `<p class="text-warning fw-bold">犬を選択してください</p>`; return; 
+                    log('Multiple dogs found. Showing selector.');
+                    showDogSelectModal(data.multiple_dogs);
+                    return; 
                 }
+                
                 renderData(data);
                 fetchDogImage(userId, data.dog.id);
             }).catch(err => {
                 log('Fetch Error: ' + err.message);
                 document.getElementById('loading').innerHTML = `<p class="text-danger fw-bold">通信エラー: ${err.message}</p>`;
             });
+        }
+
+        // Show Selection Modal
+        function showDogSelectModal(dogs) {
+            const body = document.getElementById('dogSelectBody');
+            body.innerHTML = '';
+            dogs.forEach(dog => {
+                const btn = document.createElement('button');
+                btn.className = 'dog-select-btn';
+                btn.innerText = dog.name; 
+                btn.onclick = () => selectDog(dog.id);
+                body.appendChild(btn);
+            });
+            document.getElementById('loading').style.display = 'none';
+            dogSelectModal.show();
+        }
+
+        // Handle Selection
+        function selectDog(dogId) {
+            dogSelectModal.hide();
+            document.getElementById('loading').style.display = 'block';
+            currentDogId = dogId;
+            fetchData(currentUserId, dogId);
         }
 
         function renderData(data) {
@@ -384,7 +426,7 @@
                 setText('d_breed', d.breed);
                 setText('d_gender', d.gender);
                 setText('d_birth', d.birth_date);
-                setText('d_age', d.age); // GAS updated for Y-M
+                setText('d_age', d.age);
                 
                 setText('c_name', c.name);
                 setMaskedText('c_address', c.address, maskAddress(c.address));
@@ -397,7 +439,6 @@
                 setText('c_evac', c.evac_site);
 
                 if (c.evac_site && c.evac_site !== '記載なし') {
-                    // Encode for URL
                     const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.evac_site)}`;
                     const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(mapUrl)}`;
                     document.getElementById('map-qr-img').src = qrSrc;
