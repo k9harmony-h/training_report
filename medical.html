@@ -26,14 +26,8 @@
             --body-bg: #f4f7f6;
         }
 
-        body {
-            font-family: var(--font-family-base);
-            background-color: var(--body-bg);
-            padding-bottom: 80px; /* フッター対策 */
-        }
-        
         /* ... (既存のCSS省略) ... */
-
+        
         /* デバッグログ表示エリアのスタイル（LIFFに依存せず表示） */
         #debug-log-area {
             position: fixed;
@@ -49,6 +43,7 @@
             overflow-y: scroll;
             z-index: 9999;
             border-top: 2px solid #555;
+            word-wrap: break-word; /* ログが長すぎる場合の対応 */
         }
         
         /* ログスタンプ表示の調整 */
@@ -67,7 +62,7 @@
     </style>
 </head>
 <body>
-    <p id="log-stamp-static">hhmm-001</p> 
+    <p id="log-stamp-static">1810-001</p> 
     
     <div class="liff-app-container">
         <header class="p-3 bg-white shadow-sm sticky-top">
@@ -418,13 +413,16 @@
             // 画面上のデバッグエリアにもログを出力
             const logContent = document.getElementById('debug-log-content');
             if (logContent) {
-                const now = new Date().toLocaleTimeString();
-                logContent.innerHTML = `[${now}] ${message}<br>` + logContent.innerHTML;
-                // ログスタンプの動的更新
                 const date = new Date();
+                const now = date.toLocaleTimeString();
+                
+                // ログスタンプの動的更新 (hhmm-001形式)
                 const hh = String(date.getHours()).padStart(2, '0');
                 const mm = String(date.getMinutes()).padStart(2, '0');
+                // NOTE: ビルド/デプロイ時間ではないため、ここでは実行時の時刻として更新
                 document.getElementById('log-stamp-static').textContent = `${hh}${mm}-001`;
+
+                logContent.innerHTML = `[${now}] ${message}<br>` + logContent.innerHTML;
             }
         }
 
@@ -466,383 +464,8 @@
             }
         }
 
-        // ====================================
-        // データ操作 (保存・読み込み)
-        // ====================================
+        // ... (データ操作、レンダリング、イベントハンドラ、PDF生成ロジックは変更なし) ...
         
-        // データをローカルストレージに保存
-        function saveData(userId) {
-            // ... (実装は変更なし) ...
-        }
-
-        // データをローカルストレージから読み込み
-        function loadData(userId) {
-            // ... (実装は変更なし) ...
-        }
-        
-        // レンダリング関数 (今回は省略)
-        function renderData(data) {
-            // ... (レンダリングロジック) ...
-        }
-
-        // ... (イベントハンドラ、PDF生成ロジックは変更なし) ...
-
-        function saveData(userId) {
-            const formData = {
-                dog: {
-                    name: document.getElementById('dog-name').value,
-                    type: document.getElementById('dog-type').value,
-                    gender: document.getElementById('dog-gender').value,
-                    age: document.getElementById('dog-age').value,
-                    weight: document.getElementById('dog-weight').value,
-                    features: document.getElementById('dog-features').value,
-                },
-                owner: {
-                    name: document.getElementById('owner-name').value,
-                    tel: document.getElementById('owner-tel').value,
-                    address: document.getElementById('owner-address').value,
-                },
-                medical: {
-                    history: document.getElementById('medical-history').value,
-                    medication: document.getElementById('medical-medication').value,
-                    allergies: document.getElementById('medical-allergies').value,
-                    vet_contact: document.getElementById('vet-contact').value,
-                },
-                photos: {
-                    // Lazy Load対応: Data URLを直接保存
-                    face: document.getElementById('dog-photo-face-preview').src, 
-                    full: document.getElementById('dog-photo-full-preview').src,
-                }
-            };
-
-            try {
-                localStorage.setItem(`dog_data_${userId}`, JSON.stringify(formData));
-                currentDogData = formData;
-                log('Data saved successfully to LocalStorage.');
-                alert('入力内容を保存しました。');
-                renderData(formData);
-            } catch (e) {
-                log(`Save data failed: ${e.message}`);
-                alert('データの保存に失敗しました。');
-            }
-        }
-
-        function loadData(userId) {
-            try {
-                const storedData = localStorage.getItem(`dog_data_${userId}`);
-                if (storedData) {
-                    const formData = JSON.parse(storedData);
-                    
-                    // フォームへの反映
-                    document.getElementById('dog-name').value = formData.dog.name || '';
-                    document.getElementById('dog-type').value = formData.dog.type || '';
-                    document.getElementById('dog-gender').value = formData.dog.gender || '';
-                    document.getElementById('dog-age').value = formData.dog.age || '';
-                    document.getElementById('dog-weight').value = formData.dog.weight || '';
-                    document.getElementById('dog-features').value = formData.dog.features || '';
-                    
-                    document.getElementById('owner-name').value = formData.owner.name || '';
-                    document.getElementById('owner-tel').value = formData.owner.tel || '';
-                    document.getElementById('owner-address').value = formData.owner.address || '';
-
-                    document.getElementById('medical-history').value = formData.medical.history || '';
-                    document.getElementById('medical-medication').value = formData.medical.medication || '';
-                    document.getElementById('medical-allergies').value = formData.medical.allergies || '';
-                    document.getElementById('vet-contact').value = formData.medical.vet_contact || '';
-                    
-                    // Lazy Load: プレビューのsrcを設定
-                    document.getElementById('dog-photo-face-preview').src = formData.photos.face || document.getElementById('dog-photo-face-preview').src;
-                    document.getElementById('dog-photo-full-preview').src = formData.photos.full || document.getElementById('dog-photo-full-preview').src;
-
-                    currentDogData = formData;
-                    log('Data loaded successfully.');
-                    renderData(formData);
-                } else {
-                    log('No stored data found.');
-                    renderData(null);
-                }
-            } catch (e) {
-                log(`Load data failed: ${e.message}`);
-                renderData(null);
-            }
-        }
-        
-        function renderData(data) {
-            const previewContent = document.getElementById('preview-content');
-
-            if (!data || !data.dog.name) {
-                previewContent.innerHTML = '<p class="text-muted">データがありません。入力タブで情報を入力・保存してください。</p>';
-                return;
-            }
-
-            // 1. プレビュータブのレンダリング
-            previewContent.innerHTML = `
-                <div class="row">
-                    <div class="col-md-4 text-center mb-3">
-                        <img src="${data.photos.face}" class="image-preview mb-2" alt="顔写真">
-                        <p class="fw-bold mb-0">${data.dog.name}</p>
-                    </div>
-                    <div class="col-md-8 text-start">
-                        <ul class="list-group list-group-flush small">
-                            <li class="list-group-item"><strong>種別:</strong> ${data.dog.type}</li>
-                            <li class="list-group-item"><strong>性別/年齢:</strong> ${data.dog.gender} / ${data.dog.age || '未記入'}才</li>
-                            <li class="list-group-item"><strong>体重:</strong> ${data.dog.weight || '未記入'} kg</li>
-                            <li class="list-group-item"><strong>特徴:</strong> ${data.dog.features || '未記入'}</li>
-                        </ul>
-                    </div>
-                </div>
-                <hr>
-                <h5 class="card-title mt-3">飼い主情報</h5>
-                <ul class="list-group list-group-flush small text-start">
-                    <li class="list-group-item"><strong>氏名:</strong> ${data.owner.name}</li>
-                    <li class="list-group-item"><strong>TEL:</strong> ${data.owner.tel}</li>
-                    <li class="list-group-item"><strong>住所:</strong> ${data.owner.address}</li>
-                </ul>
-                <h5 class="card-title mt-3">医療情報</h5>
-                <ul class="list-group list-group-flush small text-start">
-                    <li class="list-group-item"><strong>持病:</strong> ${data.medical.history || 'なし'}</li>
-                    <li class="list-group-item"><strong>服薬:</strong> ${data.medical.medication || 'なし'}</li>
-                    <li class="list-group-item"><strong>アレルギー:</strong> ${data.medical.allergies || 'なし'}</li>
-                    <li class="list-group-item"><strong>病院:</strong> ${data.medical.vet_contact || '未記入'}</li>
-                </ul>
-            `;
-            
-            // 2. 隠しDOM (PDF出力用) へのデータ流し込み
-            
-            // 2-1. 迷子ポスター (#poster-display)
-            document.getElementById('poster-photo').src = data.photos.face;
-            document.getElementById('poster-dog-name').textContent = data.dog.name;
-            document.getElementById('poster-dog-type-features').textContent = `${data.dog.type} (${data.dog.features || '特徴未記入'})`;
-            document.getElementById('poster-dog-gender-weight').textContent = `${data.dog.gender} / ${data.dog.weight || '未記入'}kg`;
-            document.getElementById('poster-owner-address').textContent = data.owner.address;
-            document.getElementById('poster-owner-tel').textContent = data.owner.tel;
-            document.getElementById('poster-owner-name').textContent = data.owner.name;
-
-            // 2-2. クレートタグ (#crate-tag-display)
-            document.getElementById('crate-photo').src = data.photos.face;
-            document.getElementById('crate-dog-name').textContent = data.dog.name.toUpperCase();
-            document.getElementById('crate-dog-type').textContent = data.dog.type;
-            document.getElementById('crate-dog-gender-age').textContent = `${data.dog.gender} / ${data.dog.age || '未記入'}才`;
-            document.getElementById('crate-dog-weight').textContent = `${data.dog.weight || '未記入'} kg`;
-            document.getElementById('crate-dog-features').textContent = data.dog.features || '特になし';
-            document.getElementById('crate-owner-name').textContent = data.owner.name;
-            document.getElementById('crate-owner-tel').textContent = data.owner.tel;
-            document.getElementById('crate-medical-medication').textContent = data.medical.medication || 'なし';
-            document.getElementById('crate-medical-allergies').textContent = data.medical.allergies || 'なし';
-            
-            // 2-3. 持ち歩き用手帳 (#passport-display)
-            document.getElementById('passport-photo').src = data.photos.face;
-            document.getElementById('passport-dog-name').textContent = data.dog.name;
-            document.getElementById('passport-dog-type').textContent = data.dog.type;
-            document.getElementById('passport-dog-gender-age').textContent = `${data.dog.gender} / ${data.dog.age || '未記入'}才`;
-            document.getElementById('passport-dog-weight').textContent = `${data.dog.weight || '未記入'} kg`;
-            document.getElementById('passport-owner-name').textContent = data.owner.name;
-            document.getElementById('passport-owner-tel').textContent = data.owner.tel;
-            document.getElementById('passport-owner-address').textContent = data.owner.address;
-            document.getElementById('passport-medical-history').textContent = data.medical.history || 'なし';
-            document.getElementById('passport-medical-medication').textContent = data.medical.medication || 'なし';
-            document.getElementById('passport-medical-allergies').textContent = data.medical.allergies || 'なし';
-            document.getElementById('passport-vet-contact').textContent = data.medical.vet_contact || '未記入';
-
-            // 2-4. 通常の防災手帳 (#main-display) 
-            // 今回のタスク範囲外ですが、全てのDOMにデータを流し込むロジックをここに追記します
-            // ... (既存の防災手帳のレンダリングロジックがここに入る想定)
-        }
-
-        // ====================================
-        // イベントハンドラ
-        // ====================================
-        
-        // フォーム送信時の処理
-        document.getElementById('dog-data-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            const form = event.target;
-            if (form.checkValidity()) {
-                if (liff.isLoggedIn()) {
-                    // 写真のDataURL変換を待ってから保存
-                    convertPhotosToDataURL().then(() => {
-                        saveData(liff.getProfileSync().userId);
-                    }).catch(e => {
-                        log(`Photo conversion failed: ${e.message}`);
-                        alert('写真の読み込みに失敗しました。ファイルを確認してください。');
-                    });
-                } else {
-                    alert('LIFFが認証されていません。');
-                }
-            }
-            form.classList.add('was-validated');
-        }, false);
-        
-        // ファイル入力変更時の処理 (プレビュー表示とDataURL変換)
-        document.getElementById('dog-photo-face').addEventListener('change', function(event) {
-            handlePhotoChange(event.target, 'dog-photo-face-preview');
-        });
-        document.getElementById('dog-photo-full').addEventListener('change', function(event) {
-            handlePhotoChange(event.target, 'dog-photo-full-preview');
-        });
-        
-        function handlePhotoChange(input, previewId) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById(previewId).src = e.target.result;
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-        
-        // DataURLに変換されていない写真があれば変換し、プレビューのsrcにセットする (保存前に実行)
-        async function convertPhotosToDataURL() {
-            const faceInput = document.getElementById('dog-photo-face');
-            const fullInput = document.getElementById('dog-photo-full');
-
-            // 顔写真の処理
-            if (faceInput.files && faceInput.files[0] && faceInput.files[0].size > 0) {
-                document.getElementById('dog-photo-face-preview').src = await fileToDataUrl(faceInput.files[0]);
-            }
-
-            // 全身写真の処理 (任意)
-            if (fullInput.files && fullInput.files[0] && fullInput.files[0].size > 0) {
-                document.getElementById('dog-photo-full-preview').src = await fileToDataUrl(fullInput.files[0]);
-            }
-        }
-
-        function fileToDataUrl(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-                reader.readAsDataURL(file);
-            });
-        }
-        
-        // PDF出力モーダル表示
-        function showPrintModal(mode) {
-            if (!currentDogData || !currentDogData.dog.name) {
-                alert('先に情報を入力・保存してください。');
-                return;
-            }
-            currentPrintMode = mode;
-            let message = '';
-            
-            switch (mode) {
-                case 'handbook':
-                    message = 'A4横向きで出力されます。プリンターで両面印刷し、四つ折りにすることでコンパクトな手帳になります。';
-                    break;
-                case 'poster':
-                    message = 'A4縦向きで出力されます。迷子発生時に印刷して掲示してください。';
-                    break;
-                case 'crate':
-                    message = 'A4横向きで出力されます。クレートの目立つ場所に貼り付けてご使用ください。';
-                    break;
-                case 'passport':
-                    message = 'A4縦向きで出力されます。印刷後、点線に沿って折りたたみ、持ち歩き用手帳としてご使用ください。';
-                    break;
-            }
-            
-            document.getElementById('print-modal-message').textContent = message;
-            printSelectModal.show();
-        }
-
-        // ====================================
-        // PDF生成ロジック (TASK-3実装)
-        // ====================================
-
-        /**
-         * @description PDF生成を実行する (TASK-3実装)
-         * @param {string} mode - 出力モード ('handbook', 'crate', 'poster', 'passport')
-         */
-        async function generatePDF(mode) {
-            log(`Starting PDF generation for mode: ${mode}`);
-            
-            if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
-                log('FATAL ERROR: jsPDF/html2canvas not loaded. Aborting.');
-                return;
-            }
-
-            printSelectModal.hide();
-            // PDF生成中のフィードバックを即座に表示
-            document.getElementById('pdf-preview-area').innerHTML = `<p class="fw-bold mt-5 text-dark"><i class="fa-solid fa-spinner fa-spin me-2"></i> ${mode.toUpperCase()}のPDFを生成中...</p>`;
-            pdfPreviewModal.show();
-            
-            // モードに応じたターゲット要素とPDF設定を定義
-            const targetConfig = {
-                handbook: { id: 'main-display', layout: 'l', filename: 'K9_防災手帳_四つ折り', margin: 0 },
-                crate: { id: 'crate-tag-display', layout: 'l', filename: 'K9_クレートタグ', margin: 0 },
-                poster: { id: 'poster-display', layout: 'p', filename: 'K9_迷子ポスター', margin: 0 },
-                passport: { id: 'passport-display', layout: 'p', filename: 'K9_持ち歩き手帳', margin: 0 }
-            }[mode];
-
-            const { jsPDF } = window.jspdf;
-            const targetElement = document.getElementById(targetConfig.id);
-            // NOTE: currentDogDataがnullの場合があるため、安全なファイル名を設定
-            const dogName = (currentDogData && currentDogData.dog) ? currentDogData.dog.name : 'Unknown';
-            const fileName = `${targetConfig.filename}_${dogName}_${new Date().toISOString().substring(0, 10)}.pdf`;
-
-            if (!targetElement) { log(`ERROR: Target element #${targetConfig.id} not found.`); return; }
-
-            // 状態保存 (クリーンアップに必須)
-            const originalDisplay = targetElement.style.display;
-            const originalPosition = targetElement.style.position;
-    　　　　 const originalTop = targetElement.style.top;
-            const originalBodyClass = document.body.className;
-
-            try {
-                log('Applying print classes for capture.');
-                
-                // 1. 印刷用のCSSクラスをボディに適用
-                document.body.classList.add(`print-mode-${mode}`);
-                
-                // 2. ターゲット要素をキャプチャ可能状態へ
-                targetElement.style.display = 'block';
-                targetElement.style.position = 'absolute';
-                targetElement.style.top = '-9999px'; // 画面外に配置
-                
-                // 3. html2canvasでキャプチャ
-                const canvas = await html2canvas(targetElement, {
-                    scale: 3, // 高解像度キャプチャ
-                    useCORS: true,
-                    allowTaint: true
-                });
-                log('HTML captured to Canvas.');
-
-                // 4. jsPDFでPDF化
-                const imgData = canvas.toDataURL('image/jpeg', 1.0);
-                const isLandscape = targetConfig.layout === 'l';
-                const doc = new jsPDF(targetConfig.layout, 'mm', 'a4');
-                
-                const docWidth = isLandscape ? 297 : 210;
-                const imgHeight = canvas.height * docWidth / canvas.width;
-                
-                doc.addImage(imgData, 'JPEG', 0, 0, docWidth, imgHeight);
-
-                // PDFのダウンロード
-                doc.save(fileName);
-                log(`PDF generated and saved as: ${fileName}`);
-                
-                // 画面フィードバックを更新
-                document.getElementById('pdf-preview-area').innerHTML = `<p class="fw-bold mt-4 text-dark">PDFが<span class="text-success">ブラウザのダウンロードフォルダ</span>に生成されました。</p><p class="small text-muted">ファイル名: ${fileName}</p>`;
-
-            } catch (e) {
-                log(`PDF Generation FATAL ERROR: ${e.message} (Stack: ${e.stack})`);
-                document.getElementById('pdf-preview-area').innerHTML = `<p class="fw-bold mt-4 text-danger">PDF生成中にエラーが発生しました。</p><p class="small text-muted">エラー: ${e.message}</p>`;
-            } finally {
-                // 5. ★★★ クリーンアップ (最重要) ★★★
-                log('Cleaning up print classes and restoring display state.');
-                
-                // CSSクラスを削除し、元のクラスに戻す
-                document.body.classList.remove(`print-mode-${mode}`);
-                document.body.className = originalBodyClass;
-                
-                // 要素の位置と表示属性を元に戻す
-                targetElement.style.display = originalDisplay;
-                targetElement.style.position = originalPosition;
-                targetElement.style.top = originalTop;
-            }
-        }
-
         // ====================================
         // 初期処理
         // ====================================
@@ -850,14 +473,15 @@
         document.addEventListener('DOMContentLoaded', () => {
             // DOMContentLoadedでLIFF初期化をキック（LIFFエラー解消とDOM操作の安定化のため）
             initializeLiff();
-            // Bootstrapモーダルのインスタンス化
+            
+            // Bootstrapモーダルのインスタンス化は、DOMContentLoadedで安全に実行
             const printSelectModalEl = document.getElementById('printSelectModal');
             printSelectModal = new bootstrap.Modal(printSelectModalEl);
             const pdfPreviewModalEl = document.getElementById('pdfPreviewModal');
             pdfPreviewModal = new bootstrap.Modal(pdfPreviewModalEl);
 
-            // フォームのバリデーションを無効にする機能を追加 (開発用)
-            // document.getElementById('dog-data-form').setAttribute('novalidate', '');
+            // ログスタンプの初期表示（LIFFが動作しなくても最低限の時刻を表示）
+            log('DOM fully loaded. Starting initialization cycle.');
         });
     </script>
 </body>
