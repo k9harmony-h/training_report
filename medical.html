@@ -11,10 +11,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        /* CSS Styles (Same as previous, with object-fit: contain for photos) */
         :root { --primary-color: #88b08b; --accent-color: #e8f5e9; --alert-color: #e07a5f; --text-color: #333; --mask-color: #f0f0f0; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 300px; }
-        .version-stamp { position: fixed; top: 0; right: 0; background: #dc3545; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
+        .version-stamp { position: fixed; top: 0; right: 0; background: #20c997; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
         .no-print-area { margin: 20px 0 30px; text-align: center; }
         .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; border: 1px solid #eee; }
         .section-title { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 15px; }
@@ -31,20 +30,18 @@
         .screen-logo-top { width: 120px; margin-bottom: 15px; }
         .screen-logo-footer { width: 100px; margin-top: 20px; margin-bottom: 10px; opacity: 0.8; }
 
-        /* ★★★ POSTER DESIGN (A4 Full Size & Contain Photo) ★★★ */
+        /* POSTER DESIGN (Same as confirmed) */
         .poster-container { width: 210mm; height: 297mm; background: white; margin: 0 auto; position: relative; overflow: hidden; }
         .poster-inner-border { width: 100%; height: 100%; border: 6px solid #ff0000; padding: 10mm; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
         .poster-title { color: #ff0000; font-size: 42pt; font-weight: 900; margin-bottom: 15px; font-family: sans-serif; line-height: 1; }
         .poster-date-line { font-size: 16pt; font-weight: bold; color: #333; margin-bottom: 15px; width: 100%; text-align: left; }
         .handwrite-space { border-bottom: 2px solid #333; display: inline-block; margin: 0 2px; }
-        /* Photo Frame (Contain to keep aspect ratio) */
         .poster-photo-frame { width: 100%; height: 35%; border: 3px solid #333; margin-bottom: 15px; background: #eee; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-        .poster-photo-img { width: 100%; height: 100%; object-fit: contain; /* Keep aspect ratio */ }
+        .poster-photo-img { width: 100%; height: 100%; object-fit: contain; }
         .poster-info-table { width: 100%; border-collapse: collapse; font-size: 16pt; margin-bottom: 15px; text-align: left; }
         .poster-info-table th { width: 25%; padding: 5px; border-bottom: 2px solid #ff0000; color: #ff0000; font-weight: bold; }
         .poster-info-table td { padding: 5px; border-bottom: 1px solid #ccc; font-weight: bold; color: #000; }
         .poster-message { font-size: 14pt; text-align: left; line-height: 1.4; margin-bottom: 15px; font-weight: 600; }
-        /* Split Layout */
         .poster-split-section { width: 100%; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
         .poster-left-col { width: 48%; }
         .poster-right-col { width: 48%; display: flex; flex-direction: column; align-items: center; }
@@ -56,21 +53,66 @@
         .poster-logo-area { margin-top: auto; text-align: center; width: 100%; }
         .poster-logo-img { width: 40mm; height: auto; }
 
-        /* CRATE TAG STYLE (Contain Photo) */
-        .crate-container { width: 210mm; height: 297mm; background: white; position: relative; overflow: hidden; box-sizing: border-box; border: 1px dashed #ccc; margin: 0 auto; }
-        /* ... (Folding lines, etc. same as before) */
-        .crate-fold-line { position: absolute; top: 50%; left: 0; width: 100%; height: 0; border-top: 2px dashed #88b08b; z-index: 10; }
-        .crate-fold-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 0 10px; color: #88b08b; font-size: 10pt; }
-        .crate-back { position: absolute; top: 0; left: 0; width: 100%; height: 50%; padding: 10mm; box-sizing: border-box; transform: rotate(180deg); display: flex; flex-direction: column; justify-content: space-between; background-color: #fdfdfd; }
-        .crate-owner-section { border: 3px solid #333; padding: 10px; border-radius: 8px; }
-        .crate-food-list { font-size: 10pt; display: flex; gap: 10px; }
-        .crate-food-box { border: 1px solid #ccc; padding: 5px; flex: 1; border-radius: 5px; }
-        .crate-front { position: absolute; top: 50%; left: 0; width: 100%; height: 50%; padding: 10mm; box-sizing: border-box; text-align: center; }
-        /* Crate Main Photo (Contain to keep aspect ratio) */
-        .crate-main-photo { width: 140px; height: 140px; object-fit: contain; /* Keep aspect ratio */ border-radius: 50%; border: 5px solid var(--alert-color); margin: 0 auto 10px; display: block; background: #eee; }
-        .crate-main-name { font-size: 32pt; font-weight: 900; color: #333; line-height: 1; }
-        .crate-alert-bar { background-color: var(--alert-color); color: white; font-weight: bold; font-size: 14pt; padding: 5px; border-radius: 8px; margin-bottom: 10px; }
-        .crate-write-area { border: 2px dashed #88b08b; border-radius: 8px; padding: 5px; text-align: left; height: 80px; }
+        /* ★★★ CRATE TAG DESIGN (REVISED) ★★★ */
+        .crate-container {
+            width: 210mm; height: 297mm; background: white; position: relative; overflow: hidden;
+            box-sizing: border-box; border: 1px dashed #aaa; margin: 0 auto;
+        }
+        .crate-fold-line {
+            position: absolute; top: 45%; left: 0; width: 100%; height: 0;
+            border-top: 2px dashed #88b08b; z-index: 10;
+        }
+        
+        /* BACK SIDE (Top - Rotated 180) */
+        .crate-back {
+            position: absolute; top: 0; left: 0; width: 100%; height: 45%;
+            padding: 10mm; box-sizing: border-box;
+            transform: rotate(180deg); /* 逆さま */
+            display: flex; justify-content: space-between;
+            background-color: #fdfdfd; border-bottom: 1px dashed #ccc;
+        }
+        .crate-back-left { width: 48%; border-right: 1px dashed #ccc; padding-right: 10px; }
+        .crate-back-right { width: 48%; padding-left: 10px; }
+        
+        .crate-back-title { font-weight: bold; font-size: 12pt; color: #555; border-bottom: 2px solid #555; margin-bottom: 5px; display: block; }
+        .crate-food-ok { color: #198754; font-weight: bold; font-size: 10pt; }
+        .crate-food-ng { color: #dc3545; font-weight: bold; font-size: 10pt; }
+        .crate-commands { font-size: 10pt; line-height: 1.4; }
+        
+        /* FRONT SIDE (Middle - Main) */
+        .crate-front {
+            position: absolute; top: 45%; left: 0; width: 100%; height: 40%; /* 45% to 85% */
+            padding: 10mm; box-sizing: border-box;
+            display: flex; align-items: center;
+        }
+        .crate-front-left { width: 40%; text-align: center; }
+        .crate-front-right { width: 60%; padding-left: 15px; }
+        
+        .crate-main-photo {
+            width: 100%; aspect-ratio: 1/1; object-fit: cover;
+            border: 4px solid var(--alert-color); border-radius: 10px;
+        }
+        .crate-main-name { font-size: 32pt; font-weight: 900; line-height: 1; margin-bottom: 5px; }
+        .crate-main-info { font-size: 14pt; font-weight: bold; color: #555; margin-bottom: 10px; }
+        .crate-alert-box { background: #fff5f5; border: 2px solid var(--alert-color); color: #d63384; font-weight: bold; padding: 5px; border-radius: 5px; margin-bottom: 10px; font-size: 14pt; }
+        .crate-write-box { border: 2px solid #888; border-radius: 5px; height: 60px; padding: 5px; font-size: 10pt; text-align: left; }
+        .crate-check-row { margin-top: 10px; font-weight: bold; font-size: 11pt; }
+
+        /* FOLDED CONTACT (Bottom 15%) */
+        .crate-contact {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 15%;
+            border-top: 2px dashed #88b08b;
+            background-color: #e8f5e9;
+            padding: 10px 20px; box-sizing: border-box;
+            text-align: center;
+            transform-origin: bottom; /* For visualization of fold */
+        }
+        /* Diagonal Fold Lines (Visual Guide) */
+        .crate-fold-diag-left { position: absolute; bottom: 0; left: 0; width: 50px; height: 50px; border-right: 1px dashed #aaa; transform: rotate(45deg); transform-origin: bottom left; }
+        .crate-fold-diag-right { position: absolute; bottom: 0; right: 0; width: 50px; height: 50px; border-left: 1px dashed #aaa; transform: rotate(-45deg); transform-origin: bottom right; }
+
+        .crate-contact-title { font-weight: bold; color: var(--alert-color); font-size: 12pt; margin-bottom: 5px; }
+        .crate-contact-info { font-size: 11pt; font-weight: bold; }
         
         /* Hide Elements */
         #poster-display, #crate-display, #generating-overlay, #debug-console-container { display: none; }
@@ -92,7 +134,7 @@
 </head>
 <body class="mode-handbook">
 
-    <div class="version-stamp">v2025.12.03-FINAL-FIX-CONFIRMED</div>
+    <div class="version-stamp">v2025.12.03-CRATE-FIX-FINAL</div>
 
     <div id="generating-overlay">
         <div class="spinner-border text-primary"></div><h4 class="mt-3">作成中...</h4>
@@ -101,7 +143,7 @@
     <div class="container py-3">
         <div class="no-print-area">
             <div class="text-center">
-                <img class="screen-logo-top k9-logo-common" alt="K9 Logo">
+                <img src="" class="screen-logo-top k9-logo-common" alt="K9 Logo">
             </div>
             <h4 class="fw-bold mb-3" style="color: var(--primary-color);">うちの子医療・防災手帳</h4>
             <div id="loading" class="text-center py-5"><div class="spinner-border text-success"></div><p>Loading...</p></div>
@@ -162,7 +204,6 @@
                         大切な愛犬が迷子になってしまいました。情報提供をお願いします。<br>
                         保護をしてくださった方、保護につながる情報をくださった方にはお礼をさせていただきます。下記までご連絡ください。
                     </div>
-                    
                     <div class="poster-split-section">
                         <div class="poster-left-col">
                             <div class="poster-contact-box">
@@ -177,10 +218,10 @@
                                 <span class="handwrite-space" style="width:100%; height:30px;"></span>
                             </div>
                             <div id="poster-qr-container" style="margin-top:10px;">
-                                <img id="poster-qr-img" src="" alt="QR" style="width:80px; height:80px; border:1px solid #333; display:none;"> </div>
+                                <img id="poster-qr-img" src="" alt="QR" style="width:80px; height:80px; border:1px solid #333; display:none;">
+                            </div>
                         </div>
                     </div>
-
                     <div class="poster-logo-area">
                         <img class="poster-logo-img k9-logo-common" alt="Logo">
                     </div>
@@ -191,13 +232,43 @@
         <div id="crate-display">
             <div class="crate-container">
                 <div class="crate-fold-line"></div><div class="crate-fold-text">------ 山折り (FOLD HERE) ------</div>
+                
                 <div class="crate-back">
-                    <div class="crate-owner-section"><div class="crate-owner-title">緊急連絡先</div><div class="fs-5 fw-bold">Owner: <span id="crate_owner">-</span></div><div class="fs-4 fw-bold"><i class="fa-solid fa-phone"></i> <span id="crate_phone">-</span></div><hr style="margin:5px 0;"><div class="small">代理人: <span id="crate_proxy">-</span> (<span id="crate_proxy_tel">-</span>)</div></div>
-                    <div class="mt-2"><strong>🆘 サバイバルフード</strong><div class="crate-food-list"><div class="crate-food-box bg-light"><span class="text-success fw-bold">⭕️ OK</span><br>白米・パン</div><div class="crate-food-box bg-light"><span class="text-danger fw-bold">❌ NG</span><br>ネギ・チョコ</div></div></div>
-                    <div class="k9-logo-footer" style="text-align:center; margin-top:10px;"><img class="k9-logo-common" style="width:80px;" alt="Logo"></div>
+                    <div class="crate-back-left">
+                        <span class="crate-back-title">🆘 サバイバルフード</span>
+                        <div class="small mb-2" style="border:1px solid #198754; padding:5px; color:#198754; font-weight:bold;">⭕️ OK: 白米・パン・芋・鶏肉</div>
+                        <div class="small mb-2" style="border:1px solid #dc3545; padding:5px; color:#dc3545; font-weight:bold;">❌ NG: ネギ・チョコ・ブドウ</div>
+                        <div style="border:1px dashed #aaa; height:40px; font-size:9pt; color:#aaa; padding:2px;">(手書き: アレルギー等)</div>
+                    </div>
+                    <div class="crate-back-right">
+                        <span class="crate-back-title">🐕 コマンド辞書</span>
+                        <div class="crate-commands">
+                            ・オスワリ / Sit<br>・マテ / Wait<br>・ハウス / House<br>・オイデ / Come
+                        </div>
+                    </div>
                 </div>
+
                 <div class="crate-front">
-                    <img id="crate_img" class="crate-main-photo" src=""><div id="crate_name" class="crate-main-name">NAME</div><div id="crate_breed" class="crate-main-breed">Breed / Age</div><div id="crate_alert" class="crate-alert-bar">⚠️ <span id="crate_caution">-</span></div><div style="text-align:left; font-size:10pt; font-weight:bold; color:#555;">🍚 食事・投薬ログ</div><div class="crate-write-area"><span class="small text-muted">※手書き記入欄</span></div><div class="mt-3 text-start small border-top pt-2"><label><input type="checkbox" style="transform:scale(1.5);"> 緊急時の獣医処置を一任します</label></div>
+                    <div class="crate-front-left">
+                        <img id="crate_img" class="crate-main-photo" src="">
+                    </div>
+                    <div class="crate-front-right">
+                        <div id="crate_name" class="crate-main-name">NAME</div>
+                        <div id="crate_breed" class="crate-main-info">Breed / Age / Sex</div>
+                        <div id="crate_alert" class="crate-alert-box">⚠️ <span id="crate_caution">-</span></div>
+                        <div class="crate-write-box">🍚 食事・投薬ログ (手書き)<br><br></div>
+                        <div class="crate-check-row"><input type="checkbox" style="transform:scale(1.5);"> 緊急時の獣医処置を一任します</div>
+                    </div>
+                </div>
+
+                <div class="crate-contact">
+                    <div class="crate-fold-diag-left"></div><div class="crate-fold-diag-right"></div>
+                    <div class="crate-contact-title">＼ 緊急の際はこちらにご連絡ください ／</div>
+                    <div class="crate-contact-info">
+                        飼い主: <span id="crate_owner">-</span> (<span id="crate_phone">-</span>)
+                        <span class="ms-3">代理人: <span id="crate_proxy">-</span> (<span id="crate_proxy_tel">-</span>)</span>
+                    </div>
+                    <div class="small mt-1">かかりつけ医: <span id="crate_vet">-</span></div>
                 </div>
             </div>
         </div>
@@ -219,8 +290,8 @@
         const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
         const LIFF_ID = "2008546673-MJY7j3ox";
         
-        // ★ LOGO DATA (Embedded Base64)
-        const LOGO_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."; // (Shortened for display, paste full string here)
+        // ★ LOGO DATA (Base64)
+        const LOGO_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA5gAAAGQCAYAAABvK08CAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAA... (中略) .../4P/B30Z5CgAAAABJRU5ErkJggg=="; 
 
         let outputModal, imageModal;
 
@@ -230,7 +301,6 @@
                 imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
             }
             
-            // Set Logos from embedded Base64
             document.querySelectorAll('.k9-logo-common').forEach(el => { el.src = LOGO_DATA_URI; });
 
             try {
@@ -287,29 +357,29 @@
 
             // Poster
             setText('poster_name', d.name_disp);
-            setText('poster_gender_age', `${d.gender || '-'}, ${d.age || '-'}歳`);
+            setText('poster_gender_age', `${d.gender || '-'} / ${d.age || '-'}歳`);
             setText('poster_breed_color', `${d.breed || '-'} / ${d.color || '-'}`);
             setText('poster_owner', c.name);
             setText('poster_phone', c.phone);
             
-            // Poster QR
-             if (c.evac_site && c.evac_site !== '記載なし') {
+            if (c.evac_site && c.evac_site !== '記載なし') {
                 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.evac_site)}`;
                 const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(mapUrl)}`;
                 document.getElementById('poster-qr-img').src = qrSrc;
-                document.getElementById('poster-qr-img').style.display = 'block'; // Show if URL exists
+                document.getElementById('poster-qr-img').style.display = 'block';
             } else {
                 document.getElementById('poster-qr-img').style.display = 'none';
             }
 
             // Crate
             setText('crate_name', d.name_disp);
-            setText('crate_breed', `${d.breed} (${d.gender})`);
+            setText('crate_breed', `${d.breed} / ${d.gender} / ${d.age}`);
             setText('crate_caution', d.caution);
             setText('crate_owner', c.name);
             setText('crate_phone', c.phone);
             setText('crate_proxy', c.proxy_name);
             setText('crate_proxy_tel', c.proxy_phone);
+            setText('crate_vet', d.vet_name);
 
             document.getElementById('loading').style.display = 'none';
             document.getElementById('controls').style.display = 'block';
