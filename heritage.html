@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>K9 Heritage Prototype</title>
+  <title>K9 Heritage Prototype v3</title>
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Shippori+Mincho&display=swap" rel="stylesheet">
   
   <style>
@@ -17,345 +17,81 @@
       color: #fff;
     }
 
-    /* --- スクロールのための「長さ」を作る不可視コンテナ --- */
+    /* --- スクロール用の長さ (シーン追加でさらに延長: 550vh) --- */
     #scroll-track {
-      height: 350vh; /* 画面の3.5倍の高さ */
+      height: 550vh;
       width: 100%;
       position: relative;
       z-index: 1;
     }
 
-    /* --- 画面固定の舞台装置 (Viewport) --- */
+    /* --- 舞台装置 (Viewport) --- */
     #stage {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      z-index: 2;
-      pointer-events: none; /* スクロールを邪魔しない */
+      top: 0; left: 0; width: 100%; height: 100%;
+      overflow: hidden; z-index: 2; pointer-events: none;
+      /* 3D表現のための視点設定 */
+      perspective: 1000px;
     }
 
-    /* --- Scene 1: 表紙 (Cover) --- */
+    /* --- Scene 1: 表紙 --- */
     #cover-layer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, #4a3b2a, #2e2315); /* ダミーの革質感 */
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      transform-origin: left center; /* 本が開く軸 */
-      transition: transform 0.1s ease-out; /* なめらか補間 */
-      z-index: 10;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(135deg, #4a3b2a, #2e2315);
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      transform-origin: left center; transition: transform 0.1s ease-out;
+      z-index: 30; /* 最前面 */
     }
     
-    /* 金色のタイトル文字 */
     .title-gold {
-      font-family: 'Dancing Script', cursive;
-      font-size: 3.5rem;
+      font-family: 'Dancing Script', cursive; font-size: 3.5rem;
       background: linear-gradient(to bottom, #cfc09f 0%, #ffecb3 50%, #a38956 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-      margin-bottom: 20px;
-      opacity: 0;
-      animation: floatIn 2s ease forwards;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin-bottom: 20px;
+      opacity: 0; animation: floatIn 2s ease forwards;
     }
 
     .scroll-hint {
-      position: absolute;
-      bottom: 50px;
-      font-size: 0.9rem;
-      color: #ccc;
-      opacity: 0;
-      animation: floatIn 2s ease 1s forwards;
+      position: absolute; bottom: 50px; font-size: 0.9rem; color: #ccc;
+      opacity: 0; animation: floatIn 2s ease 1s forwards;
     }
 
-    /* --- Scene 2: 背景 (Background) --- */
+    /* --- Scene 2: 背景 --- */
     #bg-paper {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: #f5f1e6; /* 古紙の色 */
-      z-index: 1;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: #f5f1e6; z-index: 1;
     }
 
-    /* --- Scene 3: Cityscape (Buildings) --- */
-    /* 黒い背景の代わりに、ビルを下から生やすコンテナ */
+    /* --- Scene 3: 街並み --- */
     #bg-city {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 100%; /* 全画面覆えるように */
-      z-index: 2;
-      opacity: 0; /* 最初は隠す */
-      transition: opacity 0.5s;
-      pointer-events: none;
-      /* 下揃えにする設定 */
-      display: flex;
-      align-items: flex-end; 
-      overflow: hidden;
+      position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
+      z-index: 2; opacity: 0; pointer-events: none;
+      display: flex; align-items: flex-end; overflow: hidden;
     }
 
-    /* ビル単体のスタイル (JSで生成) */
     .city-block {
-      background-color: #111; /* ビルの色 (ほぼ黒) */
-      position: relative;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5); /* 影 */
-      /* 少し隙間を空ける */
-      margin-right: 2px; 
-      border-top-left-radius: 2px;
-      border-top-right-radius: 2px;
+      background-color: #111; position: relative; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      margin-right: 2px; border-top-left-radius: 2px; border-top-right-radius: 2px;
     }
-
-    /* ビルの窓（アクセント） */
     .city-block::after {
-      content: '';
-      position: absolute;
-      top: 10px;
-      left: 20%;
-      width: 60%;
-      height: 20%;
-      background: rgba(255, 255, 255, 0.1); /* 窓の光（うっすら） */
+      content: ''; position: absolute; top: 10px; left: 20%; width: 60%; height: 20%;
+      background: rgba(255, 255, 255, 0.1);
     }
 
-    /* --- Main Object: パラコード (Cord) --- */
-    /* ベース（白） */
-    #cord-base {
-      position: absolute;
-      top: -100px; /* 最初は少し上に隠しておく */
-      right: 40px;
-      width: 30px; /* 紐の太さ */
-      height: 120%; /* 画面より長く */
-      background: repeating-linear-gradient(
-        45deg,
-        #f0f0f0,
-        #f0f0f0 10px,
-        #e0e0e0 10px,
-        #e0e0e0 20px
-      ); /* ダミーの編み目表現 */
-      box-shadow: 5px 0 10px rgba(0,0,0,0.2);
-      border-radius: 15px;
-      z-index: 5;
-      transform: translateY(0);
+    /* --- Scene 4 & 5: 切り絵 (Silhouette) --- */
+    .silhouette {
+      position: absolute; bottom: 0; z-index: 10;
+      filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
     }
+    .silhouette path { fill: #000; }
 
-    /* カラーレイヤー（マスク用） */
-    /* heightを0% -> 100% にすることで「色が満ちる」表現 */
-    #cord-color-mask {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 0%; /* 初期状態は0 */
-      overflow: hidden; /* はみ出した部分を隠す */
-    }
-
-    #cord-color-content {
-      width: 100%;
-      height: 100vh; /* 親ではなく画面高さを維持 */
-      background: repeating-linear-gradient(
-        45deg,
-        #ff99cc, /* ユーザーカラー (ピンク) */
-        #ff99cc 10px,
-        #ff6699 10px,
-        #ff6699 20px
-      );
-      mix-blend-mode: multiply; /* 乗算合成 */
-    }
-
-    /* マイルストーン装飾 (ステッチ) */
-    .milestone-stitch {
-      position: absolute;
-      top: 40%;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80%;
-      height: 4px;
-      background-color: gold;
-      box-shadow: 0 0 5px gold;
-      z-index: 6;
-      opacity: 0; /* スクロールで表示 */
-    }
-
-    /* --- Text Elements --- */
-    .story-text {
-      position: absolute;
-      left: 30px;
-      color: #333;
-      font-size: 1.2rem;
-      line-height: 2;
-      opacity: 0; /* スクロール制御 */
-      transform: translateX(-20px);
-      z-index: 6;
-      width: 60%;
+    /* 人間 */
+    #human-silhouette {
+      left: 10%; width: 25vh; height: auto;
+      opacity: 0; transform: translateY(20px);
     }
     
-    #text-1 { top: 20%; }
-    #text-2 { top: 60%; color: #fff; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
-
-    /* --- Keyframes --- */
-    @keyframes floatIn {
-      from { transform: translateY(-20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-  </style>
-</head>
-<body>
-
-  <div id="scroll-track"></div>
-
-  <div id="stage">
-    
-    <div id="cover-layer">
-      <div class="title-gold">K9 Heritage</div>
-      <div class="scroll-hint">↓ Scroll to Open</div>
-    </div>
-
-    <div id="bg-paper"></div>
-    
-    <div id="bg-city"></div>
-
-    <div id="cord-base">
-      <div id="cord-color-mask">
-        <div id="cord-color-content"></div>
-      </div>
-      <div class="milestone-stitch" id="ms-gold"></div>
-    </div>
-
-    <div id="text-1" class="story-text">
-      それは、<br>
-      小さな一歩から<br>
-      始まった。
-    </div>
-
-    <div id="text-2" class="story-text">
-      信頼の色が、<br>
-      少しずつ<br>
-      重なっていく。
-    </div>
-
-  </div>
-
-  <script>
-    // --- 街並み生成機能 (City Builder) ---
-    function buildCity() {
-      const cityContainer = document.getElementById('bg-city');
-      const windowWidth = window.innerWidth;
-      let currentWidth = 0;
-
-      // 画面幅がいっぱいになるまでビルを足していく
-      while (currentWidth < windowWidth) {
-        const block = document.createElement('div');
-        block.classList.add('city-block');
-
-        // 幅をランダムに決める (20px 〜 50px)
-        const w = Math.floor(Math.random() * 30) + 20;
-        
-        // 高さをランダムに決める (画面の 15% 〜 45% の高さ)
-        // ※テキストとかぶらないよう調整
-        const hPercent = Math.floor(Math.random() * 30) + 15; 
-
-        block.style.width = `${w}px`;
-        block.style.height = `${hPercent}%`;
-
-        // まれに「高いタワー」を作る演出
-        if (Math.random() > 0.95) {
-           block.style.height = '60%';
-           block.style.zIndex = '3'; // 手前に出す
-           block.style.backgroundColor = '#1a1a1a'; // 少し色を変える
-        }
-
-        cityContainer.appendChild(block);
-        currentWidth += w;
-      }
-    }
-
-    // --- スクロール連動ロジック (Scrollytelling Engine) ---
-    
-    window.addEventListener('scroll', () => {
-      const scrollY = window.scrollY;
-      const windowH = window.innerHeight;
-      const docH = document.getElementById('scroll-track').offsetHeight;
-      
-      // 進捗率 (0.0 〜 1.0)
-      const progress = scrollY / (docH - windowH);
-
-      // DOM要素の取得
-      const cover = document.getElementById('cover-layer');
-      const text1 = document.getElementById('text-1');
-      const text2 = document.getElementById('text-2');
-      const cordBase = document.getElementById('cord-base');
-      const colorMask = document.getElementById('cord-color-mask');
-      const bgCity = document.getElementById('bg-city');
-      const stitch = document.getElementById('ms-gold');
-
-      // --- Scene 1 -> 2: 表紙が開く (0% - 20%) ---
-      // 0pxから300pxの間で、扉を 0度 -> -90度(画面外) へ回転
-      let coverRotate = Math.min(scrollY / 4, 100); 
-      cover.style.transform = `perspective(1000px) rotateY(-${coverRotate}deg)`;
-      
-      // 透明度も下げて完全に消す
-      if (scrollY > 300) {
-        cover.style.opacity = 0;
-      } else {
-        cover.style.opacity = 1;
-      }
-
-      // --- Scene 2: 導入 (20% - 50%) ---
-      // パラコードが降りてくる (最初は上に隠れている)
-      // 100pxスクロールしたあたりから降り始め、500pxで定位置へ
-      let cordPos = Math.min(Math.max((scrollY - 100) / 4, 0), 100); 
-      // cordBaseの初期topが-100pxなので、それを相殺するようにプラス
-      cordBase.style.transform = `translateY(${cordPos}px)`;
-
-      // テキスト1: 左からスライドイン
-      if (scrollY > 200 && scrollY < 800) {
-        let t1Prog = (scrollY - 200) / 300; // 0.0 - 1.0
-        t1Prog = Math.min(Math.max(t1Prog, 0), 1);
-        text1.style.opacity = t1Prog;
-        text1.style.transform = `translateX(${-20 + (t1Prog * 20)}px)`;
-      } else if (scrollY >= 800) {
-        // 次のシーンに行ったら薄くする
-        text1.style.opacity = 1 - (scrollY - 800) / 200;
-      }
-
-      // --- Scene 3: 色づき & 展開 (50% - 100%) ---
-      // カラーマスクの高さ (0% -> 100%)
-      // 600px地点から色が入り始め、一番下で満タンになる
-      let colorHeight = 0;
-      if (scrollY > 600) {
-        colorHeight = (scrollY - 600) / (docH - windowH - 600) * 100;
-      }
-      colorMask.style.height = `${Math.min(colorHeight, 100)}%`;
-
-      // 背景 (街) の出現
-      if (scrollY > 800) {
-        bgCity.style.opacity = Math.min((scrollY - 800) / 300, 1);
-      }
-
-      // テキスト2 & マイルストーン出現
-      if (scrollY > 900) {
-        let t2Prog = (scrollY - 900) / 300;
-        t2Prog = Math.min(Math.max(t2Prog, 0), 1);
-        text2.style.opacity = t2Prog;
-        text2.style.transform = `translateX(${-20 + (t2Prog * 20)}px)`;
-        stitch.style.opacity = t2Prog; // ステッチも同時に光らせる
-      }
-
-    });
-
-    // アプリ起動時にビルを建設する
-    buildCity();
-  </script>
-</body>
-</html>
+    /* 犬 (追加シーン) */
+    #dog-silhouette {
+      left: 35%; /* 人間の横 */
+      width: 15vh
