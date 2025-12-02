@@ -12,10 +12,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        /* (CSSは変更なし - 省略せず記述) */
+        /* (CSSは変更なし) */
         :root { --primary-color: #88b08b; --accent-color: #e8f5e9; --alert-color: #e07a5f; --text-color: #333; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 300px; }
-        .version-stamp { position: fixed; top: 0; right: 0; background: #28a745; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
+        .version-stamp { position: fixed; top: 0; right: 0; background: #e07a5f; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
         #debug-console-container { display: block; margin-top: 30px; padding: 0 10px; }
         #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 11px; padding: 15px; border-radius: 8px; }
         .no-print-area { margin: 20px 0 30px; text-align: center; }
@@ -62,7 +62,7 @@
 </head>
 <body class="mode-handbook">
 
-    <div class="version-stamp">v2025.12.02-IPHONE-FIX</div>
+    <div class="version-stamp">v2025.12.02-IPHONE-BTN-FIX</div>
 
     <div id="generating-overlay">
         <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;"></div>
@@ -172,9 +172,9 @@
                 <div class="modal-body text-center">
                     <p class="small text-muted mb-3">準備ができました。下のボタンを押してPDFを開き、保存してください。</p>
                     
-                    <a id="btn-open-pdf" href="#" target="_blank" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm mb-3">
+                    <button id="btn-open-pdf" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm mb-3">
                         <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> PDFを開く / 保存する
-                    </a>
+                    </button>
 
                     <div class="alert alert-warning text-start small">
                         <strong><i class="fa-solid fa-mobile-screen"></i> iPhoneの方へ:</strong><br>
@@ -192,7 +192,8 @@
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
         const LIFF_ID = "2008546673-MJY7j3ox";
-        let pdfReadyModal; // Modal Instance
+        let pdfReadyModal;
+        let generatedPdfBlobUrl = null; // Store Blob URL
 
         function log(msg) {
             const el = document.getElementById('debug-console');
@@ -282,7 +283,7 @@
                 const { jsPDF } = window.jspdf;
                 const orient = (mode === 'handbook') ? 'l' : 'p';
                 const doc = new jsPDF(orient, 'mm', 'a4');
-                const imgData = canvas.toDataURL('image/jpeg', 0.90); // Compress slightly
+                const imgData = canvas.toDataURL('image/jpeg', 0.90);
                 
                 const a4w = (orient === 'l') ? 297 : 210;
                 const pdfWidth = a4w;
@@ -290,16 +291,18 @@
 
                 doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
                 
-                // ★ FIX: Instead of doc.save(), create Blob URL and show button
+                // ★ FIX: Create Blob URL
                 const pdfBlob = doc.output('blob');
-                const pdfUrl = URL.createObjectURL(pdfBlob);
+                generatedPdfBlobUrl = URL.createObjectURL(pdfBlob);
                 
+                // Setup Button Handler
                 const openBtn = document.getElementById('btn-open-pdf');
-                openBtn.href = pdfUrl;
-                // iOS Safari sometimes ignores download attr, but we set it just in case
-                openBtn.download = `K9_${mode.toUpperCase()}_${new Date().getTime()}.pdf`;
+                openBtn.onclick = function() {
+                    // Try direct location change for LINE Browser
+                    window.location.href = generatedPdfBlobUrl;
+                };
                 
-                log('PDF Blob created. Showing Modal.');
+                log('PDF Ready. URL set.');
                 pdfReadyModal.show();
 
             } catch (err) {
