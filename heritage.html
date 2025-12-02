@@ -3,35 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>K9 Heritage Prototype v3</title>
+  <title>K9 Heritage</title>
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Shippori+Mincho&display=swap" rel="stylesheet">
   
   <style>
     /* --- 基本設定 --- */
     body {
-      margin: 0;
-      padding: 0;
-      background-color: #000;
-      font-family: 'Shippori Mincho', serif;
-      overflow-x: hidden;
-      color: #fff;
+      margin: 0; padding: 0; background-color: #000;
+      font-family: 'Shippori Mincho', serif; overflow-x: hidden; color: #fff;
     }
-
-    /* --- スクロール用の長さ (シーン追加でさらに延長: 550vh) --- */
-    #scroll-track {
-      height: 550vh;
-      width: 100%;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* --- 舞台装置 (Viewport) --- */
+    #scroll-track { height: 550vh; width: 100%; position: relative; z-index: 1; }
     #stage {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      overflow: hidden; z-index: 2; pointer-events: none;
-      /* 3D表現のための視点設定 */
-      perspective: 1000px;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      overflow: hidden; z-index: 2; pointer-events: none; perspective: 1000px;
     }
 
     /* --- Scene 1: 表紙 --- */
@@ -39,10 +23,8 @@
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: linear-gradient(135deg, #4a3b2a, #2e2315);
       display: flex; flex-direction: column; justify-content: center; align-items: center;
-      transform-origin: left center; transition: transform 0.1s ease-out;
-      z-index: 30; /* 最前面 */
+      transform-origin: left center; transition: transform 0.1s ease-out; z-index: 30;
     }
-    
     .title-gold {
       font-family: 'Dancing Script', cursive; font-size: 3.5rem;
       background: linear-gradient(to bottom, #cfc09f 0%, #ffecb3 50%, #a38956 100%);
@@ -50,7 +32,6 @@
       text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin-bottom: 20px;
       opacity: 0; animation: floatIn 2s ease forwards;
     }
-
     .scroll-hint {
       position: absolute; bottom: 50px; font-size: 0.9rem; color: #ccc;
       opacity: 0; animation: floatIn 2s ease 1s forwards;
@@ -68,7 +49,6 @@
       z-index: 2; opacity: 0; pointer-events: none;
       display: flex; align-items: flex-end; overflow: hidden;
     }
-
     .city-block {
       background-color: #111; position: relative; box-shadow: 0 0 10px rgba(0,0,0,0.5);
       margin-right: 2px; border-top-left-radius: 2px; border-top-right-radius: 2px;
@@ -85,13 +65,163 @@
     }
     .silhouette path { fill: #000; }
 
-    /* 人間 */
     #human-silhouette {
       left: 10%; width: 25vh; height: auto;
       opacity: 0; transform: translateY(20px);
     }
-    
-    /* 犬 (追加シーン) */
     #dog-silhouette {
-      left: 35%; /* 人間の横 */
-      width: 15vh
+      left: 35%; width: 15vh; height: auto; opacity: 0;
+      transform-origin: bottom center; transform: rotateX(90deg);
+    }
+
+    /* --- Main Object: パラコード --- */
+    #cord-base {
+      position: absolute; top: -100px; right: 40px; width: 30px; height: 120%;
+      background: repeating-linear-gradient(45deg, #f0f0f0, #f0f0f0 10px, #e0e0e0 10px, #e0e0e0 20px);
+      box-shadow: 5px 0 10px rgba(0,0,0,0.2); border-radius: 15px;
+      z-index: 15; transform: translateY(0);
+    }
+    #cord-color-mask {
+      position: absolute; top: 0; left: 0; width: 100%; height: 0%; overflow: hidden;
+    }
+    #cord-color-content {
+      width: 100%; height: 100vh;
+      background: repeating-linear-gradient(45deg, #ff99cc, #ff99cc 10px, #ff6699 10px, #ff6699 20px);
+      mix-blend-mode: multiply;
+    }
+    .milestone-stitch {
+      position: absolute; top: 40%; left: 50%; transform: translateX(-50%);
+      width: 80%; height: 4px; background-color: gold; box-shadow: 0 0 5px gold;
+      z-index: 16; opacity: 0;
+    }
+
+    /* --- Texts --- */
+    .story-text {
+      position: absolute; left: 30px; color: #333; font-size: 1.2rem; line-height: 2;
+      opacity: 0; transform: translateX(-20px); z-index: 25; width: 60%;
+    }
+    #text-1 { top: 20%; }
+    #text-2 { top: 60%; color: #fff; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
+    #text-3 { top: 40%; left: 50%; color: #fff; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
+    #text-4 { top: 70%; left: 10%; color: #fff; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
+
+    @keyframes floatIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <div id="scroll-track"></div>
+
+  <div id="stage">
+    <div id="cover-layer">
+      <div class="title-gold">K9 Heritage</div>
+      <div class="scroll-hint">↓ Scroll to Open</div>
+    </div>
+
+    <div id="bg-paper"></div>
+    <div id="bg-city"></div>
+
+    <svg id="human-silhouette" class="silhouette" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M50,15 C58,15 65,22 65,30 C65,38 58,45 50,45 C42,45 35,38 35,30 C35,22 42,15 50,15 Z M50,50 C65,50 80,60 85,80 C88,95 85,130 85,130 L75,130 L75,190 L60,190 L60,140 L40,140 L40,190 L25,190 L25,130 C25,130 22,95 25,80 C30,60 40,50 50,50 Z" />
+    </svg>
+
+    <svg id="dog-silhouette" class="silhouette" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+       <path d="M30,65 C30,65 20,55 20,40 C20,25 35,20 45,25 C55,20 70,25 70,40 C70,55 60,65 60,65 L65,85 L55,85 L50,70 L40,70 L35,85 L25,85 L30,65 Z M70,35 C75,30 85,30 90,35 L85,45 C80,40 75,40 70,45 Z" />
+    </svg>
+
+    <div id="cord-base">
+      <div id="cord-color-mask"><div id="cord-color-content"></div></div>
+      <div class="milestone-stitch" id="ms-gold"></div>
+    </div>
+
+    <div id="text-1" class="story-text">それは、<br>小さな一歩から<br>始まった。</div>
+    <div id="text-2" class="story-text">信頼の色が、<br>少しずつ<br>重なっていく。</div>
+    <div id="text-3" class="story-text">
+      <?= ownerName ?>さんとだから、<br>ここまで来れた。
+    </div>
+    <div id="text-4" class="story-text">
+      これからも、<br>ずっと
+      <?= dogName ?>と隣で。
+    </div>
+  </div>
+
+  <script>
+    // --- 1. 街並み生成 ---
+    function buildCity() {
+      const cityContainer = document.getElementById('bg-city');
+      const windowWidth = window.innerWidth;
+      let currentWidth = 0;
+      while (currentWidth < windowWidth) {
+        const block = document.createElement('div');
+        block.classList.add('city-block');
+        const w = Math.floor(Math.random() * 50) + 40;
+        const hPercent = Math.floor(Math.random() * 45) + 35; 
+        block.style.width = `${w}px`; block.style.height = `${hPercent}%`;
+        if (Math.random() > 0.9) block.style.zIndex = '3';
+        cityContainer.appendChild(block); currentWidth += w;
+      }
+    }
+
+    // --- 2. スクロール連動ロジック ---
+    window.addEventListener('scroll', () => {
+      const scrollY = window.scrollY;
+      const docH = document.getElementById('scroll-track').offsetHeight;
+      
+      const cover = document.getElementById('cover-layer');
+      const text1 = document.getElementById('text-1');
+      const text2 = document.getElementById('text-2');
+      const text3 = document.getElementById('text-3');
+      const text4 = document.getElementById('text-4');
+      const cordBase = document.getElementById('cord-base');
+      const colorMask = document.getElementById('cord-color-mask');
+      const bgCity = document.getElementById('bg-city');
+      const stitch = document.getElementById('ms-gold');
+      const human = document.getElementById('human-silhouette');
+      const dog = document.getElementById('dog-silhouette');
+
+      // 1. 表紙 & 2. パラコード
+      cover.style.transform = `rotateY(-${Math.min(scrollY / 4, 100)}deg)`;
+      cover.style.opacity = scrollY > 300 ? 0 : 1;
+      cordBase.style.transform = `translateY(${Math.min(Math.max((scrollY - 100) / 4, 0), 100)}px)`;
+
+      // 3. テキスト1
+      if (scrollY > 200 && scrollY < 700) {
+        let t1 = (scrollY - 200) / 300;
+        text1.style.opacity = Math.min(Math.max(t1, 0), 1);
+        text1.style.transform = `translateX(${-20 + (t1 * 20)}px)`;
+      } else if (scrollY >= 700) text1.style.opacity = Math.max(0, 1 - (scrollY - 700) / 200);
+
+      // 4. 中盤
+      if (scrollY > 800) bgCity.style.opacity = Math.min((scrollY - 800) / 400, 1);
+      if (scrollY > 600) colorMask.style.height = `${Math.min((scrollY - 600) / 1200 * 100, 100)}%`;
+
+      if (scrollY > 900 && scrollY < 1600) {
+        let t2 = (scrollY - 900) / 300;
+        text2.style.opacity = stitch.style.opacity = Math.min(Math.max(t2, 0), 1);
+        text2.style.transform = `translateX(${-20 + (t2 * 20)}px)`;
+      } else if (scrollY >= 1600) text2.style.opacity = Math.max(0, 1 - (scrollY - 1600) / 200);
+
+      // 5. 終盤 (人間 & テキスト3)
+      if (scrollY > 1500 && scrollY < 2200) {
+        let hProg = (scrollY - 1500) / 400;
+        human.style.opacity = text3.style.opacity = Math.min(Math.max(hProg, 0), 1);
+        human.style.transform = `translateY(${20 - (hProg * 20)}px)`;
+      } else if (scrollY >= 2200) {
+         human.style.opacity = text3.style.opacity = Math.max(0.5, 1 - (scrollY - 2200) / 300);
+      }
+
+      // --- 6. ラストシーン (犬 & テキスト4) ---
+      if (scrollY > 2000) {
+        let dProg = (scrollY - 2000) / 500;
+        dog.style.opacity = Math.min(Math.max(dProg, 0), 1);
+        text4.style.opacity = Math.min(Math.max(dProg, 0), 1);
+        
+        let rotateX = 90 - (dProg * 90);
+        dog.style.transform = `rotateX(${rotateX}deg)`;
+      }
+    });
+
+    buildCity();
+  </script>
+</body>
+</html>
