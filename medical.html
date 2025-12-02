@@ -8,39 +8,21 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
     <style>
-        :root {
-            --primary-color: #88b08b; /* Sage Green */
-            --accent-color: #e8f5e9;
-            --alert-color: #e07a5f; /* Terracotta Orange */
-            --mask-color: #f0f0f0;
-        }
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: #333; padding-bottom: 300px; }
-        .version-stamp { position: fixed; top: 0; right: 0; background: #6f42c1; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
-        
+        /* (CSSは変更なし) */
+        :root { --primary-color: #88b08b; --accent-color: #e8f5e9; --alert-color: #e07a5f; --text-color: #333; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 300px; }
+        .version-stamp { position: fixed; top: 0; right: 0; background: #198754; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
         #debug-console-container { display: block; margin-top: 30px; padding: 0 10px; }
         #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 11px; padding: 15px; border-radius: 8px; }
-        
         .no-print-area { margin: 20px 0 30px; text-align: center; }
         .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
         #generating-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); z-index: 10000; display: none; flex-direction: column; justify-content: center; align-items: center; }
-        
         #poster-display, #crate-display { display: none; }
-        
         /* Modal Image Preview */
-        #generated-image-preview {
-            width: 100%;
-            height: auto;
-            border: 2px solid #ccc;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-
-        /* Layouts (Keep existing) */
+        #generated-image-preview { width: 100%; height: auto; border: 2px solid #ccc; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        
+        /* Layouts */
         .poster-container { width: 210mm; min-height: 297mm; background: #fffaf0; padding: 15mm; text-align: center; border: 8px solid #dc3545; box-sizing: border-box; margin: 0 auto; }
         .poster-header { color: #dc3545; font-size: 40pt; font-weight: 900; margin-bottom: 10mm; }
         .poster-photo { width: 70%; aspect-ratio: 1/1; object-fit: cover; border: 6px solid #333; margin-bottom: 10mm; background: #ddd; }
@@ -79,7 +61,7 @@
 </head>
 <body class="mode-handbook">
 
-    <div class="version-stamp">v2025.12.02-IMAGE-SAVE-FIX</div>
+    <div class="version-stamp">v2025.12.02-PERF-DATA-FIX</div>
 
     <div id="generating-overlay">
         <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;"></div>
@@ -90,24 +72,8 @@
     <div class="container py-3">
         <div class="no-print-area">
             <h4 class="fw-bold mb-3" style="color: var(--primary-color);">⛑️ うちの子医療・防災手帳</h4>
-            
             <div id="loading" class="loading">
                 <div class="spinner-border text-success"></div><p>Loading...</p>
-            </div>
-
-            <div id="controls" style="display:none; max-width: 500px; margin: 0 auto;">
-                <p class="text-muted small mb-2 text-start">必要な形式を選択してください：</p>
-                <button onclick="generateOutput('handbook')" class="btn btn-print" style="background-color: #88b08b; width:100%; color:white; margin-bottom:10px;">
-                    <i class="fa-solid fa-book-medical"></i> 1. 防災手帳 (A4横)
-                </button>
-                <button onclick="generateOutput('crate')" class="btn btn-print" style="background-color: #e07a5f; width:100%; color:white; margin-bottom:10px;">
-                    <i class="fa-solid fa-tent"></i> 2. クレート掲示タグ (A4縦)
-                </button>
-                <button onclick="generateOutput('poster')" class="btn btn-print" style="background-color: #dc3545; width:100%; color:white; margin-bottom:10px;">
-                    <i class="fa-solid fa-bullhorn"></i> 3. 迷子ポスター (A4縦)
-                </button>
-                <hr>
-                <button onclick="window.location.href='index.html'" class="btn btn-outline-secondary w-100 rounded-pill">戻る</button>
             </div>
         </div>
 
@@ -173,6 +139,23 @@
             </div>
         </div>
 
+        <div class="no-print-area mt-4">
+            <div id="controls" style="display:none; max-width: 500px; margin: 0 auto;">
+                <hr>
+                <p class="text-muted small mb-2 text-start">必要な形式を選択してください：</p>
+                <button onclick="generateOutput('handbook')" class="btn btn-print" style="background-color: #88b08b; width:100%; color:white; margin-bottom:10px;">
+                    <i class="fa-solid fa-book-medical"></i> 1. 防災手帳 (A4横)
+                </button>
+                <button onclick="generateOutput('crate')" class="btn btn-print" style="background-color: #e07a5f; width:100%; color:white; margin-bottom:10px;">
+                    <i class="fa-solid fa-tent"></i> 2. クレート掲示タグ (A4縦)
+                </button>
+                <button onclick="generateOutput('poster')" class="btn btn-print" style="background-color: #dc3545; width:100%; color:white; margin-bottom:10px;">
+                    <i class="fa-solid fa-bullhorn"></i> 3. 迷子ポスター (A4縦)
+                </button>
+                <button onclick="window.location.href='index.html'" class="btn btn-outline-secondary w-100 rounded-pill mt-3">戻る</button>
+            </div>
+        </div>
+
         <div id="debug-console-container" class="no-print-area">
             <h6 class="text-danger fw-bold">⚠️ Debug Console</h6>
             <div id="debug-console">Initializing...</div>
@@ -187,15 +170,12 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body text-center">
-                    
                     <div class="alert alert-primary text-start small mb-3">
                         <strong><i class="fa-solid fa-mobile-screen"></i> iPhoneの方へ:</strong><br>
                         下の画像を<strong>長押し</strong>して、<strong>「"写真"に保存」</strong>を選択してください。<br>
                         保存した画像は写真アプリから印刷や送信ができます。
                     </div>
-
                     <img id="generated-image-preview" src="" alt="Generated Document">
-
                     <div class="mt-3">
                         <button id="btn-download-pdf" class="btn btn-outline-secondary btn-sm" style="display:none;">
                             <i class="fa-solid fa-file-pdf"></i> PC用: PDFダウンロード
@@ -210,6 +190,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
         const LIFF_ID = "2008546673-MJY7j3ox";
@@ -252,11 +235,16 @@
             const c = data.customer || {};
             const d = data.dog || {};
 
+            // 1. Handbook
             setText('d_name_main', d.name_disp);
             setText('d_breed_main', `${d.breed} / ${d.age}`);
+
+            // 2. Poster Data (STEP 2: Data Linking)
             setText('poster_name', d.name_disp);
-            setText('poster_desc', `${d.breed} / ${d.gender} / ${d.age}`);
-            setText('poster_phone', c.phone);
+            setText('poster_desc', `${d.breed} / ${d.gender} / ${d.age} / ${d.color || ''}`);
+            setText('poster_phone', c.phone); // Ensure phone is linked
+
+            // 3. Crate Data (STEP 2: Data Linking)
             setText('crate_name', d.name_disp);
             setText('crate_breed', `${d.breed} (${d.gender})`);
             setText('crate_caution', d.caution || 'None');
@@ -281,7 +269,6 @@
             });
         }
 
-        // --- ★ NEW: Generate Image & PDF Fallback ---
         async function generateOutput(mode) {
             log(`Starting Gen: ${mode}`);
             const overlay = document.getElementById('generating-overlay');
@@ -299,18 +286,16 @@
             await new Promise(r => setTimeout(r, 500));
 
             try {
-                // 1. Capture as Image (High Quality)
+                // Image Generation
                 const canvas = await html2canvas(target, { scale: 2, useCORS: true, allowTaint: true });
                 const imgData = canvas.toDataURL('image/jpeg', 0.90);
                 
-                // 2. Set Image to Modal (For iPhone)
+                // Show in Modal
                 const previewImg = document.getElementById('generated-image-preview');
                 previewImg.src = imgData;
 
-                // 3. Prepare PDF Download (For PC - Optional)
+                // PC Download Option
                 const btnDownload = document.getElementById('btn-download-pdf');
-                
-                // PC Check (Simple logic)
                 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                 if (!isMobile) {
                     btnDownload.style.display = 'inline-block';
@@ -327,7 +312,6 @@
                     btnDownload.style.display = 'none';
                 }
                 
-                log('Image generated. Showing Modal.');
                 outputModal.show();
 
             } catch (err) {
