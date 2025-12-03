@@ -13,7 +13,7 @@
     <style>
         :root { --primary-color: #88b08b; --accent-color: #e8f5e9; --alert-color: #e07a5f; --text-color: #333; --mask-color: #f0f0f0; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 300px; }
-        .version-stamp { position: fixed; top: 0; right: 0; background: #6f42c1; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
+        .version-stamp { position: fixed; top: 0; right: 0; background: #dc3545; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
         
         /* UI Common */
         .no-print-area { margin: 20px 0 30px; text-align: center; }
@@ -36,76 +36,74 @@
         #debug-console-container { display: block; margin-top: 30px; padding: 0 10px; }
         #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 11px; padding: 15px; border-radius: 8px; height: 200px; overflow-y: scroll; }
         
-        /* Poster Styles (Restored full fields) */
-        .poster-container { width: 210mm; height: 297mm; background: white; margin: 0 auto; position: relative; overflow: hidden; }
-        .poster-inner-border { width: 100%; height: 100%; border: 6px solid #ff0000; padding: 10mm; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
-        .poster-title { color: #ff0000; font-size: 42pt; font-weight: 900; margin-bottom: 15px; font-family: sans-serif; line-height: 1; }
-        .poster-date-line { font-size: 16pt; font-weight: bold; color: #333; margin-bottom: 15px; width: 100%; text-align: left; }
+        /* Poster Styles (Fixed Aspect Ratio) */
+        .poster-container { width: 100%; max-width: 800px; aspect-ratio: 210/297; background: white; margin: 0 auto; position: relative; overflow: hidden; }
+        .poster-inner-border { width: 100%; height: 100%; border: 6px solid #ff0000; padding: 4%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
+        .poster-title { color: #ff0000; font-size: 3rem; font-weight: 900; margin-bottom: 1rem; font-family: sans-serif; line-height: 1; }
+        .poster-date-line { font-size: 1.2rem; font-weight: bold; color: #333; margin-bottom: 1rem; width: 100%; text-align: left; }
         .handwrite-space { border-bottom: 2px solid #333; display: inline-block; margin: 0 2px; }
-        .poster-photo-frame { width: 80%; aspect-ratio: 3/4; border: 3px solid #333; margin-bottom: 15px; background: #eee; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        .poster-photo-frame { width: 80%; aspect-ratio: 3/4; border: 3px solid #333; margin-bottom: 1rem; background: #eee; display: flex; justify-content: center; align-items: center; overflow: hidden; }
         .poster-photo-img { width: 100%; height: 100%; object-fit: contain; }
-        .poster-info-table { width: 100%; border-collapse: collapse; font-size: 16pt; margin-bottom: 15px; text-align: left; }
+        .poster-info-table { width: 100%; border-collapse: collapse; font-size: 1.2rem; margin-bottom: 1rem; text-align: left; }
         .poster-info-table th { width: 25%; padding: 5px; border-bottom: 2px solid #ff0000; color: #ff0000; font-weight: bold; }
         .poster-info-table td { padding: 5px; border-bottom: 1px solid #ccc; font-weight: bold; color: #000; }
-        .poster-message { font-size: 14pt; text-align: left; line-height: 1.4; margin-bottom: 15px; font-weight: 600; }
-        .poster-split-section { width: 100%; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .poster-message { font-size: 1rem; text-align: left; line-height: 1.4; margin-bottom: 1rem; font-weight: 600; }
+        .poster-split-section { width: 100%; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; flex-grow: 1; }
         .poster-left-col { width: 48%; }
         .poster-right-col { width: 48%; display: flex; flex-direction: column; align-items: center; }
         .poster-contact-box { width: 100%; border: 4px solid #ff0000; padding: 10px; background: #fff5f5; text-align: center; }
-        .poster-contact-name { font-size: 16pt; font-weight: bold; }
-        .poster-contact-phone { font-size: 24pt; font-weight: 900; color: #ff0000; display: block; }
-        .poster-shelter-area { width: 100%; font-size: 14pt; font-weight: bold; text-align: left; margin-bottom: 10px; }
+        .poster-contact-name { font-size: 1.2rem; font-weight: bold; }
+        .poster-contact-phone { font-size: 1.8rem; font-weight: 900; color: #ff0000; display: block; }
+        .poster-shelter-area { width: 100%; font-size: 1rem; font-weight: bold; text-align: left; margin-bottom: 10px; }
         .poster-qr-area { width: 100px; height: 100px; border: 1px solid #333; }
         .poster-logo-area { margin-top: auto; text-align: center; width: 100%; }
-        .poster-logo-img { width: 40mm; height: auto; }
+        .poster-logo-img { width: 30%; height: auto; }
 
-        /* Crate Tag Styles (ABC Layout + Restored Data) */
-        .crate-container { width: 210mm; height: 297mm; background: white; position: relative; overflow: hidden; box-sizing: border-box; border: 1px dashed #aaa; margin: 0 auto; }
+        /* Crate Tag Styles (Fixed Aspect Ratio & Layout Adjustments) */
+        .crate-container { width: 100%; max-width: 800px; aspect-ratio: 210/297; background: white; position: relative; overflow: hidden; box-sizing: border-box; border: 1px dashed #aaa; margin: 0 auto; }
         .crate-fold-line { position: absolute; top: 45%; left: 0; width: 100%; height: 0; border-top: 2px dashed #88b08b; z-index: 10; }
         
-        /* AREA A: BACK (Left: Command, Right: Food) */
-        .crate-area-a { position: absolute; top: 0; left: 0; width: 100%; height: 45%; padding: 10mm 10mm 5mm 10mm; box-sizing: border-box; transform: rotate(180deg); display: flex; gap: 15px; background-color: #fff; border-bottom: 1px dashed #ccc; }
-        .crate-a-left { width: 48%; border-right: 2px solid #ddd; padding-right: 10px; position: relative; }
+        /* AREA A: BACK */
+        .crate-area-a { position: absolute; top: 0; left: 0; width: 100%; height: 45%; padding: 4%; box-sizing: border-box; transform: rotate(180deg); display: flex; gap: 15px; background-color: #fff; border-bottom: 1px dashed #ccc; }
+        .crate-a-left { width: 48%; border-right: 2px solid #ddd; padding-right: 10px; position: relative; display: flex; flex-direction: column; }
         .crate-a-right { width: 48%; padding-left: 10px; display:flex; flex-direction:column; }
-        .crate-header-a { font-size: 14pt; font-weight: bold; color: #555; border-bottom: 3px solid #88b08b; margin-bottom: 8px; display: block; }
-        .cmd-example { font-size: 10pt; color: #666; margin-bottom: 5px; font-style: italic; background:#eee; padding:2px 5px; border-radius:4px; }
-        .cmd-row { font-size: 13pt; margin-bottom: 5px; border-bottom: 1px dotted #ccc; display: flex; align-items: center; }
-        .cmd-key { width: 80px; font-weight: bold; }
+        .crate-header-a { font-size: 1.2rem; font-weight: bold; color: #555; border-bottom: 3px solid #88b08b; margin-bottom: 8px; display: block; }
+        .cmd-row { font-size: 1rem; margin-bottom: 5px; border-bottom: 1px dotted #ccc; display: flex; align-items: center; }
+        .cmd-key { width: 90px; font-weight: bold; }
         .cmd-val { flex-grow: 1; font-weight: bold; color: #000; min-height:20px; }
-        .cmd-footer { margin-top: auto; font-size: 10pt; font-weight: bold; text-align: center; background: #e8f5e9; padding: 3px; border-radius: 4px; color: #88b08b; }
-        .food-grid { display: flex; gap: 5px; margin-bottom: 10px; }
-        .food-box { flex: 1; border: 1px solid #ccc; border-radius: 5px; padding: 5px; font-size: 10pt; font-weight: bold; }
+        .cmd-footer { margin-top: auto; font-size: 0.9rem; font-weight: bold; text-align: center; background: #e8f5e9; padding: 3px; border-radius: 4px; color: #88b08b; }
+        .food-grid { display: flex; gap: 5px; margin-bottom: 10px; flex-grow: 1; }
+        .food-box { flex: 1; border: 1px solid #ccc; border-radius: 5px; padding: 5px; font-size: 0.9rem; font-weight: bold; display: flex; flex-direction: column; }
         .food-title-ok { color: #198754; display:block; margin-bottom:3px; }
         .food-title-ng { color: #dc3545; display:block; margin-bottom:3px; }
-        .allergy-area { margin-top: auto; border-top: 2px solid #333; padding-top: 5px; color: #dc3545; font-weight: bold; font-size: 12pt; min-height: 40px; }
+        .food-list { flex-grow: 1; }
+        .allergy-box { margin-top: auto; background: #000; color: #dc3545; padding: 5px; font-weight: bold; font-size: 1rem; min-height: 3rem; border-radius: 4px; }
         .crate-logo-placeholder { position: absolute; bottom: 0; right: 0; color: #ccc; padding: 2px 5px; }
 
         /* AREA B: FRONT */
-        .crate-area-b { position: absolute; top: 45%; left: 0; width: 100%; height: 40%; padding: 5mm 10mm; box-sizing: border-box; display: flex; flex-direction: column; }
-        .crate-b-main { display: flex; align-items: flex-start; margin-bottom: 5px; }
-        .crate-b-photo { width: 140px; height: 140px; object-fit: contain; border-radius: 10px; border: 5px solid #88b08b; background: #eee; flex-shrink: 0; margin-right: 15px; }
+        .crate-area-b { position: absolute; top: 45%; left: 0; width: 100%; height: 40%; padding: 4%; box-sizing: border-box; display: flex; flex-direction: column; }
+        .crate-b-top { display: flex; align-items: flex-start; margin-bottom: 10px; }
+        .crate-b-photo { width: 30%; aspect-ratio: 1/1; object-fit: contain; border-radius: 10px; border: 5px solid #88b08b; background: #eee; flex-shrink: 0; margin-right: 15px; }
         .crate-b-info { flex-grow: 1; }
-        .crate-name-huge { font-size: 36pt; font-weight: 900; line-height: 1; color: #333; margin-bottom: 5px; }
-        .crate-info-sub { font-size: 14pt; font-weight: bold; color: #555; border-bottom: 1px solid #ccc; padding-bottom: 2px; }
-        .crate-caution-box { background: #fff0f0; border: 2px solid #dc3545; border-radius: 6px; padding: 5px 10px; font-size: 14pt; font-weight: bold; color: #333; margin: 8px 0; }
-        .crate-write-box-sm { border: 2px dashed #88b08b; border-radius: 6px; height: 40px; padding: 5px; font-size: 10pt; text-align: left; color: #666; margin-bottom: 8px; }
-        
-        .crate-med-grid { display: flex; height: 60px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; }
-        .crate-med-left { width: 40%; border-right: 1px solid #ccc; padding: 5px; font-size: 9pt; font-weight: bold; overflow: hidden; }
-        .crate-med-right { width: 60%; display: flex; flex-direction: column; }
-        .crate-med-right-top { height: 50%; border-bottom: 1px solid #ccc; padding: 2px 5px; font-size: 9pt; font-weight: bold; }
-        .crate-med-right-bottom { height: 50%; padding: 2px 5px; font-size: 9pt; font-weight: bold; color: #dc3545; }
-        .crate-consent-area { margin-top: 5px; padding-top: 2px; border-top: 1px solid #eee; }
-        .crate-msg-bottom { margin-top: auto; text-align: center; background: #88b08b; color: white; font-weight: bold; font-size: 11pt; padding: 3px; border-radius: 0 0 8px 8px; }
+        .crate-name-huge { font-size: 2.5rem; font-weight: 900; line-height: 1; color: #333; margin-bottom: 5px; }
+        .crate-info-sub { font-size: 1rem; font-weight: bold; color: #555; border-bottom: 1px solid #ccc; padding-bottom: 2px; }
+        .crate-caution-box { background: #fff0f0; border: 2px solid #dc3545; border-radius: 6px; padding: 5px 10px; font-size: 1rem; font-weight: bold; color: #333; margin-top: 10px; }
+        .crate-logs-container { display: flex; gap: 10px; margin-top: 10px; flex-grow: 1; }
+        .crate-log-box { flex: 1; border: 2px dashed #88b08b; border-radius: 6px; padding: 5px; font-size: 0.9rem; display: flex; flex-direction: column; }
+        .crate-log-title { font-weight: bold; color: #555; border-bottom: 1px dashed #ccc; margin-bottom: 5px; }
+        .crate-log-content { flex-grow: 1; font-weight: normal; }
+
+        .crate-consent-area { margin-top: 5px; padding-top: 5px; border-top: 1px solid #eee; text-align: center; }
+        .crate-msg-bottom { margin-top: auto; text-align: center; background: #88b08b; color: white; font-weight: bold; font-size: 0.9rem; padding: 3px; border-radius: 0 0 8px 8px; }
 
         /* AREA C: CONTACT */
-        .crate-area-c { position: absolute; bottom: 0; left: 0; width: 100%; height: 15%; border-top: 2px dashed #333; background-color: #f8f9fa; padding: 10px 20px; box-sizing: border-box; }
-        .contact-grid { display: flex; justify-content: space-between; margin-bottom: 5px; }
-        .contact-item { width: 48%; font-size: 11pt; font-weight: bold; border-bottom: 1px solid #ccc; }
-        .contact-label { font-size: 8pt; color: #666; display: block; }
+        .crate-area-c { position: absolute; bottom: 0; left: 0; width: 100%; height: 15%; border-top: 2px dashed #333; background-color: #f8f9fa; padding: 4%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; }
+        .contact-grid { display: flex; justify-content: space-between; }
+        .contact-item { width: 48%; font-size: 0.9rem; font-weight: bold; border-bottom: 1px solid #ccc; }
+        .contact-label { font-size: 0.7rem; color: #666; display: block; }
         .vet-grid { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #ccc; padding-top: 5px; }
-        .vet-info { font-size: 11pt; font-weight: bold; }
-        .shelter-write { border-bottom: 1px solid #333; width: 120px; display: inline-block; }
+        .vet-info { font-size: 0.9rem; font-weight: bold; }
+        .shelter-write { border-bottom: 1px solid #333; width: 100px; display: inline-block; }
 
         /* Hidden */
         #poster-display, #crate-display, #generating-overlay, #debug-console-container { display: none; }
@@ -127,7 +125,7 @@
 </head>
 <body class="mode-handbook">
 
-    <div class="version-stamp">v2025.12.03-FULL-RESTORE-PC-DL</div>
+    <div class="version-stamp">v2025.12.03-DESIGN-FIX</div>
 
     <div id="generating-overlay">
         <div class="spinner-border text-primary"></div><h4 class="mt-3">作成中...</h4>
@@ -149,7 +147,7 @@
         </div>
 
         <div id="poster-display">
-             <div class="poster-container"><div class="poster-inner-border"><div class="poster-title">うちの子探してます！</div><div class="poster-date-line"><span class="handwrite-space">　　　</span> 月<span class="handwrite-space">　　　</span> 日<span class="handwrite-space">　　　　　　</span> 時頃<br><span class="handwrite-space" style="width: 75%;">　　　　　　　　　　　　</span> 周辺でいなくなりました。</div><div class="poster-photo-frame"><img id="poster_img" class="poster-photo-img" src="" alt="NO PHOTO"></div><table class="poster-info-table"><tr><th>名前</th><td id="poster_name" style="font-size:24pt;">-</td></tr><tr><th>性別・年齢</th><td id="poster_gender_age">-</td></tr><tr><th>犬種・毛色</th><td id="poster_breed_color">-</td></tr></table><div class="poster-message">大切な愛犬が迷子になってしまいました。情報提供をお願いします。<br>保護をしてくださった方、保護につながる情報をくださった方にはお礼をさせていただきます。下記までご連絡ください。</div><div class="poster-split-section"><div class="poster-left-col"><div class="poster-contact-box"><div class="small fw-bold">連絡先 (飼い主)</div><div id="poster_owner" class="poster-contact-name">-</div><div id="poster_phone" class="poster-contact-phone">-</div></div></div><div class="poster-right-col"><div class="poster-shelter-area">避難所: <br><span class="handwrite-space" style="width:100%; height:30px;"></span></div><div id="poster-qr-container" style="margin-top:10px;"><img id="poster-qr-img" src="" alt="QR" style="width:80px; height:80px; border:1px solid #333; display:none;"></div></div></div><div class="poster-logo-area"><img class="poster-logo-img k9-logo-common" alt="Logo"></div></div></div>
+             <div class="poster-container"><div class="poster-inner-border"><div class="poster-title">うちの子探してます！</div><div class="poster-date-line"><span class="handwrite-space">　　　</span> 月<span class="handwrite-space">　　　</span> 日<span class="handwrite-space">　　　　　　</span> 時頃<br><span class="handwrite-space" style="width: 75%;">　　　　　　　　　　　　</span> 周辺でいなくなりました。</div><div class="poster-photo-frame"><img id="poster_img" class="poster-photo-img" src="" alt="NO PHOTO"></div><table class="poster-info-table"><tr><th>名前</th><td id="poster_name" style="font-size:2rem;">-</td></tr><tr><th>性別・年齢</th><td id="poster_gender_age">-</td></tr><tr><th>犬種・毛色</th><td id="poster_breed_color">-</td></tr></table><div class="poster-message">大切な愛犬が迷子になってしまいました。情報提供をお願いします。<br>保護をしてくださった方、保護につながる情報をくださった方にはお礼をさせていただきます。下記までご連絡ください。</div><div class="poster-split-section"><div class="poster-left-col"><div class="poster-contact-box"><div class="small fw-bold">連絡先 (飼い主)</div><div id="poster_owner" class="poster-contact-name">-</div><div id="poster_phone" class="poster-contact-phone">-</div></div></div><div class="poster-right-col"><div class="poster-shelter-area">避難所: <br><span class="handwrite-space" style="width:100%; height:30px;"></span></div><div id="poster-qr-container" style="margin-top:10px;"><img id="poster-qr-img" src="" alt="QR" style="display:none;"></div></div></div><div class="poster-logo-area"><img class="poster-logo-img k9-logo-common" alt="Logo"></div></div></div>
         </div>
 
         <div id="crate-display">
@@ -158,39 +156,48 @@
                 <div class="crate-area-a">
                     <div class="crate-a-left">
                         <span class="crate-header-a">🐕 コマンド辞書</span>
-                        <div class="cmd-example">例: マテ = Wait!(ウェイト)</div>
-                        <div class="cmd-row"><span class="cmd-key">マテ</span> <span class="cmd-val"></span></div>
-                        <div class="cmd-row"><span class="cmd-key">オスワリ</span> <span class="cmd-val"></span></div>
-                        <div class="cmd-row"><span class="cmd-key">ハウス</span> <span class="cmd-val"></span></div>
+                        <div class="cmd-row"><span class="cmd-key">マテ = </span> <span class="cmd-val"></span></div>
+                        <div class="cmd-row"><span class="cmd-key">オスワリ = </span> <span class="cmd-val"></span></div>
+                        <div class="cmd-row"><span class="cmd-key">ハウス = </span> <span class="cmd-val"></span></div>
                         <div class="cmd-footer">私の家ではこうやって伝えてます！</div>
                     </div>
                     <div class="crate-a-right">
                         <span class="crate-header-a">🆘 サバイバルフード</span>
-                        <div class="food-grid"><div class="food-box"><span class="food-title-ok">⭕️ OK</span>白米・パン<br>芋・鶏肉</div><div class="food-box"><span class="food-title-ng">❌ NG</span>ネギ・チョコ<br>ブドウ</div></div>
-                        <div class="allergy-area">アレルギー: <span id="crate_allergy_content" style="color:#000;">-</span></div>
+                        <div class="food-grid">
+                            <div class="food-box"><span class="food-title-ok">⭕️ OK</span><div class="food-list">白米・パン(具なし)<br>芋・キャベツ・鶏肉</div></div>
+                            <div class="food-box"><span class="food-title-ng">❌ NG</span><div class="food-list">ネギ類・チョコ<br>ブドウ・キシリトール</div></div>
+                        </div>
+                        <div class="allergy-box">アレルギー:<br><span id="crate_allergy_content">-</span></div>
                         <div class="crate-logo-placeholder"><img class="k9-logo-common" style="width:60px;" alt="Logo"></div>
                     </div>
                 </div>
                 <div class="crate-area-b">
-                    <div class="crate-b-main">
+                    <div class="crate-b-top">
                         <img id="crate_img" class="crate-b-photo" src="">
                         <div class="crate-b-info">
                             <div id="crate_name" class="crate-name-huge">NAME</div>
                             <div id="crate_breed" class="crate-info-sub">Breed / Sex / Neutered</div>
+                            <div class="crate-caution-box"><span class="crate-caution-title">⚠️ ちゅうい！</span><span id="crate_caution">-</span></div>
                         </div>
                     </div>
-                    <div class="crate-caution-box"><span class="crate-caution-title">⚠️ ちゅうい！</span><span id="crate_caution">-</span></div>
-                    <div class="crate-write-box-sm">🍚 食事ログ:</div>
-                    <div class="crate-med-grid">
-                        <div class="crate-med-left">既往歴:<br><span id="crate_history_content" style="font-weight:normal;">-</span></div>
-                        <div class="crate-med-right"><div class="crate-med-right-top">常備薬: <span id="crate_medicine_content" style="font-weight:normal;">-</span></div><div class="crate-med-right-bottom">アレルギー: <span id="crate_allergy_content_b">-</span></div></div>
+                    
+                    <div class="crate-logs-container">
+                        <div class="crate-log-box">
+                            <span class="crate-log-title">既往歴</span>
+                            <div id="crate_history_content" class="crate-log-content">-</div>
+                        </div>
+                        <div class="crate-log-box">
+                            <span class="crate-log-title">常備薬・食事ログ</span>
+                            <div id="crate_medicine_content" class="crate-log-content">-</div>
+                        </div>
                     </div>
-                    <div class="crate-consent-area"><div class="d-flex align-items-center"><input type="checkbox" style="transform:scale(2.0); margin-right:10px;"><span style="font-weight:bold; font-size:10pt;">万が一の怪我、体調不良の際は応急処置を有識者に一任します。</span></div></div>
+
+                    <div class="crate-consent-area"><div class="d-flex align-items-center justify-content-center"><input type="checkbox" style="transform:scale(1.5); margin-right:10px;"><span style="font-weight:bold; font-size:0.9rem;">万が一の怪我、体調不良の際は応急処置を有識者に一任します。</span></div></div>
                     <div class="crate-msg-bottom">＼ 緊急の際はこちらをめくってください ／ <i class="fa-solid fa-arrow-down"></i></div>
                 </div>
                 <div class="crate-area-c">
                     <div class="contact-grid"><div class="contact-item"><span class="contact-label">飼い主 (Owner)</span><span id="crate_owner">-</span><br><span id="crate_phone">-</span></div><div class="contact-item"><span class="contact-label">代理人 (Proxy)</span><span id="crate_proxy">-</span><br><span id="crate_proxy_tel">-</span></div></div>
-                    <div class="vet-grid"><div class="vet-info"><i class="fa-solid fa-hospital"></i> <span id="crate_vet">-</span><br><span id="crate_vet_tel" style="font-size:10pt;">-</span></div><div class="shelter-info"><span class="contact-label">居住エリア</span><span class="shelter-write"></span></div></div>
+                    <div class="vet-grid"><div class="vet-info"><i class="fa-solid fa-hospital"></i> <span id="crate_vet">-</span><br><span id="crate_vet_tel" style="font-size:0.9rem;">-</span></div><div class="shelter-info"><span class="contact-label">居住エリア</span><span class="shelter-write"></span></div></div>
                 </div>
             </div>
         </div>
@@ -278,9 +285,9 @@
                 document.getElementById('poster-qr-img').src = qrSrc; document.getElementById('poster-qr-img').style.display = 'block';
             }
 
-            // Crate (All Fields including Grid)
+            // Crate (All Fields)
             setText('crate_name', d.name_disp); setText('crate_breed', `${d.breed} / ${d.gender} / ${d.neutered}`);
-            setText('crate_caution', d.caution); setText('crate_allergy_content', d.allergy); setText('crate_allergy_content_b', d.allergy);
+            setText('crate_caution', d.caution); setText('crate_allergy_content', d.allergy);
             setText('crate_history_content', d.history); setText('crate_medicine_content', d.medicine);
             setText('crate_owner', c.name); setText('crate_phone', c.phone);
             setText('crate_proxy', c.proxy_name); setText('crate_proxy_tel', c.proxy_phone);
