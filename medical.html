@@ -7,44 +7,67 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
         :root { --primary-color: #88b08b; --accent-color: #e8f5e9; --alert-color: #e07a5f; --text-color: #333; --mask-color: #f0f0f0; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 300px; }
-        .version-stamp { position: fixed; top: 0; right: 0; background: #6610f2; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
+        .version-stamp { position: fixed; top: 0; right: 0; background: #007bff; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
         
-        /* UI Common */
+        /* UI Elements */
         .no-print-area { margin: 20px 0 30px; text-align: center; }
         .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; border: 1px solid #eee; }
         .section-title { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 15px; }
         .info-row { margin-bottom: 8px; }
         .info-label { font-weight: bold; color: #666; font-size: 0.8rem; display: block; margin-bottom: 1px; }
+        .info-value { font-size: 1rem; font-weight: 500; min-height: 24px; word-break: break-all; }
+
+        /* Masking */
         .masked-wrapper { display: flex; align-items: center; gap: 10px; }
         .masked-text { display: inline-block; letter-spacing: 2px; color: #aaa; background: var(--mask-color); padding: 2px 8px; border-radius: 4px; font-family: monospace; }
         .real-text { display: none; font-weight: bold; color: #333; }
         .btn-toggle-mask { font-size: 0.7rem; padding: 2px 10px; border: 1px solid var(--alert-color); color: var(--alert-color); background: white; border-radius: 20px; cursor: pointer; }
         .btn-toggle-mask:active { background: var(--alert-color); color: white; }
+        
         #d_photo_container { width: 200px; height: 200px; background: #fff; border-radius: 12px; border: 4px solid var(--accent-color); overflow: hidden; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; }
         .dog-profile-img { width: 100%; height: 100%; object-fit: cover; }
         .btn-cert-view { font-size: 0.8rem; padding: 4px 12px; border-radius: 6px; background-color: var(--primary-color); color: white; border: none; width: 100%; margin-top: 5px; }
-        .screen-logo-top { width: 120px; margin-bottom: 15px; }
-        .screen-logo-footer { width: 100px; margin-top: 20px; margin-bottom: 10px; opacity: 0.8; }
+        
+        /* Placeholder Logo Style */
+        .k9-logo-text { font-weight: bold; color: #ccc; border: 1px dashed #ccc; padding: 5px 10px; display: inline-block; }
 
-        /* Debug Console */
+        /* Debug & Overlay */
+        #generating-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 10000; display: none; flex-direction: column; justify-content: center; align-items: center; }
         #debug-console-container { display: block; margin-top: 30px; padding: 0 10px; }
         #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 11px; padding: 15px; border-radius: 8px; height: 200px; overflow-y: scroll; }
+        #generated-image-preview { width: 100%; height: auto; border: 2px solid #ccc; border-radius: 4px; }
+
+        /* Print Layouts (Hidden) */
+        #poster-display, #crate-display { display: none; }
         
-        /* Hide unused elements */
-        #poster-display, #crate-display { display: none; } /* Temporarily hidden until stable */
+        /* --- Simplified Layout Styles for Stability --- */
+        .poster-container, .crate-container { width: 800px; height: 1131px; background: white; margin: 0 auto; border: 1px solid #ccc; position: relative; overflow: hidden; padding: 20px; text-align: center; }
+        .poster-title { color: #dc3545; font-size: 40px; font-weight: bold; margin-bottom: 20px; }
+        .crate-title { color: #88b08b; font-size: 40px; font-weight: bold; margin-bottom: 20px; }
+
+        @media print {
+            .no-print-area, #debug-console-container, .version-stamp, #generating-overlay, .modal-backdrop { display: none !important; }
+            body { background: white; }
+        }
     </style>
 </head>
-<body>
+<body class="mode-handbook">
 
-    <div class="version-stamp">v2025.12.03-RENDER-STABILIZE</div>
+    <div class="version-stamp">v2025.12.03-FUNCTION-FIRST</div>
+
+    <div id="generating-overlay">
+        <div class="spinner-border text-primary"></div><h4 class="mt-3">作成中...</h4>
+    </div>
 
     <div class="container py-3">
         <div class="no-print-area">
-            <div class="text-center mb-3"><span style="color:#ccc; border:1px dashed #ccc; padding:5px;">[LOGO]</span></div>
+            <div class="text-center mb-3"><span class="k9-logo-text">[Logo Placeholder]</span></div>
             <h4 class="fw-bold mb-3" style="color: var(--primary-color);">うちの子医療・防災手帳</h4>
             <div id="loading" class="text-center py-5"><div class="spinner-border text-success"></div><p>Loading...</p></div>
         </div>
@@ -61,45 +84,31 @@
                 <div class="info-row"><span class="info-label">住所</span><div class="masked-wrapper"><span id="c_address_masked" class="masked-text">***</span><span id="c_address_real" class="real-text">-</span><button class="btn-toggle-mask" onclick="toggleMask('c_address')">表示</button></div></div>
                 <div class="info-row"><span class="info-label">電話番号</span><div class="masked-wrapper"><span id="c_phone_masked" class="masked-text">***</span><span id="c_phone_real" class="real-text">-</span><button class="btn-toggle-mask" onclick="toggleMask('c_phone')">表示</button></div></div>
             </div>
-
-            <div class="card-section">
-                <div class="section-title">医療情報</div>
-                <div class="mb-3 p-2 bg-light rounded border">
-                    <h6 class="fw-bold small text-muted mb-2"><i class="fa-solid fa-hospital"></i> かかりつけ動物病院</h6>
-                    <div class="info-row"><span class="info-label">病院名</span><div id="d_vet_name" class="fw-bold fs-5">-</div></div>
-                    <div class="info-row"><span class="info-label">住所</span><div id="d_vet_address" class="small">-</div></div>
-                    <div class="info-row"><span class="info-label">電話番号</span><div id="d_vet_phone">-</div></div>
-                </div>
-                <div class="info-row"><span class="info-label">既往歴</span><div id="d_history">-</div></div>
-                <div class="info-row"><span class="info-label">常用薬</span><div id="d_medicine" class="text-danger">-</div></div>
-                <div class="info-row"><span class="info-label">アレルギー</span><div id="d_allergy" class="text-danger fw-bold">-</div></div>
-                <div class="row mt-3 mb-2"><div class="col-6"><span class="info-label">鑑札番号</span><div id="d_license" class="small font-monospace">-</div></div><div class="col-6"><span class="info-label">マイクロチップ</span><div id="d_chip" class="small font-monospace">-</div></div></div>
-                <div class="row mt-3">
-                    <div class="col-6"><div class="p-2 border rounded text-center"><span class="info-label">狂犬病予防</span><div id="d_rabies_status" class="fw-bold small">-</div><button id="btn-rabies-img" class="btn-cert-view" style="display:none;">証明書</button></div></div>
-                    <div class="col-6"><div class="p-2 border rounded text-center"><span class="info-label">混合ワクチン</span><div id="d_vaccine_status" class="fw-bold small">-</div><button id="btn-vaccine-img" class="btn-cert-view" style="display:none;">証明書</button></div></div>
-                </div>
             </div>
 
-            <div class="card-section">
-                <div class="section-title" style="color:var(--alert-color); border-color:#f8d7da;">緊急時情報</div>
-                <div class="info-row"><span class="info-label">緊急連絡先 (氏名)</span><div id="c_em_name">-</div></div>
-                <div class="info-row"><span class="info-label">緊急連絡先 (電話)</span><div class="masked-wrapper"><span id="c_em_phone_masked" class="masked-text">***</span><span id="c_em_phone_real" class="real-text">-</span><button class="btn-toggle-mask" onclick="toggleMask('c_em_phone')">表示</button></div></div>
-                <hr>
-                <div class="info-row"><span class="info-label">代理人 (氏名)</span><div id="c_proxy_name">-</div></div>
-                <div class="info-row"><span class="info-label">代理人 (電話)</span><div class="masked-wrapper"><span id="c_proxy_phone_masked" class="masked-text">***</span><span id="c_proxy_phone_real" class="real-text">-</span><button class="btn-toggle-mask" onclick="toggleMask('c_proxy_phone')">表示</button></div></div>
-                <hr>
-                <div class="info-row mb-0"><span class="info-label">指定避難所</span><div id="c_evac" class="fw-bold">-</div></div>
-            </div>
-
-            <div class="card-section">
-                <div class="section-title">ケア・生活情報</div>
-                <div class="info-row"><span class="info-label">フード</span><div id="d_food">-</div></div>
-                <div class="info-row mb-0"><span class="info-label text-danger">性格・注意事項</span><div id="d_caution" class="text-danger fw-bold">-</div></div>
+        <div id="poster-display">
+            <div class="poster-container">
+                <h1 class="poster-title">迷子ポスター (TEST)</h1>
+                <div id="poster_name" style="font-size:30px; font-weight:bold;">-</div>
+                <img id="poster_img" src="" style="width:300px; margin:20px; border:1px solid #333;">
+                <div style="margin-top:auto;">[Logo]</div>
             </div>
         </div>
 
-        <div id="controls" class="no-print-area mt-4" style="display:none;">
-            <button onclick="alert('PDF機能は現在調整中です')" class="btn btn-secondary w-100 mb-2" disabled>PDF印刷 (停止中)</button>
+        <div id="crate-display">
+            <div class="crate-container">
+                <h1 class="crate-title">クレートタグ (TEST)</h1>
+                <div id="crate_name" style="font-size:30px;">-</div>
+                <div style="margin-top:500px; border-top:2px dashed black;">折り線</div>
+                <div style="margin-top:auto;">[Logo]</div>
+            </div>
+        </div>
+
+        <div id="controls" class="no-print-area mt-4" style="display:none; max-width:500px; margin:0 auto;">
+            <p class="text-muted small mb-2 text-start">出力形式を選択 (機能テスト用)：</p>
+            <button onclick="generateOutput('handbook')" class="btn btn-primary w-100 mb-2 fw-bold">1. 防災手帳</button>
+            <button onclick="generateOutput('crate')" class="btn btn-primary w-100 mb-2 fw-bold">2. クレートタグ</button>
+            <button onclick="generateOutput('poster')" class="btn btn-primary w-100 mb-2 fw-bold">3. 迷子ポスター</button>
             <button onclick="window.location.href='index.html'" class="btn btn-outline-secondary w-100 rounded-pill mt-3">戻る</button>
         </div>
 
@@ -109,29 +118,23 @@
         </div>
     </div>
 
-    <div class="modal fade" id="imageModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><div class="modal-body text-center p-4" style="background:#f0f0f0;"><img id="modalImage" src="" class="img-fluid rounded"><button class="btn btn-secondary mt-3 rounded-pill" data-bs-dismiss="modal">閉じる</button></div></div></div></div>
-
+    <div class="modal fade" id="outputModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><div class="modal-header border-0"><h5 class="modal-title fw-bold text-success">作成完了</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><p class="small text-start alert alert-primary"><strong>iPhoneの方へ:</strong> 下の画像を長押しして「写真に保存」してください。</p><img id="generated-image-preview" src=""><div class="mt-3"><button id="btn-download-pdf" class="btn btn-secondary btn-sm" style="display:none;">PC用: PDFダウンロード</button></div></div><div class="modal-footer border-0"><button type="button" class="btn btn-secondary w-100 rounded-pill" data-bs-dismiss="modal">閉じる</button></div></div></div></div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
         const LIFF_ID = "2008546673-MJY7j3ox";
-        let imageModal;
+        let outputModal;
 
         function log(msg) {
             const el = document.getElementById('debug-console');
-            if(el) {
-                const time = new Date().toLocaleTimeString();
-                el.innerHTML = `[${time}] ${msg}<br>` + el.innerHTML;
-            }
+            if(el) el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}<br>` + el.innerHTML;
             console.log(msg);
         }
 
         window.onload = async function() {
-            if(typeof bootstrap !== 'undefined') {
-                imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
-            }
+            if(typeof bootstrap !== 'undefined') { outputModal = new bootstrap.Modal(document.getElementById('outputModal')); }
             try {
-                log('LIFF Init...');
                 await liff.init({ liffId: LIFF_ID });
                 if (!liff.isLoggedIn()) { liff.login(); return; }
                 const profile = await liff.getProfile();
@@ -139,88 +142,105 @@
                 const dogId = urlParams.get('dogId');
                 log(`User: ${profile.userId}, DogID: ${dogId}`);
                 fetchData(profile.userId, dogId);
-            } catch (err) {
-                log('FATAL ERROR: ' + err.message);
-                document.getElementById('loading').innerHTML = `<p class="text-danger">Init Error: ${err.message}</p>`;
-            }
+            } catch (err) { log('Init Error: ' + err.message); }
         };
 
         function fetchData(userId, dogId) {
             let url = `${API_URL}?userId=${userId}`;
             if(dogId) url += `&dogId=${dogId}`;
-            log('Fetching: ' + url);
-            
             fetch(url).then(res => {
-                if(!res.ok) throw new Error(`HTTP ${res.status}`);
+                if(!res.ok) throw new Error('HTTP Error ' + res.status);
                 return res.json();
             }).then(data => {
-                if(data.error) { 
-                    log('API Error: ' + data.error); 
-                    document.getElementById('loading').innerHTML = `<p class="text-danger">${data.error}</p>`;
-                    return; 
-                }
-                log('Data Received');
+                if(data.error) { log('API Error: ' + data.error); return; }
                 renderData(data);
                 if(data.dog && data.dog.id) fetchImage(userId, data.dog.id);
-            }).catch(e => {
-                log('Fetch Fail: ' + e.message);
-                document.getElementById('loading').innerHTML = `<p class="text-danger fw-bold">通信エラー<br><small>${e.message}</small></p>`;
-            });
+            }).catch(e => log('Conn Error: ' + e.message));
         }
 
         function renderData(data) {
-            try {
-                const c = data.customer || {};
-                const d = data.dog || {};
+            const c = data.customer || {};
+            const d = data.dog || {};
+            log('Data Loaded: ' + d.name);
 
-                // Handbook
-                setText('d_name', d.name_disp); setText('d_breed', d.breed); setText('d_color', d.color);
-                setText('d_age', d.age); setText('d_gender', d.gender); setText('d_neutered', d.neutered);
-                setText('c_name', c.name);
-                setMaskedText('c_address', c.address, maskAddress(c.address));
-                setMaskedText('c_phone', c.phone, maskPhone(c.phone));
-                setText('c_em_name', c.em_name);
-                setMaskedText('c_em_phone', c.em_phone, maskPhone(c.em_phone));
-                setText('c_proxy_name', c.proxy_name);
-                setMaskedText('c_proxy_phone', c.proxy_phone, maskPhone(c.proxy_phone));
-                setText('c_evac', c.evac_site);
-                setText('d_vet_name', d.vet_name); setText('d_vet_address', d.vet_address); setText('d_vet_phone', d.vet_phone);
-                setText('d_history', d.history); setText('d_medicine', d.medicine); setText('d_allergy', d.allergy);
-                setText('d_license', d.license_no); setText('d_chip', d.microchip);
-                setText('d_food', d.food); setText('d_caution', d.caution);
-                
-                setupCertButton('d_rabies_status', 'btn-rabies-img', d.has_rabies, d.rabies_img_ref);
-                setupCertButton('d_vaccine_status', 'btn-vaccine-img', d.has_vaccine, d.vaccine_img_ref);
+            // Populate
+            setText('d_name', d.name_disp); setText('d_breed', d.breed); setText('d_color', d.color);
+            setText('d_age', d.age); setText('d_gender', d.gender); setText('d_neutered', d.neutered);
+            setText('c_name', c.name); setMaskedText('c_address', c.address, maskAddress(c.address)); setMaskedText('c_phone', c.phone, maskPhone(c.phone));
 
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('controls').style.display = 'block';
-                document.getElementById('main-display').style.display = 'block';
-                log('Render Complete');
-            } catch (e) {
-                log('Render Error: ' + e.message);
-            }
+            // Poster/Crate Dummy Fill
+            setText('poster_name', d.name_disp);
+            setText('crate_name', d.name_disp);
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('controls').style.display = 'block';
+            document.getElementById('main-display').style.display = 'block';
         }
 
         function fetchImage(userId, dogId) {
             let url = `${API_URL}?userId=${userId}&type=img_profile&dogId=${dogId}`;
             fetch(url).then(res => res.json()).then(data => {
                 if(data.image) {
-                    const el = document.getElementById('d_photo_container');
-                    if(el) {
-                        el.innerHTML = `<img src="${data.image}" class="dog-profile-img">`;
-                        el.style.border = 'none';
-                    }
+                    document.getElementById('d_photo_container').innerHTML = `<img src="${data.image}" class="dog-profile-img">`;
+                    document.getElementById('d_photo_container').style.border = 'none';
+                    if(document.getElementById('poster_img')) document.getElementById('poster_img').src = data.image;
                 } else {
-                    const el = document.getElementById('d_photo_container');
-                    if(el) el.innerHTML = '<span class="small text-muted">No Photo</span>';
+                    document.getElementById('d_photo_container').innerHTML = '<span class="text-muted small">No Image</span>';
                 }
             }).catch(e => log('Img Error: ' + e.message));
         }
 
-        // Helpers
+        async function generateOutput(mode) {
+            log(`Gen: ${mode}`);
+            const overlay = document.getElementById('generating-overlay');
+            overlay.style.display = 'flex';
+
+            let targetId = 'main-display';
+            if (mode === 'poster') targetId = 'poster-display';
+            if (mode === 'crate') targetId = 'crate-display';
+            const target = document.getElementById(targetId);
+
+            if(!target) { overlay.style.display='none'; return; }
+
+            const prevDisplay = target.style.display;
+            target.style.display = 'block';
+            document.body.className = '';
+            document.body.classList.add(`print-${mode}`);
+            
+            await new Promise(r => setTimeout(r, 500));
+
+            try {
+                // 1. Capture as Image (Most Robust for Mobile)
+                const canvas = await html2canvas(target, { scale: 2, useCORS: true, allowTaint: true, windowWidth: 800 });
+                const imgData = canvas.toDataURL('image/jpeg', 0.90);
+                document.getElementById('generated-image-preview').src = imgData;
+
+                // 2. PC PDF Download Logic
+                const btnDownload = document.getElementById('btn-download-pdf');
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                if (!isMobile) {
+                    btnDownload.style.display = 'inline-block';
+                    btnDownload.onclick = function() {
+                        const { jsPDF } = window.jspdf;
+                        const orient = (mode === 'handbook') ? 'l' : 'p';
+                        const doc = new jsPDF(orient, 'mm', 'a4');
+                        doc.addImage(imgData, 'JPEG', 0, 0, orient==='l'?297:210, orient==='l'?210:297);
+                        doc.save(`K9_${mode}.pdf`);
+                    };
+                } else { btnDownload.style.display = 'none'; }
+                
+                outputModal.show();
+                log('Generate Success');
+            } catch (err) { log('Gen Error: ' + err.message); alert('作成失敗: ' + err.message); } 
+            finally {
+                target.style.display = prevDisplay;
+                document.body.className = 'mode-handbook';
+                overlay.style.display = 'none';
+            }
+        }
+
         function maskAddress(addr) { if(!addr) return; const m = addr.match(/(.*?[都道府県].*?[市区町村])/); return m ? m[0]+' ***' : addr.substring(0,5)+' ***'; }
         function maskPhone(tel) { if(!tel) return; return tel.substring(0,3)+'-****-****'; }
-        function setText(id, txt) { const el = document.getElementById(id); if(el) el.textContent = txt || '-'; }
         function setMaskedText(baseId, realVal, maskedVal) {
             const rEl = document.getElementById(baseId + '_real');
             const mEl = document.getElementById(baseId + '_masked');
@@ -244,21 +264,10 @@
                 rEl.style.display='none'; mEl.style.display='inline';
             }
         }
-        function setupCertButton(statId, btnId, has, ref) {
-            const stat = document.getElementById(statId);
-            const btn = document.getElementById(btnId);
-            if(stat) stat.textContent = has ? '確認済み' : '未確認/無し';
-            if(btn) {
-                if(has && ref) {
-                    btn.style.display='inline-block';
-                    btn.onclick = () => {
-                        const src = (ref.indexOf('http')===-1) ? `https://drive.google.com/uc?export=view&id=${ref}` : ref;
-                        document.getElementById('modalImage').src = src;
-                        imageModal.show();
-                    };
-                } else { btn.style.display='none'; }
-            }
-        }
+        function setText(id, txt) { const el = document.getElementById(id); if(el) el.textContent = txt || '-'; }
+        function setSrc(id, src) { const el = document.getElementById(id); if(el) el.src = src; }
+        function setImg(cid, src) { const el = document.getElementById(cid); if(el) { el.innerHTML = `<img src="${src}" class="dog-profile-img">`; el.style.border='none'; } }
+        function setupCertButton(statId, btnId, has, ref) { /* Logic same */ document.getElementById(statId).textContent = has ? '確認済み' : '未確認/無し'; const btn = document.getElementById(btnId); if(has && ref) { btn.style.display='inline-block'; btn.onclick = () => { const src = (ref.indexOf('http')===-1) ? `https://drive.google.com/uc?export=view&id=${ref}` : ref; document.getElementById('modalImage').src = src; imageModal.show(); }; } else { btn.style.display='none'; } }
     </script>
 </body>
 </html>
