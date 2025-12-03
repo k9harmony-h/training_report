@@ -13,7 +13,9 @@
     <style>
         :root { --primary-color: #88b08b; --accent-color: #e8f5e9; --alert-color: #e07a5f; --text-color: #333; --mask-color: #f0f0f0; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 300px; }
-        .version-stamp { position: fixed; top: 0; right: 0; background: #28a745; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
+        .version-stamp { position: fixed; top: 0; right: 0; background: #20c997; color: white; font-size: 10px; padding: 2px 6px; z-index: 9999; }
+        
+        /* Common UI */
         .no-print-area { margin: 20px 0 30px; text-align: center; }
         .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; border: 1px solid #eee; }
         .section-title { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 15px; }
@@ -30,7 +32,7 @@
         .screen-logo-top { width: 120px; margin-bottom: 15px; }
         .screen-logo-footer { width: 100px; margin-top: 20px; margin-bottom: 10px; opacity: 0.8; }
 
-        /* POSTER STYLES (Unchanged) */
+        /* Poster Styles (Same) */
         .poster-container { width: 210mm; height: 297mm; background: white; margin: 0 auto; position: relative; overflow: hidden; }
         .poster-inner-border { width: 100%; height: 100%; border: 6px solid #ff0000; padding: 10mm; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
         .poster-title { color: #ff0000; font-size: 42pt; font-weight: 900; margin-bottom: 15px; font-family: sans-serif; line-height: 1; }
@@ -53,76 +55,93 @@
         .poster-logo-area { margin-top: auto; text-align: center; width: 100%; }
         .poster-logo-img { width: 40mm; height: auto; }
 
-        /* ★★★ CRATE TAG STYLES (REVISED FINAL) ★★★ */
+        /* ★★★ CRATE TAG STYLES (FINAL) ★★★ */
         .crate-container { width: 210mm; height: 297mm; background: white; position: relative; overflow: hidden; box-sizing: border-box; border: 1px dashed #aaa; margin: 0 auto; }
         .crate-fold-line { position: absolute; top: 45%; left: 0; width: 100%; height: 0; border-top: 2px dashed #88b08b; z-index: 10; }
         
-        /* AREA A: BACK (Left: Command, Right: Food) */
+        /* AREA A: BACK */
         .crate-area-a {
             position: absolute; top: 0; left: 0; width: 100%; height: 45%;
-            padding: 10mm 10mm 5mm 10mm; box-sizing: border-box; transform: rotate(180deg);
+            padding: 10mm; box-sizing: border-box; transform: rotate(180deg);
             display: flex; gap: 15px; background-color: #fff; border-bottom: 1px dashed #ccc;
         }
-        .crate-a-left { width: 48%; border-right: 2px solid #ddd; padding-right: 10px; position: relative; }
-        .crate-a-right { width: 48%; padding-left: 10px; display:flex; flex-direction:column; }
-        
-        .crate-header-a { font-size: 14pt; font-weight: bold; color: #555; border-bottom: 3px solid #88b08b; margin-bottom: 8px; display: block; }
-        
-        /* Command List (Vertical) */
-        .cmd-list { font-size: 12pt; list-style: none; padding: 0; margin: 0; font-weight: bold; line-height: 1.8; }
-        .cmd-list li { border-bottom: 1px dashed #eee; }
-        
-        /* Survival Food (Vertical) */
-        .food-vert-grid { display: flex; gap: 10px; flex-grow: 1; }
-        .food-col { width: 50%; }
-        .food-title-ok { color: #198754; display:block; font-weight:bold; font-size:12pt; border-bottom:1px solid #198754; margin-bottom:5px; }
-        .food-title-ng { color: #dc3545; display:block; font-weight:bold; font-size:12pt; border-bottom:1px solid #dc3545; margin-bottom:5px; }
-        .food-item { display: block; font-size: 11pt; font-weight: bold; margin-bottom: 3px; }
+        .crate-a-left {
+            width: 50%; border: 2px solid #ccc; border-radius: 30px; padding: 10px;
+            display: flex; flex-direction: column; position: relative;
+        }
+        .crate-a-right {
+            width: 50%; display: flex; flex-direction: column; gap: 10px;
+        }
 
-        /* Allergy Box (Revised) */
+        .cmd-title { font-weight: bold; font-size: 14pt; color: #555; text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 5px; }
+        .cmd-list { font-size: 12pt; flex-grow: 1; }
+        .cmd-row { margin-bottom: 5px; border-bottom: 1px dashed #ddd; padding-bottom: 2px; font-weight: bold; }
+        .cmd-msg-box {
+            background: var(--primary-color); color: white; font-weight: bold; font-size: 10pt;
+            text-align: center; padding: 5px; border-radius: 15px; margin-top: auto;
+        }
+
+        /* Survival Food (Rounded 30px) */
+        .food-box-ok { border: 2px solid #198754; border-radius: 30px; padding: 10px; flex: 1; margin-bottom: 5px; position: relative; }
+        .food-box-ng { border: 2px solid #dc3545; border-radius: 30px; padding: 10px; flex: 1; margin-bottom: 5px; position: relative; }
+        .food-title { font-weight: 900; font-size: 12pt; position: absolute; top: -10px; left: 20px; background: white; padding: 0 5px; }
+        
         .allergy-box {
-            border: 2px solid #000; border-radius: 15px; min-height: 50px; margin-top: 10px; position: relative; padding: 25px 5px 5px 5px;
+            border: 2px solid #000; border-radius: 30px; padding: 15px 10px 10px 10px; min-height: 50px; position: relative;
         }
         .allergy-title {
-            position: absolute; top: 0; left: 0; width: 100%; background: #000; color: #dc3545;
-            font-weight: bold; font-size: 10pt; text-align: center; border-top-left-radius: 12px; border-top-right-radius: 12px;
+            position: absolute; top: -10px; left: 20px; background: #000; color: #dc3545;
+            font-weight: bold; font-size: 10pt; padding: 2px 8px; border-radius: 4px;
         }
-        .crate-logo-placeholder { position: absolute; bottom: 0; right: 0; padding: 5px; }
+        
+        .crate-logo-placeholder { position: absolute; bottom: 0; right: 0; color: #ccc; padding: 2px 5px; }
 
         /* AREA B: FRONT */
         .crate-area-b { position: absolute; top: 45%; left: 0; width: 100%; height: 40%; padding: 5mm 10mm; box-sizing: border-box; display: flex; flex-direction: column; }
         .crate-b-main { display: flex; align-items: flex-start; margin-bottom: 5px; }
-        .crate-b-photo { width: 140px; height: 140px; object-fit: contain; border-radius: 10px; border: 5px solid #88b08b; background: #eee; flex-shrink: 0; margin-right: 15px; }
+        /* Larger Square Photo */
+        .crate-b-photo { width: 180px; height: 180px; object-fit: cover; border-radius: 10px; border: 5px solid #88b08b; background: #eee; flex-shrink: 0; margin-right: 15px; }
         .crate-b-info { flex-grow: 1; }
         
-        .crate-name-huge { font-size: 40pt; font-weight: 900; line-height: 1; color: #333; margin-bottom: 5px; }
-        .crate-info-sm { font-size: 10pt; font-weight: normal; color: #666; margin-bottom: 2px; }
-        .crate-info-val { font-size: 12pt; font-weight: bold; color: #333; }
+        .crate-name-huge { font-size: 38pt; font-weight: 900; line-height: 1; color: #333; margin-bottom: 5px; }
+        .crate-info-row { font-size: 14pt; font-weight: bold; color: #555; display: flex; gap: 15px; margin-bottom: 5px; }
         
-        .crate-caution-box { background: #fff0f0; border: 3px solid #dc3545; border-radius: 6px; padding: 5px 10px; font-size: 16pt; font-weight: bold; color: #333; margin: 10px 0; text-align: center; }
-        
-        /* Medical Grid (Revised) */
-        .crate-med-grid { display: flex; height: 80px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; }
-        .crate-med-left { width: 40%; border-right: 1px solid #ccc; padding: 5px; }
-        .crate-med-right { width: 60%; display: flex; flex-direction: column; }
-        .crate-med-right-top { height: 50%; border-bottom: 1px solid #ccc; padding: 2px 5px; }
-        .crate-med-right-bottom { height: 50%; padding: 2px 5px; background: #fff5f5; }
-        .crate-med-label { font-size: 8pt; color: #666; display: block; }
-        .crate-med-val { font-size: 11pt; font-weight: bold; color: #333; }
-        
-        /* Consent Area with Diagonals */
-        .crate-consent-area { margin-top: auto; padding: 5px 0; border-top: 1px solid #eee; position: relative; text-align: center; }
-        .crate-fold-diag-l { position: absolute; bottom: -5px; left: -10px; width: 40px; height: 40px; border-right: 1px dashed #aaa; transform: rotate(45deg); }
-        .crate-fold-diag-r { position: absolute; bottom: -5px; right: -10px; width: 40px; height: 40px; border-left: 1px dashed #aaa; transform: rotate(-45deg); }
+        .crate-caution-box {
+            background: #fff0f0; border: 2px solid #dc3545; border-radius: 6px; padding: 5px 10px;
+            font-size: 14pt; font-weight: bold; color: #333; margin-top: 5px; text-align: left;
+        }
+        .crate-caution-title { color: #dc3545; font-weight: 900; margin-right: 10px; }
 
-        /* AREA C: CONTACT (Bottom) */
+        /* Medical Grid (No Header Text) */
+        .crate-med-grid { display: flex; height: 80px; margin-top: 10px; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; }
+        .crate-med-left { width: 40%; border-right: 1px solid #ccc; padding: 5px; font-size: 9pt; overflow: hidden; display: flex; flex-direction: column; }
+        .crate-med-right { width: 60%; display: flex; flex-direction: column; }
+        .crate-med-right-top { height: 50%; border-bottom: 1px solid #ccc; padding: 2px 5px; font-size: 9pt; }
+        .crate-med-right-bottom { height: 50%; padding: 2px 5px; font-size: 9pt; }
+        .med-label { font-weight: bold; color: #666; font-size: 8pt; display: block; }
+        .med-val { font-weight: bold; font-size: 11pt; color: #333; }
+
+        .crate-consent-area { margin-top: 5px; padding-top: 2px; border-top: 1px solid #eee; text-align: center; }
+        
+        /* Folded Msg with Correct Diagonals */
+        .crate-msg-bottom {
+            margin-top: auto; text-align: center; background: #88b08b; color: white; font-weight: bold; font-size: 12pt; padding: 5px; border-radius: 0 0 8px 8px; position: relative;
+        }
+        .fold-diag-l {
+            position: absolute; top: -20px; left: -20px; width: 40px; height: 40px; border-bottom: 1px dashed #aaa; transform: rotate(-45deg);
+        }
+        .fold-diag-r {
+            position: absolute; top: -20px; right: -20px; width: 40px; height: 40px; border-bottom: 1px dashed #aaa; transform: rotate(45deg);
+        }
+
+        /* AREA C: CONTACT */
         .crate-area-c { position: absolute; bottom: 0; left: 0; width: 100%; height: 15%; border-top: 2px dashed #333; background-color: #f8f9fa; padding: 10px 20px; box-sizing: border-box; }
         .contact-grid { display: flex; justify-content: space-between; margin-bottom: 5px; }
-        .contact-item { width: 48%; font-size: 11pt; font-weight: bold; border-bottom: 1px solid #ccc; }
+        .contact-item { width: 48%; font-size: 10pt; font-weight: bold; border-bottom: 1px solid #ccc; }
         .contact-label { font-size: 8pt; color: #666; display: block; }
-        .vet-grid { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #ccc; padding-top: 5px; }
-        .vet-info { font-size: 11pt; font-weight: bold; }
-        .shelter-write { border-bottom: 1px solid #333; width: 120px; display: inline-block; }
+        .vet-grid { display: flex; align-items: center; border-top: 1px solid #ccc; padding-top: 5px; }
+        .vet-info { font-size: 11pt; font-weight: bold; width: 60%; }
+        .shelter-info { font-size: 11pt; font-weight: bold; flex-grow: 1; padding-left: 10px; border-left: 1px solid #ccc; }
 
         /* Hidden */
         #poster-display, #crate-display, #generating-overlay, #debug-console-container { display: none; }
@@ -144,7 +163,7 @@
 </head>
 <body class="mode-handbook">
 
-    <div class="version-stamp">v2025.12.03-FINAL-LAYOUT</div>
+    <div class="version-stamp">v2025.12.03-CRATE-FINAL-DESIGN</div>
 
     <div id="generating-overlay">
         <div class="spinner-border text-primary"></div><h4 class="mt-3">作成中...</h4>
@@ -175,34 +194,23 @@
                 
                 <div class="crate-area-a">
                     <div class="crate-a-left">
-                        <span class="crate-header-a"><span id="crate_name_a"></span>ちゃんのコマンド辞書</span>
-                        <ul class="cmd-list">
-                            <li>マテ = Wait / Stay</li>
-                            <li>オスワリ = Sit</li>
-                            <li>ハウス = House / Crate</li>
-                            <li>オイデ = Come</li>
-                        </ul>
-                        <div class="cmd-footer">私の家ではこうやって伝えてます！</div>
+                        <span class="crate-header-a">🐕 コマンド辞書</span>
+                        <div class="small fw-bold mb-2">例 : マテ = ウェイト！</div>
+                        <div class="cmd-list">
+                            <div class="cmd-row">マテ = </div>
+                            <div class="cmd-row">オスワリ = </div>
+                            <div class="cmd-row">ハウス = </div>
+                            <div class="cmd-row">オイデ = </div>
+                        </div>
+                        <div class="cmd-msg-box">私の家ではこうやって伝えてます！</div>
                     </div>
                     <div class="crate-a-right">
                         <span class="crate-header-a">🆘 サバイバルフード</span>
-                        <div class="food-vert-grid">
-                            <div class="food-col">
-                                <span class="food-title-ok">⭕️ OK</span>
-                                <span class="food-item">白米・パン</span>
-                                <span class="food-item">芋・キャベツ</span>
-                                <span class="food-item">鶏肉・バナナ</span>
-                            </div>
-                            <div class="food-col">
-                                <span class="food-title-ng">❌ NG</span>
-                                <span class="food-item">ネギ・玉ねぎ</span>
-                                <span class="food-item">チョコ・ブドウ</span>
-                                <span class="food-item">キシリトール</span>
-                            </div>
-                        </div>
+                        <div class="food-box-ok"><span class="food-title">⭕️ OK</span>白米・パン<br>芋・鶏肉<br>キャベツ</div>
+                        <div class="food-box-ng"><span class="food-title">❌ NG</span>ネギ類・チョコ<br>ブドウ・鳥の骨<br>キシリトール</div>
                         <div class="allergy-box">
                             <div class="allergy-title">アレルギー</div>
-                            <div style="margin-top:10px; color:#333; font-weight:normal;">(手書き記入欄)</div>
+                            <span id="crate_allergy_content" style="font-weight:normal; color:#333;">-</span>
                         </div>
                         <div class="crate-logo-placeholder"><img class="k9-logo-common" style="width:60px;" alt="Logo"></div>
                     </div>
@@ -213,32 +221,57 @@
                         <img id="crate_img" class="crate-b-photo" src="">
                         <div class="crate-b-info">
                             <div id="crate_name" class="crate-name-huge">NAME</div>
-                            <div id="crate_breed" class="crate-info-sm">犬種: -</div>
-                            <div id="crate_gender" class="crate-info-sm">性別: -</div>
-                            <div id="crate_neutered" class="crate-info-sm">去勢避妊: -</div>
+                            <div class="crate-info-row">
+                                <span id="crate_breed">-</span> / <span id="crate_gender">-</span> / <span id="crate_neutered">-</span>
+                            </div>
+                            <div class="crate-caution-box">
+                                <span class="crate-caution-title">⚠️ ちゅうい！</span> <span id="crate_caution" style="font-weight:normal;">-</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="crate-caution-box">⚠️ ちゅうい！ <span id="crate_caution" style="font-weight:normal;">-</span></div>
-                    <div class="crate-write-box-sm">🍚 食事ログ:</div>
+
                     <div class="crate-med-grid">
-                        <div class="crate-med-left"><span class="crate-med-label">既往歴</span><span id="crate_history_content" class="crate-med-val">-</span></div>
+                        <div class="crate-med-left"><span class="med-label">既往歴</span><span id="crate_history_content" class="med-val">-</span></div>
                         <div class="crate-med-right">
-                            <div class="crate-med-right-top"><span class="crate-med-label">常備薬</span><span id="crate_medicine_content" class="crate-med-val">-</span></div>
-                            <div class="crate-med-right-bottom"><span class="crate-med-label">フード</span><span id="crate_food_content" class="crate-med-val">-</span></div>
+                            <div class="crate-med-right-top"><span class="med-label">常備薬</span><span id="crate_medicine_content" class="med-val">-</span></div>
+                            <div class="crate-med-right-bottom"><span class="med-label">フード</span><span id="crate_food_content" class="med-val">-</span></div>
                         </div>
                     </div>
+
                     <div class="crate-consent-area">
-                        <div class="crate-fold-diag-l"></div><div class="crate-fold-diag-r"></div>
                         <div class="d-flex align-items-center justify-content-center">
                             <input type="checkbox" style="transform:scale(1.5); margin-right:10px;">
-                            <span style="font-weight:bold; font-size:0.9rem;">万が一の怪我、体調不良の際は応急処置を有識者に一任します。</span>
+                            <span style="font-weight:bold; font-size:10pt;">万が一の怪我、体調不良の際は応急処置を有識者に一任します。</span>
                         </div>
+                    </div>
+
+                    <div class="crate-msg-bottom">
+                        <div class="fold-diag-l"></div><div class="fold-diag-r"></div>
+                        ＼ 緊急の際はこちらをめくってください ／ <i class="fa-solid fa-arrow-down"></i>
                     </div>
                 </div>
 
                 <div class="crate-area-c">
-                    <div class="contact-grid"><div class="contact-item"><span class="contact-label">飼い主 (Owner)</span><span id="crate_owner">-</span><br><span id="crate_phone">-</span></div><div class="contact-item"><span class="contact-label">代理人 (Proxy)</span><span id="crate_proxy">-</span><br><span id="crate_proxy_tel">-</span></div></div>
-                    <div class="vet-grid"><div class="vet-info"><i class="fa-solid fa-hospital"></i> <span id="crate_vet">-</span><br><span id="crate_vet_tel" style="font-size:0.9rem;">-</span></div><div class="shelter-info"><span class="contact-label">居住エリア</span><span class="shelter-write"></span></div></div>
+                    <div class="contact-grid">
+                        <div class="contact-item">
+                            <span class="contact-label">飼い主 (Owner)</span>
+                            <span id="crate_owner">-</span><br><span id="crate_phone">-</span>
+                        </div>
+                        <div class="contact-item">
+                            <span class="contact-label">代理人 (Proxy)</span>
+                            <span id="crate_proxy">-</span><br><span id="crate_proxy_tel">-</span>
+                        </div>
+                    </div>
+                    <div class="vet-grid">
+                        <div class="vet-info">
+                            <span class="contact-label">かかりつけ動物病院</span>
+                            <span id="crate_vet">-</span><br><span id="crate_vet_tel">-</span>
+                        </div>
+                        <div class="shelter-info">
+                            <span class="contact-label">居住エリア</span>
+                            <span class="shelter-write" style="border-bottom:1px solid #333; width:100%; display:block; height:20px;"></span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -250,23 +283,28 @@
             <button onclick="generateOutput('poster')" class="btn btn-primary w-100 mb-2 fw-bold" style="background-color: #dc3545; border:none;"><i class="fa-solid fa-bullhorn"></i> 迷子ポスター (A4縦)</button>
             <button onclick="window.location.href='index.html'" class="btn btn-outline-secondary w-100 rounded-pill mt-3">戻る</button>
         </div>
-        <div id="debug-console-container" class="no-print-area"><h6 class="text-danger fw-bold">⚠️ Debug Console</h6><div id="debug-console">Initializing...</div></div>
+        <div id="debug-console-container" class="no-print-area"></div>
     </div>
 
     <div class="modal fade" id="outputModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><div class="modal-header border-0"><h5 class="modal-title fw-bold text-success">作成完了</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><p class="small text-start alert alert-primary"><strong>iPhoneの方へ:</strong> 下の画像を長押しして「写真に保存」してください。</p><img id="generated-image-preview" src=""><div class="mt-3 d-grid gap-2"><a id="btn-view-pdf-blob" href="#" target="_blank" class="btn btn-primary fw-bold"><i class="fa-solid fa-file-pdf"></i> PDFファイルを開く (保存用)</a><button id="btn-download-pdf" class="btn btn-outline-secondary btn-sm" style="display:none;">PC用: PDFダウンロード</button></div></div><div class="modal-footer border-0"><button type="button" class="btn btn-secondary w-100 rounded-pill" data-bs-dismiss="modal">閉じる</button></div></div></div></div>
-    <div class="modal fade" id="imageModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><div class="modal-body text-center p-4" style="background:#f0f0f0;"><img id="modalImage" src="" class="img-fluid rounded"><button class="btn btn-secondary mt-3 rounded-pill" data-bs-dismiss="modal">閉じる</button></div></div></div></div>
-
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
         const LIFF_ID = "2008546673-MJY7j3ox";
         const LOGO_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA5gAAAGQCAYAAABvK08CAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAA... (中略) .../4P/B30Z5CgAAAABJRU5ErkJggg=="; 
 
-        let outputModal, imageModal;
-        function log(msg) { const el = document.getElementById('debug-console'); if(el) el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}<br>` + el.innerHTML; console.log(msg); }
+        let outputModal;
+
+        function log(msg) {
+            const el = document.getElementById('debug-console-container');
+            if(el) el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}<br>` + el.innerHTML;
+        }
 
         window.onload = async function() {
-            if(typeof bootstrap !== 'undefined') { outputModal = new bootstrap.Modal(document.getElementById('outputModal')); imageModal = new bootstrap.Modal(document.getElementById('imageModal')); }
+            if(typeof bootstrap !== 'undefined') {
+                outputModal = new bootstrap.Modal(document.getElementById('outputModal'));
+            }
             document.querySelectorAll('.k9-logo-common').forEach(el => { el.src = LOGO_DATA_URI; });
             try {
                 await liff.init({ liffId: LIFF_ID });
@@ -281,37 +319,40 @@
         function fetchData(userId, dogId) {
             let url = `${API_URL}?userId=${userId}`;
             if(dogId) url += `&dogId=${dogId}`;
-            fetch(url).then(res => { if(!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); }).then(data => {
+            fetch(url).then(res => res.json()).then(data => {
                 if(data.error) { alert('Error: ' + data.error); return; }
                 renderData(data);
                 if(data.dog && data.dog.id) fetchImage(userId, data.dog.id);
-            }).catch(e => alert('Connection Error: ' + e.message));
+            }).catch(e => alert('Connection Error'));
         }
 
         function renderData(data) {
             const c = data.customer || {};
             const d = data.dog || {};
 
-            // Handbook & Poster (Same)
-            setText('d_name', d.name_disp); setText('d_breed', d.breed); setText('d_color', d.color); setText('d_age', d.age); setText('d_gender', d.gender); setText('d_neutered', d.neutered); setText('c_name', c.name); setMaskedText('c_address', c.address, maskAddress(c.address)); setMaskedText('c_phone', c.phone, maskPhone(c.phone)); setText('c_em_name', c.em_name); setMaskedText('c_em_phone', c.em_phone, maskPhone(c.em_phone)); setText('c_proxy_name', c.proxy_name); setMaskedText('c_proxy_phone', c.proxy_phone, maskPhone(c.proxy_phone)); setText('c_evac', c.evac_site); setText('d_vet_name', d.vet_name); setText('d_vet_address', d.vet_address); setText('d_vet_phone', d.vet_phone); setText('d_history', d.history); setText('d_medicine', d.medicine); setText('d_allergy', d.allergy); setText('d_license', d.license_no); setText('d_chip', d.microchip); setText('d_food', d.food); setText('d_caution', d.caution); setupCertButton('d_rabies_status', 'btn-rabies-img', d.has_rabies, d.rabies_img_ref); setupCertButton('d_vaccine_status', 'btn-vaccine-img', d.has_vaccine, d.vaccine_img_ref);
-            setText('poster_name', d.name_disp); setText('poster_gender_age', `${d.gender || '-'} / ${d.age || '-'}歳`); setText('poster_breed_color', `${d.breed || '-'} / ${d.color || '-'}`); setText('poster_owner', c.name); setText('poster_phone', c.phone); if (c.evac_site && c.evac_site !== '記載なし') { const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.evac_site)}`; const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(mapUrl)}`; document.getElementById('poster-qr-img').src = qrSrc; document.getElementById('poster-qr-img').style.display = 'block'; }
-
-            // Crate Data
-            setText('crate_name_a', d.name || 'わん'); // For Command Dict
+            // Handbook & Poster (Omitted for brevity, same as before)
+            // ...
+            // Crate Data Update
             setText('crate_name', d.name_disp);
-            setText('crate_breed', d.breed);
+            setText('crate_breed', d.breed); 
             setText('crate_gender', d.gender);
-            setText('crate_neutered', `去勢避妊: ${d.neutered}`);
+            setText('crate_neutered', `去勢避妊: ${d.neutered}`); // Updated
             setText('crate_caution', d.caution);
+            setText('crate_allergy_content', d.allergy);
+            setText('crate_allergy_content_b', d.allergy); 
             setText('crate_history_content', d.history);
             setText('crate_medicine_content', d.medicine);
-            setText('crate_food_content', d.food); // Ensure food is populated
+            setText('crate_food_content', d.food);
             setText('crate_owner', c.name);
             setText('crate_phone', c.phone);
             setText('crate_proxy', c.proxy_name);
             setText('crate_proxy_tel', c.proxy_phone);
             setText('crate_vet', d.vet_name);
             setText('crate_vet_tel', d.vet_phone || '-');
+
+            // ... (Existing Poster/Handbook Logic)
+            setText('d_name', d.name_disp); setText('d_breed', d.breed); setText('d_color', d.color); setText('d_age', d.age); setText('d_gender', d.gender); setText('d_neutered', d.neutered); setText('c_name', c.name); setMaskedText('c_address', c.address, maskAddress(c.address)); setMaskedText('c_phone', c.phone, maskPhone(c.phone)); setText('c_em_name', c.em_name); setMaskedText('c_em_phone', c.em_phone, maskPhone(c.em_phone)); setText('c_proxy_name', c.proxy_name); setMaskedText('c_proxy_phone', c.proxy_phone, maskPhone(c.proxy_phone)); setText('c_evac', c.evac_site); setText('d_vet_name', d.vet_name); setText('d_vet_address', d.vet_address); setText('d_vet_phone', d.vet_phone); setText('d_history', d.history); setText('d_medicine', d.medicine); setText('d_allergy', d.allergy); setText('d_license', d.license_no); setText('d_chip', d.microchip); setText('d_food', d.food); setText('d_caution', d.caution); setupCertButton('d_rabies_status', 'btn-rabies-img', d.has_rabies, d.rabies_img_ref); setupCertButton('d_vaccine_status', 'btn-vaccine-img', d.has_vaccine, d.vaccine_img_ref);
+            setText('poster_name', d.name_disp); setText('poster_gender_age', `${d.gender || '-'} / ${d.age || '-'}歳`); setText('poster_breed_color', `${d.breed || '-'} / ${d.color || '-'}`); setText('poster_owner', c.name); setText('poster_phone', c.phone); if (c.evac_site && c.evac_site !== '記載なし') { const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.evac_site)}`; const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(mapUrl)}`; document.getElementById('poster-qr-img').src = qrSrc; document.getElementById('poster-qr-img').style.display = 'block'; }
 
             document.getElementById('loading').style.display = 'none';
             document.getElementById('controls').style.display = 'block';
@@ -322,8 +363,12 @@
             let url = `${API_URL}?userId=${userId}&type=img_profile&dogId=${dogId}`;
             fetch(url).then(res => res.json()).then(data => {
                 if(data.image) {
-                    setImg('d_photo_container', data.image); setSrc('poster_img', data.image); setSrc('crate_img', data.image);
-                } else { document.getElementById('d_photo_container').innerHTML = '<span class="text-muted small">No Image</span>'; }
+                    setImg('d_photo_container', data.image);
+                    setSrc('poster_img', data.image);
+                    setSrc('crate_img', data.image);
+                } else {
+                    document.getElementById('d_photo_container').innerHTML = '<span class="text-muted small">No Image</span>';
+                }
             });
         }
 
@@ -335,54 +380,51 @@
             if (mode === 'crate') targetId = 'crate-display';
             const target = document.getElementById(targetId);
             if(!target) { overlay.style.display='none'; return; }
+
             const prevDisplay = target.style.display;
             target.style.display = 'block';
             document.body.className = '';
             document.body.classList.add(`print-${mode}`);
             await new Promise(r => setTimeout(r, 500));
+
             try {
                 const canvas = await html2canvas(target, { scale: 2, useCORS: true, allowTaint: true, windowWidth: 1200 });
                 const imgData = canvas.toDataURL('image/jpeg', 0.90);
                 document.getElementById('generated-image-preview').src = imgData;
                 
-                // PC Download (Instant)
+                const pdfBlob = new window.jspdf.jsPDF(mode==='handbook'?'l':'p','mm','a4').output('blob');
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                document.getElementById('btn-view-pdf-blob').href = pdfUrl;
+
                 const btnDownload = document.getElementById('btn-download-pdf');
                 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                 if (!isMobile) {
-                    const { jsPDF } = window.jspdf;
-                    const orient = (mode === 'handbook') ? 'l' : 'p';
-                    const doc = new jsPDF(orient, 'mm', 'a4');
-                    doc.addImage(imgData, 'JPEG', 0, 0, orient==='l'?297:210, orient==='l'?210:297);
-                    doc.save(`K9_${mode}.pdf`);
-                    overlay.style.display = 'none';
-                    target.style.display = prevDisplay;
-                    document.body.className = 'mode-handbook';
-                    return; // Skip modal for PC
-                } else {
-                     // PDF Blob for Mobile
-                    const pdfBlob = new window.jspdf.jsPDF(mode==='handbook'?'l':'p','mm','a4').output('blob');
-                    const pdfUrl = URL.createObjectURL(pdfBlob);
-                    document.getElementById('btn-view-pdf-blob').href = pdfUrl;
-                    btnDownload.style.display = 'none'; 
-                }
+                    btnDownload.style.display = 'inline-block';
+                    btnDownload.onclick = function() {
+                        const { jsPDF } = window.jspdf;
+                        const orient = (mode === 'handbook') ? 'l' : 'p';
+                        const doc = new jsPDF(orient, 'mm', 'a4');
+                        doc.addImage(imgData, 'JPEG', 0, 0, orient==='l'?297:210, orient==='l'?210:297);
+                        doc.save(`K9_${mode}.pdf`);
+                    };
+                } else { btnDownload.style.display = 'none'; }
                 outputModal.show();
             } catch (err) { alert('作成失敗: ' + err.message); } 
             finally {
-                if(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-                     target.style.display = prevDisplay;
-                     document.body.className = 'mode-handbook';
-                     overlay.style.display = 'none';
-                }
+                target.style.display = prevDisplay;
+                document.body.className = 'mode-handbook';
+                overlay.style.display = 'none';
             }
         }
+        
         function maskAddress(addr) { if(!addr) return; const m = addr.match(/(.*?[都道府県].*?[市区町村])/); return m ? m[0]+' ***' : addr.substring(0,5)+' ***'; }
         function maskPhone(tel) { if(!tel) return; return tel.substring(0,3)+'-****-****'; }
-        function setMaskedText(baseId, realVal, maskedVal) { const rEl = document.getElementById(baseId + '_real'); const mEl = document.getElementById(baseId + '_masked'); const btn = rEl ? rEl.parentElement.querySelector('.btn-toggle-mask') : null; if(!rEl || !mEl) return; if(!realVal || realVal === '記載なし') { rEl.textContent = '記載なし'; mEl.style.display='none'; rEl.style.display='inline'; if(btn) btn.style.display='none'; } else { rEl.textContent = realVal; mEl.textContent = maskedVal; mEl.style.display='inline'; rEl.style.display='none'; if(btn) btn.style.display='inline-block'; } }
+        function setMaskedText(baseId, realVal, maskedVal) { /* Logic same */ const rEl = document.getElementById(baseId + '_real'); const mEl = document.getElementById(baseId + '_masked'); const btn = rEl ? rEl.parentElement.querySelector('.btn-toggle-mask') : null; if(!rEl || !mEl) return; if(!realVal) { rEl.textContent = '記載なし'; mEl.style.display='none'; rEl.style.display='inline'; if(btn) btn.style.display='none'; } else { rEl.textContent = realVal; mEl.textContent = maskedVal; mEl.style.display='inline'; rEl.style.display='none'; if(btn) btn.style.display='inline-block'; } }
         function toggleMask(baseId) { const rEl = document.getElementById(baseId + '_real'); const mEl = document.getElementById(baseId + '_masked'); if(rEl.style.display === 'none') { if(confirm('表示しますか？')) { rEl.style.display='inline'; mEl.style.display='none'; } } else { rEl.style.display='none'; mEl.style.display='inline'; } }
         function setText(id, txt) { const el = document.getElementById(id); if(el) el.textContent = txt || '-'; }
         function setSrc(id, src) { const el = document.getElementById(id); if(el) el.src = src; }
         function setImg(cid, src) { const el = document.getElementById(cid); if(el) { el.innerHTML = `<img src="${src}" class="dog-profile-img">`; el.style.border='none'; } }
-        function setupCertButton(statId, btnId, has, ref) { document.getElementById(statId).textContent = has ? '確認済み' : '未確認/無し'; const btn = document.getElementById(btnId); if(has && ref) { btn.style.display='inline-block'; btn.onclick = () => { const src = (ref.indexOf('http')===-1) ? `https://drive.google.com/uc?export=view&id=${ref}` : ref; document.getElementById('modalImage').src = src; imageModal.show(); }; } else { btn.style.display='none'; } }
+        function setupCertButton(statId, btnId, has, ref) { /* Logic same */ document.getElementById(statId).textContent = has ? '確認済み' : '未確認/無し'; const btn = document.getElementById(btnId); if(has && ref) { btn.style.display='inline-block'; btn.onclick = () => { const src = (ref.indexOf('http')===-1) ? `https://drive.google.com/uc?export=view&id=${ref}` : ref; document.getElementById('modalImage').src = src; imageModal.show(); }; } else { btn.style.display='none'; } }
     </script>
 </body>
 </html>
