@@ -32,10 +32,13 @@
 
         /* ロゴ・デバッグ */
         .logo-placeholder { display: inline-block; padding: 5px 10px; border: 2px dashed #ccc; color: #999; font-size: 0.8rem; }
-        #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 8px; height: 150px; overflow-y: scroll; margin-top:20px; }
+        #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 8px; height: 150px; overflow-y: scroll; margin-top:20px; display:none; } /* デフォルト非表示 */
+        .version-tag { position: fixed; bottom: 5px; right: 5px; font-size: 0.7rem; color: #ccc; z-index: 9999; }
     </style>
 </head>
 <body>
+    <div class="version-tag">v2025.12.10-FIXED2</div>
+
     <div class="container py-3">
         <div class="no-print-area">
             <div class="text-center mb-2"><span class="logo-placeholder">[Logo img]</span></div>
@@ -106,7 +109,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // ★重要: デプロイ後に発行される新しいURLに書き換えてください
+        // ★重要: デプロイ後に発行される最新のURLに書き換えてください
         const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
         const LIFF_ID = "2008546673-MJY7j3ox";
 
@@ -115,7 +118,8 @@
 
         function log(msg) {
             const el = document.getElementById('debug-console');
-            if(el) el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}<br>` + el.innerHTML;
+            // デバッグログが必要な場合はCSSでdisplay:blockにしてください
+            if(el && el.style.display !== 'none') el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}<br>` + el.innerHTML;
             console.log(msg);
         }
 
@@ -141,19 +145,12 @@
             
             fetch(url).then(res => res.json()).then(data => {
                 if(data.error) { alert('Error: ' + data.error); return; }
-                
-                // 犬IDが未確定だった場合（多頭飼いの1匹目など）、IDを保存
                 if(data.dog && data.dog.id) currentDogId = data.dog.id;
-                
                 renderData(data);
-                
-                // 画像取得 (IDが確定してから呼ぶ)
                 if(currentDogId) fetchImage(userId, currentDogId);
-                
             }).catch(e => log('Connection Error: ' + e.message));
         }
 
-        // --- PDF生成機能 ---
         function generatePdf(type) {
             if(!currentUserId || !currentDogId) { alert('データ読み込み中です'); return; }
             
@@ -164,7 +161,6 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 作成中...';
 
-            // APIコール: type = pdf_handbook, pdf_crate, pdf_poster
             const url = `${API_URL}?userId=${currentUserId}&dogId=${currentDogId}&type=pdf_${type}`;
             
             fetch(url).then(res => res.json()).then(data => {
@@ -185,7 +181,6 @@
 
         function fetchImage(userId, dogId) {
             let url = `${API_URL}?userId=${userId}&type=img_profile&dogId=${dogId}`;
-            
             fetch(url).then(res => res.json()).then(data => {
                 if(data.image) {
                     const el = document.getElementById('d_photo_container');
@@ -199,7 +194,6 @@
             });
         }
 
-        // --- UI Render ---
         function renderData(data) {
             const c = data.customer || {};
             const d = data.dog || {};
@@ -210,27 +204,22 @@
             setText('d_age', d.age);
             setText('d_gender', d.gender);
             setText('d_neutered', d.neutered);
-            
             setText('c_name', c.name);
             setMaskedText('c_address', c.address, maskAddress(c.address));
             setMaskedText('c_phone', c.phone, maskPhone(c.phone));
-
             setText('d_vet_name', d.vet_name);
             setText('d_vet_address', d.vet_address);
             setText('d_vet_phone', d.vet_phone);
-
             setText('d_history', d.history);
             setText('d_medicine', d.medicine);
             setText('d_allergy', d.allergy);
             setText('d_license', d.license_no);
             setText('d_chip', d.microchip);
-
             setText('c_em_name', c.em_name);
             setText('c_em_phone', c.em_phone);
             setText('c_proxy_name', c.proxy_name);
             setText('c_proxy_phone', c.proxy_phone);
             setText('c_evac', c.evac_site);
-
             setText('d_food', d.food);
             setText('d_caution', d.caution);
 
