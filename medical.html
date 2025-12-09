@@ -25,12 +25,18 @@
         .btn-toggle-mask { font-size: 0.7rem; padding: 2px 10px; border: 1px solid var(--alert-color); color: var(--alert-color); background: white; border-radius: 20px; }
         .logo-placeholder { display: inline-block; padding: 5px 10px; border: 2px dashed #ccc; color: #999; font-size: 0.8rem; }
         #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 8px; height: 150px; overflow-y: scroll; margin-top:20px; display:none; }
+        
         /* ログスタンプ */
         #log-stamp { background: #d32f2f; color: white; text-align: center; font-weight: bold; padding: 5px; font-size: 0.8rem; }
+
+        /* プリント案内モーダル用スタイル */
+        .print-step { margin-bottom: 15px; border-left: 3px solid var(--primary-color); padding-left: 10px; }
+        .print-step-title { font-weight: bold; display: block; margin-bottom: 5px; }
+        .app-link-btn { display: inline-block; margin: 5px; padding: 8px 15px; background: #eee; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.85rem; }
     </style>
 </head>
 <body>
-    <div id="log-stamp">v2025.12.10-FINAL-CHECK</div>
+    <div id="log-stamp">v2025.12.10-UX-PATCH</div>
 
     <div class="container py-3">
         <div class="no-print-area">
@@ -99,6 +105,38 @@
         <div id="debug-console">Initializing...</div>
     </div>
 
+    <div class="modal fade" id="printModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-print"></i> 印刷のご案内</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-3">作成されたPDFは、ご自宅のプリンターまたはコンビニエンスストアで印刷可能です。</p>
+                    
+                    <div class="print-step">
+                        <span class="print-step-title">1. 保存する</span>
+                        <p class="small mb-1">表示されたPDFファイルを端末（スマホ/PC）に保存してください。</p>
+                    </div>
+
+                    <div class="print-step">
+                        <span class="print-step-title">2. コンビニで印刷する場合</span>
+                        <p class="small mb-2">以下のアプリまたはサイトを利用して、保存したPDFを登録してください。</p>
+                        
+                        <div class="d-grid gap-2 mb-2">
+                            <a href="https://www.printing.ne.jp/" target="_blank" class="app-link-btn text-center"><i class="fa-solid fa-store"></i> セブンイレブン (netprint)</a>
+                            <a href="https://networkprint.ne.jp/" target="_blank" class="app-link-btn text-center"><i class="fa-solid fa-store"></i> ファミマ/ローソン (ネットワークプリント)</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
@@ -106,6 +144,7 @@
 
         let currentUserId = null;
         let currentDogId = null;
+        let printModal = null; // モーダルインスタンス
 
         function log(msg) {
             const el = document.getElementById('debug-console');
@@ -122,6 +161,10 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 currentDogId = urlParams.get('dogId');
                 log(`User: ${currentUserId}, DogID: ${currentDogId}`);
+                
+                // モーダル初期化
+                printModal = new bootstrap.Modal(document.getElementById('printModal'));
+
                 fetchData(currentUserId, currentDogId);
             } catch (err) { log('Init Error: ' + err.message); }
         };
@@ -149,9 +192,11 @@
                 if(data.error) {
                     alert('作成失敗: ' + data.error);
                 } else if(data.url) {
-                    if(confirm(`${data.name} が作成されました。\n開きますか？`)) {
-                        liff.openWindow({ url: data.url, external: true });
-                    }
+                    // PC/スマホ共通: PDFを開く
+                    liff.openWindow({ url: data.url, external: true });
+                    
+                    // 案内モーダルを表示
+                    printModal.show();
                 }
             })
             .catch(e => alert('通信エラー: ' + e.message))
