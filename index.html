@@ -97,6 +97,16 @@
     .photo-item { height: 120px; border-radius: 8px; border: 1px solid #eee; cursor: pointer; }
     
     .footer-action { margin: 30px 20px 10px; text-align: center; }
+    
+    /* PDF Button */
+    .btn-pdf {
+        background: #fff; color: var(--brand-color); border: 2px solid var(--brand-color);
+        width: 100%; padding: 12px; border-radius: 30px; font-weight: 700; font-size: 1rem;
+        margin-bottom: 15px; display: block; text-decoration: none; transition: background 0.2s;
+        cursor: pointer;
+    }
+    .btn-pdf:active { background: #E0F7FA; transform: scale(0.98); }
+
     .btn-reserve { background: var(--brand-color); color: #fff; border: none; width: 100%; padding: 14px; border-radius: 30px; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 12px rgba(87, 195, 194, 0.4); display: block; text-decoration: none; }
     
     .reminder-box {
@@ -202,6 +212,10 @@
     <div class="photo-scroll" id="photoArea"><div class="text-muted small ms-3" id="photoLoadingMsg">画像を読み込み中...</div></div>
 
     <div class="footer-action">
+      <button onclick="handleDownloadPdf()" class="btn-pdf" id="pdfBtn">
+         📄 レポートをPDFで保存
+      </button>
+
       <a href="#" class="btn-reserve">予約する / Reserve</a>
       <div id="reminderArea" class="reminder-box" style="display:none;">次回予約目安: <span id="reminderDate">--/-- 〜 --/--</span></div>
       <div class="text-muted small mt-2">チケット残数: <span id="ticketCount" class="fw-bold" style="font-size:1.2rem;">-</span> 回</div>
@@ -230,6 +244,8 @@
     let currentDogId = null;
     let chartInstance1 = null; 
     let chartInstance2 = null;
+    // PDF生成用にデータを保持するグローバル変数
+    let currentLessonData = null;
 
     function startTipsSlider() {
       const tipsText = document.getElementById('tipsText');
@@ -299,8 +315,11 @@
           }
 
           try {
-              renderTextData(data);
+              // データをグローバル変数に保存（PDF用）
+              currentLessonData = data;
               
+              renderTextData(data);
+             
               currentDogId = data.dog.id || null;
               updateHistoryLink();
 
@@ -365,6 +384,97 @@
             url += `?dogId=${currentDogId}`;
         }
         window.location.href = url;
+    }
+
+    // ★ NEW: PDF Download Handler
+    function handleDownloadPdf() {
+        if (!currentLessonData || !currentLessonData.latest) {
+            alert("データが読み込まれていません。");
+            return;
+        }
+
+        const btn = document.getElementById('pdfBtn');
+        const originalText = btn.innerText;
+        btn.innerText = "作成中...";
+        btn.disabled = true;
+
+        // APIデータからPDF作成用データをマッピング
+        // ※画像パス(path)がAPIに含まれていない場合、PDFに画像は表示されません。
+        // 必要に応じてAPI側でパスを返すように修正してください。
+        const formData = {
+            training_unique_key: currentLessonData.latest.id || '', // IDがない場合は空
+            dog_name: currentLessonData.dog.name,
+            training_date: currentLessonData.latest.date,
+            customer_unique_key: currentLessonData.customer.id,
+            dog_unique_key: currentLessonData.dog.id,
+            
+            goal: currentLessonData.latest.goal,
+            done: currentLessonData.latest.done,
+            unable: currentLessonData.latest.unable,
+            next_homework: currentLessonData.latest.homework, // キー名のマッピングに注意
+            next_goal: currentLessonData.latest.next_goal,
+            comment_trainer: currentLessonData.latest.comment,
+            training_remarks: '', // 必要ならAPIに追加
+
+            // スコアマッピング
+            score_1: currentLessonData.latest.scores[0], score_detail_1: currentLessonData.latest.details[0],
+            score_2: currentLessonData.latest.scores[1], score_detail_2: currentLessonData.latest.details[1],
+            score_3: currentLessonData.latest.scores[2], score_detail_3: currentLessonData.latest.details[2],
+            score_4: currentLessonData.latest.scores[3], score_detail_4: currentLessonData.latest.details[3],
+            score_5: currentLessonData.latest.scores[4], score_detail_5: currentLessonData.latest.details[4],
+            score_6: currentLessonData.latest.scores[5], score_detail_6: currentLessonData.latest.details[5],
+            score_7: currentLessonData.latest.scores[6], score_detail_7: currentLessonData.latest.details[6],
+            score_8: currentLessonData.latest.scores[7], score_detail_8: currentLessonData.latest.details[7],
+            score_9: currentLessonData.latest.scores[8], score_detail_9: currentLessonData.latest.details[8],
+            score_10: currentLessonData.latest.scores[9], score_detail_10: currentLessonData.latest.details[9],
+            
+            // 画像用パス (APIが返していない場合は空になります)
+            training_photo_1: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[0] : '',
+            training_photo_2: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[1] : '',
+            training_photo_3: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[2] : '',
+            training_photo_4: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[3] : '',
+            training_photo_5: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[4] : ''
+        };
+
+        if (typeof google === 'undefined' || !google.script) {
+            alert('この機能はGASウェブアプリ上でのみ動作します。');
+            btn.innerText = originalText;
+            btn.disabled = false;
+            return;
+        }
+
+        google.script.run
+            .withSuccessHandler(function(response) {
+                btn.innerText = originalText;
+                btn.disabled = false;
+
+                if (response.status === 'success') {
+                    // ユーザーエージェント判定
+                    const isIos = /iP(ad|hone|od)/.test(navigator.userAgent);
+
+                    if (isIos) {
+                        // iOS: 別タブで開く (ポップアップブロック回避のためユーザーアクションが必要な場合があるが、まずはこれで試行)
+                        window.open(response.url, '_blank');
+                    } else {
+                        // PC/Android: 強制ダウンロード
+                        const a = document.createElement('a');
+                        a.href = response.url;
+                        a.download = `LessonReport_${formData.training_date}.pdf`; 
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    }
+                    alert(response.message);
+                } else {
+                    alert('エラー: ' + response.message);
+                }
+            })
+            .withFailureHandler(function(e) {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                alert('サーバーエラー: ' + e);
+            })
+            .createPdfFromSlide(formData);
     }
 
     function fetchProfileImage(userId, dogId) {
