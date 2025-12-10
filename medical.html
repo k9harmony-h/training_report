@@ -11,7 +11,10 @@
     <style>
         :root { --primary-color: #88b08b; --accent-color: #e8f5e9; --alert-color: #e07a5f; --text-color: #333; --mask-color: #f0f0f0; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 150px; }
-        .no-print-area { margin: 20px 0 30px; text-align: center; }
+        
+        /* ★修正: 上部マージンを0に変更 */
+        .no-print-area { margin: 0 0 30px; text-align: center; }
+        
         .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; border: 1px solid #eee; }
         .section-title { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 15px; }
         .info-row { margin-bottom: 8px; border-bottom:1px dashed #eee; padding-bottom:4px; }
@@ -24,14 +27,17 @@
         .real-text { display: none; font-weight: bold; color: #333; }
         .btn-toggle-mask { font-size: 0.7rem; padding: 2px 10px; border: 1px solid var(--alert-color); color: var(--alert-color); background: white; border-radius: 20px; }
         
-        /* ロゴ用スタイル (A案: 画像ファイル読み込み) */
+        /* ロゴ用スタイル */
         .logo-container { 
             display: flex; 
             justify-content: center; 
             margin-bottom: 15px; 
+            /* ★追加: 上部に余計な隙間が出ないよう明示 */
+            margin-top: 0;
+            padding-top: 20px; /* 少しだけ中身の余白を持たせるなら調整可。今回は余白なし方針なら0でOKですが、見栄えのため画像自体の上は詰めつつ、コンテナとしては画面端に張り付く設定 */
         }
         .logo-img { 
-            width: 35%; /* 30-40%のご指定に合わせて調整 */
+            width: 35%; 
             height: auto; 
             display: block; 
         }
@@ -51,12 +57,12 @@
     </style>
 </head>
 <body>
-    <div id="log-stamp">v2025.12.11-Step4-With-Logo-Img</div>
+    <div id="log-stamp">v2025.12.11-Medical-NoMargin</div>
 
-    <div class="container py-3">
+    <div class="container pt-0 pb-3">
         <div class="no-print-area">
             <div class="logo-container">
-                <img src="https://github.com/k9harmony-h/training_report/blob/main/K9_logoFull.png" class="logo-img" alt="K9 Harmony Logo">
+                <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="logo-img" alt="K9 Harmony Logo">
             </div>
             <h4 class="fw-bold mb-3" style="color: var(--primary-color);">うちの子医療・防災手帳</h4>
             <div id="loading" class="text-center py-5"><div class="spinner-border text-success"></div><p>Loading...</p></div>
@@ -224,11 +230,9 @@
                 if(data.error) {
                     alert('作成失敗: ' + data.error);
                 } else if(data.url) {
-                    // ★Step 4: デバイス判定
                     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
                     if (!isMobile) {
-                        // === PCの場合 ===
                         try {
                             const match = data.url.match(/\/d\/(.*?)\//);
                             if (match && match[1]) {
@@ -248,13 +252,11 @@
                         } catch(e) { window.open(data.url, '_blank'); }
 
                     } else {
-                        // === スマホの場合 ===
                         let fileId = '';
                         const match = data.url.match(/\/d\/(.*?)\//) || data.url.match(/id=(.*?)$/);
                         if (match && match[1]) fileId = match[1];
 
                         if (fileId) {
-                            // プレビュー表示
                             const previewArea = document.getElementById('preview-area');
                             const img = document.getElementById('preview-img');
                             
