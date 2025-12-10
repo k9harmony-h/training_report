@@ -36,7 +36,7 @@
     </style>
 </head>
 <body>
-    <div id="log-stamp">v2025.12.10-UX-PATCH</div>
+    <div id="log-stamp">v2025.12.10-Step1-PC-Download</div>
 
     <div class="container py-3">
         <div class="no-print-area">
@@ -192,11 +192,45 @@
                 if(data.error) {
                     alert('作成失敗: ' + data.error);
                 } else if(data.url) {
-                    // PC/スマホ共通: PDFを開く
-                    liff.openWindow({ url: data.url, external: true });
-                    
-                    // 案内モーダルを表示
-                    printModal.show();
+                    // ★ Step 1: PC判定と強制DL処理 ★
+                    // ユーザーエージェントでPC(iOS/Android以外)かどうか簡易判定
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+                    if (!isMobile) {
+                        // 【PCの場合】
+                        // GoogleドライブURLからIDを抽出し、ダウンロード用URLを作成してクリックさせる
+                        try {
+                            // URL例: https://drive.google.com/file/d/xxxxx/view...
+                            // ID(xxxxx)を正規表現で抽出
+                            const match = data.url.match(/\/d\/(.*?)\//);
+                            if (match && match[1]) {
+                                const fileId = match[1];
+                                const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+                                
+                                // 隠しリンクを作ってクリック
+                                const a = document.createElement('a');
+                                a.href = downloadUrl;
+                                a.download = 'medical_handbook.pdf'; // ファイル名は効かない場合もありますが指定
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                
+                                // PCでも案内モーダルは一応出しておく(Step 2で調整)
+                                printModal.show();
+                            } else {
+                                // ID抽出できなかった場合は従来の別窓表示(バックアップ)
+                                window.open(data.url, '_blank');
+                                printModal.show();
+                            }
+                        } catch(e) {
+                            console.error('Download Logic Error', e);
+                            window.open(data.url, '_blank');
+                        }
+                    } else {
+                        // 【スマホの場合】(既存動作維持)
+                        liff.openWindow({ url: data.url, external: true });
+                        printModal.show();
+                    }
                 }
             })
             .catch(e => alert('通信エラー: ' + e.message))
