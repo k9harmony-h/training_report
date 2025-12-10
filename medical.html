@@ -1,364 +1,336 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>うちの子医療・防災手帳</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+/**
+ * ============================================================================
+ * K9 Harmony - Disaster Module
+ * ============================================================================
+ * @file    disaster.gs
+ * @version v2025.12.11-PROBLEM-FIX
+ */
+
+const DISASTER_CONFIG = {
+  SLIDES: {
+    HANDBOOK:       '13B4BsuXuzUE1AZadWILQP_OHHaVAYoBYvEnuxkIX1PQ',
+    CRATE_TAG:      '1MSlvMgULTg-HfCp3uFtcPoe_eqlbX5uFzF4OSfqTtVw',
+    MISSING_POSTER: '1cA-JDa2cbxC5pko5Nsbtt6W17cRfdBG6PkRMaXYsGXE'
+  },
+  OUTPUT_FOLDER_ID: '', 
+  COLS: {
+    // 基本情報
+    DOG_NAME: 'dog_name', 
+    DOG_GENDER: 'dog_gender', 
+    BREED: 'breed', 
+    COAT_COLOR: 'coat_color',
+    DOG_BIRTH_DATE: 'dog_birth_date', 
+    NEUTERED: 'neutered', 
+    DOG_PHOTO: 'dog_photo',
     
-    <style>
-        :root { --primary-color: #88b08b; --accent-color: #e8f5e9; --alert-color: #e07a5f; --text-color: #333; --mask-color: #f0f0f0; }
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 150px; }
-        .no-print-area { margin: 20px 0 30px; text-align: center; }
-        .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; border: 1px solid #eee; }
-        .section-title { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 15px; }
-        .info-row { margin-bottom: 8px; border-bottom:1px dashed #eee; padding-bottom:4px; }
-        .info-label { font-weight: bold; color: #666; font-size: 0.8rem; display: block; margin-bottom: 1px; }
-        .info-value { font-size: 1rem; font-weight: 500; word-break: break-all; }
-        #d_photo_container { width: 150px; height: 150px; background: #fff; border-radius: 12px; border: 4px solid var(--accent-color); overflow: hidden; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; }
-        .dog-profile-img { width: 100%; height: 100%; object-fit: cover; }
-        .masked-wrapper { display: flex; align-items: center; gap: 10px; }
-        .masked-text { display: inline-block; letter-spacing: 2px; color: #aaa; background: var(--mask-color); padding: 2px 8px; border-radius: 4px; }
-        .real-text { display: none; font-weight: bold; color: #333; }
-        .btn-toggle-mask { font-size: 0.7rem; padding: 2px 10px; border: 1px solid var(--alert-color); color: var(--alert-color); background: white; border-radius: 20px; }
-        .logo-placeholder { display: inline-block; padding: 5px 10px; border: 2px dashed #ccc; color: #999; font-size: 0.8rem; }
-        #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 8px; height: 150px; overflow-y: scroll; margin-top:20px; display:none; }
-        
-        /* ログスタンプ */
-        #log-stamp { background: #d32f2f; color: white; text-align: center; font-weight: bold; padding: 5px; font-size: 0.8rem; }
+    // 医療・詳細
+    VET_NAME: 'vet_name', 
+    VET_PHONE: 'vet_phone', 
+    DOG_ALLERGY: 'dog_allergy',
+    DOG_MEDICAL_HISTORY: 'dog_medical_history', 
+    DOG_MEDICINE: 'dog_medicine', 
+    DOG_FOOD: 'dog_food',
+    DOG_CAUTION: 'dog_caution', 
+    DOG_MICROCHIP: 'dog_microchip', 
+    DOG_LICENSE_NO: 'dog_license_no',
+    WEIGHT: 'weight', 
+    
+    // ★修正: 現在のDBカラム名 'problem' に設定
+    // (将来 'dog_problem' に変更した場合はここを書き換えてください)
+    DOG_PROBLEM: 'problem', 
+    
+    UPDATED_AT: 'updated_at',
+    
+    // 顧客情報
+    CUSTOMER_NAME: 'customer_name', 
+    CUSTOMER_PHONE: 'customer_phone',
+    EM_CONTACT_NAME: 'em_contact_name', 
+    EM_CONTACT_PHONE: 'em_contact_phone',
+    EM_PROXY_NAME: 'em_proxy_name', 
+    EM_PROXY_PHONE: 'em_proxy_phone', 
+    EVACUATION_SITE: 'evacuation_site'
+  }
+};
 
-        /* プリント案内用スタイル */
-        .print-step { margin-bottom: 15px; border-left: 3px solid var(--primary-color); padding-left: 10px; }
-        .print-step-title { font-weight: bold; display: block; margin-bottom: 5px; }
-        .app-link-btn { display: inline-block; margin: 5px; padding: 8px 15px; background: #eee; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.85rem; }
+const SHEET_NAME_DOG_D = '犬情報';
+const SHEET_NAME_CUST_D = '顧客情報';
 
-        /* Step4 プレビューエリア */
-        #preview-area { display: none; background: #fff; border: 2px solid var(--primary-color); border-radius: 12px; padding: 15px; margin-top: 20px; }
-        #preview-img { width: 100%; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; }
-        .preview-caption { font-size: 0.8rem; text-align: center; color: #666; margin-bottom: 15px; }
-        .print-info-inline { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-top: 10px; }
-    </style>
-</head>
-<body>
-    <div id="log-stamp">v2025.12.11-Step4-Mobile-Preview</div>
+/**
+ * [API Entry] Webアプリから呼ばれる関数
+ */
+function generatePdfForApi(lineUserId, dogId, docType) {
+  console.log(`[Start] Generate PDF: ${docType} for User: ${lineUserId}, Dog: ${dogId}`); 
 
-    <div class="container py-3">
-        <div class="no-print-area">
-            <div class="text-center mb-2"><span class="logo-placeholder">[Logo img]</span></div>
-            <h4 class="fw-bold mb-3" style="color: var(--primary-color);">うちの子医療・防災手帳</h4>
-            <div id="loading" class="text-center py-5"><div class="spinner-border text-success"></div><p>Loading...</p></div>
-        </div>
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  if (typeof getColumnMap !== 'function') throw new Error('utils.gs not loaded');
 
-        <div id="main-display" style="display:none;">
-            <div class="card-section">
-                <div class="section-title">基本情報</div>
-                <div id="d_photo_container"><div class="spinner-border spinner-border-sm text-secondary"></div></div>
-                <div class="text-center mb-3"><h2 id="d_name" class="fw-bold mb-0">-</h2></div>
-                <div class="row text-center mb-2">
-                    <div class="col-6 border-end"><span class="info-label">犬種</span><div id="d_breed">-</div></div>
-                    <div class="col-6"><span class="info-label">毛色</span><div id="d_color">-</div></div>
-                </div>
-                <div class="row text-center mb-3">
-                    <div class="col-4 border-end"><span class="info-label">年齢</span><div id="d_age">-</div></div>
-                    <div class="col-4 border-end"><span class="info-label">性別</span><div id="d_gender">-</div></div>
-                    <div class="col-4"><span class="info-label">去勢</span><div id="d_neutered">-</div></div>
-                </div>
-                <div class="info-row"><span class="info-label">飼い主名</span><div id="c_name" class="fw-bold">-</div></div>
-                <div class="info-row"><span class="info-label">住所</span><div class="masked-wrapper"><span id="c_address_masked" class="masked-text">***</span><span id="c_address_real" class="real-text">-</span><button class="btn-toggle-mask" onclick="toggleMask('c_address')">表示</button></div></div>
-                <div class="info-row"><span class="info-label">電話番号</span><div class="masked-wrapper"><span id="c_phone_masked" class="masked-text">***</span><span id="c_phone_real" class="real-text">-</span><button class="btn-toggle-mask" onclick="toggleMask('c_phone')">表示</button></div></div>
-            </div>
+  const mergedData = getMergedDataByDogId_(ss, dogId);
+  if (!mergedData) {
+    console.error('[Error] Dog data not found.'); 
+    return { error: 'Dog data not found or ID mismatch.' };
+  }
 
-            <div class="card-section">
-                <div class="section-title">医療情報</div>
-                <div class="mb-3 p-2 bg-light rounded border">
-                    <h6 class="fw-bold small text-muted"><i class="fa-solid fa-hospital"></i> かかりつけ医</h6>
-                    <div class="info-row"><span class="info-label">病院名</span><div id="d_vet_name" class="fw-bold">-</div></div>
-                    <div class="info-row"><span class="info-label">電話</span><div id="d_vet_phone">-</div></div>
-                    <div class="info-row"><span class="info-label">住所</span><div id="d_vet_address" class="small">-</div></div>
-                </div>
-                <div class="info-row"><span class="info-label">既往歴</span><div id="d_history">-</div></div>
-                <div class="info-row"><span class="info-label">常用薬</span><div id="d_medicine" class="text-danger">-</div></div>
-                <div class="info-row"><span class="info-label">アレルギー</span><div id="d_allergy" class="text-danger fw-bold">-</div></div>
-                <div class="row mt-2">
-                    <div class="col-6"><span class="info-label">鑑札番号</span><div id="d_license" class="small">-</div></div>
-                    <div class="col-6"><span class="info-label">チップ</span><div id="d_chip" class="small">-</div></div>
-                </div>
-            </div>
+  let templateId = '', suffix = '';
+  if (docType === 'handbook') { templateId = DISASTER_CONFIG.SLIDES.HANDBOOK; suffix = 'ハンドブック'; }
+  else if (docType === 'crate') { templateId = DISASTER_CONFIG.SLIDES.CRATE_TAG; suffix = 'クレートタグ'; }
+  else if (docType === 'poster') { templateId = DISASTER_CONFIG.SLIDES.MISSING_POSTER; suffix = '迷子チラシ'; }
+  else return { error: 'Invalid document type.' };
 
-            <div class="card-section">
-                <div class="section-title" style="color:var(--alert-color); border-color:#f8d7da;">緊急時情報</div>
-                <div class="info-row"><span class="info-label">緊急連絡先</span><div id="c_em_name">-</div><div id="c_em_phone">-</div></div>
-                <div class="info-row"><span class="info-label">代理人</span><div id="c_proxy_name">-</div><div id="c_proxy_phone">-</div></div>
-                <div class="info-row"><span class="info-label">指定避難所</span><div id="c_evac" class="fw-bold">-</div></div>
-            </div>
+  let folder = DriveApp.getRootFolder();
+  if (DISASTER_CONFIG.OUTPUT_FOLDER_ID) { try { folder = DriveApp.getFolderById(DISASTER_CONFIG.OUTPUT_FOLDER_ID); } catch(e){} }
 
-            <div class="card-section">
-                <div class="section-title">ケア・生活情報</div>
-                <div class="info-row"><span class="info-label">フード</span><div id="d_food">-</div></div>
-                <div class="info-row"><span class="info-label text-danger">注意</span><div id="d_caution" class="text-danger fw-bold">-</div></div>
-            </div>
-        </div>
+  try {
+    // ファイル名からは敬称を除去
+    const cleanName = mergedData.dogNameDisplay.replace(/くん|ちゃん$/, '');
+    const fileName = `${suffix}_${cleanName}`;
+    const pdfFile = createPDF_(templateId, mergedData, folder, fileName);
+    try { pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch(e){}
+    
+    const dlUrl = `https://drive.google.com/uc?export=download&id=${pdfFile.getId()}`;
 
-        <div id="controls" class="no-print-area mt-4" style="display:none;">
-            <p class="text-muted small mb-2 fw-bold">▼ 防災書類をPDFで作成・ダウンロード</p>
-            <button id="btn-handbook" onclick="generatePdf('handbook')" class="btn btn-outline-success w-100 mb-2 fw-bold shadow-sm"><i class="fa-solid fa-book"></i> 防災手帳を作成 (A4横)</button>
-            <button id="btn-crate" onclick="generatePdf('crate')" class="btn btn-outline-primary w-100 mb-2 fw-bold shadow-sm"><i class="fa-solid fa-tag"></i> クレートタグを作成 (A4縦)</button>
-            <button id="btn-poster" onclick="generatePdf('poster')" class="btn btn-outline-danger w-100 mb-2 fw-bold shadow-sm"><i class="fa-solid fa-bullhorn"></i> 迷子ポスターを作成 (A4縦)</button>
-        </div>
-        
-        <div id="preview-area" class="no-print-area">
-            <h5 class="fw-bold text-center mb-3">作成完了！</h5>
-            <div class="text-center">
-                <p class="preview-caption">画像を長押しで保存できます。<br>タップするとPDF本体が開きます。</p>
-                <img id="preview-img" src="" alt="PDF Preview">
-            </div>
-            
-            <div class="print-info-inline">
-                <h6 class="fw-bold mb-3"><i class="fa-solid fa-print"></i> 印刷のご案内</h6>
-                
-                <div class="print-step">
-                    <span class="print-step-title">1. 保存する</span>
-                    <p class="small mb-1">画像を長押しして「写真」に保存してください。</p>
-                </div>
+    console.log(`[Success] PDF Created: ${dlUrl}`); 
+    return { success: true, url: pdfFile.getUrl(), downloadUrl: dlUrl, name: fileName };
+  } catch (e) {
+    console.error(`[Error] PDF Generation Failed: ${e.message}`); 
+    return { error: 'PDF Generation Failed: ' + e.message };
+  }
+}
 
-                <div class="print-step">
-                    <span class="print-step-title">2. コンビニで印刷</span>
-                    <p class="small mb-2">保存した画像を以下のアプリ等で登録してください。</p>
-                    <div class="d-grid gap-2">
-                        <a href="https://www.printing.ne.jp/" target="_blank" class="app-link-btn text-center"><i class="fa-solid fa-store"></i> セブンイレブン (netprint)</a>
-                        <a href="https://networkprint.ne.jp/" target="_blank" class="app-link-btn text-center"><i class="fa-solid fa-store"></i> ファミマ/ローソン</a>
-                    </div>
-                </div>
-                <div class="text-center mt-3">
-                    <button class="btn btn-secondary btn-sm" onclick="closePreview()">閉じる / 再作成</button>
-                </div>
-            </div>
-        </div>
+function getMergedDataByDogId_(ss, dogId) {
+  const shDog = ss.getSheetByName(SHEET_NAME_DOG_D);
+  const data = shDog.getDataRange().getValues();
+  const dMap = getColumnMap(shDog);
 
-        <div id="debug-console">Initializing...</div>
-    </div>
+  let targetRowIndex = -1;
+  for (let i = 1; i < data.length; i++) {
+    if (String(getVal(data[i], dMap, 'dog_unique_key')) === String(dogId)) {
+      targetRowIndex = i + 1; 
+      break;
+    }
+  }
+  if (targetRowIndex === -1) return null;
+  return getMergedData_(ss, targetRowIndex);
+}
 
-    <div class="modal fade" id="printModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-print"></i> 印刷のご案内</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="small text-muted mb-3">作成されたPDFは、ご自宅のプリンターまたはコンビニエンスストアで印刷可能です。</p>
-                    <div class="print-step"><span class="print-step-title">1. 保存する</span><p class="small mb-1">表示されたPDFを保存してください。</p></div>
-                    <div class="print-step"><span class="print-step-title">2. コンビニで印刷</span><p class="small mb-2">以下のアプリ等をご利用ください。</p><div class="d-grid gap-2 mb-2"><a href="https://www.printing.ne.jp/" target="_blank" class="app-link-btn text-center">セブンイレブン</a><a href="https://networkprint.ne.jp/" target="_blank" class="app-link-btn text-center">ファミマ/ローソン</a></div></div>
-                </div>
-                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button></div>
-            </div>
-        </div>
-    </div>
+function getMergedData_(ss, dogRowIndex) {
+  const shDog = ss.getSheetByName(SHEET_NAME_DOG_D);
+  const shCust = ss.getSheetByName(SHEET_NAME_CUST_D);
+  const dMap = getColumnMap(shDog); 
+  const cMap = getColumnMap(shCust); 
+  
+  const dogValues = shDog.getRange(dogRowIndex, 1, 1, shDog.getLastColumn()).getValues()[0];
+  const custKey = getVal(dogValues, dMap, 'customer_unique_key');
+  if (!custKey) return null;
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
-        const LIFF_ID = "2008546673-MJY7j3ox";
+  const custDataAll = shCust.getDataRange().getValues();
+  let custValues = null;
+  for (let i = 1; i < custDataAll.length; i++) {
+    if (String(getVal(custDataAll[i], cMap, 'customer_unique_key')) === String(custKey)) { custValues = custDataAll[i]; break; }
+  }
+  if (!custValues) return null;
 
-        let currentUserId = null;
-        let currentDogId = null;
-        let printModal = null; 
+  const rawName = getVal(dogValues, dMap, DISASTER_CONFIG.COLS.DOG_NAME);
+  const gender  = getVal(dogValues, dMap, DISASTER_CONFIG.COLS.DOG_GENDER);
+  
+  // ★敬称ロジック
+  // 'Male', 'オス', '♂' のいずれかなら「くん」、それ以外は「ちゃん」
+  const suffix = (['Male', 'オス', '♂'].includes(gender)) ? 'くん' : 'ちゃん';
+  
+  const bDate = getVal(dogValues, dMap, DISASTER_CONFIG.COLS.DOG_BIRTH_DATE);
+  let age = '';
+  if (bDate instanceof Date) {
+    const today = new Date();
+    let y = today.getFullYear() - bDate.getFullYear();
+    const m = today.getMonth() - bDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < bDate.getDate())) y--;
+    age = `${y}歳`;
+  }
 
-        function log(msg) {
-            const el = document.getElementById('debug-console');
-            if(el && el.style.display !== 'none') el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}<br>` + el.innerHTML;
-            console.log(msg);
-        }
+  const allergyDetail = getVal(dogValues, dMap, DISASTER_CONFIG.COLS.DOG_ALLERGY);
+  const allergyYN = (allergyDetail && String(allergyDetail).trim() !== '') ? '有' : '無';
+  
+  const photoVal = getVal(dogValues, dMap, DISASTER_CONFIG.COLS.DOG_PHOTO);
+  
+  return {
+    dogNameDisplay: rawName ? `${rawName}${suffix}` : '',
+    breed:      getVal(dogValues, dMap, DISASTER_CONFIG.COLS.BREED),
+    gender:     gender, birthDate: bDate, age: age,
+    coatColor:  getVal(dogValues, dMap, DISASTER_CONFIG.COLS.COAT_COLOR),
+    neutered:   getVal(dogValues, dMap, DISASTER_CONFIG.COLS.NEUTERED),
+    dogPhotoSource: photoVal, 
+    vetName:        getVal(dogValues, dMap, DISASTER_CONFIG.COLS.VET_NAME),
+    vetPhone:       getVal(dogValues, dMap, DISASTER_CONFIG.COLS.VET_PHONE),
+    allergy:        allergyDetail, allergyYN: allergyYN,
+    medicalHistory: getVal(dogValues, dMap, DISASTER_CONFIG.COLS.DOG_MEDICAL_HISTORY),
+    medicine:       getVal(dogValues, dMap, DISASTER_CONFIG.COLS.DOG_MEDICINE),
+    food:           getVal(dogValues, dMap, DISASTER_CONFIG.COLS.DOG_FOOD),
+    caution:        getVal(dogValues, dMap, DISASTER_CONFIG.COLS.DOG_CAUTION),
+    microchip:      getVal(dogValues, dMap, DISASTER_CONFIG.COLS.DOG_MICROCHIP),
+    licenseNo:      getVal(dogValues, dMap, DISASTER_CONFIG.COLS.DOG_LICENSE_NO),
+    weight:         getVal(dogValues, dMap, DISASTER_CONFIG.COLS.WEIGHT),
+    // ★追加: problemの取得
+    problem:        getVal(dogValues, dMap, DISASTER_CONFIG.COLS.DOG_PROBLEM),
+    
+    customerName:   getVal(custValues, cMap, DISASTER_CONFIG.COLS.CUSTOMER_NAME),
+    customerPhone:  getVal(custValues, cMap, DISASTER_CONFIG.COLS.CUSTOMER_PHONE),
+    emContactName:  getVal(custValues, cMap, DISASTER_CONFIG.COLS.EM_CONTACT_NAME),
+    emContactPhone: getVal(custValues, cMap, DISASTER_CONFIG.COLS.EM_CONTACT_PHONE),
+    emProxyName:    getVal(custValues, cMap, DISASTER_CONFIG.COLS.EM_PROXY_NAME),
+    emProxyPhone:   getVal(custValues, cMap, DISASTER_CONFIG.COLS.EM_PROXY_PHONE),
+    evacuationSite: getVal(custValues, cMap, DISASTER_CONFIG.COLS.EVACUATION_SITE),
+    updateDate:     new Date()
+  };
+}
 
-        window.onload = async function() {
-            try {
-                await liff.init({ liffId: LIFF_ID });
-                if (!liff.isLoggedIn()) { liff.login(); return; }
-                const profile = await liff.getProfile();
-                currentUserId = profile.userId;
-                const urlParams = new URLSearchParams(window.location.search);
-                currentDogId = urlParams.get('dogId');
-                log(`User: ${currentUserId}, DogID: ${currentDogId}`);
-                
-                printModal = new bootstrap.Modal(document.getElementById('printModal'));
-                fetchData(currentUserId, currentDogId);
-            } catch (err) { log('Init Error: ' + err.message); }
-        };
+function createPDF_(templateId, data, folder, fileName) {
+  const templateFile = DriveApp.getFileById(templateId);
+  const tempFile = templateFile.makeCopy(`TEMP_${fileName}`, folder);
+  const slideApp = SlidesApp.openById(tempFile.getId());
+  const slides = slideApp.getSlides();
 
-        function fetchData(userId, dogId) {
-            let url = `${API_URL}?userId=${userId}`;
-            if(dogId) url += `&dogId=${dogId}`;
-            fetch(url).then(res => res.json()).then(data => {
-                if(data.error) { alert('Error: ' + data.error); return; }
-                if(data.dog && data.dog.id) currentDogId = data.dog.id;
-                renderData(data);
-                if(currentDogId) fetchImage(userId, currentDogId);
-            }).catch(e => log('Connection Error: ' + e.message));
-        }
+  slides.forEach((slide, index) => {
+    replaceText_(slide, data);
+    console.log(`[Debug] Processing Slide ${index + 1} for Image Replacement`);
+    replaceImage_(slide, '{dog_photo}', data.dogPhotoSource);
+  });
 
-        function generatePdf(type) {
-            if(!currentUserId || !currentDogId) { alert('データ読み込み中です'); return; }
-            
-            // ボタンのローディング表示
-            const btn = document.getElementById(`btn-${type}`);
-            const originalHtml = btn.innerHTML;
-            const allBtns = document.querySelectorAll('#controls button');
-            allBtns.forEach(b => b.disabled = true);
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 作成中...';
+  slideApp.saveAndClose();
+  const pdfBlob = tempFile.getAs(MimeType.PDF);
+  const pdfFile = folder.createFile(pdfBlob).setName(fileName + '.pdf');
+  tempFile.setTrashed(true);
+  return pdfFile;
+}
 
-            const url = `${API_URL}?userId=${currentUserId}&dogId=${currentDogId}&type=pdf_${type}`;
-            
-            fetch(url).then(res => res.json()).then(data => {
-                if(data.error) {
-                    alert('作成失敗: ' + data.error);
-                } else if(data.url) {
-                    // ★Step 4: デバイス判定
-                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+function replaceText_(slide, data) {
+  slide.replaceAllText('{dog_name}',       data.dogNameDisplay);
+  slide.replaceAllText('{breed}',          valOrNone(data.breed));
+  slide.replaceAllText('{dog_gender}',     valOrNone(data.gender));
+  slide.replaceAllText('{dog_birth_date}', formatDateSafe(data.birthDate, 'yyyy/MM/dd'));
+  slide.replaceAllText('{age}',            valOrNone(data.age));
+  slide.replaceAllText('{coat_color}',     valOrNone(data.coatColor));
+  slide.replaceAllText('{neutered}',       valOrNone(data.neutered));
+  slide.replaceAllText('{vet_name}',            valOrNone(data.vetName));
+  slide.replaceAllText('{vet_phone}',           valOrNone(data.vetPhone));
+  slide.replaceAllText('{dog_medical_history}', valOrNone(data.medicalHistory));
+  slide.replaceAllText('{dog_medicine}',        valOrNone(data.medicine));
+  slide.replaceAllText('{dog_food}',            valOrNone(data.food));
+  slide.replaceAllText('{dog_allergy}',         valOrNone(data.allergy));
+  slide.replaceAllText('{allergyYN}',           data.allergyYN);
+  slide.replaceAllText('{dog_caution}',         valOrNone(data.caution));
+  slide.replaceAllText('{dog_microchip}',       valOrNone(data.microchip));
+  slide.replaceAllText('{dog_license_no}',      data.licenseNo || '');
+  slide.replaceAllText('{weight}',              data.weight || '');
+  
+  // ★出力: problem
+  slide.replaceAllText('{problem}',             data.problem || '');
 
-                    if (!isMobile) {
-                        // === PCの場合 (Step 1維持) ===
-                        try {
-                            const match = data.url.match(/\/d\/(.*?)\//);
-                            if (match && match[1]) {
-                                const fileId = match[1];
-                                const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-                                const a = document.createElement('a');
-                                a.href = downloadUrl;
-                                a.download = 'medical_document.pdf'; 
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                                printModal.show();
-                            } else {
-                                window.open(data.url, '_blank');
-                                printModal.show();
-                            }
-                        } catch(e) { window.open(data.url, '_blank'); }
+  slide.replaceAllText('{customer_name}',    valOrNone(data.customerName));
+  slide.replaceAllText('{customer_phone}',   valOrNone(data.customerPhone));
+  slide.replaceAllText('{em_contact_name}',  valOrNone(data.emContactName));
+  slide.replaceAllText('{em_contact_phone}', valOrNone(data.emContactPhone));
+  slide.replaceAllText('{em_proxy_name}',    valOrNone(data.emProxyName));
+  slide.replaceAllText('{em_proxy_phone}',   valOrNone(data.emProxyPhone));
+  slide.replaceAllText('{evacuation_site}',  valOrNone(data.evacuationSite));
+  slide.replaceAllText('{updateDate}', formatDateSafe(data.updateDate, 'yyyy/MM/dd'));
+}
 
-                    } else {
-                        // === スマホの場合 (Step 4 実装) ===
-                        // 1. ファイルID抽出
-                        let fileId = '';
-                        const match = data.url.match(/\/d\/(.*?)\//) || data.url.match(/id=(.*?)$/);
-                        if (match && match[1]) fileId = match[1];
+/**
+ * 画像置換ロジック (代替テキスト優先)
+ */
+function replaceImage_(slide, tag, source) {
+  if (!source) {
+    console.log('[Debug] No Image Source provided. Skipping replace.'); 
+    return;
+  }
 
-                        if (fileId) {
-                            // 2. プレビュー表示エリアの構築
-                            const previewArea = document.getElementById('preview-area');
-                            const img = document.getElementById('preview-img');
-                            
-                            // GoogleドライブのサムネイルURL (sz=w1000 で高画質取得)
-                            const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
-                            img.src = thumbUrl;
-                            
-                            // 画像タップ時の挙動: PDF本体を外部ブラウザで開く
-                            img.onclick = function() {
-                                liff.openWindow({ url: data.url, external: true });
-                            };
+  // 1. 画像Blobの取得
+  let imageBlob = null;
+  let fileId = '';
+  
+  try {
+    const matchId = String(source).match(/id=([-\w]{25,})/);
+    const matchPath = String(source).match(/\/d\/([-\w]{25,})/);
+    const simpleMatch = String(source).match(/^[-\w]{25,}$/); 
 
-                            // 表示切り替え
-                            document.getElementById('controls').style.display = 'none'; // ボタン隠す
-                            previewArea.style.display = 'block'; // プレビュー出す
-                            
-                            // スクロール
-                            previewArea.scrollIntoView({ behavior: 'smooth' });
+    if (matchId) fileId = matchId[1];
+    else if (matchPath) fileId = matchPath[1];
+    else if (simpleMatch) fileId = simpleMatch[0];
 
-                        } else {
-                            // ID取れない場合(稀)は従来通り開く
-                            liff.openWindow({ url: data.url, external: true });
-                        }
-                    }
-                }
-            })
-            .catch(e => alert('通信エラー: ' + e.message))
-            .finally(() => {
-                allBtns.forEach(b => b.disabled = false);
-                btn.innerHTML = originalHtml;
-            });
-        }
+    if (fileId) {
+       console.log(`[Debug] Found ID: ${fileId}`);
+       imageBlob = DriveApp.getFileById(fileId).getBlob();
+    }
+  } catch(e) { console.log(`[Debug] ID lookup failed: ${e.message}`); }
 
-        // プレビューを閉じてボタンに戻る処理
-        function closePreview() {
-            document.getElementById('preview-area').style.display = 'none';
-            document.getElementById('controls').style.display = 'block';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+  // IDで失敗したらファイル名検索
+  if (!imageBlob) {
+    const parts = String(source).split('/');
+    const fileName = parts[parts.length - 1];
+    console.log(`[Debug] Searching by name: "${fileName}"`);
+    try {
+      const files = DriveApp.getFilesByName(fileName);
+      if (files.hasNext()) imageBlob = files.next().getBlob();
+    } catch(e) { console.warn(`[Warn] Name search error: ${e.message}`); }
+  }
 
-        function fetchImage(userId, dogId) {
-            let url = `${API_URL}?userId=${userId}&type=img_profile&dogId=${dogId}`;
-            fetch(url).then(res => res.json()).then(data => {
-                if(data.image) {
-                    const el = document.getElementById('d_photo_container');
-                    if(el) {
-                        el.innerHTML = `<img src="${data.image}" class="dog-profile-img">`;
-                        el.style.border = 'none';
-                    }
-                } else {
-                    document.getElementById('d_photo_container').innerHTML = '<span class="small text-muted">No Photo</span>';
-                }
-            });
-        }
+  if (!imageBlob) {
+    console.warn('[Warn] Image Blob could not be retrieved.');
+    return;
+  }
 
-        function renderData(data) {
-            const c = data.customer || {};
-            const d = data.dog || {};
-            setText('d_name', d.name_disp);
-            setText('d_breed', d.breed);
-            setText('d_color', d.color);
-            setText('d_age', d.age);
-            setText('d_gender', d.gender);
-            setText('d_neutered', d.neutered);
-            setText('c_name', c.name);
-            setMaskedText('c_address', c.address, maskAddress(c.address));
-            setMaskedText('c_phone', c.phone, maskPhone(c.phone));
-            setText('d_vet_name', d.vet_name);
-            setText('d_vet_address', d.vet_address);
-            setText('d_vet_phone', d.vet_phone);
-            setText('d_history', d.history);
-            setText('d_medicine', d.medicine);
-            setText('d_allergy', d.allergy);
-            setText('d_license', d.license_no);
-            setText('d_chip', d.microchip);
-            setText('c_em_name', c.em_name);
-            setText('c_em_phone', c.em_phone);
-            setText('c_proxy_name', c.proxy_name);
-            setText('c_proxy_phone', c.proxy_phone);
-            setText('c_evac', c.evac_site);
-            setText('d_food', d.food);
-            setText('d_caution', d.caution);
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('controls').style.display = 'block';
-            document.getElementById('main-display').style.display = 'block';
-        }
+  // 2. 図形を検索 (代替テキスト優先)
+  const shapes = slide.getShapes();
+  const target = findShapeRecursive_(shapes, tag);
 
-        function maskAddress(addr) { if(!addr) return; const m = addr.match(/(.*?[都道府県].*?[市区町村])/); return m ? m[0]+' ***' : addr.substring(0,5)+' ***'; }
-        function maskPhone(tel) { if(!tel) return; return tel.substring(0,3)+'-****-****'; }
-        function setText(id, txt) { const el = document.getElementById(id); if(el) el.textContent = txt || '-'; }
-        function setMaskedText(baseId, realVal, maskedVal) { 
-            const rEl = document.getElementById(baseId + '_real'); 
-            const mEl = document.getElementById(baseId + '_masked'); 
-            const btn = rEl ? rEl.parentElement.querySelector('.btn-toggle-mask') : null; 
-            if(!rEl || !mEl) return; 
-            if(!realVal || realVal === '記載なし') { 
-                rEl.textContent = '記載なし'; mEl.style.display='none'; rEl.style.display='inline'; 
-                if(btn) btn.style.display='none'; 
-            } else { 
-                rEl.textContent = realVal; mEl.textContent = maskedVal; 
-                mEl.style.display='inline'; rEl.style.display='none'; 
-                if(btn) btn.style.display='inline-block'; 
-            } 
-        }
-        function toggleMask(baseId) { 
-            const rEl = document.getElementById(baseId + '_real'); 
-            const mEl = document.getElementById(baseId + '_masked'); 
-            if(rEl.style.display === 'none') { 
-                if(confirm('表示しますか？')) { rEl.style.display='inline'; mEl.style.display='none'; } 
-            } else { 
-                rEl.style.display='none'; mEl.style.display='inline'; 
-            } 
-        }
-    </script>
-</body>
-</html>
+  // 3. 置換実行
+  if (target) {
+    try {
+      target.replaceWithImage(imageBlob, true); 
+      console.log(`[Debug] Image Replaced. Tag: "${tag}"`); 
+    } catch (e) { 
+      console.error(`[Error] Image replace failed: ${e.message}`); 
+    }
+  } else {
+    console.warn(`[Warn] Shape with tag "${tag}" NOT FOUND.`); 
+  }
+}
+
+/**
+ * ヘルパー: 図形検索
+ */
+function findShapeRecursive_(shapes, tag) {
+  for (const s of shapes) {
+    if (s.getShapeType() === SlidesApp.ShapeType.GROUP) {
+      const found = findShapeRecursive_(s.getGroup().getChildren(), tag);
+      if (found) return found;
+    }
+    
+    const check = (val) => val && String(val).trim() === tag;
+
+    // ★優先1: 代替テキスト
+    if (check(s.getDescription())) return s;
+
+    // ★優先2: タイトル
+    if (check(s.getTitle())) return s;
+
+    // ★優先3: テキスト本文
+    try {
+      if (s.getText && check(s.getText().asString())) return s;
+    } catch(e) {}
+  }
+  return null;
+}
+
+/**
+ * デバッグ用
+ */
+function debugPdfHandBook() {
+  const TEST_USER_ID = 'U1d95daf0e8dfe55a2d5f22442fcddf2f'; 
+  const TEST_DOG_ID  = 'da12c3a5';                        
+
+  console.log('--- Debug Start ---');
+  const result = generatePdfForApi(TEST_USER_ID, TEST_DOG_ID, 'handbook');
+  console.log('--- Result ---');
+  console.log(JSON.stringify(result, null, 2));
+}
