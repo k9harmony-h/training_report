@@ -306,7 +306,8 @@
 
   <script>
     const LIFF_ID = '2008546673-MJY7j3ox'; 
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
+    // ★ここを修正しました: 正しいバックエンドのURLを設定
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIqH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec';
     
     // ▼▼▼ ロゴ画像のURLがあればここに設定してください ▼▼▼
     const LOGO_URL = ""; 
@@ -392,7 +393,6 @@
           }
           
           // エラーがある場合（未登録含む）
-          // 【修正】どんなエラーであれ、データが取れなければ「未登録画面」を出してIDコピーを促す
           if (data.error) {
               console.log("Fetch Error:", data.error);
               showUnregistered(userId, data.error);
@@ -414,12 +414,10 @@
               }
           } catch (e) {
               console.error(e);
-              // 描画エラー時もIDコピーできるように未登録画面へ（メッセージ変更）
               showUnregistered(userId, '描画エラー: ' + e.message);
           }
         })
         .catch(err => {
-          // 通信エラー時
           showUnregistered(userId, '通信エラー: ' + err.message);
         });
     }
