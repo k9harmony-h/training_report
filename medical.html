@@ -29,14 +29,20 @@
         /* ログスタンプ */
         #log-stamp { background: #d32f2f; color: white; text-align: center; font-weight: bold; padding: 5px; font-size: 0.8rem; }
 
-        /* プリント案内モーダル用スタイル */
+        /* プリント案内用スタイル */
         .print-step { margin-bottom: 15px; border-left: 3px solid var(--primary-color); padding-left: 10px; }
         .print-step-title { font-weight: bold; display: block; margin-bottom: 5px; }
         .app-link-btn { display: inline-block; margin: 5px; padding: 8px 15px; background: #eee; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.85rem; }
+
+        /* Step4 プレビューエリア */
+        #preview-area { display: none; background: #fff; border: 2px solid var(--primary-color); border-radius: 12px; padding: 15px; margin-top: 20px; }
+        #preview-img { width: 100%; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; }
+        .preview-caption { font-size: 0.8rem; text-align: center; color: #666; margin-bottom: 15px; }
+        .print-info-inline { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div id="log-stamp">v2025.12.10-Step1-PC-Download</div>
+    <div id="log-stamp">v2025.12.11-Step4-Mobile-Preview</div>
 
     <div class="container py-3">
         <div class="no-print-area">
@@ -101,6 +107,35 @@
             <button id="btn-crate" onclick="generatePdf('crate')" class="btn btn-outline-primary w-100 mb-2 fw-bold shadow-sm"><i class="fa-solid fa-tag"></i> クレートタグを作成 (A4縦)</button>
             <button id="btn-poster" onclick="generatePdf('poster')" class="btn btn-outline-danger w-100 mb-2 fw-bold shadow-sm"><i class="fa-solid fa-bullhorn"></i> 迷子ポスターを作成 (A4縦)</button>
         </div>
+        
+        <div id="preview-area" class="no-print-area">
+            <h5 class="fw-bold text-center mb-3">作成完了！</h5>
+            <div class="text-center">
+                <p class="preview-caption">画像を長押しで保存できます。<br>タップするとPDF本体が開きます。</p>
+                <img id="preview-img" src="" alt="PDF Preview">
+            </div>
+            
+            <div class="print-info-inline">
+                <h6 class="fw-bold mb-3"><i class="fa-solid fa-print"></i> 印刷のご案内</h6>
+                
+                <div class="print-step">
+                    <span class="print-step-title">1. 保存する</span>
+                    <p class="small mb-1">画像を長押しして「写真」に保存してください。</p>
+                </div>
+
+                <div class="print-step">
+                    <span class="print-step-title">2. コンビニで印刷</span>
+                    <p class="small mb-2">保存した画像を以下のアプリ等で登録してください。</p>
+                    <div class="d-grid gap-2">
+                        <a href="https://www.printing.ne.jp/" target="_blank" class="app-link-btn text-center"><i class="fa-solid fa-store"></i> セブンイレブン (netprint)</a>
+                        <a href="https://networkprint.ne.jp/" target="_blank" class="app-link-btn text-center"><i class="fa-solid fa-store"></i> ファミマ/ローソン</a>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <button class="btn btn-secondary btn-sm" onclick="closePreview()">閉じる / 再作成</button>
+                </div>
+            </div>
+        </div>
 
         <div id="debug-console">Initializing...</div>
     </div>
@@ -114,25 +149,10 @@
                 </div>
                 <div class="modal-body">
                     <p class="small text-muted mb-3">作成されたPDFは、ご自宅のプリンターまたはコンビニエンスストアで印刷可能です。</p>
-                    
-                    <div class="print-step">
-                        <span class="print-step-title">1. 保存する</span>
-                        <p class="small mb-1">表示されたPDFファイルを端末（スマホ/PC）に保存してください。</p>
-                    </div>
-
-                    <div class="print-step">
-                        <span class="print-step-title">2. コンビニで印刷する場合</span>
-                        <p class="small mb-2">以下のアプリまたはサイトを利用して、保存したPDFを登録してください。</p>
-                        
-                        <div class="d-grid gap-2 mb-2">
-                            <a href="https://www.printing.ne.jp/" target="_blank" class="app-link-btn text-center"><i class="fa-solid fa-store"></i> セブンイレブン (netprint)</a>
-                            <a href="https://networkprint.ne.jp/" target="_blank" class="app-link-btn text-center"><i class="fa-solid fa-store"></i> ファミマ/ローソン (ネットワークプリント)</a>
-                        </div>
-                    </div>
+                    <div class="print-step"><span class="print-step-title">1. 保存する</span><p class="small mb-1">表示されたPDFを保存してください。</p></div>
+                    <div class="print-step"><span class="print-step-title">2. コンビニで印刷</span><p class="small mb-2">以下のアプリ等をご利用ください。</p><div class="d-grid gap-2 mb-2"><a href="https://www.printing.ne.jp/" target="_blank" class="app-link-btn text-center">セブンイレブン</a><a href="https://networkprint.ne.jp/" target="_blank" class="app-link-btn text-center">ファミマ/ローソン</a></div></div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
-                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button></div>
             </div>
         </div>
     </div>
@@ -144,7 +164,7 @@
 
         let currentUserId = null;
         let currentDogId = null;
-        let printModal = null; // モーダルインスタンス
+        let printModal = null; 
 
         function log(msg) {
             const el = document.getElementById('debug-console');
@@ -162,9 +182,7 @@
                 currentDogId = urlParams.get('dogId');
                 log(`User: ${currentUserId}, DogID: ${currentDogId}`);
                 
-                // モーダル初期化
                 printModal = new bootstrap.Modal(document.getElementById('printModal'));
-
                 fetchData(currentUserId, currentDogId);
             } catch (err) { log('Init Error: ' + err.message); }
         };
@@ -182,62 +200,90 @@
 
         function generatePdf(type) {
             if(!currentUserId || !currentDogId) { alert('データ読み込み中です'); return; }
+            
+            // ボタンのローディング表示
             const btn = document.getElementById(`btn-${type}`);
             const originalHtml = btn.innerHTML;
-            btn.disabled = true;
+            const allBtns = document.querySelectorAll('#controls button');
+            allBtns.forEach(b => b.disabled = true);
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 作成中...';
 
             const url = `${API_URL}?userId=${currentUserId}&dogId=${currentDogId}&type=pdf_${type}`;
+            
             fetch(url).then(res => res.json()).then(data => {
                 if(data.error) {
                     alert('作成失敗: ' + data.error);
                 } else if(data.url) {
-                    // ★ Step 1: PC判定と強制DL処理 ★
-                    // ユーザーエージェントでPC(iOS/Android以外)かどうか簡易判定
+                    // ★Step 4: デバイス判定
                     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
                     if (!isMobile) {
-                        // 【PCの場合】
-                        // GoogleドライブURLからIDを抽出し、ダウンロード用URLを作成してクリックさせる
+                        // === PCの場合 (Step 1維持) ===
                         try {
-                            // URL例: https://drive.google.com/file/d/xxxxx/view...
-                            // ID(xxxxx)を正規表現で抽出
                             const match = data.url.match(/\/d\/(.*?)\//);
                             if (match && match[1]) {
                                 const fileId = match[1];
                                 const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-                                
-                                // 隠しリンクを作ってクリック
                                 const a = document.createElement('a');
                                 a.href = downloadUrl;
-                                a.download = 'medical_handbook.pdf'; // ファイル名は効かない場合もありますが指定
+                                a.download = 'medical_document.pdf'; 
                                 document.body.appendChild(a);
                                 a.click();
                                 document.body.removeChild(a);
-                                
-                                // PCでも案内モーダルは一応出しておく(Step 2で調整)
                                 printModal.show();
                             } else {
-                                // ID抽出できなかった場合は従来の別窓表示(バックアップ)
                                 window.open(data.url, '_blank');
                                 printModal.show();
                             }
-                        } catch(e) {
-                            console.error('Download Logic Error', e);
-                            window.open(data.url, '_blank');
-                        }
+                        } catch(e) { window.open(data.url, '_blank'); }
+
                     } else {
-                        // 【スマホの場合】(既存動作維持)
-                        liff.openWindow({ url: data.url, external: true });
-                        printModal.show();
+                        // === スマホの場合 (Step 4 実装) ===
+                        // 1. ファイルID抽出
+                        let fileId = '';
+                        const match = data.url.match(/\/d\/(.*?)\//) || data.url.match(/id=(.*?)$/);
+                        if (match && match[1]) fileId = match[1];
+
+                        if (fileId) {
+                            // 2. プレビュー表示エリアの構築
+                            const previewArea = document.getElementById('preview-area');
+                            const img = document.getElementById('preview-img');
+                            
+                            // GoogleドライブのサムネイルURL (sz=w1000 で高画質取得)
+                            const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+                            img.src = thumbUrl;
+                            
+                            // 画像タップ時の挙動: PDF本体を外部ブラウザで開く
+                            img.onclick = function() {
+                                liff.openWindow({ url: data.url, external: true });
+                            };
+
+                            // 表示切り替え
+                            document.getElementById('controls').style.display = 'none'; // ボタン隠す
+                            previewArea.style.display = 'block'; // プレビュー出す
+                            
+                            // スクロール
+                            previewArea.scrollIntoView({ behavior: 'smooth' });
+
+                        } else {
+                            // ID取れない場合(稀)は従来通り開く
+                            liff.openWindow({ url: data.url, external: true });
+                        }
                     }
                 }
             })
             .catch(e => alert('通信エラー: ' + e.message))
             .finally(() => {
-                btn.disabled = false;
+                allBtns.forEach(b => b.disabled = false);
                 btn.innerHTML = originalHtml;
             });
+        }
+
+        // プレビューを閉じてボタンに戻る処理
+        function closePreview() {
+            document.getElementById('preview-area').style.display = 'none';
+            document.getElementById('controls').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function fetchImage(userId, dogId) {
