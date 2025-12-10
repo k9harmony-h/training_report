@@ -23,24 +23,118 @@
         .masked-text { display: inline-block; letter-spacing: 2px; color: #aaa; background: var(--mask-color); padding: 2px 8px; border-radius: 4px; }
         .real-text { display: none; font-weight: bold; color: #333; }
         .btn-toggle-mask { font-size: 0.7rem; padding: 2px 10px; border: 1px solid var(--alert-color); color: var(--alert-color); background: white; border-radius: 20px; }
-        .logo-placeholder { display: inline-block; padding: 5px 10px; border: 2px dashed #ccc; color: #999; font-size: 0.8rem; }
+        
+        /* ロゴ用スタイル (SVG調整) */
+        .logo-container { width: 100%; max-width: 280px; margin: 0 auto 15px; }
+        .logo-svg { width: 100%; height: auto; display: block; fill: var(--primary-color); } /* fillで色変更可能 */
+
         #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 8px; height: 150px; overflow-y: scroll; margin-top:20px; display:none; }
         
-        /* ログスタンプ */
         #log-stamp { background: #d32f2f; color: white; text-align: center; font-weight: bold; padding: 5px; font-size: 0.8rem; }
 
-        /* プリント案内モーダル用スタイル */
         .print-step { margin-bottom: 15px; border-left: 3px solid var(--primary-color); padding-left: 10px; }
         .print-step-title { font-weight: bold; display: block; margin-bottom: 5px; }
         .app-link-btn { display: inline-block; margin: 5px; padding: 8px 15px; background: #eee; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.85rem; }
+
+        #preview-area { display: none; background: #fff; border: 2px solid var(--primary-color); border-radius: 12px; padding: 15px; margin-top: 20px; }
+        #preview-img { width: 100%; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; }
+        .preview-caption { font-size: 0.8rem; text-align: center; color: #666; margin-bottom: 15px; }
+        .print-info-inline { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div id="log-stamp">v2025.12.10-Step1-PC-Download</div>
+    <div id="log-stamp">v2025.12.11-Step4-With-Logo</div>
 
     <div class="container py-3">
         <div class="no-print-area">
-            <div class="text-center mb-2"><span class="logo-placeholder">[Logo img]</span></div>
+            <div class="logo-container">
+                <svg version="1.1" class="logo-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 595.28 160" style="enable-background:new 0 0 595.28 160;" xml:space="preserve">
+                    <style type="text/css">.st0{fill:#55B9B9;}.st1{fill:#333333;}.st2{fill:none;}.st3{fill-rule:evenodd;clip-rule:evenodd;fill:#333333;}</style>
+                    <g transform="translate(0, -380)"> <path class="st0" d="M198.95,324.51l14.45-12.67l3.96,10.6v2.47l3.99,2.92c1.79,1.31,3.12,3.14,3.82,5.25l0,0c0.03,0.09,0.06,0.18,0.1,0.27
+                        l1.1,2.67c0.28,0.68,0.73,1.27,1.32,1.71c0.78,0.58,1.84,1.32,2.24,1.32c0.5,0,9.67,3.34,14.35,5.06c1.63,0.6,2.7,2.15,2.7,3.88v2.2
+                        c0,1.32-0.63,2.56-1.7,3.34l-4.14,3.02l-5.28,3.59c-0.22,0.15-0.45,0.28-0.7,0.38l-1.62,0.69c-0.75,0.32-1.59,0.41-2.39,0.26
+                        l-5.67-1.06c-0.18-0.03-0.37-0.06-0.56-0.07l-1.8-0.09c-1.49-0.07-2.91,0.66-3.7,1.92l-0.83,1.32c-0.38,0.59-0.59,1.27-0.63,1.97
+                        l-0.61,10.82c0,0-0.67,7.85-0.22,9.2c0.39,1.17,1.46,8.12,1.73,9.9c0.04,0.29,0.05,0.56,0.04,0.85l-0.2,3.4
+                        c-0.3,5.05-1.25,10.05-2.82,14.86l0,0c-1.11,3.38-2.62,6.62-4.51,9.64l-0.14,0.22c-1,1.61-2.12,3.15-3.32,4.61l-3.87,4.67
+                        c-0.53,0.65-0.86,1.44-0.93,2.27l-3.57,40.32c-0.09,0.96,0.17,1.92,0.72,2.72l2.47,3.57c0.47,0.68,1.13,1.2,1.89,1.5l2.55,1
+                        c0.93,0.36,1.69,1.05,2.16,1.93l1.27,2.43c0.31,0.59,0.41,1.27,0.29,1.93l-0.03,0.15c-0.26,1.41-1.49,2.43-2.92,2.43h-2.92h-3.38
+                        c-1.51,0-2.91-0.83-3.63-2.16l-2.6-4.77c-0.17-0.32-0.39-0.61-0.64-0.88l-3.13-3.28c-0.77-0.81-1.18-1.89-1.14-3.01l0.57-15.34
+                        c0.03-0.72-0.13-1.43-0.47-2.07l-1.43-2.74c-0.49-0.93-0.6-2.02-0.32-3.03l1.06-3.79c0.05-0.16,0.08-0.33,0.11-0.5l0.76-4.99
+                        c0.2-1.35-0.27-2.72-1.27-3.65l-0.28-0.26c-0.81-0.75-1.88-1.15-2.99-1.1l-3.26,0.14c-0.27,0.01-0.53,0.05-0.79,0.11l0,0
+                        c-3.45,0.83-6.74,2.25-9.71,4.2l-2.69,1.77l-3.16,2.19c-1.57,1.09-2.19,3.1-1.51,4.88l1.08,2.8l1.38,3.64
+                        c0.27,0.7,0.34,1.47,0.2,2.21l-0.54,2.94c-0.68,3.75-2.64,7.14-5.54,9.61l0,0l-1.55,1.36c-1.35,1.18-2.87,2.16-4.51,2.91l0,0
+                        l8.6,2.1c0.4,0.1,0.81,0.13,1.22,0.11l1.85-0.11c0.88-0.05,1.75,0.18,2.49,0.66c0.77,0.5,1.73,1.14,2.22,1.51
+                        c0.09,0.07,0.18,0.16,0.27,0.27c1.32,1.65,0.88,4.1-0.72,5.47l-0.14,0.12c-0.49,0.42-1.11,0.67-1.75,0.71l-6.06,0.38
+                        c-0.09,0.01-0.17,0.01-0.26,0.01h-7.73h-8.98l-7.63-0.22l-6.73-0.45c0,0-2.69,0-3.82-0.67c-0.78-0.47-2.09-1.79-2.82-2.56
+                        c-0.37-0.39-0.81-0.7-1.3-0.92l-16.75-7.51l-2.94-1.23c-2.64-1.11-4.95-2.87-6.71-5.12l-1.5-1.93c-0.95-1.21-1.85-2.46-2.69-3.75
+                        l-4.18-6.33c-1-1.52-1.81-3.16-2.41-4.87l0,0c-1.77-5.1-2.43-10.52-1.93-15.89v0c0.39-4.12,1.29-8.18,2.69-12.08l0.59-1.64
+                        c0.88-2.44,2.32-4.65,4.2-6.44l0.84-0.8c0.67-0.64,1.4-1.22,2.17-1.75l7.15-4.83l-4.25,6.58c-0.45,0.7-0.86,1.44-1.2,2.2l-2.13,4.73
+                        c-0.33,0.72-0.6,1.47-0.82,2.23l-0.17,0.59c-1.3,4.5-1.91,9.18-1.8,13.86l0,0c0.04,1.71,0.34,3.4,0.89,5.02l1.36,3.97
+                        c0.48,1.41,1.15,2.74,1.98,3.97l2.33,3.43c0.45,0.66,0.95,1.29,1.49,1.88l0.65,0.71c2.12,2.33,4.86,4,7.9,4.84h0
+                        c1.24,0.34,2.43,0.82,3.56,1.44l2.8,1.53c0.29,0.16,0.61,0.27,0.94,0.32h0c1.84,0.31,3.51-1.14,3.46-3l-0.04-1.82
+                        c-0.07-3.05,0.05-6.11,0.37-9.14c0.25-2.39,0.53-4.86,0.65-5.2c0.2-0.61,2.41-5.23,2.84-6.13c0.05-0.11,0.09-0.21,0.14-0.33
+                        l0.65-1.74c1.91-5.12,4.57-9.94,7.89-14.28l0,0c0.1-0.12,0.18-0.25,0.26-0.39l2.01-3.35c2.32-3.86,4.96-7.52,7.82-11
+                        c0.18-0.22,0.31-0.39,0.38-0.49c0.19-0.29,1.44-2.08,2.79-4.01c2.46-3.52,5.25-6.8,8.31-9.8l0.56-0.55l8.81-8.15
+                        c0.11-0.1,0.21-0.2,0.31-0.32c0.56-0.65,2.71-3.1,3.68-3.88c1.12-0.9,4.71-5.16,4.71-5.16l4.08-4.9c0.27-0.32,0.49-0.68,0.65-1.07
+                        l0.18-0.43c1.8-4.38,2.93-9.01,3.35-13.73l0,0c0.03-0.34,0.1-0.67,0.21-0.99l1.15-3.32c0.47-1.35,0.98-2.69,1.55-4l0.92-2.15
+                        c0.17-0.39,0.42-0.74,0.73-1.03l1.39-1.26c0.39-0.36,0.69-0.82,0.84-1.33l0.36-1.18c0.19-0.62,0.17-1.29-0.05-1.9l-0.47-1.28
+                        c-1.48-4.02-1.23-8.47,0.68-12.31l0,0c0.38-0.76,0.99-1.39,1.75-1.8l4.98-2.67c0.09-0.05,0.19-0.1,0.29-0.14"/>
+                        <path class="st3" d="M235.75,464.6v-42.32h5.64v42.32H235.75z M245.87,448.14h-6.94v-4.94h6.7c2,0,3.52-0.47,4.56-1.41
+                        c1.04-0.94,1.87-2.12,2.5-3.53l7.52-15.99h5.88v0.47l-8.23,17.16c-0.7,1.53-1.59,2.92-2.64,4.17c-1.06,1.25-2.34,2.24-3.85,2.97
+                        C249.85,447.78,248.02,448.14,245.87,448.14z M253.62,444.38l12.58,19.75v0.47h-6.35l-10.7-17.4L253.62,444.38z"/>
+                        <path class="st3" d="M281.72,465.31c-1.65,0-3.04-0.11-4.17-0.32c-1.14-0.22-2.17-0.5-3.12-0.85v-5.17h0.47
+                        c0.82,0.35,1.76,0.68,2.82,0.97c1.06,0.29,2.47,0.44,4.23,0.44c2.35,0,4.39-0.38,6.11-1.15c1.72-0.76,3.14-1.9,4.23-3.41
+                        c1.1-1.51,1.92-3.34,2.47-5.5c0.55-2.15,0.82-4.6,0.82-7.35c0-3.68-0.3-6.76-0.91-9.23c-0.61-2.47-1.63-4.33-3.06-5.58
+                        c-1.43-1.25-3.4-1.88-5.91-1.88c-2.12,0-3.83,0.44-5.14,1.32c-1.31,0.88-2.27,2.06-2.88,3.53c-0.61,1.47-0.91,3.07-0.91,4.79
+                        c0,2.82,0.75,5.06,2.26,6.7c1.51,1.65,3.73,2.47,6.67,2.47c2.59,0,4.72-0.52,6.41-1.56c1.68-1.04,3.08-2.32,4.17-3.85h2.12v5.53
+                        h-2.35c-0.94,1.1-2.29,2.14-4.05,3.12c-1.76,0.98-4.17,1.47-7.23,1.47c-2.59,0-4.89-0.52-6.91-1.56c-2.02-1.04-3.6-2.59-4.76-4.64
+                        c-1.16-2.06-1.74-4.61-1.74-7.67c0-2.66,0.56-5.08,1.68-7.26c1.12-2.18,2.76-3.9,4.94-5.17c2.17-1.27,4.83-1.91,7.96-1.91
+                        c2.78,0,5.14,0.5,7.08,1.5c1.94,1,3.51,2.44,4.7,4.32c1.19,1.88,2.08,4.11,2.64,6.7c0.57,2.59,0.85,5.47,0.85,8.64
+                        c0,3.45-0.41,6.56-1.23,9.35c-0.82,2.78-2.05,5.16-3.67,7.14c-1.63,1.98-3.65,3.49-6.08,4.53
+                        C287.82,464.79,284.97,465.31,281.72,465.31z"/>
+                        <path class="st3" d="M325.22,464.6v-42.32h5.64v42.32H325.22z M328.51,445.09v-4.94h25.39v4.94H328.51z M351.55,464.6v-42.32h5.64
+                        v42.32H351.55z"/>
+                        <path class="st3" d="M379.65,465.31c-4.58,0-8.02-0.83-10.32-2.5c-2.29-1.66-3.44-4.2-3.44-7.61c0-2.27,0.56-4.15,1.68-5.64
+                        c1.12-1.49,2.7-2.6,4.76-3.35c2.06-0.74,4.5-1.12,7.32-1.12c2.19,0,4.03,0.19,5.5,0.56c1.47,0.37,2.73,0.73,3.79,1.09v4.23
+                        c-1.06-0.35-2.37-0.68-3.94-0.97c-1.57-0.29-3.04-0.44-4.41-0.44c-3.17,0-5.54,0.41-7.08,1.24c-1.55,0.82-2.32,2.29-2.32,4.41
+                        c0,2,0.74,3.44,2.23,4.32c1.49,0.88,3.64,1.32,6.47,1.32c1.57,0,3.08-0.13,4.53-0.38c1.45-0.25,2.8-0.6,4.05-1.03l-1.06,1.59
+                        c-0.08-0.31-0.15-0.67-0.21-1.06c-0.06-0.39-0.11-0.8-0.15-1.23c-0.04-0.43-0.07-0.88-0.09-1.35c-0.02-0.47-0.03-0.96-0.03-1.47
+                        v-10.58c0-2.51-0.34-4.38-1.03-5.61c-0.69-1.24-1.7-2.06-3.06-2.47c-1.35-0.41-3.05-0.62-5.09-0.62c-1.53,0-3.09,0.2-4.67,0.59
+                        c-1.59,0.39-2.85,0.82-3.79,1.29h-0.47v-4.82c1.41-0.59,2.99-1.03,4.73-1.32c1.74-0.29,3.38-0.44,4.91-0.44
+                        c1.96,0,3.77,0.18,5.44,0.53c1.66,0.35,3.13,0.99,4.41,1.91c1.27,0.92,2.26,2.24,2.97,3.97c0.71,1.72,1.06,3.98,1.06,6.76v7.76
+                        c0,0.78,0.01,1.8,0.03,3.06c0.02,1.25,0.06,2.49,0.12,3.7c0.06,1.21,0.17,2.17,0.32,2.88l-0.12,0.47
+                        c-1.29,0.47-2.72,0.88-4.29,1.23c-1.57,0.35-3.13,0.63-4.67,0.82C382.19,465.21,380.83,465.31,379.65,465.31z"/>
+                        <path class="st3" d="M403.16,464.6v-20.22c0-0.78-0.01-1.8-0.03-3.06c-0.02-1.25-0.06-2.49-0.12-3.7
+                        c-0.06-1.21-0.17-2.18-0.32-2.88l0.12-0.47c1.02-0.39,2.28-0.73,3.79-1c1.51-0.27,3.02-0.49,4.53-0.65
+                        c1.51-0.16,2.77-0.24,3.79-0.24c0.94,0,1.7,0.02,2.29,0.06c0.59,0.04,1.08,0.1,1.47,0.18v4.7h-0.47c-0.51-0.08-1.12-0.14-1.82-0.18
+                        c-0.7-0.04-1.35-0.06-1.94-0.06c-1.21,0-2.49,0.1-3.82,0.29c-1.33,0.2-2.49,0.39-3.47,0.59l1.06-1.47c0.24,1.29,0.35,2.9,0.35,4.82
+                        v23.28H403.16z"/>
+                        <path class="st3" d="M425.73,464.6v-20.22c0-0.78-0.01-1.8-0.03-3.06c-0.02-1.25-0.06-2.49-0.12-3.7
+                        c-0.06-1.21-0.17-2.18-0.32-2.88l0.12-0.47c1.02-0.39,2.29-0.76,3.82-1.12c1.53-0.35,3.09-0.65,4.7-0.88
+                        c1.61-0.23,3.04-0.35,4.29-0.35c1.72,0,3.37,0.21,4.94,0.62c1.57,0.41,2.97,1.14,4.2,2.17c1.23,1.04,2.21,2.45,2.94,4.23
+                        c0.73,1.78,1.09,4.07,1.09,6.85v18.81h-5.41v-18.34c0-2.59-0.36-4.57-1.09-5.97c-0.73-1.39-1.73-2.35-3-2.88
+                        c-1.27-0.53-2.73-0.79-4.38-0.79c-1.25,0-2.6,0.14-4.03,0.41c-1.43,0.27-2.67,0.61-3.73,1l0.94-1.65c0.16,0.59,0.27,1.32,0.35,2.2
+                        s0.12,1.79,0.12,2.73v23.28H425.73z M465.47,464.6v-18.34c0-2.59-0.33-4.57-1-5.97s-1.66-2.35-3-2.88
+                        c-1.33-0.53-2.98-0.79-4.94-0.79c-1.14,0-2.3,0.14-3.5,0.41c-1.2,0.27-2.46,0.69-3.79,1.23l-3.29-3.76
+                        c1.96-0.78,3.91-1.41,5.85-1.88c1.94-0.47,3.75-0.71,5.44-0.71c1.96,0,3.76,0.21,5.41,0.62s3.09,1.14,4.32,2.17
+                        c1.23,1.04,2.19,2.45,2.88,4.23c0.69,1.78,1.03,4.07,1.03,6.85v18.81H465.47z"/>
+                        <path class="st3" d="M479.34,448.5c0-3.49,0.62-6.47,1.85-8.93c1.23-2.47,2.96-4.36,5.17-5.67c2.21-1.31,4.77-1.97,7.67-1.97
+                        c2.9,0,5.46,0.66,7.67,1.97c2.21,1.31,3.94,3.2,5.17,5.67c1.23,2.47,1.85,5.45,1.85,8.93c0,3.49-0.62,6.47-1.85,8.94
+                        s-2.96,4.36-5.17,5.67c-2.22,1.31-4.77,1.97-7.67,1.97c-2.98,0-5.57-0.66-7.76-1.97c-2.2-1.31-3.9-3.2-5.11-5.67
+                        C479.95,454.96,479.34,451.99,479.34,448.5z M484.87,448.5c0,3.92,0.79,6.88,2.38,8.88c1.59,2,3.85,3,6.79,3c2.94,0,5.2-1,6.79-3
+                        c1.59-2,2.38-4.96,2.38-8.88c0-3.96-0.79-6.93-2.38-8.91c-1.59-1.98-3.85-2.97-6.79-2.97c-2.94,0-5.2,0.99-6.79,2.97
+                        C485.66,441.57,484.87,444.54,484.87,448.5z"/>
+                        <path class="st3" d="M517.43,464.6v-20.22c0-0.78-0.01-1.8-0.03-3.06c-0.02-1.25-0.06-2.49-0.12-3.7
+                        c-0.06-1.21-0.17-2.18-0.32-2.88l0.12-0.47c1.02-0.39,2.31-0.76,3.88-1.12c1.57-0.35,3.16-0.65,4.76-0.88
+                        c1.61-0.23,3-0.35,4.17-0.35c1.96,0,3.78,0.21,5.47,0.62c1.68,0.41,3.18,1.14,4.5,2.17c1.31,1.04,2.33,2.45,3.06,4.23
+                        c0.72,1.78,1.09,4.07,1.09,6.85v18.81h-5.41v-18.34c0-2.59-0.37-4.57-1.12-5.97s-1.82-2.35-3.23-2.88
+                        c-1.41-0.53-3.1-0.79-5.06-0.79c-1.25,0-2.6,0.14-4.03,0.41c-1.43,0.27-2.67,0.61-3.73,1l0.94-1.65c0.16,0.59,0.27,1.32,0.35,2.2
+                        s0.12,1.79,0.12,2.73v23.28H517.43z"/>
+                        <path class="st3" d="M563.05,465.78l-12.93-32.45v-0.7h5.64l10.4,27.16L563.05,465.78z M557.17,478.24v-0.7l7.29-17.87l10.35-27.04
+                        h5.41v0.7l-17.87,44.91H557.17z"/>
+                    </g>
+                </svg>
+            </div>
             <h4 class="fw-bold mb-3" style="color: var(--primary-color);">うちの子医療・防災手帳</h4>
             <div id="loading" class="text-center py-5"><div class="spinner-border text-success"></div><p>Loading...</p></div>
         </div>
@@ -101,6 +195,35 @@
             <button id="btn-crate" onclick="generatePdf('crate')" class="btn btn-outline-primary w-100 mb-2 fw-bold shadow-sm"><i class="fa-solid fa-tag"></i> クレートタグを作成 (A4縦)</button>
             <button id="btn-poster" onclick="generatePdf('poster')" class="btn btn-outline-danger w-100 mb-2 fw-bold shadow-sm"><i class="fa-solid fa-bullhorn"></i> 迷子ポスターを作成 (A4縦)</button>
         </div>
+        
+        <div id="preview-area" class="no-print-area">
+            <h5 class="fw-bold text-center mb-3">作成完了！</h5>
+            <div class="text-center">
+                <p class="preview-caption">画像を長押しで保存できます。<br>タップするとPDF本体が開きます。</p>
+                <img id="preview-img" src="" alt="PDF Preview">
+            </div>
+            
+            <div class="print-info-inline">
+                <h6 class="fw-bold mb-3"><i class="fa-solid fa-print"></i> 印刷のご案内</h6>
+                
+                <div class="print-step">
+                    <span class="print-step-title">1. 保存する</span>
+                    <p class="small mb-1">画像を長押しして「写真」に保存してください。</p>
+                </div>
+
+                <div class="print-step">
+                    <span class="print-step-title">2. コンビニで印刷</span>
+                    <p class="small mb-2">保存した画像を以下のアプリ等で登録してください。</p>
+                    <div class="d-grid gap-2">
+                        <a href="https://www.printing.ne.jp/" target="_blank" class="app-link-btn text-center"><i class="fa-solid fa-store"></i> セブンイレブン (netprint)</a>
+                        <a href="https://networkprint.ne.jp/" target="_blank" class="app-link-btn text-center"><i class="fa-solid fa-store"></i> ファミマ/ローソン</a>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <button class="btn btn-secondary btn-sm" onclick="closePreview()">閉じる / 再作成</button>
+                </div>
+            </div>
+        </div>
 
         <div id="debug-console">Initializing...</div>
     </div>
@@ -114,25 +237,10 @@
                 </div>
                 <div class="modal-body">
                     <p class="small text-muted mb-3">作成されたPDFは、ご自宅のプリンターまたはコンビニエンスストアで印刷可能です。</p>
-                    
-                    <div class="print-step">
-                        <span class="print-step-title">1. 保存する</span>
-                        <p class="small mb-1">表示されたPDFファイルを端末（スマホ/PC）に保存してください。</p>
-                    </div>
-
-                    <div class="print-step">
-                        <span class="print-step-title">2. コンビニで印刷する場合</span>
-                        <p class="small mb-2">以下のアプリまたはサイトを利用して、保存したPDFを登録してください。</p>
-                        
-                        <div class="d-grid gap-2 mb-2">
-                            <a href="https://www.printing.ne.jp/" target="_blank" class="app-link-btn text-center"><i class="fa-solid fa-store"></i> セブンイレブン (netprint)</a>
-                            <a href="https://networkprint.ne.jp/" target="_blank" class="app-link-btn text-center"><i class="fa-solid fa-store"></i> ファミマ/ローソン (ネットワークプリント)</a>
-                        </div>
-                    </div>
+                    <div class="print-step"><span class="print-step-title">1. 保存する</span><p class="small mb-1">表示されたPDFを保存してください。</p></div>
+                    <div class="print-step"><span class="print-step-title">2. コンビニで印刷</span><p class="small mb-2">以下のアプリ等をご利用ください。</p><div class="d-grid gap-2 mb-2"><a href="https://www.printing.ne.jp/" target="_blank" class="app-link-btn text-center">セブンイレブン</a><a href="https://networkprint.ne.jp/" target="_blank" class="app-link-btn text-center">ファミマ/ローソン</a></div></div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
-                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button></div>
             </div>
         </div>
     </div>
@@ -144,7 +252,7 @@
 
         let currentUserId = null;
         let currentDogId = null;
-        let printModal = null; // モーダルインスタンス
+        let printModal = null; 
 
         function log(msg) {
             const el = document.getElementById('debug-console');
@@ -162,9 +270,7 @@
                 currentDogId = urlParams.get('dogId');
                 log(`User: ${currentUserId}, DogID: ${currentDogId}`);
                 
-                // モーダル初期化
                 printModal = new bootstrap.Modal(document.getElementById('printModal'));
-
                 fetchData(currentUserId, currentDogId);
             } catch (err) { log('Init Error: ' + err.message); }
         };
@@ -182,62 +288,86 @@
 
         function generatePdf(type) {
             if(!currentUserId || !currentDogId) { alert('データ読み込み中です'); return; }
+            
+            // ボタンのローディング表示
             const btn = document.getElementById(`btn-${type}`);
             const originalHtml = btn.innerHTML;
-            btn.disabled = true;
+            const allBtns = document.querySelectorAll('#controls button');
+            allBtns.forEach(b => b.disabled = true);
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 作成中...';
 
             const url = `${API_URL}?userId=${currentUserId}&dogId=${currentDogId}&type=pdf_${type}`;
+            
             fetch(url).then(res => res.json()).then(data => {
                 if(data.error) {
                     alert('作成失敗: ' + data.error);
                 } else if(data.url) {
-                    // ★ Step 1: PC判定と強制DL処理 ★
-                    // ユーザーエージェントでPC(iOS/Android以外)かどうか簡易判定
+                    // ★Step 4: デバイス判定
                     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
                     if (!isMobile) {
-                        // 【PCの場合】
-                        // GoogleドライブURLからIDを抽出し、ダウンロード用URLを作成してクリックさせる
+                        // === PCの場合 ===
                         try {
-                            // URL例: https://drive.google.com/file/d/xxxxx/view...
-                            // ID(xxxxx)を正規表現で抽出
                             const match = data.url.match(/\/d\/(.*?)\//);
                             if (match && match[1]) {
                                 const fileId = match[1];
                                 const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-                                
-                                // 隠しリンクを作ってクリック
                                 const a = document.createElement('a');
                                 a.href = downloadUrl;
-                                a.download = 'medical_handbook.pdf'; // ファイル名は効かない場合もありますが指定
+                                a.download = 'medical_document.pdf'; 
                                 document.body.appendChild(a);
                                 a.click();
                                 document.body.removeChild(a);
-                                
-                                // PCでも案内モーダルは一応出しておく(Step 2で調整)
                                 printModal.show();
                             } else {
-                                // ID抽出できなかった場合は従来の別窓表示(バックアップ)
                                 window.open(data.url, '_blank');
                                 printModal.show();
                             }
-                        } catch(e) {
-                            console.error('Download Logic Error', e);
-                            window.open(data.url, '_blank');
-                        }
+                        } catch(e) { window.open(data.url, '_blank'); }
+
                     } else {
-                        // 【スマホの場合】(既存動作維持)
-                        liff.openWindow({ url: data.url, external: true });
-                        printModal.show();
+                        // === スマホの場合 ===
+                        let fileId = '';
+                        const match = data.url.match(/\/d\/(.*?)\//) || data.url.match(/id=(.*?)$/);
+                        if (match && match[1]) fileId = match[1];
+
+                        if (fileId) {
+                            // プレビュー表示
+                            const previewArea = document.getElementById('preview-area');
+                            const img = document.getElementById('preview-img');
+                            
+                            // 高画質サムネイル取得 (sz=w1000)
+                            const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+                            img.src = thumbUrl;
+                            
+                            // 画像タップ時: PDF本体をブラウザで開く
+                            img.onclick = function() {
+                                liff.openWindow({ url: data.url, external: true });
+                            };
+
+                            document.getElementById('controls').style.display = 'none'; 
+                            previewArea.style.display = 'block'; 
+                            
+                            previewArea.scrollIntoView({ behavior: 'smooth' });
+
+                        } else {
+                            liff.openWindow({ url: data.url, external: true });
+                        }
                     }
                 }
             })
             .catch(e => alert('通信エラー: ' + e.message))
             .finally(() => {
-                btn.disabled = false;
+                allBtns.forEach(b => b.disabled = false);
                 btn.innerHTML = originalHtml;
             });
+        }
+
+        // プレビューを閉じる
+        function closePreview() {
+            document.getElementById('preview-area').style.display = 'none';
+            document.getElementById('controls').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function fetchImage(userId, dogId) {
