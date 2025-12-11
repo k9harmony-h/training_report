@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <script>
-    // 特定のクエリパラメータがある場合はリダイレクト
     (function() {
+      // URLに ?page=medical がついていたら、即座に手帳ページへ転送
       if (new URLSearchParams(window.location.search).get('page') === 'medical') {
         window.location.replace('medical.html'); 
       }
@@ -12,125 +12,30 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>K9 Harmony Portal</title>
-  
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/medium-zoom/dist/medium-zoom.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 
   <style>
-    /* ブランドカラー定義 */
-    :root { 
-        --brand-color: #57C3C2; 
-        --brand-bg: #E0F7FA; 
-        --text-main: #333333; 
-        --accent-color: #F2A679; 
-    }
+    :root { --brand-color: #57C3C2; --brand-bg: #E0F7FA; --text-main: #333333; --accent-color: #F2A679; }
+    body { font-family: 'Montserrat', 'Noto Sans JP', sans-serif; background-color: #fafafa; color: var(--text-main); padding-bottom: 80px; overflow-x: hidden; }
     
-    body { 
-        font-family: 'Montserrat', 'Noto Sans JP', sans-serif; 
-        background-color: #fafafa; 
-        color: var(--text-main); 
-        padding-bottom: 80px; 
-        overflow-x: hidden; 
-    }
-    
-    /* ローディング画面 */
-    #loadingOverlay { 
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        background-color: var(--brand-color); 
-        display: flex; flex-direction: column; justify-content: center; align-items: center; 
-        z-index: 9999; color: white; 
-        transition: opacity 0.5s ease-out, visibility 0.5s ease-out; 
-    }
+    #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; transition: opacity 0.5s ease-out, visibility 0.5s ease-out; }
     .spinner-border-white { border-color: white; border-right-color: transparent; }
     #tipsText { margin-top: 20px; font-weight: 500; font-size: 1rem; text-align: center; padding: 0 20px; height: 1.5em; }
     
     body.loaded #loadingOverlay { opacity: 0; visibility: hidden; pointer-events: none; }
     
-    /* メインコンテンツのアニメーション */
     #mainContent { opacity: 0; transform: scale(0.95); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
     body.loaded #mainContent { opacity: 1; transform: scale(1); }
     
-    /* --- ここからデザイン修正箇所 --- */
-
-    /* ロゴエリア */
-    .top-logo-area {
-        text-align: center;
-        padding: 20px 0 10px;
-        background-color: #fafafa; /* 背景色 */
-    }
-    .top-logo-img {
-        max-width: 200px; /* ロゴの最大幅 */
-        height: auto;
-        display: block;
-        margin: 0 auto;
-    }
-    .brand-text-fallback {
-        font-family: 'Montserrat', sans-serif;
-        font-weight: 700;
-        font-size: 1.5rem;
-        color: var(--brand-color);
-        letter-spacing: 0.05em;
-    }
-
-    /* 未登録・エラー画面のスタイル (ブランドカラー統一) */
-    #unregisteredView, #errorView { 
-        text-align: center; 
-        margin-top: 20px; 
-        display: none; /* 初期状態は非表示 */
-        padding: 20px; 
-    }
+    .header-area { padding: 20px 20px 10px; background: #fff; }
+    .brand-title { color: var(--text-main); font-weight: 700; letter-spacing: 0.05em; font-size: 1.2rem; text-align: center; }
     
-    .unreg-card {
-        background: white;
-        border: 2px solid var(--brand-color);
-        border-radius: 15px;
-        padding: 30px 20px;
-        box-shadow: 0 4px 15px rgba(87, 195, 194, 0.15);
-    }
-
-    .line-id-box { 
-        background: #f0fcfc; /* 薄いブランドカラー */
-        border: 1px dashed var(--brand-color);
-        color: #555;
-        padding: 12px; 
-        border-radius: 8px; 
-        margin: 15px auto; 
-        font-family: monospace; 
-        font-weight: bold; 
-        font-size: 1.1rem;
-        word-break: break-all; 
-        max-width: 100%; 
-    }
-
-    /* ブランドカラーボタン */
-    .btn-brand {
-        background-color: var(--brand-color);
-        color: white;
-        border: none;
-        font-weight: bold;
-        padding: 12px 20px;
-        border-radius: 30px;
-        box-shadow: 0 4px 6px rgba(87, 195, 194, 0.3);
-        transition: transform 0.1s;
-        width: 100%;
-        max-width: 300px;
-    }
-    .btn-brand:active {
-        transform: scale(0.98);
-        background-color: #4daaaaaa;
-        color: white;
-    }
-
-    /* --- ここまでデザイン修正 --- */
-
-    .header-area { padding: 0 20px 10px; background: #fff; border-radius: 0 0 20px 20px; }
-    
-    .profile-card { margin-top: 10px; display: flex; align-items: center; }
+    .profile-card { margin-top: 20px; display: flex; align-items: center; }
     
     #dogImgContainer {
         width: 150px; height: 150px; 
@@ -153,8 +58,12 @@
     .lesson-meta { margin-top: 5px; font-size: 0.85rem; color: var(--brand-color); font-weight: 600; }
     .history-link { text-decoration: none; color: var(--brand-color); font-weight: bold; font-size: 0.9rem; margin-left: auto; display: block; text-align: right; margin-top: 10px;}
     
+    /* Medical Button Style */
     .medical-btn-card {
-        cursor: pointer; border-radius: 12px; border: 1px solid #eee; transition: transform 0.1s;
+        cursor: pointer; 
+        border-radius: 12px; 
+        border: 1px solid #eee; 
+        transition: transform 0.1s;
     }
     .medical-btn-card:active { transform: scale(0.98); background-color: #f8f9fa; }
 
@@ -164,10 +73,17 @@
     
     .section-title { font-size: 0.9rem; font-weight: 700; color: var(--brand-color); margin: 25px 20px 10px; display: flex; align-items: center; gap: 8px; }
     .section-title::before { content: ''; display: block; width: 4px; height: 16px; background: var(--brand-color); border-radius: 2px; }
+    
     .section-title.accent { color: var(--accent-color); }
     .section-title.accent::before { background: var(--accent-color); }
+    .next-goal-box { 
+        margin: 0 20px; background: #fff; 
+        border: 2px solid var(--accent-color); 
+        border-radius: 10px; padding: 15px; 
+        font-weight: 700; color: #555; 
+        box-shadow: 0 2px 8px rgba(242, 166, 121, 0.15);
+    }
 
-    .next-goal-box { margin: 0 20px; background: #fff; border: 2px solid var(--accent-color); border-radius: 10px; padding: 15px; font-weight: 700; color: #555; box-shadow: 0 2px 8px rgba(242, 166, 121, 0.15); }
     .feedback-box { margin: 0 20px; background: #f8f9fa; border-radius: 10px; padding: 15px; font-size: 0.9rem; line-height: 1.6; }
     .homework-box { margin: 0 20px; border: 2px solid var(--brand-color); border-radius: 10px; padding: 15px; background: #fff; position: relative; margin-top: 30px; }
     .homework-badge { position: absolute; top: -12px; left: 15px; background: var(--brand-color); color: #fff; font-size: 0.75rem; padding: 2px 10px; border-radius: 10px; font-weight: bold; }
@@ -181,10 +97,27 @@
     .photo-item { height: 120px; border-radius: 8px; border: 1px solid #eee; cursor: pointer; }
     
     .footer-action { margin: 30px 20px 10px; text-align: center; }
+    
+    /* PDF Button */
+    .btn-pdf {
+        background: #fff; color: var(--brand-color); border: 2px solid var(--brand-color);
+        width: 100%; padding: 12px; border-radius: 30px; font-weight: 700; font-size: 1rem;
+        margin-bottom: 15px; display: block; text-decoration: none; transition: background 0.2s;
+        cursor: pointer;
+    }
+    .btn-pdf:active { background: #E0F7FA; transform: scale(0.98); }
+
     .btn-reserve { background: var(--brand-color); color: #fff; border: none; width: 100%; padding: 14px; border-radius: 30px; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 12px rgba(87, 195, 194, 0.4); display: block; text-decoration: none; }
     
-    .reminder-box { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem; font-weight: bold; }
+    .reminder-box {
+        background: #fff3cd; border: 1px solid #ffeeba; color: #856404;
+        padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem; font-weight: bold;
+    }
+
+    #errorView { text-align: center; margin-top: 50px; display: none; padding: 20px; }
+    .line-id-box { background: #eee; padding: 10px; border-radius: 5px; margin: 15px 0; font-family: monospace; font-weight: bold; word-break: break-all; }
     
+    /* モーダル用ボタン */
     .dog-select-btn { width: 100%; margin-bottom: 10px; padding: 15px; font-weight: bold; font-size: 1.1rem; border-radius: 12px; background: #f8f9fa; border: 2px solid var(--brand-color); color: var(--brand-color); transition: all 0.2s; }
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
   </style>
@@ -196,35 +129,21 @@
     <p id="tipsText">Loading...</p>
   </div>
 
-  <div class="top-logo-area">
-      <img src="" alt="K9 Harmony" class="top-logo-img" id="topLogoImg" style="display:none;">
-      <div id="topLogoText" class="brand-text-fallback">K9 Harmony</div>
-  </div>
-
-  <div id="unregisteredView">
+  <div id="errorView">
     <div class="container">
-       <div class="unreg-card">
-           <h5 class="fw-bold" style="color: var(--text-main);">ユーザー登録が必要です</h5>
-           
-           <p class="mt-3 small text-muted">
-             システムに情報が見つかりませんでした。<br>
-             以下のIDをコピーして、<br>
-             <span class="fw-bold" style="color: var(--brand-color);">トレーナーに伝えてください。</span>
-           </p>
-
-           <div class="line-id-box" id="unregLineId">---</div>
-           
-           <button class="btn-brand" onclick="copyUnregId()">
-             📋 IDをコピー
-           </button>
-           
-           <p class="mt-4 mb-0" style="font-size:0.6rem; color:#ccc;" id="debugErrorMsg"></p>
-       </div>
+      <div class="alert alert-warning text-center">
+        <h5 class="fw-bold" id="errorTitle">エラーが発生しました</h5>
+        <p class="small" id="errorMessage">---</p>
+        <div class="line-id-box" id="dispLineId" style="display:none;"></div>
+        <button class="btn btn-secondary btn-sm w-100 mt-2" onclick="location.reload()">再読み込み</button>
+      </div>
     </div>
   </div>
 
   <div id="mainContent">
     <div class="header-area">
+      <h1 class="brand-title">K9 Harmony</h1>
+      
       <div class="profile-card">
         <div id="dogImgContainer">読み込み中...</div>
         <div class="profile-info">
@@ -245,15 +164,19 @@
                      style="width: 42px; height: 42px; min-width: 42px; background-color: #f0fcfc; color: var(--brand-color);">
                     <span style="font-size: 1.4rem;">⛑️</span>
                 </div>
+                
                 <div class="flex-grow-1">
                     <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">医療・防災手帳</h6>
                     <small class="text-muted" style="font-size: 0.7rem;">緊急時・災害時の身分証カルテ</small>
                 </div>
-                <div class="text-muted" style="font-size: 0.9rem;">&gt;</div>
+                
+                <div class="text-muted" style="font-size: 0.9rem;">
+                    &gt;
+                </div>
             </div>
         </div>
       </div>
-    </div>
+      </div>
 
     <div class="chart-section">
       <div class="chart-box"><canvas id="chart1"></canvas><div class="chart-caption">基礎・集中</div></div>
@@ -289,6 +212,10 @@
     <div class="photo-scroll" id="photoArea"><div class="text-muted small ms-3" id="photoLoadingMsg">画像を読み込み中...</div></div>
 
     <div class="footer-action">
+      <button onclick="handleDownloadPdf()" class="btn-pdf" id="pdfBtn">
+         📄 レポートをPDFで保存
+      </button>
+
       <a href="#" class="btn-reserve">予約する / Reserve</a>
       <div id="reminderArea" class="reminder-box" style="display:none;">次回予約目安: <span id="reminderDate">--/-- 〜 --/--</span></div>
       <div class="text-muted small mt-2">チケット残数: <span id="ticketCount" class="fw-bold" style="font-size:1.2rem;">-</span> 回</div>
@@ -306,12 +233,7 @@
 
   <script>
     const LIFF_ID = '2008546673-MJY7j3ox'; 
-    // ★ここを修正しました。ご指定のURLをセットしました。
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
-    
-    // ▼▼▼ ロゴ画像のURLがあればここに設定してください ▼▼▼
-    const LOGO_URL = ""; 
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     const dogTips = [
       "犬の鼻紋は人間の指紋と同じで、一頭一頭違います。", "犬は人間の約4倍の聴力を持っています。", "犬の嗅覚は人間の100万倍〜1億倍とも言われます。", "犬は汗を肉球からしかかけません。", "犬があくびをするのは、ストレスを感じて落ち着こうとしている時もあります。", "犬のしっぽの振り方は、右寄りだと「嬉しい」、左寄りだと「不安」な時があります。", "小型犬の方が大型犬よりも長生きする傾向があります。", "犬は夢を見ます。寝言を言ったり足を動かすのはその証拠です。", "ダルメシアンは生まれた時は真っ白で、後から斑点が出てきます。", "犬が飼い主の顔を舐めるのは、愛情表現やご飯の催促です。"
@@ -322,13 +244,8 @@
     let currentDogId = null;
     let chartInstance1 = null; 
     let chartInstance2 = null;
-
-    // ロゴ表示の初期化
-    if (LOGO_URL) {
-        document.getElementById('topLogoImg').src = LOGO_URL;
-        document.getElementById('topLogoImg').style.display = 'block';
-        document.getElementById('topLogoText').style.display = 'none';
-    }
+    // PDF生成用にデータを保持するグローバル変数
+    let currentLessonData = null;
 
     function startTipsSlider() {
       const tipsText = document.getElementById('tipsText');
@@ -354,11 +271,7 @@
 
     window.onload = function() {
       startTipsSlider();
-      if (typeof liff === 'undefined') { 
-          // LIFFがない場合もIDなしで未登録画面（エラー扱い）へ
-          showUnregistered('LIFF_NOT_LOADED', 'LIFF SDKの読み込みに失敗しました');
-          return; 
-      }
+      if (typeof liff === 'undefined') { showError('SDK Error', 'LIFF SDK not loaded.'); return; }
       main();
     };
 
@@ -369,13 +282,15 @@
         const profile = await liff.getProfile();
         currentUserId = profile.userId;
         
+        // ★ URLパラメータからdogIdを取得
         const urlParams = new URLSearchParams(window.location.search);
         const urlDogId = urlParams.get('dogId');
         
+        // ★ dogIdがあればそれを指定してフェッチ
         fetchTextData(currentUserId, urlDogId);
 
       } catch (err) {
-        showUnregistered('INIT_ERROR', err.message);
+        showError('LIFF Init Error', err.message);
       }
     }
 
@@ -386,23 +301,25 @@
       fetch(url)
         .then(res => res.json())
         .then(data => {
-          // 複数頭飼育の場合
           if (data.multiple_dogs) {
               showDogSelectModal(data.multiple_dogs);
               return;
           }
-          
-          // エラーがある場合（未登録含む）
           if (data.error) {
-              console.log("Fetch Error:", data.error);
-              showUnregistered(userId, data.error);
+              if (data.error === 'Unregistered') {
+                  showError('未登録のユーザーです', 'IDをトレーナーにお伝えください', userId);
+              } else {
+                  showError('データ取得エラー', data.error);
+              }
               return;
           }
 
-          // 正常系
           try {
-              renderTextData(data);
+              // データをグローバル変数に保存（PDF用）
+              currentLessonData = data;
               
+              renderTextData(data);
+             
               currentDogId = data.dog.id || null;
               updateHistoryLink();
 
@@ -414,11 +331,11 @@
               }
           } catch (e) {
               console.error(e);
-              showUnregistered(userId, '描画エラー: ' + e.message);
+              showError('描画エラー', 'データの表示中に問題が発生しました: ' + e.message);
           }
         })
         .catch(err => {
-          showUnregistered(userId, '通信エラー: ' + err.message);
+          showError('通信エラー', err.message);
         });
     }
 
@@ -460,12 +377,104 @@
         }
     }
 
+    // ★ NEW: Medical Page Navigation Helper
     function openMedicalPage() {
         let url = 'medical.html';
         if (currentDogId) {
             url += `?dogId=${currentDogId}`;
         }
         window.location.href = url;
+    }
+
+    // ★ NEW: PDF Download Handler
+    function handleDownloadPdf() {
+        if (!currentLessonData || !currentLessonData.latest) {
+            alert("データが読み込まれていません。");
+            return;
+        }
+
+        const btn = document.getElementById('pdfBtn');
+        const originalText = btn.innerText;
+        btn.innerText = "作成中...";
+        btn.disabled = true;
+
+        // APIデータからPDF作成用データをマッピング
+        // ※画像パス(path)がAPIに含まれていない場合、PDFに画像は表示されません。
+        // 必要に応じてAPI側でパスを返すように修正してください。
+        const formData = {
+            training_unique_key: currentLessonData.latest.id || '', // IDがない場合は空
+            dog_name: currentLessonData.dog.name,
+            training_date: currentLessonData.latest.date,
+            customer_unique_key: currentLessonData.customer.id,
+            dog_unique_key: currentLessonData.dog.id,
+            
+            goal: currentLessonData.latest.goal,
+            done: currentLessonData.latest.done,
+            unable: currentLessonData.latest.unable,
+            next_homework: currentLessonData.latest.homework, // キー名のマッピングに注意
+            next_goal: currentLessonData.latest.next_goal,
+            comment_trainer: currentLessonData.latest.comment,
+            training_remarks: '', // 必要ならAPIに追加
+
+            // スコアマッピング
+            score_1: currentLessonData.latest.scores[0], score_detail_1: currentLessonData.latest.details[0],
+            score_2: currentLessonData.latest.scores[1], score_detail_2: currentLessonData.latest.details[1],
+            score_3: currentLessonData.latest.scores[2], score_detail_3: currentLessonData.latest.details[2],
+            score_4: currentLessonData.latest.scores[3], score_detail_4: currentLessonData.latest.details[3],
+            score_5: currentLessonData.latest.scores[4], score_detail_5: currentLessonData.latest.details[4],
+            score_6: currentLessonData.latest.scores[5], score_detail_6: currentLessonData.latest.details[5],
+            score_7: currentLessonData.latest.scores[6], score_detail_7: currentLessonData.latest.details[6],
+            score_8: currentLessonData.latest.scores[7], score_detail_8: currentLessonData.latest.details[7],
+            score_9: currentLessonData.latest.scores[8], score_detail_9: currentLessonData.latest.details[8],
+            score_10: currentLessonData.latest.scores[9], score_detail_10: currentLessonData.latest.details[9],
+            
+            // 画像用パス (APIが返していない場合は空になります)
+            training_photo_1: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[0] : '',
+            training_photo_2: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[1] : '',
+            training_photo_3: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[2] : '',
+            training_photo_4: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[3] : '',
+            training_photo_5: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[4] : ''
+        };
+
+        if (typeof google === 'undefined' || !google.script) {
+            alert('この機能はGASウェブアプリ上でのみ動作します。');
+            btn.innerText = originalText;
+            btn.disabled = false;
+            return;
+        }
+
+        google.script.run
+            .withSuccessHandler(function(response) {
+                btn.innerText = originalText;
+                btn.disabled = false;
+
+                if (response.status === 'success') {
+                    // ユーザーエージェント判定
+                    const isIos = /iP(ad|hone|od)/.test(navigator.userAgent);
+
+                    if (isIos) {
+                        // iOS: 別タブで開く (ポップアップブロック回避のためユーザーアクションが必要な場合があるが、まずはこれで試行)
+                        window.open(response.url, '_blank');
+                    } else {
+                        // PC/Android: 強制ダウンロード
+                        const a = document.createElement('a');
+                        a.href = response.url;
+                        a.download = `LessonReport_${formData.training_date}.pdf`; 
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    }
+                    alert(response.message);
+                } else {
+                    alert('エラー: ' + response.message);
+                }
+            })
+            .withFailureHandler(function(e) {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                alert('サーバーエラー: ' + e);
+            })
+            .createPdfFromSlide(formData);
     }
 
     function fetchProfileImage(userId, dogId) {
@@ -512,7 +521,7 @@
       const d = data.dog || {};
       document.getElementById('custName').innerText = c.name + ' 様';
       document.getElementById('dogName').innerText = d.name_disp || d.name || 'Your Dog';
-      document.getElementById('ticketCount').innerText = data.ticket_count || '-';
+      document.getElementById('ticketCount').innerText = data.ticket_count;
 
       checkBirthday(c.birth_date, 'custBirthdayMsg'); 
       checkBirthday(d.birth_date, 'dogBirthdayMsg'); 
@@ -520,11 +529,11 @@
       const l = data.latest;
       if (l) {
         document.getElementById('lessonDate').innerText = 'Last: ' + l.date;
-        document.getElementById('goalText').innerText = l.goal || '---';
-        document.getElementById('doneText').innerText = l.done || '---';
-        document.getElementById('unableText').innerText = l.unable || '---';
-        document.getElementById('homeworkText').innerText = l.homework || '---';
-        document.getElementById('trainerComment').innerText = l.comment || '---';
+        document.getElementById('goalText').innerText = l.goal;
+        document.getElementById('doneText').innerText = l.done;
+        document.getElementById('unableText').innerText = l.unable;
+        document.getElementById('homeworkText').innerText = l.homework;
+        document.getElementById('trainerComment').innerText = l.comment;
         document.getElementById('nextGoalText').innerText = l.next_goal || 'トレーナーと相談しましょう';
 
         if (l.recommend_date) {
@@ -535,20 +544,16 @@
         }
 
         let d1 = '', d2 = '';
-        if(l.details) {
-            for(let i=0; i<5; i++) { d1 += `[${i+1}] ${l.details[i] || 'なし'}\n`; }
-            for(let i=5; i<10; i++) { d2 += `[${i+1}] ${l.details[i] || 'なし'}\n`; }
-        }
+        for(let i=0; i<5; i++) { d1 += `[${i+1}] ${l.details[i] || 'なし'}\n`; }
+        for(let i=5; i<10; i++) { d2 += `[${i+1}] ${l.details[i] || 'なし'}\n`; }
         document.getElementById('detail1').innerText = d1 || '特になし';
         document.getElementById('detail2').innerText = d2 || '特になし';
 
         if (chartInstance1) chartInstance1.destroy();
         if (chartInstance2) chartInstance2.destroy();
 
-        if (l.scores) {
-            chartInstance1 = renderChart('chart1', l.scores.slice(0, 5), ['指示理解','集中力','報酬','ボディ','コンタクト'], 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 1)');
-            chartInstance2 = renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト'], 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
-        }
+        chartInstance1 = renderChart('chart1', l.scores.slice(0, 5), ['指示理解','集中力','報酬','ボディ','コンタクト'], 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 1)');
+        chartInstance2 = renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト'], 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
       } else {
           document.getElementById('lessonDate').innerText = 'レッスン履歴なし';
       }
@@ -583,44 +588,25 @@
       });
     }
 
-    // 【重要改修】 未登録・エラー時もすべてこの画面を通す
-    function showUnregistered(userId, debugMsg = '') {
-        finishLoading(); 
+    function showError(title, msg, userId) {
+        finishLoading();
         document.getElementById('mainContent').style.display = 'none';
-
-        const unregDiv = document.getElementById('unregisteredView');
-        unregDiv.style.display = 'block';
         
-        const idBox = document.getElementById('unregLineId');
-        idBox.innerText = userId || 'ID_NOT_FOUND';
+        const errDiv = document.getElementById('errorView');
+        errDiv.style.display = 'block';
+        document.getElementById('errorTitle').innerText = title;
+        document.getElementById('errorMessage').innerText = msg;
         
-        // デバッグ用メッセージ（不要ならCSSで消す）
-        if(debugMsg) {
-             document.getElementById('debugErrorMsg').innerText = 'Code: ' + debugMsg;
+        if (userId) {
+            const idBox = document.getElementById('dispLineId');
+            idBox.innerText = userId;
+            idBox.style.display = 'block';
         }
     }
-
-    // IDコピー機能
-    function copyUnregId() {
-        const idText = document.getElementById('unregLineId').innerText;
-        if (!idText || idText.includes('---')) return;
-        
-        navigator.clipboard.writeText(idText)
-          .then(() => alert('IDをコピーしました！\nLINEでトレーナーにお伝えください。'))
-          .catch(err => {
-              // クリップボードAPIが使えない場合のフォールバック（iOSなど一部環境対策）
-              const textArea = document.createElement("textarea");
-              textArea.value = idText;
-              document.body.appendChild(textArea);
-              textArea.select();
-              try {
-                  document.execCommand('copy');
-                  alert('IDをコピーしました！');
-              } catch (err) {
-                  alert('コピーに失敗しました。手動でメモをお願いします。');
-              }
-              document.body.removeChild(textArea);
-          });
+    
+    function copyLineId() {
+        const idText = document.getElementById('dispLineId').innerText;
+        navigator.clipboard.writeText(idText).then(() => alert('IDをコピーしました'));
     }
   </script>
 </body>
