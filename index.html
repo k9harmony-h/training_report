@@ -317,9 +317,9 @@
           try {
               // データをグローバル変数に保存（PDF用）
               currentLessonData = data;
-              
+            
               renderTextData(data);
-             
+              
               currentDogId = data.dog.id || null;
               updateHistoryLink();
 
@@ -345,7 +345,8 @@
         dogs.forEach(dog => {
             const btn = document.createElement('button');
             btn.className = 'dog-select-btn';
-            btn.innerText = dog.name; 
+            // ★修正: 敬称付きの名前を使用
+            btn.innerText = dog.name_disp; 
             btn.onclick = () => selectDog(dog.id);
             body.appendChild(btn);
         });
@@ -552,8 +553,10 @@
         if (chartInstance1) chartInstance1.destroy();
         if (chartInstance2) chartInstance2.destroy();
 
-        chartInstance1 = renderChart('chart1', l.scores.slice(0, 5), ['指示理解','集中力','報酬','ボディ','コンタクト'], 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 1)');
-        chartInstance2 = renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト'], 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
+        if (l.scores) {
+            chartInstance1 = renderChart('chart1', l.scores.slice(0, 5), ['指示理解','集中力','報酬','ボディ','コンタクト'], 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 1)');
+            chartInstance2 = renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト'], 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
+        }
       } else {
           document.getElementById('lessonDate').innerText = 'レッスン履歴なし';
       }
