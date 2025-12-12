@@ -54,10 +54,14 @@
         #preview-img { width: 100%; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; }
         .preview-caption { font-size: 0.8rem; text-align: center; color: #666; margin-bottom: 15px; }
         .print-info-inline { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-top: 10px; }
+
+        /* ★追加: モーダル用ボタン (index.htmlから移植) */
+        .dog-select-btn { width: 100%; margin-bottom: 10px; padding: 15px; font-weight: bold; font-size: 1.1rem; border-radius: 12px; background: #f8f9fa; border: 2px solid var(--primary-color); color: var(--primary-color); transition: all 0.2s; }
+        .dog-select-btn:active { background: var(--primary-color); color: #fff; transform: scale(0.98); }
     </style>
 </head>
 <body>
-    <div id="log-stamp">v2025.12.11-Medical-NoMargin</div>
+    <div id="log-stamp">v2025.12.12-Medical-MultiDog</div>
 
     <div class="container pt-0 pb-3">
         <div class="no-print-area">
@@ -174,6 +178,15 @@
         </div>
     </div>
 
+    <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center">わんちゃんを選択</h5></div>
+                <div class="modal-body" id="dogSelectBody"></div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
@@ -208,11 +221,45 @@
             let url = `${API_URL}?userId=${userId}`;
             if(dogId) url += `&dogId=${dogId}`;
             fetch(url).then(res => res.json()).then(data => {
+                // ★追加: 複数頭選択ロジック
+                if (data.multiple_dogs) {
+                    showDogSelectModal(data.multiple_dogs);
+                    return;
+                }
+
                 if(data.error) { alert('Error: ' + data.error); return; }
                 if(data.dog && data.dog.id) currentDogId = data.dog.id;
                 renderData(data);
                 if(currentDogId) fetchImage(userId, currentDogId);
             }).catch(e => log('Connection Error: ' + e.message));
+        }
+
+        // ★追加: モーダル表示関数
+        function showDogSelectModal(dogs) {
+            const body = document.getElementById('dogSelectBody');
+            body.innerHTML = '';
+            dogs.forEach(dog => {
+                const btn = document.createElement('button');
+                btn.className = 'dog-select-btn';
+                btn.innerText = dog.name; 
+                btn.onclick = () => selectDog(dog.id);
+                body.appendChild(btn);
+            });
+            // ローディングを隠す
+            document.getElementById('loading').style.display = 'none';
+            // モーダル表示
+            new bootstrap.Modal(document.getElementById('dogSelectModal')).show();
+        }
+
+        // ★追加: 犬選択時の処理
+        function selectDog(dogId) {
+            const modalEl = document.getElementById('dogSelectModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+            
+            document.getElementById('loading').style.display = 'block';
+            currentDogId = dogId;
+            fetchData(currentUserId, dogId);
         }
 
         function generatePdf(type) {
@@ -309,6 +356,7 @@
         function renderData(data) {
             const c = data.customer || {};
             const d = data.dog || {};
+            // ★確認: main.gs から渡される name_disp には既に敬称(くん/ちゃん)が付与されているためそのまま表示
             setText('d_name', d.name_disp);
             setText('d_breed', d.breed);
             setText('d_color', d.color);
