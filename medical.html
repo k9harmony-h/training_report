@@ -12,7 +12,6 @@
         :root { --primary-color: #88b08b; --accent-color: #e8f5e9; --alert-color: #e07a5f; --text-color: #333; --mask-color: #f0f0f0; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 150px; }
         
-        /* ★修正: 上部マージンを0に変更 */
         .no-print-area { margin: 0 0 30px; text-align: center; }
         
         .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; border: 1px solid #eee; }
@@ -32,9 +31,8 @@
             display: flex; 
             justify-content: center; 
             margin-bottom: 15px; 
-            /* ★追加: 上部に余計な隙間が出ないよう明示 */
             margin-top: 0;
-            padding-top: 20px; /* 少しだけ中身の余白を持たせるなら調整可。今回は余白なし方針なら0でOKですが、見栄えのため画像自体の上は詰めつつ、コンテナとしては画面端に張り付く設定 */
+            padding-top: 20px; 
         }
         .logo-img { 
             width: 35%; 
@@ -55,13 +53,13 @@
         .preview-caption { font-size: 0.8rem; text-align: center; color: #666; margin-bottom: 15px; }
         .print-info-inline { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-top: 10px; }
 
-        /* ★追加: モーダル用ボタン (index.htmlから移植) */
+        /* モーダル用ボタン */
         .dog-select-btn { width: 100%; margin-bottom: 10px; padding: 15px; font-weight: bold; font-size: 1.1rem; border-radius: 12px; background: #f8f9fa; border: 2px solid var(--primary-color); color: var(--primary-color); transition: all 0.2s; }
         .dog-select-btn:active { background: var(--primary-color); color: #fff; transform: scale(0.98); }
     </style>
 </head>
 <body>
-    <div id="log-stamp">v2025.12.12-Medical-MultiDog-Fix</div>
+    <div id="log-stamp">v2025.12.12-Medical-MultiDog-Honorific</div>
 
     <div class="container pt-0 pb-3">
         <div class="no-print-area">
@@ -203,7 +201,7 @@
         }
 
         window.onload = async function() {
-            // 修正: LIFF SDK ロードチェック
+            // LIFF SDK ロードチェック
             if (typeof liff === 'undefined') {
                 log('Error: LIFF SDK not loaded.');
                 alert('LIFF SDKの読み込みに失敗しました。リロードしてください。');
@@ -228,7 +226,7 @@
             let url = `${API_URL}?userId=${userId}`;
             if(dogId) url += `&dogId=${dogId}`;
             fetch(url).then(res => res.json()).then(data => {
-                // ★追加: 複数頭選択ロジック
+                // 複数頭選択ロジック
                 if (data.multiple_dogs) {
                     showDogSelectModal(data.multiple_dogs);
                     return;
@@ -241,14 +239,15 @@
             }).catch(e => log('Connection Error: ' + e.message));
         }
 
-        // ★追加: モーダル表示関数
+        // モーダル表示関数
         function showDogSelectModal(dogs) {
             const body = document.getElementById('dogSelectBody');
             body.innerHTML = '';
             dogs.forEach(dog => {
                 const btn = document.createElement('button');
                 btn.className = 'dog-select-btn';
-                btn.innerText = dog.name; 
+                // ★修正: 敬称付きの名前(name_disp)を使用
+                btn.innerText = dog.name_disp; 
                 btn.onclick = () => selectDog(dog.id);
                 body.appendChild(btn);
             });
@@ -258,7 +257,7 @@
             new bootstrap.Modal(document.getElementById('dogSelectModal')).show();
         }
 
-        // ★追加: 犬選択時の処理
+        // 犬選択時の処理
         function selectDog(dogId) {
             const modalEl = document.getElementById('dogSelectModal');
             const modal = bootstrap.Modal.getInstance(modalEl);
@@ -363,7 +362,6 @@
         function renderData(data) {
             const c = data.customer || {};
             const d = data.dog || {};
-            // ★確認: main.gs から渡される name_disp には既に敬称(くん/ちゃん)が付与されているためそのまま表示
             setText('d_name', d.name_disp);
             setText('d_breed', d.breed);
             setText('d_color', d.color);
