@@ -241,8 +241,7 @@
             dogs.forEach(dog => {
                 const btn = document.createElement('button');
                 btn.className = 'dog-select-btn';
-                // ★修正: 敬称付きの名前を使用
-                btn.innerText = dog.name_disp; 
+                btn.innerText = dog.name; 
                 btn.onclick = () => selectDog(dog.id);
                 body.appendChild(btn);
             });
