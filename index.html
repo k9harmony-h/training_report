@@ -298,8 +298,17 @@
       let url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
       if (dogId) url += `&dogId=${dogId}`;
 
-      fetch(url)
-        .then(res => res.json())
+      // ★修正: CORS対応を追加 (通常はデフォルトだが、明示的に指定)
+      fetch(url, {
+          method: 'GET',
+          mode: 'cors'
+      })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`Server Error: ${res.status} ${res.statusText}`);
+            }
+            return res.json();
+        })
         .then(data => {
           if (data.multiple_dogs) {
               showDogSelectModal(data.multiple_dogs);
@@ -482,7 +491,8 @@
       let url = `${GAS_URL}?userId=${userId}&type=img_profile`;
       if(dogId) url += `&dogId=${dogId}`;
       
-      fetch(url)
+      // ★修正: CORS対応を追加
+      fetch(url, { method: 'GET', mode: 'cors' })
         .then(res => res.json())
         .then(data => {
            const container = document.getElementById('dogImgContainer');
@@ -499,7 +509,8 @@
       let url = `${GAS_URL}?userId=${userId}&type=img_latest`;
       if(dogId) url += `&dogId=${dogId}`;
 
-      fetch(url)
+      // ★修正: CORS対応を追加
+      fetch(url, { method: 'GET', mode: 'cors' })
         .then(res => res.json())
         .then(data => {
            const pArea = document.getElementById('photoArea');
@@ -614,3 +625,16 @@
   </script>
 </body>
 </html>
+
+# 重要な忠告: デプロイの更新について
+今回のCORSエラーは、多くの場合**「GASコードを更新した後、デプロイのバージョンを更新していない」**ことが原因で発生します。
+
+コードを貼り付けた後、以下の手順を**必ず**実行してください。実行しないと、古いコードが動き続け、CORSエラーは解消しません。
+
+1.  GASエディタ右上の **「デプロイ」** をクリック。
+2.  **「デプロイを管理」** を選択。
+3.  現在のデプロイ設定の右上にある **「鉛筆アイコン（編集）」** をクリック。
+4.  「バージョン」のプルダウンから **「新バージョン」** を選択。
+5.  **「デプロイ」** ボタンをクリック。
+
+これで新しいコードが反映され、CORSエラーが解消するはずです。
