@@ -1,446 +1,1063 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>レッスン履歴</title>
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/medium-zoom/dist/medium-zoom.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <script>
+    (function() {
+      // URLに ?page=medical がついていたら、即座に手帳ページへ転送
+      if (new URLSearchParams(window.location.search).get('page') === 'medical') {
+        window.location.replace('medical.html'); 
+      }
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>K9 Harmony Portal</title>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/medium-zoom/dist/medium-zoom.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 
-    <style>
-        /* (CSSは変更なしのため省略、元の記述をそのまま使用してください) */
-        :root { --brand-color: #57C3C2; --text-main: #333333; --badge-gray: #E0E0E0; }
-        body { font-family: 'Montserrat', 'Noto Sans JP', sans-serif; background-color: #fafafa; color: var(--text-main); padding-bottom: 80px; }
-        .header-area { background: #fff; padding: 15px 20px 20px; border-bottom: 1px solid #eee; position: relative; }
-        .back-link { color: var(--brand-color); font-weight: bold; text-decoration: none; font-size: 0.9rem; position: absolute; top: 15px; left: 20px; z-index: 10; }
-        .profile-img-container { display: flex; justify-content: center; margin-top: 10px; }
-        .dog-profile-large { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid var(--brand-color); padding: 2px; background: #fff; }
-        .page-title { text-align: center; font-weight: 700; font-size: 1.2rem; color: var(--text-main); margin-top: 15px; margin-bottom: 0; }
-        .content-container { padding: 0 15px; }
-        .badge-section { background: #fff; margin-top: 20px; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; min-height: 80px;}
-        .badge-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
-        .badge-item { width: 50px; height: 75px; display: flex; flex-direction: column; align-items: center; }
-        .badge-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .badge-label { font-size: 0.6rem; color: #555; font-weight: bold; line-height: 1.1; }
-        .chart-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-top: 20px; padding: 15px; }
-        .chart-card canvas { height: 180px !important; }
-        .chart-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .chart-title { font-size: 1.1rem; font-weight: 700; color: var(--brand-color); margin-bottom: 5px; }
-        .chart-status { font-size: 0.9rem; font-weight: 600; }
-        .status-great { color: #FF6B6B; } .status-steady { color: #555555; } 
-        .gallery-section { margin-top: 30px; }
-        .section-title { font-size: 1.2rem; color: #555; margin-bottom: 10px; font-weight: 600; }
-        .photo-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; padding-right: 20px; }
-        .gallery-img-wrapper { flex: 0 0 28vw; width: 28vw; height: 28vw; border-radius: 8px; border: 1px solid #ddd; flex-shrink: 0; overflow: hidden; background: #f8f9fa; }
-        .gallery-img { width: 100%; height: 100%; object-fit: cover; }
-        .lesson-list { margin-top: 30px; }
-        .list-group-item { border: none; margin-bottom: 8px; border-radius: 8px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05); padding: 15px; cursor: pointer; }
-        .list-header { font-weight: 700; color: var(--brand-color); }
-        .list-date { font-size: 0.85rem; color: #888; }
-        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-color); display: flex; justify-content: center; align-items: center; z-index: 9999; color: white; flex-direction: column; }
-        body.loaded #loadingOverlay { display: none !important; }
-        .spinner-border-white { border-color: white; border-right-color: transparent; }
-        #tipsText { margin-top: 20px; font-weight: 500; font-size: 1rem; text-align: center; }
-        #errorContainer { display: none; padding: 20px; text-align: center; margin-top: 20px; }
-        .error-box { background: #fff; padding: 20px; border-radius: 12px; border: 2px solid #ffcccc; color: #d9534f; }
-        .modal-score-item { margin-bottom: 5px; font-size: 1rem; }
-        .modal-score-item strong { color: var(--brand-color); width: 80px; display: inline-block; }
-        .modal-avg-box { display: flex; gap: 10px; margin-bottom: 20px; }
-        .avg-item { flex: 1; background: #E0F7FA; border-radius: 8px; padding: 10px; text-align: center; }
-        .avg-label { font-size: 0.7rem; color: #666; font-weight: bold; display: block; }
-        .avg-val { font-size: 1.4rem; color: var(--brand-color); font-weight: 700; }
-        
-        /* モーダル用ボタン */
-        .dog-select-btn { width: 100%; margin-bottom: 10px; padding: 15px; font-weight: bold; font-size: 1.1rem; border-radius: 12px; background: #f8f9fa; border: 2px solid var(--brand-color); color: var(--brand-color); transition: all 0.2s; }
-        .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
-    </style>
+  <style>
+    :root { --brand-color: #57C3C2; --brand-bg: #E0F7FA; --text-main: #333333; --accent-color: #F2A679; }
+    body { font-family: 'Montserrat', 'Noto Sans JP', sans-serif; background-color: #fafafa; color: var(--text-main); padding-bottom: 80px; overflow-x: hidden; }
+    
+    #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; transition: opacity 0.5s ease-out, visibility 0.5s ease-out; }
+    .spinner-border-white { border-color: white; border-right-color: transparent; }
+    #tipsText { margin-top: 20px; font-weight: 500; font-size: 1rem; text-align: center; padding: 0 20px; height: 1.5em; }
+    
+    body.loaded #loadingOverlay { opacity: 0; visibility: hidden; pointer-events: none; }
+    
+    #mainContent { opacity: 0; transform: scale(0.95); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+    body.loaded #mainContent { opacity: 1; transform: scale(1); }
+    
+    .header-area { padding: 20px 20px 10px; background: #fff; }
+    .brand-title { color: var(--text-main); font-weight: 700; letter-spacing: 0.05em; font-size: 1.2rem; text-align: center; }
+    
+    .profile-card { margin-top: 20px; display: flex; align-items: center; }
+    
+    #dogImgContainer {
+        width: 150px; height: 150px; 
+        border-radius: 50%; 
+        border: 4px solid var(--brand-color); 
+        background: #fff; 
+        flex-shrink: 0; 
+        display: flex; align-items: center; justify-content: center;
+        overflow: hidden;
+        font-size: 0.8rem; color: #aaa; text-align: center;
+    }
+    .dog-img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .profile-info { margin-left: 20px; flex-grow: 1; }
+    .birthday-msg { color: #FF6B6B; font-weight: bold; font-size: 0.8rem; margin-bottom: 0px; display: none; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    
+    .cust-name { font-size: 0.85rem; color: #666; margin: 0; line-height: 1.2; }
+    .dog-name { font-size: 1.6rem; font-weight: 700; line-height: 1.2; margin: 0; }
+    .lesson-meta { margin-top: 5px; font-size: 0.85rem; color: var(--brand-color); font-weight: 600; }
+    .history-link { text-decoration: none; color: var(--brand-color); font-weight: bold; font-size: 0.9rem; margin-left: auto; display: block; text-align: right; margin-top: 10px;}
+    
+    /* Medical Button Style */
+    .medical-btn-card {
+        cursor: pointer; 
+        border-radius: 12px; 
+        border: 1px solid #eee; 
+        transition: transform 0.1s;
+    }
+    .medical-btn-card:active { transform: scale(0.98); background-color: #f8f9fa; }
+
+    .chart-section { margin-top: 20px; padding: 0 10px; display: flex; justify-content: space-between; }
+    .chart-box { width: 49%; text-align: center; }
+    .chart-caption { font-size: 0.75rem; color: #888; margin-top: 5px; font-weight: 600; }
+    
+    .section-title { font-size: 0.9rem; font-weight: 700; color: var(--brand-color); margin: 25px 20px 10px; display: flex; align-items: center; gap: 8px; }
+    .section-title::before { content: ''; display: block; width: 4px; height: 16px; background: var(--brand-color); border-radius: 2px; }
+    
+    .section-title.accent { color: var(--accent-color); }
+    .section-title.accent::before { background: var(--accent-color); }
+    .next-goal-box { 
+        margin: 0 20px; background: #fff; 
+        border: 2px solid var(--accent-color); 
+        border-radius: 10px; padding: 15px; 
+        font-weight: 700; color: #555; 
+        box-shadow: 0 2px 8px rgba(242, 166, 121, 0.15);
+    }
+
+    .feedback-box { margin: 0 20px; background: #f8f9fa; border-radius: 10px; padding: 15px; font-size: 0.9rem; line-height: 1.6; }
+    .homework-box { margin: 0 20px; border: 2px solid var(--brand-color); border-radius: 10px; padding: 15px; background: #fff; position: relative; margin-top: 30px; }
+    .homework-badge { position: absolute; top: -12px; left: 15px; background: var(--brand-color); color: #fff; font-size: 0.75rem; padding: 2px 10px; border-radius: 10px; font-weight: bold; }
+    
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 20px; }
+    .detail-card { background: #f8f9fa; border-radius: 8px; padding: 10px; }
+    .detail-head { font-size: 0.75rem; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 5px; text-align: center; color: #555; }
+    .detail-body { font-size: 0.8rem; color: #333; white-space: pre-wrap; }
+    
+    .photo-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 0 20px; margin-top: 10px; padding-bottom: 10px; }
+    .photo-item { height: 120px; border-radius: 8px; border: 1px solid #eee; cursor: pointer; }
+    
+    .footer-action { margin: 30px 20px 10px; text-align: center; }
+    
+    /* PDF Button */
+    .btn-pdf {
+        background: #fff; color: var(--brand-color); border: 2px solid var(--brand-color);
+        width: 100%; padding: 12px; border-radius: 30px; font-weight: 700; font-size: 1rem;
+        margin-bottom: 15px; display: block; text-decoration: none; transition: background 0.2s;
+        cursor: pointer;
+    }
+    .btn-pdf:active { background: #E0F7FA; transform: scale(0.98); }
+
+    .btn-reserve { background: var(--brand-color); color: #fff; border: none; width: 100%; padding: 14px; border-radius: 30px; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 12px rgba(87, 195, 194, 0.4); display: block; text-decoration: none; }
+    
+    .reminder-box {
+        background: #fff3cd; border: 1px solid #ffeeba; color: #856404;
+        padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem; font-weight: bold;
+    }
+
+    #errorView { text-align: center; margin-top: 50px; display: none; padding: 20px; }
+    .line-id-box { background: #eee; padding: 10px; border-radius: 5px; margin: 15px 0; font-family: monospace; font-weight: bold; word-break: break-all; }
+    
+    /* モーダル用ボタン */
+    .dog-select-btn { width: 100%; margin-bottom: 10px; padding: 15px; font-weight: bold; font-size: 1.1rem; border-radius: 12px; background: #f8f9fa; border: 2px solid var(--brand-color); color: var(--brand-color); transition: all 0.2s; }
+    .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
+  </style>
 </head>
 <body>
 
-    <div id="loadingOverlay">
-        <div class="spinner-border spinner-border-white" role="status"></div>
-        <p id="tipsText">Loading...</p>
-    </div>
+  <div id="loadingOverlay">
+    <div class="spinner-border spinner-border-white" role="status"></div>
+    <p id="tipsText">Loading...</p>
+  </div>
 
-    <div id="errorContainer">
-        <div class="error-box">
-            <h5 class="fw-bold">読み込みエラー</h5>
-            <p id="errorMsg" class="small text-dark"></p>
-            <button class="btn btn-secondary btn-sm mt-2" onclick="location.reload()">再読み込み</button>
-        </div>
-    </div>
-
-    <div id="mainWrapper">
-        <div class="header-area">
-            <a href="index.html" id="backLinkBtn" class="back-link">&lt; 戻る</a>
-            <div class="profile-img-container">
-                <img id="dogProfileImg" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="dog-profile-large" alt="愛犬">
-            </div>
-            <h1 id="pageTitle" class="page-title">レッスン履歴</h1>
-        </div>
-
-        <div class="content-container py-3">
-            
-            <div class="badge-section">
-                <h6 style="color:#888; font-size:0.8rem; font-weight:bold;">マスタリーバッジ (5点×3連続)</h6>
-                <div id="badgeContainer" class="badge-grid"></div>
-                <div id="noBadgeMsg" class="text-muted small mt-3" style="display:none;">まだ獲得したバッジはありません</div>
-            </div>
-
-            <p class="text-muted small text-center mt-3">過去のレッスン評価の推移です。</p>
-            <div id="chartArea"></div>
-
-            <div class="gallery-section">
-                <h3 class="section-title">ギャラリー</h3>
-                <div id="mainGalleryContainer" class="photo-scroll">
-                    <div class="text-muted small ms-3">読み込み中...</div>
-                </div>
-            </div>
-
-            <div class="lesson-list">
-                <h3 class="section-title">過去のレッスン日一覧 (新しい順)</h3>
-                <div id="lessonList" class="list-group"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="historyDetailModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">レッスン詳細: <span id="modalDate"></span></h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            
-            <div id="modalAvgArea"></div>
-
-            <h6 class="mt-2 text-muted">評価スコア</h6>
-            <div id="modalScores"></div>
-            
-            <h6 class="mt-4 text-muted">コメント</h6>
-            <p id="modalComment" style="white-space: pre-wrap; background:#f7f7f7; padding:10px; border-radius:5px;"></p>
-            
-            <h6 class="mt-4 text-muted">宿題</h6>
-            <p id="modalHomework" style="white-space: pre-wrap; background:#f7f7f7; padding:10px; border-radius:5px;"></p>
-            
-            <div class="text-end mt-3">
-                <a href="#" id="driveLink" class="btn-drive-link" target="_blank" style="display:none;">元データフォルダへ &gt;</a>
-            </div>
-
-          </div>
-          <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button></div>
-        </div>
+  <div id="errorView">
+    <div class="container">
+      <div class="alert alert-warning text-center">
+        <h5 class="fw-bold" id="errorTitle">エラーが発生しました</h5>
+        <p class="small" id="errorMessage">---</p>
+        <div class="line-id-box" id="dispLineId" style="display:none;"></div>
+        <button class="btn btn-secondary btn-sm w-100 mt-2" onclick="location.reload()">再読み込み</button>
       </div>
     </div>
+  </div>
 
-    <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center">わんちゃんを選択</h5></div>
-                <div class="modal-body" id="dogSelectBody"></div>
+  <div id="mainContent">
+    <div class="header-area">
+      <h1 class="brand-title">K9 Harmony</h1>
+      
+      <div class="profile-card">
+        <div id="dogImgContainer">読み込み中...</div>
+        <div class="profile-info">
+          <div id="custBirthdayMsg" class="birthday-msg">🎉Happy Birthday🍰</div>
+          <p id="custName" class="cust-name">Loading...</p>
+          <div style="height: 5px;"></div>
+          <div id="dogBirthdayMsg" class="birthday-msg">🎉Happy Birthday🐶</div>
+          <h2 id="dogName" class="dog-name">---</h2>
+          <div class="lesson-meta"><span id="lessonDate">Last: --/--/--</span></div>
+          <a href="#" id="historyLinkBtn" class="history-link">履歴 ></a>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <div onclick="openMedicalPage()" class="card shadow-sm medical-btn-card">
+            <div class="card-body py-2 d-flex align-items-center">
+                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" 
+                     style="width: 42px; height: 42px; min-width: 42px; background-color: #f0fcfc; color: var(--brand-color);">
+                    <span style="font-size: 1.4rem;">⛑️</span>
+                </div>
+                
+                <div class="flex-grow-1">
+                    <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">医療・防災手帳</h6>
+                    <small class="text-muted" style="font-size: 0.7rem;">緊急時・災害時の身分証カルテ</small>
+                </div>
+                
+                <div class="text-muted" style="font-size: 0.9rem;">
+                    &gt;
+                </div>
             </div>
         </div>
+      </div>
+      </div>
+
+    <div class="chart-section">
+      <div class="chart-box"><canvas id="chart1"></canvas><div class="chart-caption">基礎・集中</div></div>
+      <div class="chart-box"><canvas id="chart2"></canvas><div class="chart-caption">応用・対応</div></div>
     </div>
 
-    <script>
-        const LIFF_ID = '2008546673-MJY7j3ox'; 
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec'; 
+    <div class="section-title">本日のテーマ・目標</div>
+    <div class="feedback-box" id="goalText">---</div>
+    <div class="section-title">できたこと (Done)</div>
+    <div class="feedback-box" id="doneText">---</div>
+    <div class="section-title">課題 (Unable)</div>
+    <div class="feedback-box" id="unableText">---</div>
+    
+    <div class="section-title">宿題 (Homework)</div>
+    <div class="homework-box">
+      <div class="homework-badge">HOMEWORK</div>
+      <div id="homeworkText">---</div>
+    </div>
+
+    <div class="section-title accent">次回目標 (Next Goal)</div>
+    <div class="next-goal-box" id="nextGoalText">---</div>
+    
+    <div class="section-title">詳細フィードバック</div>
+    <div class="detail-grid">
+      <div class="detail-card"><div class="detail-head">項目1-5</div><div class="detail-body" id="detail1">---</div></div>
+      <div class="detail-card"><div class="detail-head">項目6-10</div><div class="detail-body" id="detail2">---</div></div>
+    </div>
+    <div class="feedback-box mt-4" style="background:#fff; border:1px solid #eee;">
+      <strong style="color:var(--brand-color);">トレーナーコメント:</strong><br><span id="trainerComment">---</span>
+    </div>
+
+    <div class="section-title">本日のショット</div>
+    <div class="photo-scroll" id="photoArea"><div class="text-muted small ms-3" id="photoLoadingMsg">画像を読み込み中...</div></div>
+
+    <div class="footer-action">
+      <button onclick="handleDownloadPdf()" class="btn-pdf" id="pdfBtn">
+         📄 レポートをPDFで保存
+      </button>
+
+      <a href="#" class="btn-reserve">予約する / Reserve</a>
+      <div id="reminderArea" class="reminder-box" style="display:none;">次回予約目安: <span id="reminderDate">--/-- 〜 --/--</span></div>
+      <div class="text-muted small mt-2">チケット残数: <span id="ticketCount" class="fw-bold" style="font-size:1.2rem;">-</span> 回</div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center">わんちゃんを選択</h5></div>
+        <div class="modal-body" id="dogSelectBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const LIFF_ID = '2008546673-MJY7j3ox'; 
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
+
+    const dogTips = [
+      "犬の鼻紋は人間の指紋と同じで、一頭一頭違います。", "犬は人間の約4倍の聴力を持っています。", "犬の嗅覚は人間の100万倍〜1億倍とも言われます。", "犬は汗を肉球からしかかけません。", "犬があくびをするのは、ストレスを感じて落ち着こうとしている時もあります。", "犬のしっぽの振り方は、右寄りだと「嬉しい」、左寄りだと「不安」な時があります。", "小型犬の方が大型犬よりも長生きする傾向があります。", "犬は夢を見ます。寝言を言ったり足を動かすのはその証拠です。", "ダルメシアンは生まれた時は真っ白で、後から斑点が出てきます。", "犬が飼い主の顔を舐めるのは、愛情表現やご飯の催促です。"
+    ];
+
+    let tipsTimer;
+    let currentUserId = null;
+    let currentDogId = null;
+    let chartInstance1 = null; 
+    let chartInstance2 = null;
+    // PDF生成用にデータを保持するグローバル変数
+    let currentLessonData = null;
+
+    function startTipsSlider() {
+      const tipsText = document.getElementById('tipsText');
+      if(!tipsText) return;
+      let currentTipIndex = Math.floor(Math.random() * dogTips.length);
+      tipsText.innerText = dogTips[currentTipIndex];
+      tipsTimer = setInterval(() => {
+        currentTipIndex = (currentTipIndex + 1) % dogTips.length;
+        tipsText.innerText = dogTips[currentTipIndex];
+      }, 2500); 
+    }
+
+    function finishLoading() {
+      clearInterval(tipsTimer);
+      const overlay = document.getElementById('loadingOverlay');
+      if (overlay) {
+          overlay.style.visibility = '';
+          overlay.style.opacity = '';
+      }
+      document.body.classList.add('loaded');
+      mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
+    }
+
+    window.onload = function() {
+      startTipsSlider();
+      if (typeof liff === 'undefined') { showError('SDK Error', 'LIFF SDK not loaded.'); return; }
+      main();
+    };
+
+    async function main() {
+      try {
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) { liff.login(); return; }
+        const profile = await liff.getProfile();
+        currentUserId = profile.userId;
         
-        const scoreLabels = [ '指示理解', '集中力', '報酬', 'ボディ', 'コンタクト', '指示出し', '対応力', 'リード', 'ボディ', 'コンタクト' ];
-        const chartColors = [ 'rgba(255, 99, 132, 1)', 'rgba(255, 159, 64, 1)', 'rgba(255, 205, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(54, 162, 235, 1)', 'rgba(153, 102, 255, 1)', 'rgba(201, 203, 207, 1)', 'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)' ];
+        // ★ URLパラメータからdogIdを取得
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlDogId = urlParams.get('dogId');
+        
+        // ★ dogIdがあればそれを指定してフェッチ
+        fetchTextData(currentUserId, urlDogId);
 
-        const dogTips = ["犬の鼻紋は...", "犬は人間の約4倍の...", "犬の嗅覚は...", "犬は汗を...", "犬があくびをするのは...", "犬のしっぽの...", "小型犬の方が...", "犬は夢を見ます...", "ダルメシアンは...", "犬が飼い主の..."];
+      } catch (err) {
+        showError('LIFF Init Error', err.message);
+      }
+    }
 
-        let tipsTimer;
-        let allHistoryData = []; let customerData = {}; let currentUserId = ''; let currentDogId = null;
+    function fetchTextData(userId, dogId = null) {
+      let url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
+      if (dogId) url += `&dogId=${dogId}`;
 
-        function startTipsSlider() {
-          const tipsText = document.getElementById('tipsText');
-          if(!tipsText) return;
-          let currentTipIndex = Math.floor(Math.random() * dogTips.length);
-          tipsText.innerText = dogTips[currentTipIndex];
-          tipsTimer = setInterval(() => {
-            currentTipIndex = (currentTipIndex + 1) % dogTips.length;
-            tipsText.innerText = dogTips[currentTipIndex];
-          }, 2500); 
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (data.multiple_dogs) {
+              showDogSelectModal(data.multiple_dogs);
+              return;
+          }
+          if (data.error) {
+              if (data.error === 'Unregistered') {
+                  showError('未登録のユーザーです', 'IDをトレーナーにお伝えください', userId);
+              } else {
+                  showError('データ取得エラー', data.error);
+              }
+              return;
+          }
+
+          try {
+              // データをグローバル変数に保存（PDF用）
+              currentLessonData = data;
+            
+              renderTextData(data);
+              
+              currentDogId = data.dog.id || null;
+              updateHistoryLink();
+
+              fetchProfileImage(userId, currentDogId);
+              if (data.latest && data.latest.has_photos) {
+                  fetchLessonImages(userId, currentDogId);
+              } else {
+                  document.getElementById('photoArea').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
+              }
+          } catch (e) {
+              console.error(e);
+              showError('描画エラー', 'データの表示中に問題が発生しました: ' + e.message);
+          }
+        })
+        .catch(err => {
+          showError('通信エラー', err.message);
+        });
+    }
+
+    function showDogSelectModal(dogs) {
+        const body = document.getElementById('dogSelectBody');
+        body.innerHTML = '';
+        dogs.forEach(dog => {
+            const btn = document.createElement('button');
+            btn.className = 'dog-select-btn';
+            // ★修正: 敬称付きの名前を使用
+            btn.innerText = dog.name_disp; 
+            btn.onclick = () => selectDog(dog.id);
+            body.appendChild(btn);
+        });
+        
+        document.getElementById('loadingOverlay').style.opacity = 0;
+        setTimeout(() => { document.getElementById('loadingOverlay').style.visibility = 'hidden'; }, 500);
+        
+        new bootstrap.Modal(document.getElementById('dogSelectModal')).show();
+    }
+
+    function selectDog(dogId) {
+        const modalEl = document.getElementById('dogSelectModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+        
+        document.getElementById('loadingOverlay').style.visibility = 'visible';
+        document.getElementById('loadingOverlay').style.opacity = 1;
+        
+        currentDogId = dogId;
+        fetchTextData(currentUserId, dogId);
+    }
+
+    function updateHistoryLink() {
+        const link = document.getElementById('historyLinkBtn');
+        if (currentDogId) {
+            link.href = `history.html?dogId=${currentDogId}`;
+        } else {
+            link.href = `history.html`;
+        }
+    }
+
+    // ★ NEW: Medical Page Navigation Helper
+    function openMedicalPage() {
+        let url = 'medical.html';
+        if (currentDogId) {
+            url += `?dogId=${currentDogId}`;
+        }
+        window.location.href = url;
+    }
+
+    // ★ NEW: PDF Download Handler
+    function handleDownloadPdf() {
+        if (!currentLessonData || !currentLessonData.latest) {
+            alert("データが読み込まれていません。");
+            return;
         }
 
-        function finishLoading() {
-            clearInterval(tipsTimer);
-            const overlay = document.getElementById('loadingOverlay');
-            if (overlay) { overlay.style.visibility = ''; overlay.style.opacity = ''; }
-            document.body.classList.add('loaded');
-        }
+        const btn = document.getElementById('pdfBtn');
+        const originalText = btn.innerText;
+        btn.innerText = "作成中...";
+        btn.disabled = true;
 
-        window.onload = function() {
-            startTipsSlider(); 
-            if (typeof liff === 'undefined') { showError('LIFF SDK not loaded.'); return; } 
-            main(); 
+        // APIデータからPDF作成用データをマッピング
+        // ※画像パス(path)がAPIに含まれていない場合、PDFに画像は表示されません。
+        // 必要に応じてAPI側でパスを返すように修正してください。
+        const formData = {
+            training_unique_key: currentLessonData.latest.id || '', // IDがない場合は空
+            dog_name: currentLessonData.dog.name,
+            training_date: currentLessonData.latest.date,
+            customer_unique_key: currentLessonData.customer.id,
+            dog_unique_key: currentLessonData.dog.id,
+            
+            goal: currentLessonData.latest.goal,
+            done: currentLessonData.latest.done,
+            unable: currentLessonData.latest.unable,
+            next_homework: currentLessonData.latest.homework, // キー名のマッピングに注意
+            next_goal: currentLessonData.latest.next_goal,
+            comment_trainer: currentLessonData.latest.comment,
+            training_remarks: '', // 必要ならAPIに追加
+
+            // スコアマッピング
+            score_1: currentLessonData.latest.scores[0], score_detail_1: currentLessonData.latest.details[0],
+            score_2: currentLessonData.latest.scores[1], score_detail_2: currentLessonData.latest.details[1],
+            score_3: currentLessonData.latest.scores[2], score_detail_3: currentLessonData.latest.details[2],
+            score_4: currentLessonData.latest.scores[3], score_detail_4: currentLessonData.latest.details[3],
+            score_5: currentLessonData.latest.scores[4], score_detail_5: currentLessonData.latest.details[4],
+            score_6: currentLessonData.latest.scores[5], score_detail_6: currentLessonData.latest.details[5],
+            score_7: currentLessonData.latest.scores[6], score_detail_7: currentLessonData.latest.details[6],
+            score_8: currentLessonData.latest.scores[7], score_detail_8: currentLessonData.latest.details[7],
+            score_9: currentLessonData.latest.scores[8], score_detail_9: currentLessonData.latest.details[8],
+            score_10: currentLessonData.latest.scores[9], score_detail_10: currentLessonData.latest.details[9],
+            
+            // 画像用パス (APIが返していない場合は空になります)
+            training_photo_1: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[0] : '',
+            training_photo_2: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[1] : '',
+            training_photo_3: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[2] : '',
+            training_photo_4: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[3] : '',
+            training_photo_5: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[4] : ''
         };
 
-        async function main() {
-            try {
-                await liff.init({ liffId: LIFF_ID });
-                if (!liff.isLoggedIn()) { liff.login(); return; }
-                const profile = await liff.getProfile();
-                currentUserId = profile.userId;
-                const urlParams = new URLSearchParams(window.location.search);
-                currentDogId = urlParams.get('dogId');
-                fetchTextData(profile.userId, currentDogId);
-            } catch (err) { showError('アプリ起動エラー: ' + err.message); }
+        if (typeof google === 'undefined' || !google.script) {
+            alert('この機能はGASウェブアプリ上でのみ動作します。');
+            btn.innerText = originalText;
+            btn.disabled = false;
+            return;
         }
 
-        function fetchTextData(userId, dogId = null) {
-            let url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
-            if (dogId) url += `&dogId=${dogId}`;
+        google.script.run
+            .withSuccessHandler(function(response) {
+                btn.innerText = originalText;
+                btn.disabled = false;
 
-            // mode: 'cors' 削除
-            fetch(url)
-                .then(res => { if (!res.ok) throw new Error(res.statusText); return res.json(); })
-                .then(data => {
-                    if (data.multiple_dogs) {
-                        showDogSelectModal(data.multiple_dogs);
-                        return;
+                if (response.status === 'success') {
+                    // ユーザーエージェント判定
+                    const isIos = /iP(ad|hone|od)/.test(navigator.userAgent);
+
+                    if (isIos) {
+                        // iOS: 別タブで開く (ポップアップブロック回避のためユーザーアクションが必要な場合があるが、まずはこれで試行)
+                        window.open(response.url, '_blank');
+                    } else {
+                        // PC/Android: 強制ダウンロード
+                        const a = document.createElement('a');
+                        a.href = response.url;
+                        a.download = `LessonReport_${formData.training_date}.pdf`; 
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
                     }
+                    alert(response.message);
+                } else {
+                    alert('エラー: ' + response.message);
+                }
+            })
+            .withFailureHandler(function(e) {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                alert('サーバーエラー: ' + e);
+            })
+            .createPdfFromSlide(formData);
+    }
 
-                    if (data.error) { showError('データ取得エラー: ' + data.error); return; }
-                    
-                    // 修正: データの受け取りを安全に
-                    allHistoryData = data.score_history || []; 
-                    customerData = data.customer || {};
-                    if(data.dog) currentDogId = data.dog.id;
-                    updateBackLink(); 
+    function fetchProfileImage(userId, dogId) {
+      let url = `${GAS_URL}?userId=${userId}&type=img_profile`;
+      if(dogId) url += `&dogId=${dogId}`;
+      
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+           const container = document.getElementById('dogImgContainer');
+           if(data.image) {
+               container.innerHTML = `<img src="${data.image}" class="dog-img" alt="Dog Photo">`;
+           } else {
+               container.innerHTML = 'No Image';
+           }
+        })
+        .catch(e => console.log('Profile Image Error', e));
+    }
 
-                    // グラフ描画
-                    renderHistory(data);
-                    
-                    finishLoading(); 
-                    
-                    // 画像取得呼び出し
-                    // ★修正: 最新レッスンがあるか、履歴がある場合に実行
-                    if (allHistoryData.length > 0 || (data.latest && data.latest.has_photos)) {
-                        setTimeout(() => { 
-                            fetchGalleryImages(userId, currentDogId); // ギャラリー用
-                            fetchProfileImage(userId, currentDogId);  // プロフ用
-                        }, 100);
-                    } else { 
-                        document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>'; 
-                        fetchProfileImage(userId, currentDogId); // プロフ画像は常にとってくる
-                    }
-                })
-                .catch(err => { 
-                    showError('通信エラー: ' + err.message); 
-                    finishLoading();
-                });
+    function fetchLessonImages(userId, dogId) {
+      let url = `${GAS_URL}?userId=${userId}&type=img_latest`;
+      if(dogId) url += `&dogId=${dogId}`;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+           const pArea = document.getElementById('photoArea');
+           pArea.innerHTML = ''; 
+           if (data.images && data.images.length > 0) {
+             data.images.forEach(b64 => {
+               const img = document.createElement('img');
+               img.src = b64; img.className = 'photo-item zoomable'; pArea.appendChild(img);
+             });
+             mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
+           } else {
+             pArea.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
+           }
+        })
+        .catch(e => console.log('Lesson Image Error', e));
+    }
+
+    function renderTextData(data) {
+      const c = data.customer || {};
+      const d = data.dog || {};
+      document.getElementById('custName').innerText = c.name + ' 様';
+      document.getElementById('dogName').innerText = d.name_disp || d.name || 'Your Dog';
+      document.getElementById('ticketCount').innerText = data.ticket_count;
+
+      checkBirthday(c.birth_date, 'custBirthdayMsg'); 
+      checkBirthday(d.birth_date, 'dogBirthdayMsg'); 
+
+      const l = data.latest;
+      if (l) {
+        document.getElementById('lessonDate').innerText = 'Last: ' + l.date;
+        document.getElementById('goalText').innerText = l.goal;
+        document.getElementById('doneText').innerText = l.done;
+        document.getElementById('unableText').innerText = l.unable;
+        document.getElementById('homeworkText').innerText = l.homework;
+        document.getElementById('trainerComment').innerText = l.comment;
+        document.getElementById('nextGoalText').innerText = l.next_goal || 'トレーナーと相談しましょう';
+
+        if (l.recommend_date) {
+            document.getElementById('reminderDate').innerText = l.recommend_date;
+            document.getElementById('reminderArea').style.display = 'block';
+        } else {
+            document.getElementById('reminderArea').style.display = 'none';
         }
 
-        function updateBackLink() {
-            const link = document.getElementById('backLinkBtn');
-            if (currentDogId) {
-                link.href = `index.html?dogId=${currentDogId}`;
-            } else {
-                link.href = `index.html`;
-            }
-        }
+        let d1 = '', d2 = '';
+        for(let i=0; i<5; i++) { d1 += `[${i+1}] ${l.details[i] || 'なし'}\n`; }
+        for(let i=5; i<10; i++) { d2 += `[${i+1}] ${l.details[i] || 'なし'}\n`; }
+        document.getElementById('detail1').innerText = d1 || '特になし';
+        document.getElementById('detail2').innerText = d2 || '特になし';
 
-        function showDogSelectModal(dogs) {
-            const body = document.getElementById('dogSelectBody');
-            body.innerHTML = '';
-            dogs.forEach(dog => {
-                const btn = document.createElement('button');
-                btn.className = 'dog-select-btn';
-                btn.innerText = dog.name_disp; 
-                btn.onclick = () => selectDog(dog.id);
-                body.appendChild(btn);
-            });
-            document.getElementById('loadingOverlay').style.opacity = 0;
-            setTimeout(() => { document.getElementById('loadingOverlay').style.visibility = 'hidden'; }, 500);
-            new bootstrap.Modal(document.getElementById('dogSelectModal')).show();
-        }
+        if (chartInstance1) chartInstance1.destroy();
+        if (chartInstance2) chartInstance2.destroy();
 
-        function selectDog(dogId) {
-            const modalEl = document.getElementById('dogSelectModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            modal.hide();
-            document.getElementById('loadingOverlay').style.visibility = 'visible';
-            document.getElementById('loadingOverlay').style.opacity = 1;
-            window.location.search = `?dogId=${dogId}`;
+        if (l.scores) {
+            chartInstance1 = renderChart('chart1', l.scores.slice(0, 5), ['指示理解','集中力','報酬','ボディ','コンタクト'], 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 1)');
+            chartInstance2 = renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト'], 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
         }
+      } else {
+          document.getElementById('lessonDate').innerText = 'レッスン履歴なし';
+      }
+      
+      finishLoading();
+    }
 
-        function showError(msg) {
-            finishLoading();
-            document.getElementById('mainWrapper').style.display = 'none';
-            document.getElementById('errorContainer').style.display = 'block';
-            document.getElementById('errorMsg').innerText = msg;
+    function checkBirthday(dateStr, elementId) {
+        if (!dateStr) return;
+        const today = new Date(); const bDate = new Date(dateStr); bDate.setFullYear(today.getFullYear());
+        const diffTime = bDate.getTime() - today.getTime(); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (Math.abs(diffDays) <= 14 || Math.abs(diffDays - 365) <= 14 || Math.abs(diffDays + 365) <= 14) {
+            document.getElementById(elementId).style.display = 'block';
         }
+    }
 
-        function fetchProfileImage(userId, dogId) {
-             let url = `${GAS_URL}?userId=${userId}&type=img_profile`;
-             if(dogId) url += `&dogId=${dogId}`;
-             fetch(url).then(res => res.json()).then(data => { if(data.image) document.getElementById('dogProfileImg').src = data.image; });
+    function renderChart(id, data, labels, bgColor, borderColor) {
+      const ctx = document.getElementById(id);
+      return new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: bgColor, borderColor: borderColor, pointBackgroundColor: borderColor, borderWidth: 2
+          }]
+        },
+        options: {
+          scales: { r: { min: 0, max: 5, ticks: { display: false }, pointLabels: { font: { size: 11 } } } },
+          plugins: { legend: { display: false } }
         }
+      });
+    }
+
+    function showError(title, msg, userId) {
+        finishLoading();
+        document.getElementById('mainContent').style.display = 'none';
         
-        function fetchGalleryImages(userId, dogId) {
-            let url = `${GAS_URL}?userId=${userId}&type=img_latest`;
-            if(dogId) url += `&dogId=${dogId}`;
-
-            fetch(url).then(res => res.json()).then(d => {
-                const gallery = document.getElementById('mainGalleryContainer'); gallery.innerHTML = ''; 
-                if (d.images && d.images.length > 0) {
-                    const displayCount = d.images.length; // 全部表示
-                    for(let i=0; i<displayCount; i++) {
-                        gallery.insertAdjacentHTML('beforeend', `<div class="gallery-img-wrapper"><img src="${d.images[i]}" class="gallery-img zoomable" alt="Photo"></div>`);
-                    }
-                    mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
-                } else { gallery.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>'; }
-            });
-        }
+        const errDiv = document.getElementById('errorView');
+        errDiv.style.display = 'block';
+        document.getElementById('errorTitle').innerText = title;
+        document.getElementById('errorMessage').innerText = msg;
         
-        function renderHistory(data) {
-            const chartArea = document.getElementById('chartArea'); const lessonList = document.getElementById('lessonList');
-            chartArea.innerHTML = ''; lessonList.innerHTML = ''; 
-            const dogData = data.dog || {}; 
-            document.getElementById('pageTitle').innerText = `${dogData.name_disp || dogData.name || '愛犬'}のレッスン履歴`; 
-
-            // データが無い場合
-            if (!allHistoryData || allHistoryData.length < 1) { 
-                chartArea.innerHTML = `<div class="text-center text-muted small mt-4">まだレッスン履歴がありません。</div>`; 
-                lessonList.innerHTML = `<div class="text-center text-muted small mt-4">履歴がありません。</div>`; 
-                return; 
-            }
-
-            const listHistory = [...allHistoryData]; // 日付降順 (main.gsでソート済み前提だが念の為)
-            // Chart用は日付昇順に直す
-            const chartHistory = [...allHistoryData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-            // 直近10回
-            const recent10Chart = chartHistory.slice(-10);
-            
-            // チャート生成
-            for (let i = 0; i < 10; i++) {
-                const itemLabel = scoreLabels[i]; const color = chartColors[i];
-                const scores = recent10Chart.map(h => h.scores[i]); const dates = recent10Chart.map(h => h.date);
-                const latestScore = scores[scores.length - 1]; const previousScore = scores.length > 1 ? scores[scores.length - 2] : null;
-                let comparisonText = '', comparisonClass = 'status-steady', specialComment = '';
-                if (latestScore === 5) specialComment = '⭐️🐶⭐️';
-                if (previousScore !== null) { const diff = latestScore - previousScore; if (diff >= 1 && latestScore < 5) { comparisonText = '成長中！'; comparisonClass = 'status-great'; } } else { comparisonText = '初回'; }
-                
-                chartArea.insertAdjacentHTML('beforeend', `<div class="chart-card"><div class="chart-meta"><h4 class="chart-title">[${i + 1}] ${itemLabel}</h4><div class="text-end"><span class="chart-status ${comparisonClass}">${comparisonText}</span>${specialComment ? `<div style="font-size:1.2rem; line-height:1;">${specialComment}</div>` : ''}</div></div><canvas id="chart-${i}"></canvas></div>`);
-                
-                new Chart(document.getElementById(`chart-${i}`), { 
-                    type: 'line', 
-                    data: { 
-                        labels: dates, 
-                        datasets: [{ 
-                            label: itemLabel, 
-                            data: scores, 
-                            borderColor: color, 
-                            backgroundColor: color.replace('1)', '0.1)'), 
-                            borderWidth: 2, 
-                            pointRadius: 5, 
-                            fill: true, 
-                            tension: 0.2 
-                        }] 
-                    }, 
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false, 
-                        scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } } }, 
-                        plugins: { legend: { display: false } } 
-                    } 
-                });
-            }
-            
-            // リスト生成
-            listHistory.forEach(h => {
-                const comment = (h.comment && String(h.comment).trim()) ? h.comment : 'コメントなし';
-                // スコア配列の数値化保証
-                const numScores = h.scores.map(Number);
-                const avg = (numScores.reduce((a,b)=>a+b,0) / numScores.length).toFixed(1);
-                
-                lessonList.insertAdjacentHTML('beforeend', `
-                    <div class="list-group-item" onclick="showLessonDetail('${h.id}', '${h.date}')">
-                        <div class="d-flex w-100 justify-content-between list-header">
-                            レッスン日: ${h.date}
-                            <span class="list-date">詳細 &gt;</span>
-                        </div>
-                        <div class="mt-2 p-2" style="background:#f7f7f7; border-radius:5px;">
-                            <div class="mb-1 fw-bold" style="color:var(--brand-color);">Avg: ${avg}点</div>
-                            <p class="mb-1 small" style="white-space: pre-wrap; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><strong>コメント:</strong> ${comment}</p>
-                        </div>
-                    </div>`);
-            });
+        if (userId) {
+            const idBox = document.getElementById('dispLineId');
+            idBox.innerText = userId;
+            idBox.style.display = 'block';
         }
-        
-        function showLessonDetail(id, date) {
-            const detail = allHistoryData.find(h => h.id === id) || allHistoryData.find(h => h.date === date); if (!detail) return;
-            document.getElementById('modalDate').innerText = date;
-            document.getElementById('modalComment').innerText = (detail.comment && String(detail.comment).trim()) ? detail.comment : 'コメントなし';
-            document.getElementById('modalHomework').innerText = (detail.homework && String(detail.homework).trim()) ? detail.homework : '宿題なし';
-            
-            const numScores = detail.scores.map(Number);
-            const s1 = numScores.slice(0,5).reduce((a,b)=>a+b,0)/5;
-            const s2 = numScores.slice(5,10).reduce((a,b)=>a+b,0)/5;
-            document.getElementById('modalAvgArea').innerHTML = `
-                <div class="modal-avg-box">
-                    <div class="avg-item"><span class="avg-label">基礎・集中 (1-5)</span><span class="avg-val">${s1.toFixed(1)}</span></div>
-                    <div class="avg-item"><span class="avg-label">応用・対応 (6-10)</span><span class="avg-val">${s2.toFixed(1)}</span></div>
-                </div>`;
-
-            const scoresContainer = document.getElementById('modalScores'); scoresContainer.innerHTML = '';
-            for (let i = 0; i < 10; i++) { scoresContainer.insertAdjacentHTML('beforeend', `<div class="modal-score-item"><strong>[${i + 1}] ${scoreLabels[i]}：</strong> ${numScores[i]} 点</div>`); }
-            
-            const driveLinkBtn = document.getElementById('driveLink');
-            // shared_folder_url があればリンクを表示
-            if (customerData.shared_folder_url) { driveLinkBtn.href = customerData.shared_folder_url; driveLinkBtn.style.display = 'block'; } else { driveLinkBtn.style.display = 'none'; }
-            
-            new bootstrap.Modal(document.getElementById('historyDetailModal')).show();
-        }
-        
-        // バッジ描画 (history.html専用 - スコア履歴から算出も可能だが、main.gsで計算済みならそれを使う)
-        // ※今回はmain.gsがbadgesを返していないため、ここで簡易計算するロジックにするか、非表示にするか。
-        // リクエストに「バッジ」が含まれていないため、とりあえず空処理にしておくか、履歴から計算する。
-        function renderBadges(badges) {
-            // 履歴から計算ロジック（簡易版）
-            const earned = [];
-            // 各項目ごとに、最新3回が全て5点ならバッジ獲得
-            if (allHistoryData.length >= 3) {
-                 // 日付昇順（古い順）にソート
-                 const sorted = [...allHistoryData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-                 // 最新3件
-                 const recent3 = sorted.slice(-3);
-                 
-                 for(let i=0; i<10; i++) {
-                     if (recent3.every(h => Number(h.scores[i]) === 5)) {
-                         earned.push(i+1);
-                     }
-                 }
-            }
-            
-            const container = document.getElementById('badgeContainer');
-            container.innerHTML = '';
-            if (earned.length === 0) {
-                document.getElementById('noBadgeMsg').style.display = 'block';
-                return;
-            } else {
-                document.getElementById('noBadgeMsg').style.display = 'none';
-            }
-            
-            scoreLabels.forEach((label, idx) => {
-                const badgeNum = idx + 1; 
-                if (!earned.includes(badgeNum)) return;
-                const color = chartColors[idx]; 
-                const iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-star-fill" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>`;
-                const div = document.createElement('div');
-                div.className = 'badge-item';
-                div.innerHTML = `<div class="badge-icon" style="background:${color}; box-shadow: 0 2px 5px ${color.replace('1)','0.4)')};">${iconHtml}</div><div class="badge-label">${label}</div>`;
-                container.appendChild(div);
-            });
-        }
-    </script>
+    }
+    
+    function copyLineId() {
+        const idText = document.getElementById('dispLineId').innerText;
+        navigator.clipboard.writeText(idText).then(() => alert('IDをコピーしました'));
+    }
+  </script>
 </body>
 </html>
+
+
+history.html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>レッスン履歴</title>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.0.8/dist/medium-zoom.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --brand-color: #57C3C2;
+            --text-main: #333333;
+            --badge-gray: #E0E0E0;
+        }
+        body { font-family: 'Montserrat', 'Noto Sans JP', sans-serif; background-color: #fafafa; color: var(--text-main); padding-bottom: 80px; }
+        
+        .header-area { background: #fff; padding: 15px 20px 20px; border-bottom: 1px solid #eee; position: relative; }
+        .back-link { color: var(--brand-color); font-weight: bold; text-decoration: none; font-size: 0.9rem; position: absolute; top: 15px; left: 20px; z-index: 10; }
+        .profile-img-container { display: flex; justify-content: center; margin-top: 10px; }
+        .dog-profile-large { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid var(--brand-color); padding: 2px; background: #fff; }
+        .page-title { text-align: center; font-weight: 700; font-size: 1.2rem; color: var(--text-main); margin-top: 15px; margin-bottom: 0; }
+
+        .content-container { padding: 0 15px; }
+        
+        /* --- デジタルバッジ --- */
+        .badge-section { background: #fff; margin-top: 20px; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; min-height: 80px;}
+        .badge-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
+        
+        .badge-item { width: 50px; height: 75px; display: flex; flex-direction: column; align-items: center; transition: transform 0.3s; }
+        .badge-item:hover { transform: scale(1.1); }
+        
+        .badge-icon { 
+            width: 40px; height: 40px; 
+            border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            color: #fff; font-size: 1.2rem; margin-bottom: 5px; 
+            position: relative; overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        @keyframes sparkle {
+            0% { transform: translateX(-100%) rotate(45deg); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(100%) rotate(45deg); opacity: 0; }
+        }
+        .badge-icon::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
+            animation: sparkle 3s infinite;
+        }
+        
+        .badge-label { font-size: 0.6rem; color: #555; font-weight: bold; line-height: 1.1; }
+
+        /* Chart */
+        .chart-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-top: 20px; padding: 15px; }
+        .chart-card canvas { height: 180px !important; }
+        .chart-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .chart-title { font-size: 1.1rem; font-weight: 700; color: var(--brand-color); margin-bottom: 5px; }
+        .chart-status { font-size: 0.9rem; font-weight: 600; }
+        .status-great { color: #FF6B6B; } .status-steady { color: #555555; } 
+        
+        /* Gallery */
+        .gallery-section { margin-top: 30px; }
+        .section-title { font-size: 1.2rem; color: #555; margin-bottom: 10px; font-weight: 600; }
+        .photo-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; padding-right: 20px; -webkit-overflow-scrolling: touch; }
+        .photo-scroll::-webkit-scrollbar { display: none; }
+        
+        .gallery-img-wrapper { flex: 0 0 28vw; width: 28vw; height: 28vw; border-radius: 8px; border: 1px solid #ddd; flex-shrink: 0; overflow: hidden; position: relative; background: #f8f9fa; }
+        .gallery-img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .see-more-card { display: flex; flex-direction: column; justify-content: center; align-items: center; text-decoration: none; background: linear-gradient(135deg, rgba(87, 195, 194, 0.9), rgba(87, 195, 194, 0.3)); border: 2px solid var(--brand-color); }
+        .see-more-icon { font-size: 1.5rem; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .see-more-text { font-size: 0.8rem; font-weight: 700; color: #fff; margin-top: 5px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+
+        .btn-drive-link { display: inline-block; font-size: 0.9rem; color: var(--brand-color); text-decoration: none; font-weight: bold; margin-top: 5px; }
+        
+        /* List */
+        .lesson-list { margin-top: 30px; }
+        .list-group-item { border: none; margin-bottom: 8px; border-radius: 8px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05); padding: 15px; cursor: pointer; }
+        .list-header { font-weight: 700; color: var(--brand-color); }
+        .list-date { font-size: 0.85rem; color: #888; }
+        
+        /* Utils */
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-color); display: flex; justify-content: center; align-items: center; z-index: 9999; color: white; flex-direction: column; }
+        body.loaded #loadingOverlay { display: none !important; }
+        .spinner-border-white { border-color: white; border-right-color: transparent; }
+        #tipsText { margin-top: 20px; font-weight: 500; font-size: 1rem; text-align: center; padding: 0 20px; height: 1.5em; }
+        
+        #errorContainer { display: none; padding: 20px; text-align: center; margin-top: 20px; }
+        .error-box { background: #fff; padding: 20px; border-radius: 12px; border: 2px solid #ffcccc; color: #d9534f; }
+
+        .modal-score-item { margin-bottom: 5px; font-size: 1rem; }
+        .modal-score-item strong { color: var(--brand-color); width: 80px; display: inline-block; }
+        
+        .modal-avg-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        .avg-item { flex: 1; background: #E0F7FA; border-radius: 8px; padding: 10px; text-align: center; }
+        .avg-label { font-size: 0.7rem; color: #666; font-weight: bold; display: block; }
+        .avg-val { font-size: 1.4rem; color: var(--brand-color); font-weight: 700; }
+        
+        /* モーダル用ボタン */
+        .dog-select-btn { width: 100%; margin-bottom: 10px; padding: 15px; font-weight: bold; font-size: 1.1rem; border-radius: 12px; background: #f8f9fa; border: 2px solid var(--brand-color); color: var(--brand-color); transition: all 0.2s; }
+        .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+    <div id="loadingOverlay">
+        <div class="spinner-border spinner-border-white" role="status"></div>
+        <p id="tipsText">Loading...</p>
+    </div>
+
+    <div id="errorContainer">
+        <div class="error-box">
+            <h5 class="fw-bold">読み込みエラー</h5>
+            <p id="errorMsg" class="small text-dark"></p>
+            <button class="btn btn-secondary btn-sm mt-2" onclick="location.reload()">再読み込み</button>
+        </div>
+    </div>
+
+    <div id="mainWrapper">
+        <div class="header-area">
+            <a href="index.html" id="backLinkBtn" class="back-link">&lt; 戻る</a>
+            <div class="profile-img-container">
+                <img id="dogProfileImg" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="dog-profile-large" alt="愛犬">
+            </div>
+            <h1 id="pageTitle" class="page-title">...のレッスン履歴</h1>
+        </div>
+
+        <div class="content-container py-3">
+            
+            <div class="badge-section">
+                <h6 style="color:#888; font-size:0.8rem; font-weight:bold;">マスタリーバッジ (5点×3連続)</h6>
+                <div id="badgeContainer" class="badge-grid"></div>
+                <div id="noBadgeMsg" class="text-muted small mt-3" style="display:none;">まだ獲得したバッジはありません</div>
+            </div>
+
+            <p class="text-muted small text-center mt-3">過去のレッスン評価の推移です。</p>
+            <div id="chartArea"></div>
+
+            <div class="gallery-section">
+                <h3 class="section-title">ギャラリー</h3>
+                <div id="mainGalleryContainer" class="photo-scroll">
+                    <div class="text-muted small ms-3">読み込み中...</div>
+                </div>
+            </div>
+
+            <div class="lesson-list">
+                <h3 class="section-title">過去のレッスン日一覧 (新しい順)</h3>
+                <div id="lessonList" class="list-group"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="historyDetailModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">レッスン詳細: <span id="modalDate"></span></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            
+            <div id="modalAvgArea"></div>
+
+            <h6 class="mt-2 text-muted">評価スコア</h6>
+            <div id="modalScores"></div>
+            
+            <h6 class="mt-4 text-muted">コメント</h6>
+            <p id="modalComment" style="white-space: pre-wrap; background:#f7f7f7; padding:10px; border-radius:5px;"></p>
+            
+            <h6 class="mt-4 text-muted">宿題</h6>
+            <p id="modalHomework" style="white-space: pre-wrap; background:#f7f7f7; padding:10px; border-radius:5px;"></p>
+            
+            <div class="text-end mt-3">
+                <a href="#" id="driveLink" class="btn-drive-link" target="_blank" style="display:none;">元データフォルダへ &gt;</a>
+            </div>
+
+          </div>
+          <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center">わんちゃんを選択</h5></div>
+            <div class="modal-body" id="dogSelectBody"></div>
+          </div>
+        </div>
+    </div>
+
+    <script>
+        const LIFF_ID = '2008546673-MJY7j3ox'; 
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec'; 
+        
+        const scoreLabels = [ '指示理解', '集中力', '報酬', 'ボディ', 'コンタクト', '指示出し', '対応力', 'リード', 'ボディ', 'コンタクト' ];
+        const chartColors = [ 'rgba(255, 99, 132, 1)', 'rgba(255, 159, 64, 1)', 'rgba(255, 205, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(54, 162, 235, 1)', 'rgba(153, 102, 255, 1)', 'rgba(201, 203, 207, 1)', 'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)' ];
+
+        const dogTips = [
+          "犬の鼻紋は人間の指紋と同じで、一頭一頭違います。", "犬は人間の約4倍の聴力を持っています。", "犬の嗅覚は人間の100万倍〜1億倍とも言われます。", "犬は汗を肉球からしかかけません。", "犬があくびをするのは、ストレスを感じて落ち着こうとしている時もあります。", "犬のしっぽの振り方は、右寄りだと「嬉しい」、左寄りだと「不安」な時があります。", "小型犬の方が大型犬よりも長生きする傾向があります。", "犬は夢を見ます。寝言を言ったり足を動かすのはその証拠です。", "ダルメシアンは生まれた時は真っ白で、後から斑点が出てきます。", "犬が飼い主の顔を舐めるのは、愛情表現やご飯の催促です。"
+        ];
+
+        let tipsTimer;
+        let allHistoryData = []; let customerData = {}; let currentUserId = ''; let currentDogId = null;
+
+        function startTipsSlider() {
+          const tipsText = document.getElementById('tipsText');
+          if(!tipsText) return;
+          let currentTipIndex = Math.floor(Math.random() * dogTips.length);
+          tipsText.innerText = dogTips[currentTipIndex];
+          tipsTimer = setInterval(() => {
+            currentTipIndex = (currentTipIndex + 1) % dogTips.length;
+            tipsText.innerText = dogTips[currentTipIndex];
+          }, 2500); 
+        }
+
+        function finishLoading() {
+            clearInterval(tipsTimer);
+            // スタイル削除
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) { overlay.style.visibility = ''; overlay.style.opacity = ''; }
+            document.body.classList.add('loaded');
+        }
+
+        window.onload = function() {
+            startTipsSlider(); 
+            if (typeof liff === 'undefined') { showError('LIFF SDK not loaded.'); return; } 
+            main(); 
+        };
+
+        async function main() {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                if (!liff.isLoggedIn()) { liff.login(); return; }
+                const profile = await liff.getProfile();
+                currentUserId = profile.userId;
+                
+                // ★ URLパラメータからdogIdを取得
+                const urlParams = new URLSearchParams(window.location.search);
+                currentDogId = urlParams.get('dogId');
+
+                fetchTextData(profile.userId, currentDogId);
+            } catch (err) { showError('アプリ起動エラー: ' + err.message); }
+        }
+
+        function fetchTextData(userId, dogId = null) {
+            let url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
+            if (dogId) url += `&dogId=${dogId}`;
+
+            fetch(url).then(res => { if (!res.ok) throw new Error(res.statusText); return res.json(); })
+                .then(data => {
+                    if (data.multiple_dogs) {
+                        showDogSelectModal(data.multiple_dogs);
+                        return;
+                    }
+
+                    if (data.error) { showError('データ取得エラー: ' + data.error); return; }
+                    allHistoryData = data.score_history || []; customerData = data.customer || {};
+                    
+                    // IDを更新 (GASが選んだID)
+                    currentDogId = data.dog.id;
+                    updateBackLink(); // ★ 戻るボタンの更新
+
+                    renderHistory(data);
+                    renderBadges(data.badges || []); 
+
+                    finishLoading(); 
+                    
+                    if (allHistoryData.length > 0 || (data.latest && data.latest.has_photos)) {
+                        setTimeout(() => { fetchGalleryImages(userId, currentDogId, data); fetchProfileImage(userId, currentDogId); }, 100);
+                    } else { document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>'; }
+                })
+                .catch(err => { 
+                    showError('通信エラー: ' + err.message); 
+                    finishLoading();
+                });
+        }
+
+        // ★ Backリンク更新
+        function updateBackLink() {
+            const link = document.getElementById('backLinkBtn');
+            if (currentDogId) {
+                link.href = `index.html?dogId=${currentDogId}`;
+            } else {
+                link.href = `index.html`;
+            }
+        }
+
+        function showDogSelectModal(dogs) {
+            const body = document.getElementById('dogSelectBody');
+            body.innerHTML = '';
+            dogs.forEach(dog => {
+                const btn = document.createElement('button');
+                btn.className = 'dog-select-btn';
+                btn.innerText = dog.name; 
+                btn.onclick = () => selectDog(dog.id);
+                body.appendChild(btn);
+            });
+            document.getElementById('loadingOverlay').style.opacity = 0;
+            setTimeout(() => { document.getElementById('loadingOverlay').style.visibility = 'hidden'; }, 500);
+            new bootstrap.Modal(document.getElementById('dogSelectModal')).show();
+        }
+
+        function selectDog(dogId) {
+            const modalEl = document.getElementById('dogSelectModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+            
+            document.getElementById('loadingOverlay').style.visibility = 'visible';
+            document.getElementById('loadingOverlay').style.opacity = 1;
+            
+            window.location.search = `?dogId=${dogId}`;
+        }
+
+        function showError(msg) {
+            finishLoading();
+            document.getElementById('mainWrapper').style.display = 'none';
+            document.getElementById('errorContainer').style.display = 'block';
+            document.getElementById('errorMsg').innerText = msg;
+        }
+
+        function renderBadges(earnedIndices) {
+            const container = document.getElementById('badgeContainer');
+            container.innerHTML = '';
+            
+            if (!earnedIndices || earnedIndices.length === 0) {
+                document.getElementById('noBadgeMsg').style.display = 'block';
+                return;
+            } else {
+                document.getElementById('noBadgeMsg').style.display = 'none';
+            }
+            
+            scoreLabels.forEach((label, idx) => {
+                const badgeNum = idx + 1; 
+                if (!earnedIndices.includes(badgeNum)) return;
+
+                const color = chartColors[idx]; 
+                const iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-star-fill" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>`;
+                
+                const div = document.createElement('div');
+                div.className = 'badge-item';
+                div.innerHTML = `<div class="badge-icon" style="background:${color}; box-shadow: 0 2px 5px ${color.replace('1)','0.4)')};">${iconHtml}</div><div class="badge-label">${label}</div>`;
+                container.appendChild(div);
+            });
+        }
+
+        function fetchProfileImage(userId, dogId) {
+             let url = `${GAS_URL}?userId=${userId}&type=img_profile`;
+             if(dogId) url += `&dogId=${dogId}`;
+             fetch(url).then(res => res.json()).then(data => { if(data.image) document.getElementById('dogProfileImg').src = data.image; });
+        }
+        function fetchGalleryImages(userId, dogId, data) {
+            if (!(data.latest && data.latest.has_photos)) { document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>'; return; }
+            
+            let url = `${GAS_URL}?userId=${userId}&type=img_latest`;
+            if(dogId) url += `&dogId=${dogId}`;
+
+            fetch(url).then(res => res.json()).then(d => {
+                const gallery = document.getElementById('mainGalleryContainer'); gallery.innerHTML = ''; 
+                if (d.images && d.images.length > 0) {
+                    const displayCount = Math.min(d.images.length, 3);
+                    for(let i=0; i<displayCount; i++) {
+                        gallery.insertAdjacentHTML('beforeend', `<div class="gallery-img-wrapper"><img src="${d.images[i]}" class="gallery-img zoomable" alt="Photo"></div>`);
+                    }
+                    mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
+                    if (customerData.shared_folder_url) {
+                        gallery.insertAdjacentHTML('beforeend', `<a href="${customerData.shared_folder_url}" target="_blank" class="gallery-img-wrapper see-more-card"><div class="see-more-icon">📂</div><div class="see-more-text">もっと見る</div></a>`);
+                    }
+                } else { gallery.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>'; }
+            });
+        }
+        function renderHistory(data) {
+            const chartArea = document.getElementById('chartArea'); const lessonList = document.getElementById('lessonList');
+            chartArea.innerHTML = ''; lessonList.innerHTML = ''; 
+            const dogData = data.dog || {}; 
+            document.getElementById('pageTitle').innerText = `${dogData.name_disp || dogData.name || '愛犬'}のレッスン履歴`; 
+
+            if (!allHistoryData || allHistoryData.length < 1) { chartArea.innerHTML = `<div class="text-center text-muted small mt-4">まだレッスン履歴がありません。</div>`; lessonList.innerHTML = `<div class="text-center text-muted small mt-4">履歴がありません。</div>`; return; }
+
+            const listHistory = [...allHistoryData].sort((a, b) => new Date(a.full_date||a.date).getTime() - new Date(b.full_date||b.date).getTime()).reverse();
+            const chartHistory = [...allHistoryData].sort((a, b) => new Date(a.full_date||a.date).getTime() - new Date(b.full_date||b.date).getTime());
+            const recent10Chart = chartHistory.slice(-10);
+            
+            for (let i = 0; i < 10; i++) {
+                const itemLabel = scoreLabels[i]; const color = chartColors[i];
+                const scores = recent10Chart.map(h => h.scores[i]); const dates = recent10Chart.map(h => h.date);
+                const latestScore = scores[scores.length - 1]; const previousScore = scores.length > 1 ? scores[scores.length - 2] : null;
+                let comparisonText = '', comparisonClass = 'status-steady', specialComment = '';
+                if (latestScore === 5) specialComment = '⭐️🐶⭐️';
+                if (previousScore !== null) { const diff = latestScore - previousScore; if (diff >= 1 && latestScore < 5) { comparisonText = '成長中！'; comparisonClass = 'status-great'; } } else { comparisonText = '初回'; }
+                chartArea.insertAdjacentHTML('beforeend', `<div class="chart-card"><div class="chart-meta"><h4 class="chart-title">[${i + 1}] ${itemLabel}</h4><div class="text-end"><span class="chart-status ${comparisonClass}">${comparisonText}</span>${specialComment ? `<div style="font-size:1.2rem; line-height:1;">${specialComment}</div>` : ''}</div></div><canvas id="chart-${i}"></canvas></div>`);
+                new Chart(document.getElementById(`chart-${i}`), { type: 'line', data: { labels: dates, datasets: [{ label: itemLabel, data: scores, borderColor: color, backgroundColor: color.replace('1)', '0.1)'), borderWidth: 2, pointRadius: 5, fill: true, tension: 0.2 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } } });
+            }
+            listHistory.forEach(h => {
+                const comment = (h.comment && String(h.comment).trim()) ? h.comment : 'コメントなし';
+                const avg = (h.scores.reduce((a,b)=>a+b,0) / h.scores.length).toFixed(1);
+                
+                lessonList.insertAdjacentHTML('beforeend', `
+                    <div class="list-group-item" onclick="showLessonDetail('${h.id}', '${h.date}')">
+                        <div class="d-flex w-100 justify-content-between list-header">
+                            レッスン日: ${h.date}
+                            <span class="list-date">詳細 &gt;</span>
+                        </div>
+                        <div class="mt-2 p-2" style="background:#f7f7f7; border-radius:5px;">
+                            <div class="mb-1 fw-bold" style="color:var(--brand-color);">Avg: ${avg}点</div>
+                            <p class="mb-1 small" style="white-space: pre-wrap; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><strong>コメント:</strong> ${comment}</p>
+                        </div>
+                    </div>`);
+            });
+        }
+        function showLessonDetail(id, date) {
+            const detail = allHistoryData.find(h => h.id === id) || allHistoryData.find(h => h.date === date); if (!detail) return;
+            document.getElementById('modalDate').innerText = date;
+            document.getElementById('modalComment').innerText = (detail.comment && String(detail.comment).trim()) ? detail.comment : 'コメントなし';
+            document.getElementById('modalHomework').innerText = (detail.homework && String(detail.homework).trim()) ? detail.homework : '宿題なし';
+            
+            const s1 = detail.scores.slice(0,5).reduce((a,b)=>a+b,0)/5;
+            const s2 = detail.scores.slice(5,10).reduce((a,b)=>a+b,0)/5;
+            document.getElementById('modalAvgArea').innerHTML = `
+                <div class="modal-avg-box">
+                    <div class="avg-item"><span class="avg-label">基礎・集中 (1-5)</span><span class="avg-val">${s1.toFixed(1)}</span></div>
+                    <div class="avg-item"><span class="avg-label">応用・対応 (6-10)</span><span class="avg-val">${s2.toFixed(1)}</span></div>
+                </div>`;
+
+            const scoresContainer = document.getElementById('modalScores'); scoresContainer.innerHTML = '';
+            for (let i = 0; i < 10; i++) { scoresContainer.insertAdjacentHTML('beforeend', `<div class="modal-score-item"><strong>[${i + 1}] ${scoreLabels[i]}：</strong> ${detail.scores[i]} 点</div>`); }
+            
+            const driveLinkBtn = document.getElementById('driveLink');
+            if (customerData.shared_folder_url) { driveLinkBtn.href = customerData.shared_folder_url; driveLinkBtn.style.display = 'block'; } else { driveLinkBtn.style.display = 'none'; }
+            new bootstrap.Modal(document.getElementById('historyDetailModal')).show();
+        }
+    </script>
+</body>
+</html>
+
+# 今回の修正依頼内容
+index.htmlの写真はOK。ただしhistory.htmlの写真とグラフが依然として表示されない。
+修正せよ。
