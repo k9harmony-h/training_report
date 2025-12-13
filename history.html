@@ -198,7 +198,7 @@
             let url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
             if (dogId) url += `&dogId=${dogId}`;
 
-            // mode: 'cors' を削除
+            // ★修正: CORSエラー回避のため mode: 'cors' を削除
             fetch(url)
                 .then(res => { if (!res.ok) throw new Error(res.statusText); return res.json(); })
                 .then(data => {
@@ -219,7 +219,7 @@
 
                     finishLoading(); 
                     
-                    // 最新または履歴があるなら画像取得
+                    // 画像取得呼び出し
                     if (allHistoryData.length > 0 || (data.latest && data.latest.has_photos)) {
                         setTimeout(() => { 
                             fetchGalleryImages(userId, currentDogId);
@@ -227,7 +227,7 @@
                         }, 100);
                     } else { 
                         document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>'; 
-                        fetchProfileImage(userId, currentDogId);
+                        fetchProfileImage(userId, currentDogId); // プロフ画像は常にとってくる
                     }
                 })
                 .catch(err => { 
@@ -288,13 +288,17 @@
 
             fetch(url).then(res => res.json()).then(d => {
                 const gallery = document.getElementById('mainGalleryContainer'); gallery.innerHTML = ''; 
-                if (d.images && d.images.length > 0) {
+                // ★修正: 配列チェック
+                if (d.images && Array.isArray(d.images) && d.images.length > 0) {
                     const displayCount = d.images.length; 
                     for(let i=0; i<displayCount; i++) {
                         gallery.insertAdjacentHTML('beforeend', `<div class="gallery-img-wrapper"><img src="${d.images[i]}" class="gallery-img zoomable" alt="Photo"></div>`);
                     }
                     mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
                 } else { gallery.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>'; }
+            }).catch(e => {
+                console.error("Gallery Error:", e);
+                document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-muted small ms-3">読み込みエラー</div>'; 
             });
         }
         
@@ -302,7 +306,6 @@
             const container = document.getElementById('badgeContainer');
             container.innerHTML = '';
             
-            // 履歴から計算（簡易版）
             const earned = [];
             if (allHistoryData.length >= 3) {
                  const sorted = [...allHistoryData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -345,12 +348,10 @@
                 return; 
             }
 
-            const listHistory = [...allHistoryData]; // main.gsで降順ソート済み
-            // Chart用は昇順
+            const listHistory = [...allHistoryData];
             const chartHistory = [...allHistoryData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
             const recent10Chart = chartHistory.slice(-10);
             
-            // チャート生成
             for (let i = 0; i < 10; i++) {
                 const itemLabel = scoreLabels[i]; const color = chartColors[i];
                 const scores = recent10Chart.map(h => h.scores[i]); const dates = recent10Chart.map(h => h.date);
@@ -385,7 +386,6 @@
                 });
             }
             
-            // リスト生成
             listHistory.forEach(h => {
                 const comment = (h.comment && String(h.comment).trim()) ? h.comment : 'コメントなし';
                 const numScores = h.scores.map(Number);
