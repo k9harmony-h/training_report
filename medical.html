@@ -59,7 +59,7 @@
     </style>
 </head>
 <body>
-    <div id="log-stamp">v2025.12.12-Medical-MultiDog-Honorific</div>
+    <div id="log-stamp">v2025.12.13-Final</div>
 
     <div class="container pt-0 pb-3">
         <div class="no-print-area">
@@ -225,18 +225,29 @@
         function fetchData(userId, dogId) {
             let url = `${API_URL}?userId=${userId}`;
             if(dogId) url += `&dogId=${dogId}`;
-            fetch(url).then(res => res.json()).then(data => {
-                // 複数頭選択ロジック
-                if (data.multiple_dogs) {
-                    showDogSelectModal(data.multiple_dogs);
-                    return;
-                }
+            
+            // ★修正: シンプルなfetch + 堅牢なエラーハンドリング
+            fetch(url)
+                .then(res => {
+                    if (!res.ok) throw new Error(`Server Error: ${res.status}`);
+                    return res.json();
+                })
+                .then(data => {
+                    // 複数頭選択ロジック
+                    if (data.multiple_dogs) {
+                        showDogSelectModal(data.multiple_dogs);
+                        return;
+                    }
 
-                if(data.error) { alert('Error: ' + data.error); return; }
-                if(data.dog && data.dog.id) currentDogId = data.dog.id;
-                renderData(data);
-                if(currentDogId) fetchImage(userId, currentDogId);
-            }).catch(e => log('Connection Error: ' + e.message));
+                    if(data.error) { alert('Error: ' + data.error); return; }
+                    if(data.dog && data.dog.id) currentDogId = data.dog.id;
+                    renderData(data);
+                    if(currentDogId) fetchImage(userId, currentDogId);
+                })
+                .catch(e => {
+                    log('Connection Error: ' + e.message);
+                    alert('データ取得に失敗しました。通信環境を確認してください。');
+                });
         }
 
         // モーダル表示関数
@@ -246,7 +257,6 @@
             dogs.forEach(dog => {
                 const btn = document.createElement('button');
                 btn.className = 'dog-select-btn';
-                // ★修正: 敬称付きの名前(name_disp)を使用
                 btn.innerText = dog.name_disp; 
                 btn.onclick = () => selectDog(dog.id);
                 body.appendChild(btn);
@@ -279,63 +289,68 @@
 
             const url = `${API_URL}?userId=${currentUserId}&dogId=${currentDogId}&type=pdf_${type}`;
             
-            fetch(url).then(res => res.json()).then(data => {
-                if(data.error) {
-                    alert('作成失敗: ' + data.error);
-                } else if(data.url) {
-                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            fetch(url)
+                .then(res => {
+                    if (!res.ok) throw new Error(`Server Error: ${res.status}`);
+                    return res.json();
+                })
+                .then(data => {
+                    if(data.error) {
+                        alert('作成失敗: ' + data.error);
+                    } else if(data.url) {
+                        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-                    if (!isMobile) {
-                        try {
-                            const match = data.url.match(/\/d\/(.*?)\//);
-                            if (match && match[1]) {
-                                const fileId = match[1];
-                                const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-                                const a = document.createElement('a');
-                                a.href = downloadUrl;
-                                a.download = 'medical_document.pdf'; 
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                                printModal.show();
-                            } else {
-                                window.open(data.url, '_blank');
-                                printModal.show();
-                            }
-                        } catch(e) { window.open(data.url, '_blank'); }
-
-                    } else {
-                        let fileId = '';
-                        const match = data.url.match(/\/d\/(.*?)\//) || data.url.match(/id=(.*?)$/);
-                        if (match && match[1]) fileId = match[1];
-
-                        if (fileId) {
-                            const previewArea = document.getElementById('preview-area');
-                            const img = document.getElementById('preview-img');
-                            
-                            const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
-                            img.src = thumbUrl;
-                            
-                            img.onclick = function() {
-                                liff.openWindow({ url: data.url, external: true });
-                            };
-
-                            document.getElementById('controls').style.display = 'none'; 
-                            previewArea.style.display = 'block'; 
-                            
-                            previewArea.scrollIntoView({ behavior: 'smooth' });
+                        if (!isMobile) {
+                            try {
+                                const match = data.url.match(/\/d\/(.*?)\//);
+                                if (match && match[1]) {
+                                    const fileId = match[1];
+                                    const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+                                    const a = document.createElement('a');
+                                    a.href = downloadUrl;
+                                    a.download = 'medical_document.pdf'; 
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    printModal.show();
+                                } else {
+                                    window.open(data.url, '_blank');
+                                    printModal.show();
+                                }
+                            } catch(e) { window.open(data.url, '_blank'); }
 
                         } else {
-                            liff.openWindow({ url: data.url, external: true });
+                            let fileId = '';
+                            const match = data.url.match(/\/d\/(.*?)\//) || data.url.match(/id=(.*?)$/);
+                            if (match && match[1]) fileId = match[1];
+
+                            if (fileId) {
+                                const previewArea = document.getElementById('preview-area');
+                                const img = document.getElementById('preview-img');
+                                
+                                const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+                                img.src = thumbUrl;
+                                
+                                img.onclick = function() {
+                                    liff.openWindow({ url: data.url, external: true });
+                                };
+
+                                document.getElementById('controls').style.display = 'none'; 
+                                previewArea.style.display = 'block'; 
+                                
+                                previewArea.scrollIntoView({ behavior: 'smooth' });
+
+                            } else {
+                                liff.openWindow({ url: data.url, external: true });
+                            }
                         }
                     }
-                }
-            })
-            .catch(e => alert('通信エラー: ' + e.message))
-            .finally(() => {
-                allBtns.forEach(b => b.disabled = false);
-                btn.innerHTML = originalHtml;
-            });
+                })
+                .catch(e => alert('通信エラー: ' + e.message))
+                .finally(() => {
+                    allBtns.forEach(b => b.disabled = false);
+                    btn.innerHTML = originalHtml;
+                });
         }
 
         function closePreview() {
@@ -346,17 +361,20 @@
 
         function fetchImage(userId, dogId) {
             let url = `${API_URL}?userId=${userId}&type=img_profile&dogId=${dogId}`;
-            fetch(url).then(res => res.json()).then(data => {
-                if(data.image) {
-                    const el = document.getElementById('d_photo_container');
-                    if(el) {
-                        el.innerHTML = `<img src="${data.image}" class="dog-profile-img">`;
-                        el.style.border = 'none';
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if(data.image) {
+                        const el = document.getElementById('d_photo_container');
+                        if(el) {
+                            el.innerHTML = `<img src="${data.image}" class="dog-profile-img">`;
+                            el.style.border = 'none';
+                        }
+                    } else {
+                        document.getElementById('d_photo_container').innerHTML = '<span class="small text-muted">No Photo</span>';
                     }
-                } else {
-                    document.getElementById('d_photo_container').innerHTML = '<span class="small text-muted">No Photo</span>';
-                }
-            });
+                })
+                .catch(e => log('Image Fetch Error: ' + e));
         }
 
         function renderData(data) {
