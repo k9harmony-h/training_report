@@ -123,7 +123,7 @@
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
 
     /* =========================================
-       Milestone CSS (Refined v2)
+       Milestone CSS (Refined v3)
        ========================================= */
     .milestone-section { margin: 30px 20px 10px; }
     .tier-container { margin-bottom: 20px; position: relative; border-radius: 12px; background: #fff; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: max-height 0.5s ease-out; }
@@ -241,7 +241,7 @@
 </head>
 <body>
 
-  <div id="log-stamp">v2025.12.14-Milestone-Fix-v1</div>
+  <div id="log-stamp">v2025.12.14-Milestone-Fix-v2</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -370,7 +370,7 @@
 
   <div id="debug-console">Initializing...</div>
 
-  <div class="modal fade" id="milestoneModal" tabindex="-1" aria-hidden="true">
+  <div class="modal fade" id="milestoneModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
@@ -394,7 +394,7 @@
     </div>
   </div>
 
-  <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+  <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center">わんちゃんを選択</h5></div>
@@ -539,6 +539,13 @@
             .then(res => res.json())
             .then(data => {
                 log(`MS Response: ${JSON.stringify(data).substring(0,50)}...`);
+                // Enhanced error handling
+                if (data.error) {
+                    log('MS Backend Error: ' + data.error);
+                    document.getElementById('tier1-loading').innerText = '準備中: ' + data.error;
+                    return;
+                }
+                
                 if (data.status === 'success' && data.badges) {
                     cachedMilestones = data.badges;
                     renderMilestones(data);
@@ -895,3 +902,380 @@
   </script>
 </body>
 </html>
+
+
+
+main.gs
+/**
+ * ============================================================================
+ * K9 Harmony Portal - Main Backend Logic
+ * ============================================================================
+ * @file    main.gs
+ * @version v2025.12.14-STEP1.5-MILESTONE-ROUTER-FIX
+ */
+
+const ACTION_GET_TICKET_BALANCE = 'getTicketBalance';
+
+/**
+ * [Router] HTTP GET リクエストハンドリング
+ */
+function doGet(e) {
+  let result = {};
+  
+  try {
+    const params   = e.parameter;
+    const userId   = params.userId;
+    const type     = params.type || 'data';
+    const dogId    = params.dogId;
+
+    if(!userId) throw new Error('No User ID provided');
+
+    // --- PDF Generation ---
+    if (type.startsWith('pdf_')) {
+      if (typeof generatePdfForApi !== 'function') throw new Error('Disaster module not loaded.');
+      const docType = type.replace('pdf_', ''); 
+      result = generatePdfForApi(userId, dogId, docType);
+    } 
+    // --- Image Retrieval ---
+    else if (type === 'img_profile') {
+      result = getProfileImage(userId, dogId);
+    } 
+    // --- Lesson Image Retrieval ---
+    else if (type === 'img_latest') {
+      result = getLatestLessonImages(userId, dogId);
+    }
+    // ▼▼▼ Milestone Retrieval (Removed defensive check to avoid false negatives) ▼▼▼
+    else if (type === 'milestone') {
+      // 直接呼び出す (milestone.gsがない場合は標準のReferenceErrorが出る)
+      result = getMilestoneService(dogId);
+    }
+    // ▲▲▲ End Milestone Retrieval ▲▲▲
+    // --- Main Data Retrieval ---
+    else {
+      result = getAllData(userId, dogId);
+    }
+
+  } catch (err) {
+    console.error('[doGet Error]', err);
+    // HTMLエラーではなくJSONエラーを返すことでCORSエラーを回避
+    result = { error: 'System Error: ' + err.toString() };
+  }
+
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * [Router] HTTP POST リクエストハンドリング
+ */
+function doPost(e) {
+  const result = { status: 'error', message: 'Invalid request' };
+  try {
+    if (!e || !e.postData) throw new Error('No post data');
+    const requestData = JSON.parse(e.postData.contents);
+    const action = requestData.action;
+
+    if (action === ACTION_GET_TICKET_BALANCE) {
+        const balanceData = calculateTicketBalanceService_(requestData.customer_unique_key);
+        result.status = 'success';
+        result.data = balanceData;
+    // ▼▼▼ Milestone Seen Update (Removed defensive check) ▼▼▼
+    } else if (action === 'markMilestoneSeen') {
+        // dogId, milestoneId を渡して既読化処理
+        const mResult = markMilestoneAsSeen(requestData.dogId, requestData.milestoneId);
+        result.status = mResult.success ? 'success' : 'error';
+    // ▲▲▲ End Milestone Seen Update ▲▲▲
+    } else {
+        result.message = 'Unknown action: ' + action;
+    }
+  } catch (error) {
+    result.message = error.toString();
+  }
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * [Logic] 全データ取得
+ */
+function getAllData(lineUserId, targetDogId) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  // ★ CONFIGからシート名を取得
+  const shCust = ss.getSheetByName(CONFIG.SHEET.CUSTOMER);
+  const shDog  = ss.getSheetByName(CONFIG.SHEET.DOG);
+  const shLog  = ss.getSheetByName(CONFIG.SHEET.LESSON);
+  
+  if (!shCust || !shDog || !shLog) throw new Error('Required sheets not found.');
+  
+  // 1. 顧客特定
+  const custData = shCust.getDataRange().getValues();
+  const cMap = getColumnMap(shCust);
+  let targetCust = null;
+  
+  for (let i = 1; i < custData.length; i++) {
+    const rowLineId = String(getVal(custData[i], cMap, 'line_user_id'));
+    if (rowLineId.indexOf(lineUserId) > -1) {
+      targetCust = {
+        unique_key: String(getVal(custData[i], cMap, 'customer_unique_key')), 
+        code:       getVal(custData[i], cMap, 'customer_code'),
+        name:       getVal(custData[i], cMap, 'customer_name'),
+        phone:      getVal(custData[i], cMap, 'customer_phone'),
+        address:    getVal(custData[i], cMap, 'customer_address_1') + getVal(custData[i], cMap, 'customer_address_2'),
+        em_name:    getVal(custData[i], cMap, 'em_contact_name'), 
+        em_phone:   getVal(custData[i], cMap, 'em_contact_phone'),
+        proxy_name: valOrNone(getVal(custData[i], cMap, 'em_proxy_name')), 
+        proxy_phone:valOrNone(getVal(custData[i], cMap, 'em_proxy_phone')),
+        evac_site:  valOrNone(getVal(custData[i], cMap, 'evacuation_site')),
+        birth_date: formatDateSafe(getVal(custData[i], cMap, 'customer_birth_date'), 'yyyy/MM/dd'),
+        shared_folder_id: getVal(custData[i], cMap, 'shared_folder_id')
+      };
+      break;
+    }
+  }
+  
+  if (!targetCust) return { error: 'Unregistered' };
+
+  // 2. 犬情報の取得
+  const dogData = shDog.getDataRange().getValues();
+  const dMap = getColumnMap(shDog);
+  let userDogs = [];
+
+  for (let i = 1; i < dogData.length; i++) {
+    const rowCustKey = String(getVal(dogData[i], dMap, 'customer_unique_key'));
+    
+    if (rowCustKey === targetCust.unique_key) {
+      const gender = getVal(dogData[i], dMap, 'dog_gender');
+      const rawName = getVal(dogData[i], dMap, 'dog_name');
+      let honorific = (['オス','Male','♂'].includes(gender)) ? 'くん' : 'ちゃん';
+      const bDateStr = formatDateSafe(getVal(dogData[i], dMap, 'dog_birth_date'), 'yyyy/MM/dd');
+      let age = '-';
+      if(bDateStr) {
+          const bDate = new Date(bDateStr);
+          const today = new Date();
+          let y = today.getFullYear() - bDate.getFullYear();
+          let m = today.getMonth() - bDate.getMonth();
+          if (today.getDate() < bDate.getDate()) m--;
+          if (m < 0) { y--; m += 12; }
+          age = `${y}歳${m}ヶ月`;
+      }
+
+      userDogs.push({
+        id:         String(getVal(dogData[i], dMap, 'dog_unique_key')),
+        code:       getVal(dogData[i], dMap, 'dog_code'),
+        name:       rawName,
+        name_disp:  rawName + honorific,
+        birth_date: bDateStr,
+        age:        age,
+        breed:      valOrNone(getVal(dogData[i], dMap, 'breed')),
+        gender:     valOrNone(gender),
+        color:      valOrNone(getVal(dogData[i], dMap, 'coat_color')),
+        neutered:   valOrNone(getVal(dogData[i], dMap, 'neutered')),
+        vet_name:    valOrNone(getVal(dogData[i], dMap, 'vet_name')),
+        vet_address: valOrNone(getVal(dogData[i], dMap, 'vet_address')),
+        vet_phone:   valOrNone(getVal(dogData[i], dMap, 'vet_phone')),
+        history:     valOrNone(getVal(dogData[i], dMap, 'dog_medical_history')),
+        medicine:    valOrNone(getVal(dogData[i], dMap, 'dog_medicine')),
+        allergy:     valOrNone(getVal(dogData[i], dMap, 'dog_allergy')),
+        caution:     valOrNone(getVal(dogData[i], dMap, 'dog_caution')),
+        license_no:  valOrNone(getVal(dogData[i], dMap, 'dog_license_no')),
+        microchip:   valOrNone(getVal(dogData[i], dMap, 'dog_microchip')),
+        food:        valOrNone(getVal(dogData[i], dMap, 'dog_food')),
+        photo_val:   getVal(dogData[i], dMap, 'dog_photo') 
+      });
+    }
+  }
+
+  if (userDogs.length === 0) return { error: 'No Dog Found' };
+  
+  let targetDog = userDogs[0];
+  if (targetDogId) { 
+    const found = userDogs.find(d => d.id === targetDogId); 
+    if (found) targetDog = found; 
+  }
+
+  // 3. レッスン履歴 & 最新
+  const lessonData = getLessonData_(ss, targetDog.id);
+  const latestLesson = lessonData.latest;
+  const history = lessonData.history;
+
+  // 4. チケット残数計算
+  let ticketInfo = { balance: 0 };
+  try {
+     ticketInfo = calculateTicketBalanceService_(targetCust.unique_key);
+  } catch (e) {
+     console.warn("Ticket calc warning: " + e.toString());
+     ticketInfo.balance = 0; 
+  }
+
+  return { 
+    customer: targetCust, 
+    dog: targetDog, 
+    ticket_count: ticketInfo.balance, 
+    latest: latestLesson, 
+    score_history: history, 
+    multiple_dogs: (userDogs.length > 1 && !targetDogId) ? userDogs : null
+  };
+}
+
+/**
+ * レッスンデータ取得ロジック
+ */
+function getLessonData_(ss, dogId) {
+  // ★ CONFIGからシート名を取得
+  const shLog = ss.getSheetByName(CONFIG.SHEET.LESSON);
+  const data = shLog.getDataRange().getValues();
+  const map = getColumnMap(shLog);
+  
+  let logs = [];
+  for (let i = 1; i < data.length; i++) {
+    if (String(getVal(data[i], map, 'dog_unique_key')) === String(dogId)) {
+      logs.push(data[i]);
+    }
+  }
+  
+  // 日付新しい順
+  logs.sort((a, b) => new Date(getVal(b, map, 'training_date')) - new Date(getVal(a, map, 'training_date')));
+  
+  const history = [];
+  let latestLesson = null;
+
+  for (const row of logs) {
+      const scores = [];
+      for(let j=1; j<=10; j++) scores.push(Number(getVal(row, map, `score_${j}`)) || 0);
+      
+      const details = [];
+      for(let j=1; j<=10; j++) details.push(String(getVal(row, map, `score_detail_${j}`) || ''));
+
+      const dVal = new Date(getVal(row, map, 'training_date'));
+      const dStr = formatDateSafe(dVal, 'yyyy/MM/dd');
+      
+      const hasPhoto = !!getVal(row, map, 'training_photo_1');
+
+      const lessonObj = {
+          id: getVal(row, map, 'training_unique_key'),
+          date: dStr,
+          scores: scores,
+          details: details,
+          comment: getVal(row, map, 'comment_trainer'),
+          homework: getVal(row, map, 'next_homework'),
+          goal: getVal(row, map, 'goal'),
+          done: getVal(row, map, 'done'),
+          unable: getVal(row, map, 'unable'),
+          next_goal: getVal(row, map, 'next_goal'),
+          has_photos: hasPhoto
+      };
+
+      history.push(lessonObj);
+      if (!latestLesson) latestLesson = lessonObj; 
+  }
+
+  // 最新レッスンの整形
+  if (latestLesson) {
+     const dVal = new Date(latestLesson.date);
+     const d7 = new Date(dVal); d7.setDate(dVal.getDate() + 7);
+     const d10 = new Date(dVal); d10.setDate(dVal.getDate() + 10);
+     latestLesson.recommend_date = `${d7.getMonth()+1}/${d7.getDate()} 〜 ${d10.getMonth()+1}/${d10.getDate()}`;
+     
+     // 画像パス
+     const latestRow = logs[0];
+     latestLesson.image_paths = [1,2,3,4,5].map(k => getVal(latestRow, map, `training_photo_${k}`));
+  }
+  
+  return { latest: latestLesson, history: history };
+}
+
+/**
+ * プロフィール画像取得 API
+ */
+function getProfileImage(lineUserId, dogId) {
+  const all = getAllData(lineUserId, dogId);
+  if (all.error || !all.dog) return { image: null };
+  const rawPath = all.dog.photo_val; 
+  // ★ CONFIGから検索用フォールバックIDを取得して渡す
+  const b64 = getImageBase64(rawPath, CONFIG.FOLDER.DOG_SEARCH_FALLBACK);
+  return { image: b64 };
+}
+
+/**
+ * 最新レッスン画像取得 API
+ */
+function getLatestLessonImages(lineUserId, dogId) {
+  const all = getAllData(lineUserId, dogId);
+  if (all.error || !all.latest) return { images: [] };
+
+  const paths = all.latest.image_paths || [];
+  const images = [];
+
+  for(const path of paths) {
+     if(path) {
+         // ★ CONFIGから検索用フォールバックIDを取得して渡す
+         const b64 = getImageBase64(path, CONFIG.FOLDER.DOG_SEARCH_FALLBACK); 
+         if (b64) images.push(b64);
+     }
+  }
+  return { images: images };
+}
+
+// --- Helpers ---
+
+function calculateTicketBalanceService_(customerUniqueKey) {
+  if (!customerUniqueKey) throw new Error('customer_unique_key is required.');
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // ★ CONFIGからシート名を取得
+  const productSheet = ss.getSheetByName(CONFIG.SHEET.PRODUCT);
+  if (!productSheet) return { purchased: 0, used: 0, balance: 0 };
+  const products = getSheetDataAsObjects_(productSheet);
+  const productTicketMap = {};
+  products.forEach(row => {
+    const count = row['ticket_count'] ? Number(row['ticket_count']) : 0;
+    productTicketMap[row['product_unique_key']] = count;
+  });
+
+  const salesSheet = ss.getSheetByName(CONFIG.SHEET.SALES);
+  if (!salesSheet) return { purchased: 0, used: 0, balance: 0 };
+  const sales = getSheetDataAsObjects_(salesSheet);
+  let totalPurchased = 0;
+  sales.forEach(row => {
+    if (row['customer_unique_key'] === customerUniqueKey) {
+      const pKey = row['product_unique_key'];
+      if (productTicketMap.hasOwnProperty(pKey)) {
+        totalPurchased += productTicketMap[pKey];
+      }
+    }
+  });
+
+  const trainingSheet = ss.getSheetByName(CONFIG.SHEET.LESSON);
+  if (!trainingSheet) return { purchased: 0, used: 0, balance: 0 };
+  const trainings = getSheetDataAsObjects_(trainingSheet);
+  let totalUsed = 0;
+  trainings.forEach(row => {
+    if (row['customer_unique_key'] === customerUniqueKey) {
+      totalUsed++;
+    }
+  });
+
+  return {
+    purchased: totalPurchased,
+    used: totalUsed,
+    balance: totalPurchased - totalUsed
+  };
+}
+
+function getSheetDataAsObjects_(sheet) {
+  if (!sheet) return [];
+  const values = sheet.getDataRange().getValues();
+  if (values.length < 2) return [];
+  const headers = values[0];
+  const data = [];
+  const map = {};
+  headers.forEach((h, i) => map[String(h).trim()] = i);
+  for (let i = 1; i < values.length; i++) {
+    const row = values[i];
+    const rowObj = {};
+    for (let key in map) {
+      rowObj[key] = row[map[key]];
+    }
+    data.push(rowObj);
+  }
+  return data;
+}
