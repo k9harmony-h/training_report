@@ -123,15 +123,15 @@
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
 
     /* =========================================
-       Step 2: Milestone CSS - Structure & Design
+       Milestone CSS
        ========================================= */
     .milestone-section { margin: 30px 20px 10px; }
-    .tier-container { margin-bottom: 20px; position: relative; border-radius: 12px; background: #fff; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .tier-container { margin-bottom: 20px; position: relative; border-radius: 12px; background: #fff; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: max-height 0.5s ease-out; }
     .tier-header { font-size: 0.85rem; font-weight: 700; color: #666; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
     .tier-badge-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; row-gap: 15px; }
     
     /* Badge Item */
-    .ms-badge { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.1s; position: relative; }
+    .ms-badge { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.1s; position: relative; text-decoration: none; }
     .ms-badge:active { transform: scale(0.95); }
     .ms-icon-box { 
         width: 100%; aspect-ratio: 1; border-radius: 50%; 
@@ -139,13 +139,17 @@
         margin-bottom: 5px; box-shadow: 0 3px 6px rgba(0,0,0,0.1);
         font-size: 1.5rem; color: #fff; position: relative; overflow: hidden;
     }
-    .ms-icon-box img { width: 60%; height: 60%; object-fit: contain; }
+    /* Fallback Icon if Image Fails */
+    .ms-icon-box i { font-size: 1.5rem; }
+    .ms-icon-box img { width: 60%; height: 60%; object-fit: contain; z-index: 2; }
     .ms-label { font-size: 0.6rem; font-weight: 700; color: #555; text-align: center; line-height: 1.1; width: 120%; margin-left: -10%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* Unacquired State */
     .ms-badge.locked .ms-icon-box { background: #e0e0e0 !important; box-shadow: none; }
     .ms-badge.locked .ms-label { color: #aaa; }
-    .ms-badge.locked .ms-icon-box::after { content: '🔒'; position: absolute; font-size: 1rem; color: #999; }
+    .ms-badge.locked .ms-icon-box::after { content: '🔒'; position: absolute; font-size: 1rem; color: #999; z-index: 3; }
+    /* Hide image in locked state if desired, or grayscale it */
+    .ms-badge.locked .ms-icon-box img { opacity: 0.2; filter: grayscale(100%); }
 
     /* --- Tier 1: Pastel Colors --- */
     .bg-pastel-sage     { background: #A8D8B9; }
@@ -194,6 +198,7 @@
         content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 50px;
         background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
         pointer-events: none;
+        z-index: 5;
     }
 
     /* Luxury Lock (高級ロック) */
@@ -219,6 +224,16 @@
         font-size: 1.1rem; letter-spacing: 0.1em;
         text-shadow: 0 1px 3px rgba(0,0,0,0.8);
     }
+
+    /* Modal Styles */
+    #milestoneModal .modal-header { border-bottom: none; padding-bottom: 0; }
+    #msModalIconBox { 
+        width: 80px; height: 80px; border-radius: 50%; margin: 0 auto; 
+        display: flex; align-items: center; justify-content: center; 
+        font-size: 2.5rem; color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    #msModalTipsBox { background-color: #E0F7FA; border-radius: 8px; padding: 15px; margin-top: 15px; color: #006064; font-size: 0.9rem; }
   </style>
 </head>
 <body>
@@ -347,6 +362,30 @@
     </div>
   </div>
 
+  <div class="modal fade" id="milestoneModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center pt-0">
+            <div id="msModalIconBox">
+                </div>
+            <h4 class="fw-bold mt-3 mb-2" id="msModalTitle">Title</h4>
+            <p class="text-muted small mb-3" id="msModalDesc">Description</p>
+            
+            <div id="msModalTipsBox">
+                <strong><i class="fa-solid fa-lightbulb"></i> Practical Tips</strong><br>
+                <span id="msModalTips">Tips text here</span>
+            </div>
+        </div>
+        <div class="modal-footer justify-content-center border-0 pb-4">
+            <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -369,8 +408,9 @@
     let currentDogId = null;
     let chartInstance1 = null; 
     let chartInstance2 = null;
-    // PDF生成用にデータを保持するグローバル変数
     let currentLessonData = null;
+    let milestoneModal = null; // Modal Instance
+    let cachedMilestones = []; // Store for modal reference
 
     function startTipsSlider() {
       const tipsText = document.getElementById('tipsText');
@@ -407,11 +447,13 @@
         const profile = await liff.getProfile();
         currentUserId = profile.userId;
         
-        // ★ URLパラメータからdogIdを取得
+        // Modal Init
+        milestoneModal = new bootstrap.Modal(document.getElementById('milestoneModal'));
+
         const urlParams = new URLSearchParams(window.location.search);
         const urlDogId = urlParams.get('dogId');
         
-        // ★ dogIdがあればそれを指定してフェッチ
+        // Main Data Fetch
         fetchTextData(currentUserId, urlDogId);
 
       } catch (err) {
@@ -423,12 +465,9 @@
       let url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
       if (dogId) url += `&dogId=${dogId}`;
 
-      // ★修正: 10年後の保守性のため mode: 'cors' を削除 (標準挙動に任せる)
       fetch(url)
         .then(res => {
-            if (!res.ok) {
-                throw new Error(`Server Error: ${res.status} ${res.statusText}`);
-            }
+            if (!res.ok) { throw new Error(`Server Error: ${res.status} ${res.statusText}`); }
             return res.json();
         })
         .then(data => {
@@ -446,9 +485,7 @@
           }
 
           try {
-              // データをグローバル変数に保存（PDF用）
               currentLessonData = data;
-            
               renderTextData(data);
               
               currentDogId = data.dog.id || null;
@@ -460,6 +497,13 @@
               } else {
                   document.getElementById('photoArea').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
               }
+
+              // ▼▼▼ Step 3: Fetch Milestones ▼▼▼
+              if (currentDogId) {
+                  fetchMilestones(userId, currentDogId);
+              }
+              // ▲▲▲ End Step 3 ▲▲▲
+
           } catch (e) {
               console.error(e);
               showError('描画エラー', 'データの表示中に問題が発生しました: ' + e.message);
@@ -470,13 +514,129 @@
         });
     }
 
+    // --- Step 3: Milestone Functions ---
+
+    function fetchMilestones(userId, dogId) {
+        let url = `${GAS_URL}?userId=${userId}&dogId=${dogId}&type=milestone`;
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success' && data.badges) {
+                    cachedMilestones = data.badges;
+                    renderMilestones(data);
+                } else {
+                    console.warn('Milestone fetch failed or empty', data);
+                }
+            })
+            .catch(e => console.error('Milestone Error:', e));
+    }
+
+    function renderMilestones(data) {
+        const badges = data.badges;
+        const meta = data.meta;
+        
+        const tier1Grid = document.getElementById('tier1-grid');
+        const tier2Grid = document.getElementById('tier2-grid');
+        const tier3Grid = document.getElementById('tier3-grid');
+        
+        // Clear Loading...
+        tier1Grid.innerHTML = ''; tier2Grid.innerHTML = ''; tier3Grid.innerHTML = '';
+
+        badges.forEach(badge => {
+            // Determine container
+            let container = null;
+            if (badge.tier === '1_Beginner') container = tier1Grid;
+            else if (badge.tier === '2_Intermediate') container = tier2Grid;
+            else if (badge.tier === '3_Advanced') container = tier3Grid;
+            
+            if (container) {
+                const isLocked = !badge.is_acquired;
+                const lockedClass = isLocked ? 'locked' : '';
+                const colorClass = isLocked ? '' : `bg-${badge.color}`;
+                // Glitter for tier 3 if acquired
+                const glitterClass = (badge.tier === '3_Advanced' && !isLocked) ? 'glitter-effect' : '';
+                
+                // Icon HTML (Image or fallback)
+                // Use a default icon from FontAwesome if no image path, purely for fallback
+                const iconHtml = badge.icon 
+                    ? `<img src="https://drive.google.com/thumbnail?id=${extractFileId(badge.icon)}&sz=w200" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\'fa-solid fa-paw\'></i>'">` 
+                    : `<i class="fa-solid fa-paw"></i>`;
+
+                const html = `
+                    <div class="ms-badge ${lockedClass}" onclick="showMilestoneDetail('${badge.id}')">
+                        <div class="ms-icon-box ${colorClass} ${glitterClass}">
+                            ${iconHtml}
+                        </div>
+                        <div class="ms-label">${badge.title}</div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            }
+        });
+
+        // Handle Progressive Disclosure (Peek / Unlock)
+        const t2Cont = document.getElementById('tier2-container');
+        if (meta.show_intermediate_full) {
+            t2Cont.classList.remove('tier-peek'); // Full open
+        } else if (meta.show_intermediate_peek) {
+            t2Cont.classList.add('tier-peek'); // Half open
+        } else {
+            // Default behavior if neither? For now keep peek or hide completely
+             t2Cont.style.display = 'none'; // Or keep peek as incentive? Current logic implies peek is default or conditioned.
+             // Re-reading logic: Peek appears when count >= 6. Before that? Maybe hidden?
+             // Let's hide it if not peek allowed.
+             if (!meta.show_intermediate_peek && !meta.show_intermediate_full) {
+                 t2Cont.style.display = 'none';
+             }
+        }
+        
+        // Tier 3 is always locked visually for now (structure is static locked)
+        // If we implement advanced unlock logic later, handle it here.
+    }
+
+    function showMilestoneDetail(badgeId) {
+        const badge = cachedMilestones.find(b => b.id === badgeId);
+        if (!badge) return;
+
+        // Populate Modal
+        const isLocked = !badge.is_acquired;
+        
+        // Icon
+        const iconBox = document.getElementById('msModalIconBox');
+        iconBox.className = isLocked ? 'bg-secondary' : `bg-${badge.color}`;
+        if (badge.tier === '3_Advanced' && !isLocked) iconBox.classList.add('glitter-effect');
+        
+        iconBox.innerHTML = badge.icon 
+            ? `<img src="https://drive.google.com/thumbnail?id=${extractFileId(badge.icon)}&sz=w200" style="width:60%;height:60%;object-fit:contain;">`
+            : `<i class="fa-solid fa-paw"></i>`;
+
+        // Text
+        document.getElementById('msModalTitle').innerText = badge.title + (isLocked ? ' (未獲得)' : '');
+        document.getElementById('msModalDesc').innerText = badge.desc;
+        document.getElementById('msModalTips').innerText = badge.tips || '---';
+
+        milestoneModal.show();
+    }
+    
+    function extractFileId(urlOrPath) {
+        // Simple helper to get ID from Google Drive URL or Path
+        if (!urlOrPath) return '';
+        const match = urlOrPath.match(/id=([-\w]{25,})/) || urlOrPath.match(/\/d\/([-\w]{25,})/);
+        return match ? match[1] : ''; 
+        // Note: If you store full path like "Folder/image.png", this helper needs the ID. 
+        // In previous steps, image management converts paths to IDs. 
+        // If raw path remains, thumbnail won't work without ID. Assuming IDs are present or generated.
+    }
+
+    // --- End Milestone Functions ---
+
+
     function showDogSelectModal(dogs) {
         const body = document.getElementById('dogSelectBody');
         body.innerHTML = '';
         dogs.forEach(dog => {
             const btn = document.createElement('button');
             btn.className = 'dog-select-btn';
-            // ★修正: 敬称付きの名前を使用
             btn.innerText = dog.name_disp; 
             btn.onclick = () => selectDog(dog.id);
             body.appendChild(btn);
@@ -509,7 +669,6 @@
         }
     }
 
-    // ★ NEW: Medical Page Navigation Helper
     function openMedicalPage() {
         let url = 'medical.html';
         if (currentDogId) {
@@ -518,7 +677,6 @@
         window.location.href = url;
     }
 
-    // ★ NEW: PDF Download Handler
     function handleDownloadPdf() {
         if (!currentLessonData || !currentLessonData.latest) {
             alert("データが読み込まれていません。");
@@ -530,11 +688,8 @@
         btn.innerText = "作成中...";
         btn.disabled = true;
 
-        // APIデータからPDF作成用データをマッピング
-        // ※画像パス(path)がAPIに含まれていない場合、PDFに画像は表示されません。
-        // 必要に応じてAPI側でパスを返すように修正してください。
         const formData = {
-            training_unique_key: currentLessonData.latest.id || '', // IDがない場合は空
+            training_unique_key: currentLessonData.latest.id || '', 
             dog_name: currentLessonData.dog.name,
             training_date: currentLessonData.latest.date,
             customer_unique_key: currentLessonData.customer.id,
@@ -543,12 +698,11 @@
             goal: currentLessonData.latest.goal,
             done: currentLessonData.latest.done,
             unable: currentLessonData.latest.unable,
-            next_homework: currentLessonData.latest.homework, // キー名のマッピングに注意
+            next_homework: currentLessonData.latest.homework, 
             next_goal: currentLessonData.latest.next_goal,
             comment_trainer: currentLessonData.latest.comment,
-            training_remarks: '', // 必要ならAPIに追加
+            training_remarks: '', 
 
-            // スコアマッピング
             score_1: currentLessonData.latest.scores[0], score_detail_1: currentLessonData.latest.details[0],
             score_2: currentLessonData.latest.scores[1], score_detail_2: currentLessonData.latest.details[1],
             score_3: currentLessonData.latest.scores[2], score_detail_3: currentLessonData.latest.details[2],
@@ -560,7 +714,6 @@
             score_9: currentLessonData.latest.scores[8], score_detail_9: currentLessonData.latest.details[8],
             score_10: currentLessonData.latest.scores[9], score_detail_10: currentLessonData.latest.details[9],
             
-            // 画像用パス (APIが返していない場合は空になります)
             training_photo_1: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[0] : '',
             training_photo_2: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[1] : '',
             training_photo_3: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[2] : '',
@@ -581,14 +734,10 @@
                 btn.disabled = false;
 
                 if (response.status === 'success') {
-                    // ユーザーエージェント判定
                     const isIos = /iP(ad|hone|od)/.test(navigator.userAgent);
-
                     if (isIos) {
-                        // iOS: 別タブで開く (ポップアップブロック回避のためユーザーアクションが必要な場合があるが、まずはこれで試行)
                         window.open(response.url, '_blank');
                     } else {
-                        // PC/Android: 強制ダウンロード
                         const a = document.createElement('a');
                         a.href = response.url;
                         a.download = `LessonReport_${formData.training_date}.pdf`; 
