@@ -213,7 +213,7 @@
 
     <div class="footer-action">
       <button onclick="handleDownloadPdf()" class="btn-pdf" id="pdfBtn">
-         📄 レポートをPDFで保存
+          📄 レポートをPDFで保存
       </button>
 
       <a href="#" class="btn-reserve">予約する / Reserve</a>
@@ -298,11 +298,8 @@
       let url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
       if (dogId) url += `&dogId=${dogId}`;
 
-      // ★復元: ユーザーが「動いた」と言ったコードに合わせて mode: 'cors' を指定
-      fetch(url, {
-          method: 'GET',
-          mode: 'cors'
-      })
+      // ★修正: 10年後の保守性のため mode: 'cors' を削除 (標準挙動に任せる)
+      fetch(url)
         .then(res => {
             if (!res.ok) {
                 throw new Error(`Server Error: ${res.status} ${res.statusText}`);
