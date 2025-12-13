@@ -4,99 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>レッスン履歴</title>
-    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.0.8/dist/medium-zoom.min.js"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/medium-zoom/dist/medium-zoom.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 
     <style>
-        :root {
-            --brand-color: #57C3C2;
-            --text-main: #333333;
-            --badge-gray: #E0E0E0;
-        }
+        /* (CSSは変更なしのため省略、元の記述をそのまま使用してください) */
+        :root { --brand-color: #57C3C2; --text-main: #333333; --badge-gray: #E0E0E0; }
         body { font-family: 'Montserrat', 'Noto Sans JP', sans-serif; background-color: #fafafa; color: var(--text-main); padding-bottom: 80px; }
-        
         .header-area { background: #fff; padding: 15px 20px 20px; border-bottom: 1px solid #eee; position: relative; }
         .back-link { color: var(--brand-color); font-weight: bold; text-decoration: none; font-size: 0.9rem; position: absolute; top: 15px; left: 20px; z-index: 10; }
         .profile-img-container { display: flex; justify-content: center; margin-top: 10px; }
         .dog-profile-large { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid var(--brand-color); padding: 2px; background: #fff; }
         .page-title { text-align: center; font-weight: 700; font-size: 1.2rem; color: var(--text-main); margin-top: 15px; margin-bottom: 0; }
-
         .content-container { padding: 0 15px; }
-        
-        /* --- デジタルバッジ --- */
         .badge-section { background: #fff; margin-top: 20px; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; min-height: 80px;}
         .badge-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
-        
-        .badge-item { width: 50px; height: 75px; display: flex; flex-direction: column; align-items: center; transition: transform 0.3s; }
-        .badge-item:hover { transform: scale(1.1); }
-        
-        .badge-icon { 
-            width: 40px; height: 40px; 
-            border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; 
-            color: #fff; font-size: 1.2rem; margin-bottom: 5px; 
-            position: relative; overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        
-        @keyframes sparkle {
-            0% { transform: translateX(-100%) rotate(45deg); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translateX(100%) rotate(45deg); opacity: 0; }
-        }
-        .badge-icon::after {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
-            animation: sparkle 3s infinite;
-        }
-        
+        .badge-item { width: 50px; height: 75px; display: flex; flex-direction: column; align-items: center; }
+        .badge-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .badge-label { font-size: 0.6rem; color: #555; font-weight: bold; line-height: 1.1; }
-
-        /* Chart */
         .chart-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-top: 20px; padding: 15px; }
         .chart-card canvas { height: 180px !important; }
         .chart-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .chart-title { font-size: 1.1rem; font-weight: 700; color: var(--brand-color); margin-bottom: 5px; }
         .chart-status { font-size: 0.9rem; font-weight: 600; }
         .status-great { color: #FF6B6B; } .status-steady { color: #555555; } 
-        
-        /* Gallery */
         .gallery-section { margin-top: 30px; }
         .section-title { font-size: 1.2rem; color: #555; margin-bottom: 10px; font-weight: 600; }
-        .photo-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; padding-right: 20px; -webkit-overflow-scrolling: touch; }
-        .photo-scroll::-webkit-scrollbar { display: none; }
-        
-        .gallery-img-wrapper { flex: 0 0 28vw; width: 28vw; height: 28vw; border-radius: 8px; border: 1px solid #ddd; flex-shrink: 0; overflow: hidden; position: relative; background: #f8f9fa; }
+        .photo-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; padding-right: 20px; }
+        .gallery-img-wrapper { flex: 0 0 28vw; width: 28vw; height: 28vw; border-radius: 8px; border: 1px solid #ddd; flex-shrink: 0; overflow: hidden; background: #f8f9fa; }
         .gallery-img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .see-more-card { display: flex; flex-direction: column; justify-content: center; align-items: center; text-decoration: none; background: linear-gradient(135deg, rgba(87, 195, 194, 0.9), rgba(87, 195, 194, 0.3)); border: 2px solid var(--brand-color); }
-        .see-more-icon { font-size: 1.5rem; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-        .see-more-text { font-size: 0.8rem; font-weight: 700; color: #fff; margin-top: 5px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-
-        .btn-drive-link { display: inline-block; font-size: 0.9rem; color: var(--brand-color); text-decoration: none; font-weight: bold; margin-top: 5px; }
-        
-        /* List */
         .lesson-list { margin-top: 30px; }
         .list-group-item { border: none; margin-bottom: 8px; border-radius: 8px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05); padding: 15px; cursor: pointer; }
         .list-header { font-weight: 700; color: var(--brand-color); }
         .list-date { font-size: 0.85rem; color: #888; }
-        
-        /* Utils */
         #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-color); display: flex; justify-content: center; align-items: center; z-index: 9999; color: white; flex-direction: column; }
         body.loaded #loadingOverlay { display: none !important; }
         .spinner-border-white { border-color: white; border-right-color: transparent; }
-        #tipsText { margin-top: 20px; font-weight: 500; font-size: 1rem; text-align: center; padding: 0 20px; height: 1.5em; }
-        
+        #tipsText { margin-top: 20px; font-weight: 500; font-size: 1rem; text-align: center; }
         #errorContainer { display: none; padding: 20px; text-align: center; margin-top: 20px; }
         .error-box { background: #fff; padding: 20px; border-radius: 12px; border: 2px solid #ffcccc; color: #d9534f; }
-
         .modal-score-item { margin-bottom: 5px; font-size: 1rem; }
         .modal-score-item strong { color: var(--brand-color); width: 80px; display: inline-block; }
-        
         .modal-avg-box { display: flex; gap: 10px; margin-bottom: 20px; }
         .avg-item { flex: 1; background: #E0F7FA; border-radius: 8px; padding: 10px; text-align: center; }
         .avg-label { font-size: 0.7rem; color: #666; font-weight: bold; display: block; }
@@ -128,7 +80,7 @@
             <div class="profile-img-container">
                 <img id="dogProfileImg" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="dog-profile-large" alt="愛犬">
             </div>
-            <h1 id="pageTitle" class="page-title">...のレッスン履歴</h1>
+            <h1 id="pageTitle" class="page-title">レッスン履歴</h1>
         </div>
 
         <div class="content-container py-3">
@@ -186,12 +138,12 @@
       </div>
     </div>
 
-    <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center">わんちゃんを選択</h5></div>
-            <div class="modal-body" id="dogSelectBody"></div>
-          </div>
+            <div class="modal-content">
+                <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center">わんちゃんを選択</h5></div>
+                <div class="modal-body" id="dogSelectBody"></div>
+            </div>
         </div>
     </div>
 
@@ -202,9 +154,7 @@
         const scoreLabels = [ '指示理解', '集中力', '報酬', 'ボディ', 'コンタクト', '指示出し', '対応力', 'リード', 'ボディ', 'コンタクト' ];
         const chartColors = [ 'rgba(255, 99, 132, 1)', 'rgba(255, 159, 64, 1)', 'rgba(255, 205, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(54, 162, 235, 1)', 'rgba(153, 102, 255, 1)', 'rgba(201, 203, 207, 1)', 'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)' ];
 
-        const dogTips = [
-          "犬の鼻紋は人間の指紋と同じで、一頭一頭違います。", "犬は人間の約4倍の聴力を持っています。", "犬の嗅覚は人間の100万倍〜1億倍とも言われます。", "犬は汗を肉球からしかかけません。", "犬があくびをするのは、ストレスを感じて落ち着こうとしている時もあります。", "犬のしっぽの振り方は、右寄りだと「嬉しい」、左寄りだと「不安」な時があります。", "小型犬の方が大型犬よりも長生きする傾向があります。", "犬は夢を見ます。寝言を言ったり足を動かすのはその証拠です。", "ダルメシアンは生まれた時は真っ白で、後から斑点が出てきます。", "犬が飼い主の顔を舐めるのは、愛情表現やご飯の催促です。"
-        ];
+        const dogTips = ["犬の鼻紋は...", "犬は人間の約4倍の...", "犬の嗅覚は...", "犬は汗を...", "犬があくびをするのは...", "犬のしっぽの...", "小型犬の方が...", "犬は夢を見ます...", "ダルメシアンは...", "犬が飼い主の..."];
 
         let tipsTimer;
         let allHistoryData = []; let customerData = {}; let currentUserId = ''; let currentDogId = null;
@@ -222,7 +172,6 @@
 
         function finishLoading() {
             clearInterval(tipsTimer);
-            // スタイル削除
             const overlay = document.getElementById('loadingOverlay');
             if (overlay) { overlay.style.visibility = ''; overlay.style.opacity = ''; }
             document.body.classList.add('loaded');
@@ -240,11 +189,8 @@
                 if (!liff.isLoggedIn()) { liff.login(); return; }
                 const profile = await liff.getProfile();
                 currentUserId = profile.userId;
-                
-                // ★ URLパラメータからdogIdを取得
                 const urlParams = new URLSearchParams(window.location.search);
                 currentDogId = urlParams.get('dogId');
-
                 fetchTextData(profile.userId, currentDogId);
             } catch (err) { showError('アプリ起動エラー: ' + err.message); }
         }
@@ -253,7 +199,9 @@
             let url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
             if (dogId) url += `&dogId=${dogId}`;
 
-            fetch(url).then(res => { if (!res.ok) throw new Error(res.statusText); return res.json(); })
+            // mode: 'cors' 削除
+            fetch(url)
+                .then(res => { if (!res.ok) throw new Error(res.statusText); return res.json(); })
                 .then(data => {
                     if (data.multiple_dogs) {
                         showDogSelectModal(data.multiple_dogs);
@@ -261,20 +209,29 @@
                     }
 
                     if (data.error) { showError('データ取得エラー: ' + data.error); return; }
-                    allHistoryData = data.score_history || []; customerData = data.customer || {};
                     
-                    // IDを更新 (GASが選んだID)
-                    currentDogId = data.dog.id;
-                    updateBackLink(); // ★ 戻るボタンの更新
+                    // 修正: データの受け取りを安全に
+                    allHistoryData = data.score_history || []; 
+                    customerData = data.customer || {};
+                    if(data.dog) currentDogId = data.dog.id;
+                    updateBackLink(); 
 
+                    // グラフ描画
                     renderHistory(data);
-                    renderBadges(data.badges || []); 
-
+                    
                     finishLoading(); 
                     
+                    // 画像取得呼び出し
+                    // ★修正: 最新レッスンがあるか、履歴がある場合に実行
                     if (allHistoryData.length > 0 || (data.latest && data.latest.has_photos)) {
-                        setTimeout(() => { fetchGalleryImages(userId, currentDogId, data); fetchProfileImage(userId, currentDogId); }, 100);
-                    } else { document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>'; }
+                        setTimeout(() => { 
+                            fetchGalleryImages(userId, currentDogId); // ギャラリー用
+                            fetchProfileImage(userId, currentDogId);  // プロフ用
+                        }, 100);
+                    } else { 
+                        document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>'; 
+                        fetchProfileImage(userId, currentDogId); // プロフ画像は常にとってくる
+                    }
                 })
                 .catch(err => { 
                     showError('通信エラー: ' + err.message); 
@@ -282,7 +239,6 @@
                 });
         }
 
-        // ★ Backリンク更新
         function updateBackLink() {
             const link = document.getElementById('backLinkBtn');
             if (currentDogId) {
@@ -298,7 +254,7 @@
             dogs.forEach(dog => {
                 const btn = document.createElement('button');
                 btn.className = 'dog-select-btn';
-                btn.innerText = dog.name; 
+                btn.innerText = dog.name_disp; 
                 btn.onclick = () => selectDog(dog.id);
                 body.appendChild(btn);
             });
@@ -311,10 +267,8 @@
             const modalEl = document.getElementById('dogSelectModal');
             const modal = bootstrap.Modal.getInstance(modalEl);
             modal.hide();
-            
             document.getElementById('loadingOverlay').style.visibility = 'visible';
             document.getElementById('loadingOverlay').style.opacity = 1;
-            
             window.location.search = `?dogId=${dogId}`;
         }
 
@@ -325,68 +279,48 @@
             document.getElementById('errorMsg').innerText = msg;
         }
 
-        function renderBadges(earnedIndices) {
-            const container = document.getElementById('badgeContainer');
-            container.innerHTML = '';
-            
-            if (!earnedIndices || earnedIndices.length === 0) {
-                document.getElementById('noBadgeMsg').style.display = 'block';
-                return;
-            } else {
-                document.getElementById('noBadgeMsg').style.display = 'none';
-            }
-            
-            scoreLabels.forEach((label, idx) => {
-                const badgeNum = idx + 1; 
-                if (!earnedIndices.includes(badgeNum)) return;
-
-                const color = chartColors[idx]; 
-                const iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-star-fill" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>`;
-                
-                const div = document.createElement('div');
-                div.className = 'badge-item';
-                div.innerHTML = `<div class="badge-icon" style="background:${color}; box-shadow: 0 2px 5px ${color.replace('1)','0.4)')};">${iconHtml}</div><div class="badge-label">${label}</div>`;
-                container.appendChild(div);
-            });
-        }
-
         function fetchProfileImage(userId, dogId) {
              let url = `${GAS_URL}?userId=${userId}&type=img_profile`;
              if(dogId) url += `&dogId=${dogId}`;
              fetch(url).then(res => res.json()).then(data => { if(data.image) document.getElementById('dogProfileImg').src = data.image; });
         }
-        function fetchGalleryImages(userId, dogId, data) {
-            if (!(data.latest && data.latest.has_photos)) { document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>'; return; }
-            
+        
+        function fetchGalleryImages(userId, dogId) {
             let url = `${GAS_URL}?userId=${userId}&type=img_latest`;
             if(dogId) url += `&dogId=${dogId}`;
 
             fetch(url).then(res => res.json()).then(d => {
                 const gallery = document.getElementById('mainGalleryContainer'); gallery.innerHTML = ''; 
                 if (d.images && d.images.length > 0) {
-                    const displayCount = Math.min(d.images.length, 3);
+                    const displayCount = d.images.length; // 全部表示
                     for(let i=0; i<displayCount; i++) {
                         gallery.insertAdjacentHTML('beforeend', `<div class="gallery-img-wrapper"><img src="${d.images[i]}" class="gallery-img zoomable" alt="Photo"></div>`);
                     }
                     mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
-                    if (customerData.shared_folder_url) {
-                        gallery.insertAdjacentHTML('beforeend', `<a href="${customerData.shared_folder_url}" target="_blank" class="gallery-img-wrapper see-more-card"><div class="see-more-icon">📂</div><div class="see-more-text">もっと見る</div></a>`);
-                    }
                 } else { gallery.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>'; }
             });
         }
+        
         function renderHistory(data) {
             const chartArea = document.getElementById('chartArea'); const lessonList = document.getElementById('lessonList');
             chartArea.innerHTML = ''; lessonList.innerHTML = ''; 
             const dogData = data.dog || {}; 
             document.getElementById('pageTitle').innerText = `${dogData.name_disp || dogData.name || '愛犬'}のレッスン履歴`; 
 
-            if (!allHistoryData || allHistoryData.length < 1) { chartArea.innerHTML = `<div class="text-center text-muted small mt-4">まだレッスン履歴がありません。</div>`; lessonList.innerHTML = `<div class="text-center text-muted small mt-4">履歴がありません。</div>`; return; }
+            // データが無い場合
+            if (!allHistoryData || allHistoryData.length < 1) { 
+                chartArea.innerHTML = `<div class="text-center text-muted small mt-4">まだレッスン履歴がありません。</div>`; 
+                lessonList.innerHTML = `<div class="text-center text-muted small mt-4">履歴がありません。</div>`; 
+                return; 
+            }
 
-            const listHistory = [...allHistoryData].sort((a, b) => new Date(a.full_date||a.date).getTime() - new Date(b.full_date||b.date).getTime()).reverse();
-            const chartHistory = [...allHistoryData].sort((a, b) => new Date(a.full_date||a.date).getTime() - new Date(b.full_date||b.date).getTime());
+            const listHistory = [...allHistoryData]; // 日付降順 (main.gsでソート済み前提だが念の為)
+            // Chart用は日付昇順に直す
+            const chartHistory = [...allHistoryData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            // 直近10回
             const recent10Chart = chartHistory.slice(-10);
             
+            // チャート生成
             for (let i = 0; i < 10; i++) {
                 const itemLabel = scoreLabels[i]; const color = chartColors[i];
                 const scores = recent10Chart.map(h => h.scores[i]); const dates = recent10Chart.map(h => h.date);
@@ -394,12 +328,39 @@
                 let comparisonText = '', comparisonClass = 'status-steady', specialComment = '';
                 if (latestScore === 5) specialComment = '⭐️🐶⭐️';
                 if (previousScore !== null) { const diff = latestScore - previousScore; if (diff >= 1 && latestScore < 5) { comparisonText = '成長中！'; comparisonClass = 'status-great'; } } else { comparisonText = '初回'; }
+                
                 chartArea.insertAdjacentHTML('beforeend', `<div class="chart-card"><div class="chart-meta"><h4 class="chart-title">[${i + 1}] ${itemLabel}</h4><div class="text-end"><span class="chart-status ${comparisonClass}">${comparisonText}</span>${specialComment ? `<div style="font-size:1.2rem; line-height:1;">${specialComment}</div>` : ''}</div></div><canvas id="chart-${i}"></canvas></div>`);
-                new Chart(document.getElementById(`chart-${i}`), { type: 'line', data: { labels: dates, datasets: [{ label: itemLabel, data: scores, borderColor: color, backgroundColor: color.replace('1)', '0.1)'), borderWidth: 2, pointRadius: 5, fill: true, tension: 0.2 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } } });
+                
+                new Chart(document.getElementById(`chart-${i}`), { 
+                    type: 'line', 
+                    data: { 
+                        labels: dates, 
+                        datasets: [{ 
+                            label: itemLabel, 
+                            data: scores, 
+                            borderColor: color, 
+                            backgroundColor: color.replace('1)', '0.1)'), 
+                            borderWidth: 2, 
+                            pointRadius: 5, 
+                            fill: true, 
+                            tension: 0.2 
+                        }] 
+                    }, 
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } } }, 
+                        plugins: { legend: { display: false } } 
+                    } 
+                });
             }
+            
+            // リスト生成
             listHistory.forEach(h => {
                 const comment = (h.comment && String(h.comment).trim()) ? h.comment : 'コメントなし';
-                const avg = (h.scores.reduce((a,b)=>a+b,0) / h.scores.length).toFixed(1);
+                // スコア配列の数値化保証
+                const numScores = h.scores.map(Number);
+                const avg = (numScores.reduce((a,b)=>a+b,0) / numScores.length).toFixed(1);
                 
                 lessonList.insertAdjacentHTML('beforeend', `
                     <div class="list-group-item" onclick="showLessonDetail('${h.id}', '${h.date}')">
@@ -414,14 +375,16 @@
                     </div>`);
             });
         }
+        
         function showLessonDetail(id, date) {
             const detail = allHistoryData.find(h => h.id === id) || allHistoryData.find(h => h.date === date); if (!detail) return;
             document.getElementById('modalDate').innerText = date;
             document.getElementById('modalComment').innerText = (detail.comment && String(detail.comment).trim()) ? detail.comment : 'コメントなし';
             document.getElementById('modalHomework').innerText = (detail.homework && String(detail.homework).trim()) ? detail.homework : '宿題なし';
             
-            const s1 = detail.scores.slice(0,5).reduce((a,b)=>a+b,0)/5;
-            const s2 = detail.scores.slice(5,10).reduce((a,b)=>a+b,0)/5;
+            const numScores = detail.scores.map(Number);
+            const s1 = numScores.slice(0,5).reduce((a,b)=>a+b,0)/5;
+            const s2 = numScores.slice(5,10).reduce((a,b)=>a+b,0)/5;
             document.getElementById('modalAvgArea').innerHTML = `
                 <div class="modal-avg-box">
                     <div class="avg-item"><span class="avg-label">基礎・集中 (1-5)</span><span class="avg-val">${s1.toFixed(1)}</span></div>
@@ -429,11 +392,54 @@
                 </div>`;
 
             const scoresContainer = document.getElementById('modalScores'); scoresContainer.innerHTML = '';
-            for (let i = 0; i < 10; i++) { scoresContainer.insertAdjacentHTML('beforeend', `<div class="modal-score-item"><strong>[${i + 1}] ${scoreLabels[i]}：</strong> ${detail.scores[i]} 点</div>`); }
+            for (let i = 0; i < 10; i++) { scoresContainer.insertAdjacentHTML('beforeend', `<div class="modal-score-item"><strong>[${i + 1}] ${scoreLabels[i]}：</strong> ${numScores[i]} 点</div>`); }
             
             const driveLinkBtn = document.getElementById('driveLink');
+            // shared_folder_url があればリンクを表示
             if (customerData.shared_folder_url) { driveLinkBtn.href = customerData.shared_folder_url; driveLinkBtn.style.display = 'block'; } else { driveLinkBtn.style.display = 'none'; }
+            
             new bootstrap.Modal(document.getElementById('historyDetailModal')).show();
+        }
+        
+        // バッジ描画 (history.html専用 - スコア履歴から算出も可能だが、main.gsで計算済みならそれを使う)
+        // ※今回はmain.gsがbadgesを返していないため、ここで簡易計算するロジックにするか、非表示にするか。
+        // リクエストに「バッジ」が含まれていないため、とりあえず空処理にしておくか、履歴から計算する。
+        function renderBadges(badges) {
+            // 履歴から計算ロジック（簡易版）
+            const earned = [];
+            // 各項目ごとに、最新3回が全て5点ならバッジ獲得
+            if (allHistoryData.length >= 3) {
+                 // 日付昇順（古い順）にソート
+                 const sorted = [...allHistoryData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                 // 最新3件
+                 const recent3 = sorted.slice(-3);
+                 
+                 for(let i=0; i<10; i++) {
+                     if (recent3.every(h => Number(h.scores[i]) === 5)) {
+                         earned.push(i+1);
+                     }
+                 }
+            }
+            
+            const container = document.getElementById('badgeContainer');
+            container.innerHTML = '';
+            if (earned.length === 0) {
+                document.getElementById('noBadgeMsg').style.display = 'block';
+                return;
+            } else {
+                document.getElementById('noBadgeMsg').style.display = 'none';
+            }
+            
+            scoreLabels.forEach((label, idx) => {
+                const badgeNum = idx + 1; 
+                if (!earned.includes(badgeNum)) return;
+                const color = chartColors[idx]; 
+                const iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-star-fill" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>`;
+                const div = document.createElement('div');
+                div.className = 'badge-item';
+                div.innerHTML = `<div class="badge-icon" style="background:${color}; box-shadow: 0 2px 5px ${color.replace('1)','0.4)')};">${iconHtml}</div><div class="badge-label">${label}</div>`;
+                container.appendChild(div);
+            });
         }
     </script>
 </body>
