@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <script>
     (function() {
-      // URLに ?page=medical がついていたら、即座に手帳ページへ転送
       if (new URLSearchParams(window.location.search).get('page') === 'medical') {
         window.location.replace('medical.html'); 
       }
@@ -21,7 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 
   <style>
-    :root { --brand-color: #57C3C2; --brand-bg: #E0F7FA; --text-main: #333333; --accent-color: #F2A679; }
+    :root { --brand-color: #57C3C2; --brand-bg: #E0F7FA; --text-main: #333333; --accent-color: #F2A679; --wax-shadow: rgba(87, 195, 194, 0.4); }
     body { font-family: 'Montserrat', 'Noto Sans JP', sans-serif; background-color: #fafafa; color: var(--text-main); padding-bottom: 150px; overflow-x: hidden; }
     
     #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; transition: opacity 0.5s ease-out, visibility 0.5s ease-out; }
@@ -101,41 +100,39 @@
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
 
     /* =========================================
-       Milestone CSS (Step 4 Refined - Horizontal)
+       Milestone CSS (Wax & Horizontal)
        ========================================= */
     .milestone-section { margin: 30px 20px 10px; }
     
     .tier-container { 
-        margin-bottom: 20px; 
+        margin-bottom: 10px; /* Spacing for the link */
         position: relative; 
         border-radius: 12px; 
         background: #fff; 
-        padding: 15px 15px 20px 15px; /* Bottom padding for labels */
+        padding: 15px 15px 20px 15px; 
         box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-        transition: max-height 0.5s ease-out; 
     }
     
     .tier-header { font-size: 0.85rem; font-weight: 700; color: #666; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
     
     /* Horizontal Scroll Layout */
-    .tier-badge-grid { 
+    .tier-badge-scroll { 
         display: flex; 
         flex-wrap: nowrap;
         overflow-x: auto; 
-        gap: 15px; /* Spacing between items */
+        gap: 15px; 
         padding-bottom: 5px;
         scroll-snap-type: x mandatory;
         -webkit-overflow-scrolling: touch;
     }
     
-    /* Hide scrollbar but keep functionality */
-    .tier-badge-grid::-webkit-scrollbar { display: none; }
-    .tier-badge-grid { -ms-overflow-style: none; scrollbar-width: none; }
+    .tier-badge-scroll::-webkit-scrollbar { display: none; }
+    .tier-badge-scroll { -ms-overflow-style: none; scrollbar-width: none; }
 
     /* Badge Item */
     .ms-badge { 
-        flex: 0 0 auto; /* Do not shrink */
-        width: 75px; /* Container width slightly larger than icon */
+        flex: 0 0 auto; 
+        width: 75px; 
         display: flex; 
         flex-direction: column; 
         align-items: center; 
@@ -149,86 +146,69 @@
     /* Sealing Wax Style Icon Box (70px x 70px) */
     .ms-icon-box { 
         width: 70px; height: 70px; 
-        border-radius: 50%; 
+        /* Distorted Circle */
+        border-radius: 48% 52% 53% 47% / 55% 45% 60% 40%;
         display: flex; align-items: center; justify-content: center; 
         margin-bottom: 8px; 
         position: relative; overflow: hidden;
         
-        /* Sealing Wax Effect */
+        /* Wax Effect */
         box-shadow: 
-            inset 0 0 8px rgba(0,0,0,0.3), 
-            inset 2px 2px 4px rgba(255,255,255,0.4), 
-            0 4px 6px rgba(0,0,0,0.3);
-        border: 3px solid rgba(0,0,0,0.05);
+            inset 0 0 6px rgba(0,0,0,0.2), 
+            inset 2px 2px 5px rgba(255,255,255,0.4), 
+            0 3px 5px rgba(0,0,0,0.2);
+        border: 2px solid rgba(0,0,0,0.05);
+        background-color: #eee;
     }
-    .ms-icon-box i { font-size: 1.8rem; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
-    .ms-icon-box img { width: 60%; height: 60%; object-fit: contain; z-index: 2; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
+    .ms-icon-box i { font-size: 1.8rem; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); color: #fff; }
+    .ms-icon-box img { width: 55%; height: 55%; object-fit: contain; z-index: 2; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
     
-    /* Label with fixed height for alignment */
     .ms-label { 
         font-size: 0.65rem; font-weight: 700; color: #555; 
         text-align: center; line-height: 1.2; 
         width: 100%; 
-        height: 2.4em; /* Approx 2 lines */
+        height: 2.4em; 
         overflow: hidden; 
         display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
     }
 
     /* Unacquired & Locked */
-    .ms-badge.locked .ms-icon-box { background: #e0e0e0 !important; box-shadow: inset 0 0 5px rgba(0,0,0,0.1); border-color: #d0d0d0; }
+    .ms-badge.locked .ms-icon-box { background: #e0e0e0 !important; box-shadow: inset 0 0 5px rgba(0,0,0,0.1); border-color: #ccc; }
     .ms-badge.locked .ms-label { color: #aaa; }
     .ms-badge.locked .ms-icon-box::after { content: '🔒'; position: absolute; font-size: 1.2rem; color: #999; z-index: 3; }
     .ms-badge.locked .ms-icon-box img { opacity: 0.1; filter: grayscale(100%); }
 
-    /* Celebration Animation (Flash) */
-    .ms-badge-new .ms-icon-box { animation: flash-badge 2s ease-out infinite; box-shadow: 0 0 15px #FFD700, inset 0 0 8px rgba(0,0,0,0.3); border-color: #FFD700; }
+    /* Celebration Animation */
+    .ms-badge-new .ms-icon-box { animation: flash-badge 2s ease-out infinite; box-shadow: 0 0 15px #FFD700; border-color: #FFD700; }
     @keyframes flash-badge {
         0% { transform: scale(1); filter: brightness(1); }
         50% { transform: scale(1.05); filter: brightness(1.2); }
         100% { transform: scale(1); filter: brightness(1); }
     }
 
-    /* Colors */
-    .bg-pastel-sage { background: #A8D8B9; } .bg-pastel-apricot { background: #FFDAB9; }
-    .bg-pastel-sky { background: #87CEEB; } .bg-pastel-rose { background: #FFB7B2; }
-    .bg-pastel-lilac { background: #C8A2C8; } .bg-pastel-mint { background: #98FF98; }
-    .bg-pastel-coral { background: #FF7F50; } .bg-pastel-cocoa { background: #D2691E; }
+    /* Brand Colors for Wax */
+    .wax-brand-light { background-color: #B2EBF2; } /* Pale Brand */
+    .wax-brand-main  { background-color: var(--brand-color); } /* Main Brand */
+    .wax-accent-light{ background-color: #FFE0B2; } /* Pale Accent */
+    .wax-accent-main { background-color: var(--accent-color); } /* Main Accent */
 
-    .bg-metallic-silver { background: linear-gradient(135deg, #e0e0e0, #ffffff, #b0b0b0); color: #333; }
-    .bg-metallic-bronze { background: linear-gradient(135deg, #cd7f32, #ffcc99, #8b4513); }
-    .bg-metallic-champagne { background: linear-gradient(135deg, #fad6a5, #fff8e7, #d2b48c); color: #5d4037; }
-    .bg-metallic-slate { background: linear-gradient(135deg, #708090, #b0c4de, #2f4f4f); }
-    .bg-metallic-pearl { background: linear-gradient(135deg, #f0f8ff, #ffffff, #dcdcdc); color: #333; border: 1px solid #ddd; }
-    .bg-metallic-rose-gold { background: linear-gradient(135deg, #b76e79, #ffd1dc, #a0522d); }
-    .bg-metallic-coffee { background: linear-gradient(135deg, #6f4e37, #d2b48c, #3e2723); }
-    .bg-metallic-ice { background: linear-gradient(135deg, #a5f2f3, #e0ffff, #00ced1); color: #00695c; }
-
-    .bg-luxury-gold { background: linear-gradient(45deg, #FFD700, #FDB931, #FFD700); }
-    .bg-luxury-platinum { background: linear-gradient(45deg, #E5E4E2, #ffffff, #BCC6CC); color:#333; }
-    .bg-luxury-ruby { background: linear-gradient(45deg, #9b111e, #ff0000, #800000); }
-    .bg-luxury-sapphire { background: linear-gradient(45deg, #0F52BA, #4169E1, #000080); }
-    .bg-luxury-onyx { background: linear-gradient(45deg, #353839, #000000, #2c2c2c); }
-    .bg-luxury-diamond { background: linear-gradient(45deg, #b9f2ff, #ffffff, #e0ffff); color:#000; border:1px solid #aaa; }
-
-    .glitter-effect::after {
-        content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-        background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
-        transform: rotate(45deg); animation: sparkle 3s infinite linear; pointer-events: none;
-    }
-    @keyframes sparkle { 0% { transform: translateX(-100%) rotate(45deg); } 100% { transform: translateX(100%) rotate(45deg); } }
-
-    /* Peek Style (Horizontal) */
-    /* No need for vertical mask, just let the 4th item be cut off by screen width */
-    /* We can add a gradient fade on the right edge to suggest scrolling */
+    /* Scroll Hint Fade */
     .tier-container::after {
-        content: ''; position: absolute; top: 0; right: 0; width: 40px; height: 100%;
+        content: ''; position: absolute; top: 0; right: 0; width: 30px; height: 100%;
         background: linear-gradient(to left, rgba(255,255,255,1), rgba(255,255,255,0));
-        pointer-events: none; z-index: 5;
-        border-radius: 0 12px 12px 0;
+        pointer-events: none; z-index: 5; border-radius: 0 12px 12px 0;
     }
 
-    /* Luxury Lock Style (Updated) */
-    .tier-locked { position: relative; min-height: 120px; }
+    /* All List Link */
+    .ms-list-link {
+        display: block; text-align: center; color: var(--brand-color); 
+        font-weight: bold; font-size: 0.9rem; text-decoration: none; 
+        margin: 10px 0 20px 0; cursor: pointer;
+    }
+    .ms-list-link:hover { text-decoration: underline; }
+
+    /* Luxury Lock Style (Diamond Quilt) */
+    .tier-locked { position: relative; min-height: 120px; margin-bottom: 20px; border-radius: 12px; overflow: hidden; }
     .lock-overlay {
         position: absolute; inset: 0; 
         background-color: #2c2c2c;
@@ -241,7 +221,6 @@
         background-size: 20px 20px;
         background-repeat: repeat;
         opacity: 0.95;
-        border-radius: 12px;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         z-index: 10; color: #fff;
         box-shadow: inset 0 0 15px #000;
@@ -255,35 +234,37 @@
     }
     .lock-text {
         font-family: 'Times New Roman', serif;
-        font-size: 1.2rem; letter-spacing: 0.15em;
-        color: #fbf5b7;
+        font-size: 1.2rem; letter-spacing: 0.15em; color: #fbf5b7;
         text-shadow: 0 2px 4px rgba(0,0,0,1);
     }
 
-    /* Modal Styles */
-    #milestoneModal .modal-header { border-bottom: none; padding-bottom: 0; }
+    /* Modals */
+    .modal-header { border-bottom: none; padding-bottom: 0; }
     #msModalIconBox { 
-        width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; 
+        width: 100px; height: 100px; border-radius: 48% 52% 53% 47% / 55% 45% 60% 40%; margin: 0 auto; 
         display: flex; align-items: center; justify-content: center; 
         font-size: 3rem; color: white;
         box-shadow: inset 0 0 10px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.2);
-        border: 4px solid rgba(0,0,0,0.05);
     }
     #msModalTipsBox { background-color: #E0F7FA; border-radius: 8px; padding: 15px; margin-top: 15px; color: #006064; font-size: 0.9rem; }
+    
+    /* Full List Modal Grid */
+    .full-list-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; row-gap: 15px; margin-bottom: 20px; }
+    .full-list-section { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+    .full-list-title { font-size: 0.9rem; font-weight: bold; margin-bottom: 10px; color: var(--brand-color); }
     
     #log-stamp { background: #d32f2f; color: white; text-align: center; font-weight: bold; padding: 5px; font-size: 0.8rem; }
     #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 8px; height: 150px; overflow-y: scroll; margin: 20px; }
 
-    /* Fireworks System */
+    /* Fireworks & Night Sky */
     #fireworksCanvas {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        pointer-events: none; z-index: 9999; display: none;
+        pointer-events: none; z-index: 2000; display: none;
     }
-    /* Night Sky Overlay */
     #nightSkyOverlay {
-        position: fixed; inset: 0;
-        background: radial-gradient(circle at center bottom, transparent 0%, rgba(0, 20, 60, 0.85) 100%);
-        opacity: 0; pointer-events: none; z-index: 9998;
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: radial-gradient(circle at center bottom, transparent 0%, rgba(0, 20, 60, 0.9) 100%);
+        opacity: 0; pointer-events: none; z-index: 1999;
         transition: opacity 1s ease-in-out;
     }
   </style>
@@ -293,7 +274,7 @@
   <div id="nightSkyOverlay"></div>
   <canvas id="fireworksCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step4-HorizontalScroll</div>
+  <div id="log-stamp">v2025.12.14-Step4-Refined</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -387,16 +368,12 @@
         
         <div class="tier-container" id="tier1-container">
             <div class="tier-header">🟢 初級: Basic Harmony</div>
-            <div class="tier-badge-grid" id="tier1-grid">
+            <div class="tier-badge-scroll" id="tier1-scroll">
                 <div class="text-center w-100 text-muted small" style="flex:1;" id="tier1-loading">Loading...</div>
             </div>
         </div>
 
-        <div class="tier-container" id="tier2-container" style="display:none;">
-            <div class="tier-header">🔵 中級: Advance Harmony</div>
-            <div class="tier-badge-grid" id="tier2-grid">
-                </div>
-        </div>
+        <a class="ms-list-link" onclick="openAllMilestonesModal()">獲得マイルストーン一覧を見る &gt;</a>
 
         <div class="tier-container tier-locked" id="tier3-container">
             <div class="lock-overlay">
@@ -404,9 +381,7 @@
                 <div class="lock-text">Coming Soon...</div>
             </div>
             <div class="tier-header">🔴 上級: Master Harmony</div>
-            <div class="tier-badge-grid" id="tier3-grid">
-                </div>
-        </div>
+            </div>
     </div>
     
     <div class="footer-action">
@@ -422,7 +397,7 @@
 
   <div id="debug-console">Initializing...</div>
 
-  <div class="modal fade" id="milestoneModal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal fade" id="milestoneModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
@@ -446,7 +421,23 @@
     </div>
   </div>
 
-  <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal fade" id="allMilestonesModal" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen-sm-down modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title fw-bold">獲得マイルストーン一覧</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="allMilestonesBody">
+            </div>
+        <div class="modal-footer justify-content-center">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center">わんちゃんを選択</h5></div>
@@ -477,7 +468,9 @@
     let chartInstance2 = null;
     let currentLessonData = null;
     let milestoneModal = null;
+    let allMilestonesModal = null;
     let cachedMilestones = [];
+    let cachedMeta = {};
 
     // --- Fireworks System ---
     class Firework {
@@ -497,7 +490,7 @@
         update() {
             if (!this.exploded) {
                 this.x += this.vx; this.y += this.vy;
-                this.vy += 0.1; // gravity
+                this.vy += 0.1; 
                 if (this.vy >= 0 || this.y <= this.targetY) this.explode();
             } else {
                 this.particles.forEach(p => p.update());
@@ -515,7 +508,6 @@
         }
         explode() {
             this.exploded = true;
-            // Gold, Champagne, Silver
             const colors = ['#FFD700', '#F7E7CE', '#C0C0C0', '#FFFFFF']; 
             for(let i=0; i<60; i++) {
                 this.particles.push(new Particle(this.x, this.y, colors[Math.floor(Math.random()*colors.length)]));
@@ -535,7 +527,7 @@
         }
         update() {
             this.x += this.vx; this.y += this.vy;
-            this.vy += 0.05; // gravity
+            this.vy += 0.05; 
             this.alpha -= this.decay;
         }
         draw(ctx) {
@@ -552,8 +544,9 @@
         const overlay = document.getElementById('nightSkyOverlay');
         const ctx = canvas.getContext('2d');
         
+        // Force Z-Index and Display for Overlay
         canvas.style.display = 'block';
-        overlay.style.opacity = '1'; // Show night sky
+        overlay.style.opacity = '1'; 
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -562,13 +555,11 @@
         let launchCount = 0;
         const totalLaunches = 9;
 
-        // Vibrate start
         try { navigator.vibrate([100, 50, 100]); } catch(e){}
 
         const loop = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Random launch
             if (launchCount < totalLaunches && Math.random() < 0.05) {
                 fireworks.push(new Firework(ctx, canvas.width, canvas.height));
                 launchCount++;
@@ -579,8 +570,8 @@
             fireworks = fireworks.filter(f => !f.dead);
 
             if (launchCount >= totalLaunches && fireworks.length === 0) {
-                canvas.style.display = 'none'; // finish
-                overlay.style.opacity = '0'; // Hide night sky
+                canvas.style.display = 'none'; 
+                overlay.style.opacity = '0'; 
             } else {
                 requestAnimationFrame(loop);
             }
@@ -626,6 +617,7 @@
         log(`User: ${currentUserId}`);
         
         milestoneModal = new bootstrap.Modal(document.getElementById('milestoneModal'));
+        allMilestonesModal = new bootstrap.Modal(document.getElementById('allMilestonesModal'));
 
         const urlParams = new URLSearchParams(window.location.search);
         const urlDogId = urlParams.get('dogId');
@@ -709,6 +701,7 @@
                 
                 if (data.status === 'success' && data.badges) {
                     cachedMilestones = data.badges;
+                    cachedMeta = data.meta;
                     renderMilestones(data);
                 } else {
                     log('MS Failed or Empty');
@@ -723,87 +716,143 @@
 
     function renderMilestones(data) {
         const badges = data.badges;
-        const meta = data.meta;
-        
-        const tier1Grid = document.getElementById('tier1-grid');
-        const tier2Grid = document.getElementById('tier2-grid');
-        const tier3Grid = document.getElementById('tier3-grid');
-        
-        tier1Grid.innerHTML = ''; tier2Grid.innerHTML = ''; tier3Grid.innerHTML = '';
+        const tier1Container = document.getElementById('tier1-scroll');
+        tier1Container.innerHTML = '';
 
         let hasNewBadge = false;
 
-        badges.forEach(badge => {
-            let container = null;
-            if (badge.tier === '1_Beginner') container = tier1Grid;
-            else if (badge.tier === '2_Intermediate') container = tier2Grid;
-            else if (badge.tier === '3_Advanced') container = tier3Grid;
-            
-            if (container) {
-                const isLocked = !badge.is_acquired;
-                const lockedClass = isLocked ? 'locked' : '';
-                const colorClass = isLocked ? '' : `bg-${badge.color}`;
-                const glitterClass = (badge.tier === '3_Advanced' && !isLocked) ? 'glitter-effect' : '';
-                
-                // Animation Class if New
-                let animationClass = '';
-                if (badge.is_new) {
-                    animationClass = 'ms-badge-new';
-                    hasNewBadge = true;
-                }
-                
-                // Icon
-                let iconHtml = '<i class="fa-solid fa-paw"></i>';
-                if (badge.icon) {
-                     const fileId = extractFileId(badge.icon);
-                     const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
-                     iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
-                }
-
-                const html = `
-                    <div class="ms-badge ${lockedClass} ${animationClass}" data-id="${badge.id}" onclick="showMilestoneDetail('${badge.id}')">
-                        <div class="ms-icon-box ${colorClass} ${glitterClass}">
-                            ${iconHtml}
-                        </div>
-                        <div class="ms-label">${badge.title}</div>
-                    </div>
-                `;
-                container.insertAdjacentHTML('beforeend', html);
-            }
+        // Render only Beginner Tier for the main view
+        badges.filter(b => b.tier === '1_Beginner').forEach(badge => {
+            const html = createBadgeHtml(badge);
+            tier1Container.insertAdjacentHTML('beforeend', html);
+            if (badge.is_new) hasNewBadge = true;
         });
         
-        if (tier1Grid.innerHTML === '') tier1Grid.innerHTML = '<div class="text-center w-100 small" style="flex:1;">データなし</div>';
-
-        const t2Cont = document.getElementById('tier2-container');
-        if (meta.show_intermediate_full) {
-            t2Cont.style.display = 'block'; 
-        } else if (meta.show_intermediate_peek) {
-            t2Cont.style.display = 'block'; 
-        } else {
-             if (!meta.show_intermediate_peek && !meta.show_intermediate_full) {
-                 t2Cont.style.display = 'none';
-             }
-        }
-        
-        // --- Setup Observer for New Badges ---
-        // Lower threshold to ensure triggering even if partially visible
+        // --- Setup Observer for New Badges (Lower Threshold) ---
         if (hasNewBadge) setupMilestoneObserver();
 
         log('Milestones Rendered.');
     }
 
+    function createBadgeHtml(badge) {
+        const isLocked = !badge.is_acquired;
+        const lockedClass = isLocked ? 'locked' : '';
+        const colorClass = isLocked ? '' : getBrandColorClass(badge.color); 
+        const glitterClass = (badge.tier === '3_Advanced' && !isLocked) ? 'glitter-effect' : '';
+        
+        // Animation Class if New
+        let animationClass = '';
+        if (badge.is_new) {
+            animationClass = 'ms-badge-new';
+        }
+        
+        // Icon with fallback
+        let iconHtml = '<i class="fa-solid fa-paw"></i>';
+        if (badge.icon) {
+             const fileId = extractFileId(badge.icon);
+             const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
+             iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
+        }
+
+        // Random organic shape for wax
+        const radiuses = [
+            "48% 52% 53% 47% / 55% 45% 60% 40%",
+            "52% 48% 40% 60% / 45% 55% 42% 58%",
+            "50% 50% 58% 42% / 52% 48% 55% 45%",
+            "45% 55% 48% 52% / 50% 50% 45% 55%"
+        ];
+        const randomRadius = radiuses[Math.floor(Math.random() * radiuses.length)];
+        const randomRot = (Math.random() * 20 - 10) + 'deg';
+
+        return `
+            <div class="ms-badge ${lockedClass} ${animationClass}" data-id="${badge.id}" onclick="showMilestoneDetail('${badge.id}')">
+                <div class="ms-icon-box ${colorClass} ${glitterClass}" style="border-radius:${randomRadius}; transform: rotate(${randomRot});">
+                    ${iconHtml}
+                </div>
+                <div class="ms-label">${badge.title}</div>
+            </div>
+        `;
+    }
+    
+    function getBrandColorClass(originalColor) {
+        // Map original CSV colors to Brand Colors
+        // Just return new brand classes
+        return "wax-brand-main"; // For now, use main brand color for all acquired. 
+        // Can differentiate later if needed: wax-accent-main
+    }
+
+    function openAllMilestonesModal() {
+        const modalBody = document.getElementById('allMilestonesBody');
+        modalBody.innerHTML = '';
+
+        // Tiers
+        const tiers = [
+            { id: '1_Beginner', label: '🟢 初級: Basic Harmony', locked: false },
+            { id: '2_Intermediate', label: '🔵 中級: Advance Harmony', locked: !cachedMeta.show_intermediate_peek && !cachedMeta.show_intermediate_full },
+            { id: '3_Advanced', label: '🔴 上級: Master Harmony', locked: !cachedMeta.show_intermediate_full } // If intermediate full earned? Logic based on meta
+        ];
+        
+        // Actually, meta.show_intermediate_full means "Beginner is Complete", so Intermediate is FULLY open.
+        // If meta.show_intermediate_peek, Intermediate is PEEKING (partially open).
+        // Let's rely on simple logic:
+        // Tier 1: Always Open.
+        // Tier 2: Open if peek or full is true. Locked otherwise.
+        // Tier 3: Open if Intermediate is fully done? Or currently just Locked. Let's keep Tier 3 Locked as per current logic unless user requests otherwise.
+        
+        // Re-read requirement: 
+        // "If only Beginner earned -> Intermediate & Advanced are Coming Soon (Locked)"
+        // "If at least one Intermediate earned -> Advanced is Coming Soon (Locked)"
+        
+        // Check intermediate count
+        const intermediateEarned = cachedMilestones.filter(b => b.tier === '2_Intermediate' && b.is_acquired).length;
+        const tier2Locked = (cachedMeta.total_earned < 6); // Using original threshold logic from backend
+        const tier3Locked = (intermediateEarned === 0);
+
+        // Adjust Tiers based on logic
+        tiers[1].locked = tier2Locked;
+        tiers[2].locked = true; // Always lock Tier 3 for now as per instructions
+
+        tiers.forEach(tier => {
+            let contentHtml = '';
+            
+            if (tier.locked) {
+                 contentHtml = `
+                    <div class="tier-locked">
+                        <div class="lock-overlay" style="position:relative; height:120px; border-radius:8px;">
+                            <div class="lock-icon-gold"><i class="fa-solid fa-lock"></i></div>
+                            <div class="lock-text">Coming Soon...</div>
+                        </div>
+                    </div>`;
+            } else {
+                const tierBadges = cachedMilestones.filter(b => b.tier === tier.id);
+                let badgesHtml = '';
+                tierBadges.forEach(b => {
+                    badgesHtml += createBadgeHtml(b); // Re-use badge creation
+                });
+                contentHtml = `<div class="full-list-grid">${badgesHtml}</div>`;
+            }
+
+            const sectionHtml = `
+                <div class="full-list-section">
+                    <div class="full-list-title">${tier.label}</div>
+                    ${contentHtml}
+                </div>
+            `;
+            modalBody.insertAdjacentHTML('beforeend', sectionHtml);
+        });
+
+        allMilestonesModal.show();
+    }
+
     function setupMilestoneObserver() {
-        // Updated threshold to 0.1 for better detection in horizontal scroll
         const options = { root: null, rootMargin: '0px', threshold: 0.1 };
         const observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     const el = entry.target;
                     const badgeId = el.getAttribute('data-id');
-                    
                     launchFireworks();
                     markAsSeen(badgeId);
-                    
                     observer.unobserve(el);
                     el.classList.remove('ms-badge-new'); 
                 }
@@ -834,12 +883,24 @@
 
         const isLocked = !badge.is_acquired;
         const iconBox = document.getElementById('msModalIconBox');
-        iconBox.className = isLocked ? 'bg-secondary' : `bg-${badge.color}`;
-        if (badge.tier === '3_Advanced' && !isLocked) iconBox.classList.add('glitter-effect');
+        
+        // Brand Color for modal icon
+        iconBox.className = isLocked ? 'bg-secondary' : 'wax-brand-main';
+        iconBox.style.backgroundColor = isLocked ? '#e0e0e0' : 'var(--brand-color)';
         
         iconBox.innerHTML = badge.icon 
             ? `<img src="https://drive.google.com/thumbnail?id=${extractFileId(badge.icon)}&sz=w200" style="width:60%;height:60%;object-fit:contain;">`
             : `<i class="fa-solid fa-paw"></i>`;
+        
+        // Ensure icon is visible if image fails (using onerror in HTML injection above)
+        // But here we insert directly. Let's add listener.
+        const img = iconBox.querySelector('img');
+        if(img) {
+            img.onerror = function() {
+                this.style.display='none';
+                iconBox.innerHTML = '<i class="fa-solid fa-paw"></i>';
+            };
+        }
 
         document.getElementById('msModalTitle').innerText = badge.title + (isLocked ? ' (未獲得)' : '');
         document.getElementById('msModalDesc').innerText = badge.desc;
