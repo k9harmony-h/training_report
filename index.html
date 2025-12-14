@@ -9,7 +9,7 @@
       }
     })();
   </script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>K9 Harmony Portal</title>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -100,7 +100,7 @@
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
 
     /* =========================================
-       Milestone CSS
+       Milestone CSS (Step 4 Final)
        ========================================= */
     .milestone-section { margin: 30px 20px 10px; }
     .tier-container { margin-bottom: 20px; position: relative; border-radius: 12px; background: #fff; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: max-height 0.5s ease-out; }
@@ -119,20 +119,25 @@
     .ms-icon-box img { width: 60%; height: 60%; object-fit: contain; z-index: 2; }
     .ms-label { font-size: 0.6rem; font-weight: 700; color: #555; text-align: center; line-height: 1.1; width: 120%; margin-left: -10%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+    /* Unacquired & Locked */
     .ms-badge.locked .ms-icon-box { background: #e0e0e0 !important; box-shadow: none; }
     .ms-badge.locked .ms-label { color: #aaa; }
     .ms-badge.locked .ms-icon-box::after { content: '🔒'; position: absolute; font-size: 1rem; color: #999; z-index: 3; }
     .ms-badge.locked .ms-icon-box img { opacity: 0.2; filter: grayscale(100%); }
 
+    /* Celebration Animation (Flash) */
+    .ms-badge-new .ms-icon-box { animation: flash-badge 2s ease-out infinite; box-shadow: 0 0 15px #FFD700; border: 2px solid #FFD700; }
+    @keyframes flash-badge {
+        0% { transform: scale(1); filter: brightness(1); }
+        50% { transform: scale(1.1); filter: brightness(1.3); }
+        100% { transform: scale(1); filter: brightness(1); }
+    }
+
     /* Colors */
-    .bg-pastel-sage { background: #A8D8B9; }
-    .bg-pastel-apricot { background: #FFDAB9; }
-    .bg-pastel-sky { background: #87CEEB; }
-    .bg-pastel-rose { background: #FFB7B2; }
-    .bg-pastel-lilac { background: #C8A2C8; }
-    .bg-pastel-mint { background: #98FF98; }
-    .bg-pastel-coral { background: #FF7F50; }
-    .bg-pastel-cocoa { background: #D2691E; }
+    .bg-pastel-sage { background: #A8D8B9; } .bg-pastel-apricot { background: #FFDAB9; }
+    .bg-pastel-sky { background: #87CEEB; } .bg-pastel-rose { background: #FFB7B2; }
+    .bg-pastel-lilac { background: #C8A2C8; } .bg-pastel-mint { background: #98FF98; }
+    .bg-pastel-coral { background: #FF7F50; } .bg-pastel-cocoa { background: #D2691E; }
 
     .bg-metallic-silver { background: linear-gradient(135deg, #e0e0e0, #ffffff, #b0b0b0); color: #333; }
     .bg-metallic-bronze { background: linear-gradient(135deg, #cd7f32, #ffcc99, #8b4513); }
@@ -157,31 +162,21 @@
     }
     @keyframes sparkle { 0% { transform: translateX(-100%) rotate(45deg); } 100% { transform: translateX(100%) rotate(45deg); } }
 
+    /* Peek & Lock */
     .tier-peek { max-height: 85px; overflow: hidden; position: relative; }
     .tier-peek::after {
         content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 50px;
         background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
         pointer-events: none; z-index: 5;
     }
-
     .tier-locked { position: relative; min-height: 100px; }
     .lock-overlay {
         position: absolute; inset: 0; 
         background-color: #2c2c2c;
-        background-image: 
-            linear-gradient(135deg, #333 25%, transparent 25%), 
-            linear-gradient(225deg, #333 25%, transparent 25%), 
-            linear-gradient(45deg, #333 25%, transparent 25%), 
-            linear-gradient(315deg, #333 25%, transparent 25%);
-        background-position: 10px 0, 10px 0, 0 0, 0 0;
-        background-size: 20px 20px;
-        background-repeat: repeat;
-        opacity: 0.95;
-        border-radius: 12px;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        z-index: 10; color: #fff;
-        box-shadow: inset 0 0 15px #000;
-        border: 1px solid #444;
+        background-image: linear-gradient(135deg, #333 25%, transparent 25%), linear-gradient(225deg, #333 25%, transparent 25%), linear-gradient(45deg, #333 25%, transparent 25%), linear-gradient(315deg, #333 25%, transparent 25%);
+        background-position: 10px 0, 10px 0, 0 0, 0 0; background-size: 20px 20px; background-repeat: repeat;
+        opacity: 0.95; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        z-index: 10; color: #fff; box-shadow: inset 0 0 15px #000; border: 1px solid #444;
     }
     .lock-icon-gold {
         font-size: 3rem; margin-bottom: 8px;
@@ -189,14 +184,9 @@
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         filter: drop-shadow(0 4px 4px rgba(0,0,0,0.8));
     }
-    .lock-text {
-        font-family: 'Times New Roman', serif;
-        font-size: 1.2rem; letter-spacing: 0.15em;
-        color: #fbf5b7;
-        text-shadow: 0 2px 4px rgba(0,0,0,1);
-    }
+    .lock-text { font-family: 'Times New Roman', serif; font-size: 1.2rem; letter-spacing: 0.15em; color: #fbf5b7; text-shadow: 0 2px 4px rgba(0,0,0,1); }
 
-    /* Modal Styles */
+    /* Modal */
     #milestoneModal .modal-header { border-bottom: none; padding-bottom: 0; }
     #msModalIconBox { 
         width: 80px; height: 80px; border-radius: 50%; margin: 0 auto; 
@@ -206,14 +196,21 @@
     }
     #msModalTipsBox { background-color: #E0F7FA; border-radius: 8px; padding: 15px; margin-top: 15px; color: #006064; font-size: 0.9rem; }
     
-    /* Log & Console */
     #log-stamp { background: #d32f2f; color: white; text-align: center; font-weight: bold; padding: 5px; font-size: 0.8rem; }
     #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 8px; height: 150px; overflow-y: scroll; margin: 20px; }
+
+    /* Fireworks Canvas */
+    #fireworksCanvas {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none; z-index: 9999; display: none;
+    }
   </style>
 </head>
 <body>
 
-  <div id="log-stamp">v2025.12.14-Milestone-Fix-v4-SyntaxError</div>
+  <canvas id="fireworksCanvas"></canvas>
+
+  <div id="log-stamp">v2025.12.14-Step4-Fireworks</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -342,7 +339,7 @@
 
   <div id="debug-console">Initializing...</div>
 
-  <div class="modal fade" id="milestoneModal" tabindex="-1">
+  <div class="modal fade" id="milestoneModal" tabindex="-1" role="dialog" aria-modal="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
@@ -366,7 +363,7 @@
     </div>
   </div>
 
-  <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+  <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-modal="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center">わんちゃんを選択</h5></div>
@@ -398,6 +395,111 @@
     let currentLessonData = null;
     let milestoneModal = null;
     let cachedMilestones = [];
+
+    // --- Fireworks System ---
+    class Firework {
+        constructor(ctx, w, h) {
+            this.ctx = ctx; this.w = w; this.h = h;
+            this.x = Math.random() * w;
+            this.y = h;
+            this.targetY = h * 0.2 + Math.random() * (h * 0.4);
+            this.speed = 8 + Math.random() * 4;
+            this.angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.5;
+            this.vx = Math.cos(this.angle) * this.speed;
+            this.vy = Math.sin(this.angle) * this.speed;
+            this.particles = [];
+            this.exploded = false;
+            this.dead = false;
+        }
+        update() {
+            if (!this.exploded) {
+                this.x += this.vx; this.y += this.vy;
+                this.vy += 0.1; // gravity
+                if (this.vy >= 0 || this.y <= this.targetY) this.explode();
+            } else {
+                this.particles.forEach(p => p.update());
+                this.particles = this.particles.filter(p => p.alpha > 0);
+                if (this.particles.length === 0) this.dead = true;
+            }
+        }
+        draw() {
+            if (!this.exploded) {
+                this.ctx.fillStyle = '#fff';
+                this.ctx.beginPath(); this.ctx.arc(this.x, this.y, 3, 0, Math.PI*2); this.ctx.fill();
+            } else {
+                this.particles.forEach(p => p.draw(this.ctx));
+            }
+        }
+        explode() {
+            this.exploded = true;
+            // Gold, Champagne, Silver
+            const colors = ['#FFD700', '#F7E7CE', '#C0C0C0', '#FFFFFF']; 
+            for(let i=0; i<60; i++) {
+                this.particles.push(new Particle(this.x, this.y, colors[Math.floor(Math.random()*colors.length)]));
+            }
+        }
+    }
+
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x; this.y = y; this.color = color;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 4 + 1;
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.alpha = 1;
+            this.decay = Math.random() * 0.02 + 0.01;
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            this.vy += 0.05; // gravity
+            this.alpha -= this.decay;
+        }
+        draw(ctx) {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.fillStyle = this.color;
+            ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2); ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    function launchFireworks() {
+        const canvas = document.getElementById('fireworksCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.style.display = 'block';
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        let fireworks = [];
+        let launchCount = 0;
+        const totalLaunches = 9;
+
+        // Vibrate start
+        try { navigator.vibrate([100, 50, 100]); } catch(e){}
+
+        const loop = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Random launch
+            if (launchCount < totalLaunches && Math.random() < 0.05) {
+                fireworks.push(new Firework(ctx, canvas.width, canvas.height));
+                launchCount++;
+            }
+
+            fireworks.forEach(f => f.update());
+            fireworks.forEach(f => f.draw());
+            fireworks = fireworks.filter(f => !f.dead);
+
+            if (launchCount >= totalLaunches && fireworks.length === 0) {
+                canvas.style.display = 'none'; // finish
+            } else {
+                requestAnimationFrame(loop);
+            }
+        };
+        loop();
+    }
+    // ----------------------
 
     function startTipsSlider() {
       const tipsText = document.getElementById('tipsText');
@@ -511,7 +613,6 @@
             .then(res => res.json())
             .then(data => {
                 log(`MS Response: ${JSON.stringify(data).substring(0,50)}...`);
-                // Enhanced error handling
                 if (data.error) {
                     log('MS Backend Error: ' + data.error);
                     document.getElementById('tier1-loading').innerText = '準備中: ' + data.error;
@@ -542,6 +643,8 @@
         
         tier1Grid.innerHTML = ''; tier2Grid.innerHTML = ''; tier3Grid.innerHTML = '';
 
+        let hasNewBadge = false;
+
         badges.forEach(badge => {
             let container = null;
             if (badge.tier === '1_Beginner') container = tier1Grid;
@@ -554,17 +657,24 @@
                 const colorClass = isLocked ? '' : `bg-${badge.color}`;
                 const glitterClass = (badge.tier === '3_Advanced' && !isLocked) ? 'glitter-effect' : '';
                 
-                // Fix: Properly escaped HTML string for iconHtml
+                // Animation Class if New
+                let animationClass = '';
+                if (badge.is_new) {
+                    animationClass = 'ms-badge-new';
+                    hasNewBadge = true;
+                    // Observe this later
+                }
+                
+                // Icon
                 let iconHtml = '<i class="fa-solid fa-paw"></i>';
                 if (badge.icon) {
                      const fileId = extractFileId(badge.icon);
                      const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
-                     // Use single quotes for JS string, double quotes for HTML attributes, escape inner quotes
                      iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
                 }
 
                 const html = `
-                    <div class="ms-badge ${lockedClass}" onclick="showMilestoneDetail('${badge.id}')">
+                    <div class="ms-badge ${lockedClass} ${animationClass}" data-id="${badge.id}" onclick="showMilestoneDetail('${badge.id}')">
                         <div class="ms-icon-box ${colorClass} ${glitterClass}">
                             ${iconHtml}
                         </div>
@@ -587,7 +697,50 @@
                  t2Cont.style.display = 'none';
              }
         }
+        
+        // --- Setup Observer for New Badges ---
+        if (hasNewBadge) setupMilestoneObserver();
+
         log('Milestones Rendered.');
+    }
+
+    function setupMilestoneObserver() {
+        const options = { root: null, rootMargin: '0px', threshold: 0.5 };
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    const badgeId = el.getAttribute('data-id');
+                    
+                    // Trigger Effect
+                    launchFireworks();
+                    
+                    // Call API to mark as seen
+                    markAsSeen(badgeId);
+                    
+                    // Stop observing this element
+                    observer.unobserve(el);
+                    el.classList.remove('ms-badge-new'); // Remove flash class after trigger or let it run? Let's keep it but stop observer.
+                }
+            });
+        }, options);
+
+        document.querySelectorAll('.ms-badge-new').forEach(el => {
+            observer.observe(el);
+        });
+    }
+
+    function markAsSeen(badgeId) {
+        if(!currentUserId || !currentDogId) return;
+        const payload = {
+            action: 'markMilestoneSeen',
+            dogId: currentDogId,
+            milestoneId: badgeId
+        };
+        fetch(GAS_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        }).then(r=>r.json()).then(d=>log('Marked seen: '+badgeId)).catch(e=>log('MarkErr:'+e));
     }
 
     function showMilestoneDetail(badgeId) {
