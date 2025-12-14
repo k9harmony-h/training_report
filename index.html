@@ -146,12 +146,10 @@
     /* Sealing Wax Style Icon Box (70px x 70px) */
     .ms-icon-box { 
         width: 70px; height: 70px; 
-        /* Distorted Circle Border (Randomized via JS) */
         border-radius: 50%;
         display: flex; align-items: center; justify-content: center; 
         margin-bottom: 8px; 
         position: relative; overflow: hidden;
-        
         /* Wax Effect */
         box-shadow: 
             inset 0 0 8px rgba(0,0,0,0.3), 
@@ -160,11 +158,11 @@
         border: none;
     }
     
-    /* Inner Perfect Circle (Smaller: 8px margin as requested) */
+    /* Inner Perfect Circle (9px margin) */
     .ms-icon-box::before {
         content: '';
         position: absolute;
-        top: 8px; left: 8px; right: 8px; bottom: 8px;
+        top: 9px; left: 9px; right: 9px; bottom: 9px;
         border-radius: 50%; 
         border: 1px solid rgba(0,0,0,0.15); 
         box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2), 0 0 0 20px rgba(0,0,0,0.02); 
@@ -321,12 +319,18 @@
         pointer-events: none;
         z-index: 2003; /* Above Badge */
     }
+    
+    /* 修正: 光のコアをぼかし、グラデーションにする (広がり重視) */
     #celebLightCore {
-        width: 10px; height: 10px; border-radius: 50%;
-        background: radial-gradient(circle, #fff 0%, rgba(255,255,255,0) 70%);
+        width: 20px; height: 20px; 
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.8) 20%, rgba(255,255,255,0) 70%);
         opacity: 0;
         transform: scale(1);
+        filter: blur(20px); /* ぼかしを強く */
+        box-shadow: 0 0 40px 20px rgba(255, 255, 255, 0.9); /* 外側にさらに光を */
     }
+    
     #celebFireworksCanvas {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         pointer-events: none;
@@ -347,13 +351,13 @@
         cursor: pointer;
     }
 
-    /* Animation Classes */
-    .anim-flash { animation: flash-expand 1.2s forwards; }
+    /* 修正: アニメーション拡大率アップ */
+    .anim-flash { animation: flash-expand 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards; } 
     @keyframes flash-expand {
         0% { transform: scale(1); opacity: 0; }
-        10% { transform: scale(50); opacity: 1; background: #fff; }
-        40% { transform: scale(80); opacity: 1; background: #fff; }
-        100% { transform: scale(0.1); opacity: 0; }
+        15% { transform: scale(200); opacity: 1; } /* 拡大率アップ */
+        40% { transform: scale(250); opacity: 0.8; }
+        100% { transform: scale(400); opacity: 0; } /* 画面全体を確実に覆う */
     }
     
     .anim-badge-emerge { animation: badge-pop 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
@@ -396,7 +400,7 @@
       </div>
   </div>
 
-  <div id="log-stamp">v2025.12.14-Step5-VisualRefined</div>
+  <div id="log-stamp">v2025.12.14-Step5-LightBloom</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -935,8 +939,8 @@
         const randomRadius = radiuses[Math.floor(Math.random() * radiuses.length)];
         const randomRot = (Math.random() * 20 - 10) + 'deg';
 
-        // DEBUG: Clicking an acquired badge triggers Celebration instead of Modal
-        const clickAction = (badge.is_acquired) ? `showCelebration(cachedMilestones.find(b=>b.id=='${badge.id}'))` : `showMilestoneDetail('${badge.id}')`;
+        // 修正: タップ時は常に詳細モーダルを表示 (デバッグ用強制演出トリガー廃止)
+        const clickAction = `showMilestoneDetail('${badge.id}')`;
 
         return `
             <div class="ms-badge ${lockedClass} ${animationClass}" data-id="${badge.id}" onclick="${clickAction}">
@@ -955,7 +959,7 @@
         const intermediateEarnedCount = cachedMilestones.filter(b => b.tier === '2_Intermediate' && b.is_acquired).length;
         const isGroupedLock = (intermediateEarnedCount === 0);
 
-        // 1. Beginner
+        // 1. Render Beginner
         const beginnerBadges = cachedMilestones.filter(b => b.tier === '1_Beginner');
         let bHtml = '';
         beginnerBadges.forEach(b => bHtml += createBadgeHtml(b));
@@ -966,7 +970,7 @@
             </div>
         `);
 
-        // 2. Intermediate & Advanced
+        // 2. Render Intermediate & Advanced
         if (isGroupedLock) {
              modalBody.insertAdjacentHTML('beforeend', `
                 <div class="tier-locked">
@@ -1007,15 +1011,16 @@
                 if (entry.isIntersecting) {
                     const el = entry.target;
                     const badgeId = el.getAttribute('data-id');
+                    
+                    // Show Celebration Automatically for New Badges
                     const badgeData = cachedMilestones.find(b => b.id === badgeId);
+                    if (badgeData) showCelebration(badgeData);
 
-                    // Debug: Trigger if acquired
-                    if (badgeData && badgeData.is_acquired) {
-                        showCelebration(badgeData);
-                        markAsSeen(badgeId);
-                        observer.unobserve(el);
-                        el.classList.remove('ms-badge-new'); 
-                    }
+                    launchFireworks();
+                    markAsSeen(badgeId);
+                    
+                    observer.unobserve(el);
+                    el.classList.remove('ms-badge-new'); 
                 }
             });
         }, options);
