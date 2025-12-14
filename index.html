@@ -160,7 +160,7 @@
         border: none;
     }
     
-    /* Inner Perfect Circle (8px margin) */
+    /* Inner Perfect Circle (Smaller: 8px margin as requested) */
     .ms-icon-box::before {
         content: '';
         position: absolute;
@@ -396,7 +396,7 @@
       </div>
   </div>
 
-  <div id="log-stamp">v2025.12.14-Step5-DirectTrigger</div>
+  <div id="log-stamp">v2025.12.14-Step5-VisualRefined</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -612,10 +612,17 @@
         
         // Phase 2: Converge & Prepare Badge (1.0s)
         setTimeout(() => {
-            // Render Badge
+            // Render Badge with fallback
+            let iconHtml = '<i class="fa-solid fa-paw"></i>';
+            if (badge.icon) {
+                 const fileId = extractFileId(badge.icon);
+                 const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
+                 iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
+            }
+            
             badgeCont.innerHTML = `
                 <div class="celeb-badge-inner bg-${badge.color}">
-                    ${badge.icon ? `<img src="https://drive.google.com/thumbnail?id=${extractFileId(badge.icon)}&sz=w200">` : `<i class="fa-solid fa-paw"></i>`}
+                    ${iconHtml}
                 </div>
                 <div style="position:absolute; bottom:-40px; width:200px; text-align:center; color:white; font-weight:bold; font-size:1.2rem; text-shadow:0 0 10px gold;">
                     ${badge.title} 獲得!
@@ -884,7 +891,7 @@
         let hasNewBadge = false;
 
         badges.filter(b => b.tier === '1_Beginner').forEach(badge => {
-            // DEBUG: Force Animation for ALL acquired badges for testing
+            // DEBUG: Force Animation for ALL acquired badges
             if (badge.is_acquired) {
                 badge.is_new = true; // Remove this line in production!
             }
@@ -896,17 +903,9 @@
         
         if (tier1Container.innerHTML === '') tier1Container.innerHTML = '<div class="text-center w-100 small" style="flex:1;">データなし</div>';
         
-        // Directly trigger celebration for first new badge after a short delay
-        if (hasNewBadge) {
-             const newBadge = badges.find(b => b.is_new && b.tier === '1_Beginner');
-             if (newBadge) {
-                 setTimeout(() => {
-                     showCelebration(newBadge);
-                     // Call API to mark seen
-                     // markAsSeen(newBadge.id);
-                 }, 1500); // 1.5s delay after render
-             }
-        }
+        // --- Setup Observer for New Badges ---
+        // For Debug: Trigger automatically if any new badge
+        if (hasNewBadge) setupMilestoneObserver();
 
         log('Milestones Rendered.');
     }
@@ -918,7 +917,7 @@
         const glitterClass = (badge.tier === '3_Advanced' && !isLocked) ? 'glitter-effect' : '';
         
         let animationClass = '';
-        // Note: Inline animation removed to avoid conflict with modal animation, handled via JS trigger now.
+        if (badge.is_new) animationClass = 'ms-badge-new';
         
         let iconHtml = '<i class="fa-solid fa-paw"></i>';
         if (badge.icon) {
@@ -940,7 +939,7 @@
         const clickAction = (badge.is_acquired) ? `showCelebration(cachedMilestones.find(b=>b.id=='${badge.id}'))` : `showMilestoneDetail('${badge.id}')`;
 
         return `
-            <div class="ms-badge ${lockedClass}" data-id="${badge.id}" onclick="${clickAction}">
+            <div class="ms-badge ${lockedClass} ${animationClass}" data-id="${badge.id}" onclick="${clickAction}">
                 <div class="ms-icon-box ${colorClass} ${glitterClass}" style="border-radius:${randomRadius}; transform: rotate(${randomRot});">
                     ${iconHtml}
                 </div>
@@ -999,6 +998,31 @@
         }
 
         allMilestonesModal.show();
+    }
+
+    function setupMilestoneObserver() {
+        const options = { root: null, rootMargin: '0px', threshold: 0.2 };
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    const badgeId = el.getAttribute('data-id');
+                    const badgeData = cachedMilestones.find(b => b.id === badgeId);
+
+                    // Debug: Trigger if acquired
+                    if (badgeData && badgeData.is_acquired) {
+                        showCelebration(badgeData);
+                        markAsSeen(badgeId);
+                        observer.unobserve(el);
+                        el.classList.remove('ms-badge-new'); 
+                    }
+                }
+            });
+        }, options);
+
+        document.querySelectorAll('.ms-badge-new').forEach(el => {
+            observer.observe(el);
+        });
     }
 
     function markAsSeen(badgeId) {
