@@ -100,7 +100,7 @@
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
 
     /* =========================================
-       Milestone CSS (Step 5 Refined)
+       Milestone CSS
        ========================================= */
     .milestone-section { margin: 30px 20px 10px; }
     
@@ -111,6 +111,7 @@
         background: #fff; 
         padding: 15px 15px 20px 15px; 
         box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+        z-index: 1; 
     }
     
     .tier-header { font-size: 0.85rem; font-weight: 700; color: #666; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
@@ -149,6 +150,7 @@
         display: flex; align-items: center; justify-content: center; 
         margin-bottom: 8px; 
         position: relative; overflow: hidden;
+        /* Wax Effect */
         box-shadow: 
             inset 0 0 8px rgba(0,0,0,0.3), 
             inset 2px 2px 4px rgba(255,255,255,0.4), 
@@ -156,11 +158,11 @@
         border: none;
     }
     
-    /* Inner Perfect Circle (Smaller: 8px margin as requested) */
+    /* Inner Perfect Circle (9px margin) */
     .ms-icon-box::before {
         content: '';
         position: absolute;
-        top: 8px; left: 8px; right: 8px; bottom: 8px;
+        top: 9px; left: 9px; right: 9px; bottom: 9px;
         border-radius: 50%; 
         border: 1px solid rgba(0,0,0,0.15); 
         box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2), 0 0 0 20px rgba(0,0,0,0.02); 
@@ -207,19 +209,10 @@
     .bg-luxury-onyx { background: linear-gradient(45deg, #353839, #000000, #2c2c2c); }
     .bg-luxury-diamond { background: linear-gradient(45deg, #b9f2ff, #ffffff, #e0ffff); color:#000; border:1px solid #aaa; }
 
-    /* Cloned Badge for Animation (Highest Z-Index) */
-    .ms-badge-cloned {
-        position: fixed !important;
-        z-index: 2005 !important; /* Above Fireworks(2001) & Sky(2000) */
-        pointer-events: none;
-        transition: opacity 0.5s;
-        animation: appear-shine 3s ease-out forwards;
-    }
-    
-    @keyframes appear-shine {
-        0% { transform: scale(0.5); opacity: 0; filter: brightness(3) blur(2px); }
-        20% { transform: scale(1.2); opacity: 1; filter: brightness(2) blur(0); }
-        100% { transform: scale(1); opacity: 1; filter: brightness(1) drop-shadow(0 0 10px gold); }
+    .glitter-effect::after {
+        content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+        background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+        transform: rotate(45deg); animation: sparkle 3s infinite linear; pointer-events: none;
     }
 
     /* Scroll Hint Fade */
@@ -268,7 +261,7 @@
         text-shadow: 0 2px 4px rgba(0,0,0,1);
     }
 
-    /* Modals */
+    /* Modals - Branded */
     .modal-header { border-bottom: none; padding-bottom: 0; }
     #msModalIconBox { 
         width: 100px; height: 100px; 
@@ -293,18 +286,74 @@
     #log-stamp { background: #d32f2f; color: white; text-align: center; font-weight: bold; padding: 5px; font-size: 0.8rem; }
     #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 8px; height: 150px; overflow-y: scroll; margin: 20px; }
 
-    /* Fireworks & Night Sky */
-    #fireworksCanvas {
+    /* --- Full Screen Celebration Overlay --- */
+    #celebrationOverlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        pointer-events: none; z-index: 2001; display: none;
+        z-index: 9999; display: none;
     }
-    #nightSkyOverlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: radial-gradient(circle at center bottom, transparent 0%, rgba(0, 20, 60, 0.9) 100%);
-        opacity: 0; pointer-events: none; z-index: 2000;
-        transition: opacity 1s ease-in-out;
+    #celebNightSky {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: radial-gradient(circle at center bottom, #00143c 0%, #000 90%);
+        opacity: 0; transition: opacity 0.5s;
+    }
+    #celebLightContainer {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; justify-content: center; align-items: center;
+        pointer-events: none;
+    }
+    #celebLightCore {
+        width: 10px; height: 10px; border-radius: 50%;
+        background: radial-gradient(circle, #fff 0%, rgba(255,255,255,0) 70%);
+        opacity: 0;
+        transform: scale(1);
+    }
+    #celebFireworksCanvas {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none;
+    }
+    #celebBadgeContainer {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 150px; height: 150px;
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.2);
+    }
+    /* Modal Close Overlay Area */
+    #celebCloseArea {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000;
+        cursor: pointer;
+    }
+
+    /* Animation Classes */
+    .anim-flash { animation: flash-expand 1.2s forwards; }
+    @keyframes flash-expand {
+        0% { transform: scale(1); opacity: 0; }
+        10% { transform: scale(50); opacity: 1; background: #fff; }
+        40% { transform: scale(80); opacity: 1; background: #fff; }
+        100% { transform: scale(0.1); opacity: 0; }
     }
     
+    .anim-badge-emerge { animation: badge-pop 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    @keyframes badge-pop {
+        0% { transform: translate(-50%, -50%) scale(0.2) rotate(-30deg); opacity: 0; filter: brightness(5) blur(5px); }
+        100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; filter: brightness(1) blur(0); }
+    }
+    
+    /* Celebration Badge Style (Larger) */
+    .celeb-badge-inner {
+        width: 140px; height: 140px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 0 50px rgba(255,215,0,0.8), inset 0 0 20px rgba(0,0,0,0.2);
+        border: 4px solid #fff;
+        position: relative;
+    }
+    .celeb-badge-inner::before {
+        content: ''; position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px;
+        border-radius: 50%; border: 1px solid rgba(0,0,0,0.2);
+    }
+    .celeb-badge-inner i { font-size: 4rem; color: #fff; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+    .celeb-badge-inner img { width: 60%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+
     /* Unified Button Colors */
     .btn-secondary { background-color: var(--brand-color); border-color: var(--brand-color); color: white; }
     .btn-secondary:hover, .btn-secondary:active { background-color: #4aa3a2; border-color: #4aa3a2; }
@@ -312,10 +361,19 @@
 </head>
 <body>
 
-  <div id="nightSkyOverlay"></div>
-  <canvas id="fireworksCanvas"></canvas>
+  <div id="celebrationOverlay">
+      <div id="celebNightSky"></div>
+      <div id="celebLightContainer"><div id="celebLightCore"></div></div>
+      <canvas id="celebFireworksCanvas"></canvas>
+      <div id="celebBadgeContainer">
+          </div>
+      <div id="celebCloseArea" onclick="closeCelebration()"></div>
+      <div style="position:absolute; bottom:50px; width:100%; text-align:center; color:white; z-index:10001; pointer-events:none; font-weight:bold; letter-spacing:0.1em; text-shadow:0 2px 5px black;">
+          Tap to Close
+      </div>
+  </div>
 
-  <div id="log-stamp">v2025.12.14-Step5-VisualFix</div>
+  <div id="log-stamp">v2025.12.14-Step5-CelebrationModal</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -448,7 +506,7 @@
             </div>
         </div>
         <div class="modal-footer justify-content-center border-0 pb-4">
-            <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">閉じる</button>
+            <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal" style="background-color: var(--brand-color); border:none;">閉じる</button>
         </div>
       </div>
     </div>
@@ -464,7 +522,7 @@
         <div class="modal-body" id="allMilestonesBody">
             </div>
         <div class="modal-footer justify-content-center">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: var(--brand-color); border:none;">閉じる</button>
         </div>
       </div>
     </div>
@@ -505,7 +563,61 @@
     let cachedMilestones = [];
     let cachedMeta = {};
 
-    // --- Fireworks System ---
+    // --- Celebration Animation Control ---
+    function showCelebration(badge) {
+        const overlay = document.getElementById('celebrationOverlay');
+        const sky = document.getElementById('celebNightSky');
+        const light = document.getElementById('celebLightCore');
+        const badgeCont = document.getElementById('celebBadgeContainer');
+        const canvas = document.getElementById('celebFireworksCanvas');
+        
+        // Reset states
+        overlay.style.display = 'block';
+        sky.style.opacity = '0';
+        light.style.opacity = '0';
+        light.className = ''; 
+        badgeCont.style.opacity = '0';
+        badgeCont.className = '';
+        
+        // Phase 0: Night Sky Fade In
+        setTimeout(() => { sky.style.opacity = '1'; }, 100);
+        
+        // Phase 1: Flash (0.5s)
+        setTimeout(() => {
+            light.className = 'anim-flash'; // Trigger flash
+        }, 500);
+        
+        // Phase 2: Converge & Prepare Badge (1.0s)
+        setTimeout(() => {
+            // Render Badge
+            badgeCont.innerHTML = `
+                <div class="celeb-badge-inner bg-${badge.color}">
+                    ${badge.icon ? `<img src="https://drive.google.com/thumbnail?id=${extractFileId(badge.icon)}&sz=w200">` : `<i class="fa-solid fa-paw"></i>`}
+                </div>
+                <div style="position:absolute; bottom:-40px; width:200px; text-align:center; color:white; font-weight:bold; font-size:1.2rem; text-shadow:0 0 10px gold;">
+                    ${badge.title} 獲得!
+                </div>
+            `;
+        }, 1000);
+        
+        // Phase 3: Badge Emerge & Fireworks (1.5s)
+        setTimeout(() => {
+             badgeCont.className = 'anim-badge-emerge'; // Start appear
+             launchCelebrationFireworks();
+        }, 1500);
+    }
+    
+    function closeCelebration() {
+        const overlay = document.getElementById('celebrationOverlay');
+        overlay.style.transition = 'opacity 0.5s';
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            overlay.style.opacity = '1'; // Reset for next
+        }, 500);
+    }
+
+    // --- Fireworks System (Canvas) ---
     class Firework {
         constructor(ctx, w, h) {
             this.ctx = ctx; this.w = w; this.h = h;
@@ -572,14 +684,9 @@
         }
     }
 
-    function launchFireworks() {
-        const canvas = document.getElementById('fireworksCanvas');
-        const overlay = document.getElementById('nightSkyOverlay');
+    function launchCelebrationFireworks() {
+        const canvas = document.getElementById('celebFireworksCanvas');
         const ctx = canvas.getContext('2d');
-        
-        canvas.style.display = 'block';
-        overlay.style.opacity = '1'; 
-
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         
@@ -602,14 +709,14 @@
             fireworks = fireworks.filter(f => !f.dead);
 
             if (launchCount >= totalLaunches && fireworks.length === 0) {
-                canvas.style.display = 'none'; 
-                overlay.style.opacity = '0'; 
+                // finish
             } else {
                 requestAnimationFrame(loop);
             }
         };
         loop();
     }
+
     // ----------------------
 
     function startTipsSlider() {
@@ -754,17 +861,37 @@
         let hasNewBadge = false;
 
         badges.filter(b => b.tier === '1_Beginner').forEach(badge => {
-            // Force Animation for testing
-            if (badge.is_acquired) {
-                badge.is_new = true; 
-            }
-
             const html = createBadgeHtml(badge);
             tier1Container.insertAdjacentHTML('beforeend', html);
-            if (badge.is_new) hasNewBadge = true;
         });
         
-        if (hasNewBadge) setupMilestoneObserver();
+        if (tier1Grid.innerHTML === '') tier1Grid.innerHTML = '<div class="text-center w-100 small" style="flex:1;">データなし</div>';
+
+        // --- Intersection Observer for Trigger ---
+        const options = { root: null, rootMargin: '0px', threshold: 0.1 };
+        const observer = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    const badgeId = el.getAttribute('data-id');
+                    const badgeData = cachedMilestones.find(b => b.id === badgeId);
+
+                    // Debug: Trigger if acquired (Remove this condition in prod to use is_new)
+                    if (badgeData && badgeData.is_acquired) {
+                        showCelebration(badgeData);
+                        markAsSeen(badgeId);
+                        obs.unobserve(el); // Play only once per session
+                    }
+                }
+            });
+        }, options);
+
+        document.querySelectorAll('.ms-badge').forEach(el => {
+            // Only observe acquired ones for debug
+            if (!el.classList.contains('locked')) {
+                observer.observe(el);
+            }
+        });
 
         log('Milestones Rendered.');
     }
@@ -773,11 +900,8 @@
         const isLocked = !badge.is_acquired;
         const lockedClass = isLocked ? 'locked' : '';
         const colorClass = isLocked ? '' : `bg-${badge.color}`;
-        const glitterClass = (badge.tier === '3_Advanced' && !isLocked) ? 'glitter-effect' : '';
         
-        let animationClass = '';
-        if (badge.is_new) animationClass = 'ms-badge-new';
-        
+        // Icon
         let iconHtml = '<i class="fa-solid fa-paw"></i>';
         if (badge.icon) {
              const fileId = extractFileId(badge.icon);
@@ -785,6 +909,7 @@
              iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
         }
 
+        // Random organic shape
         const radiuses = [
             "48% 52% 53% 47% / 55% 45% 60% 40%",
             "52% 48% 40% 60% / 45% 55% 42% 58%",
@@ -795,38 +920,13 @@
         const randomRot = (Math.random() * 20 - 10) + 'deg';
 
         return `
-            <div class="ms-badge ${lockedClass} ${animationClass}" data-id="${badge.id}" onclick="showMilestoneDetail('${badge.id}')">
-                <div class="ms-icon-box ${colorClass} ${glitterClass}" style="border-radius:${randomRadius}; transform: rotate(${randomRot});">
+            <div class="ms-badge ${lockedClass}" data-id="${badge.id}" onclick="showMilestoneDetail('${badge.id}')">
+                <div class="ms-icon-box ${colorClass}" style="border-radius:${randomRadius}; transform: rotate(${randomRot});">
                     ${iconHtml}
                 </div>
                 <div class="ms-label">${badge.title}</div>
             </div>
         `;
-    }
-
-    // CLONE FUNCTION FOR EFFECT VISIBILITY (TOP LAYER)
-    function highlightBadge(targetEl) {
-        const rect = targetEl.getBoundingClientRect();
-        const clone = targetEl.cloneNode(true);
-        
-        clone.style.position = 'fixed';
-        clone.style.top = rect.top + 'px';
-        clone.style.left = rect.left + 'px';
-        clone.style.width = rect.width + 'px';
-        clone.style.height = rect.height + 'px';
-        clone.style.margin = '0';
-        clone.classList.add('ms-badge-cloned'); // New class for top z-index
-        
-        // Remove onclick from clone to avoid duplicate trigger
-        clone.onclick = null;
-
-        document.body.appendChild(clone);
-        
-        // Remove after animation (3.5s to be safe)
-        setTimeout(() => {
-            clone.style.opacity = '0';
-            setTimeout(() => clone.remove(), 500);
-        }, 3500);
     }
     
     function openAllMilestonesModal() {
@@ -881,28 +981,6 @@
         allMilestonesModal.show();
     }
 
-    function setupMilestoneObserver() {
-        const options = { root: null, rootMargin: '0px', threshold: 0.2 };
-        const observer = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const el = entry.target;
-                    const badgeId = el.getAttribute('data-id');
-                    
-                    launchFireworks();
-                    highlightBadge(el); // Creates the glowing clone on top
-                    markAsSeen(badgeId);
-                    
-                    observer.unobserve(el);
-                }
-            });
-        }, options);
-
-        document.querySelectorAll('.ms-badge-new').forEach(el => {
-            observer.observe(el);
-        });
-    }
-
     function markAsSeen(badgeId) {
         if(!currentUserId || !currentDogId) return;
         const payload = {
@@ -925,8 +1003,6 @@
         
         iconBox.className = isLocked ? 'bg-secondary' : `bg-${badge.color}`;
         iconBox.style.backgroundColor = ''; 
-        
-        if (badge.tier === '3_Advanced' && !isLocked) iconBox.classList.add('glitter-effect');
         
         iconBox.innerHTML = badge.icon 
             ? `<img src="https://drive.google.com/thumbnail?id=${extractFileId(badge.icon)}&sz=w200" style="width:60%;height:60%;object-fit:contain;">`
