@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <script>
     (function() {
-      // URLに ?page=medical がついていたら、即座に手帳ページへ転送
       if (new URLSearchParams(window.location.search).get('page') === 'medical') {
         window.location.replace('medical.html'); 
       }
@@ -112,6 +111,8 @@
         background: #fff; 
         padding: 15px 15px 20px 15px; 
         box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+        /* Ensure normal stacking context for content */
+        z-index: 1; 
     }
     
     .tier-header { font-size: 0.85rem; font-weight: 700; color: #666; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
@@ -160,14 +161,14 @@
         border: none;
     }
     
-    /* Inner Perfect Circle for Stamp Effect */
+    /* Inner Perfect Circle (Smaller: 16px margin) */
     .ms-icon-box::before {
         content: '';
         position: absolute;
-        top: 6px; left: 6px; right: 6px; bottom: 6px;
-        border-radius: 50%; /* Perfect Circle */
-        border: 1px solid rgba(0,0,0,0.1); /* Stamped Edge */
-        box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2), 0 0 0 20px rgba(0,0,0,0.02); /* Slight depth */
+        top: 16px; left: 16px; right: 16px; bottom: 16px;
+        border-radius: 50%; 
+        border: 1px solid rgba(0,0,0,0.15); 
+        box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2), 0 0 0 20px rgba(0,0,0,0.02); 
         pointer-events: none;
         z-index: 1;
     }
@@ -189,15 +190,23 @@
     .ms-badge.locked .ms-icon-box::after { content: '🔒'; position: absolute; font-size: 1.2rem; color: #999; z-index: 3; }
     .ms-badge.locked .ms-icon-box img { opacity: 0.1; filter: grayscale(100%); }
 
-    /* Celebration Animation */
-    .ms-badge-new .ms-icon-box { animation: flash-badge 2s ease-out infinite; box-shadow: 0 0 15px #FFD700; }
+    /* Celebration Animation - Force High Z-Index */
+    /* Z-Index: Badge(2002) > Fireworks(2001) > Sky(2000) */
+    .ms-badge-new { z-index: 2002 !important; position: relative; } 
+    .ms-badge-new .ms-icon-box { 
+        animation: flash-badge 2.5s ease-out infinite; 
+        box-shadow: 0 0 25px #FFD700, inset 0 0 10px rgba(0,0,0,0.2); 
+        border: 2px solid #fff;
+    }
+    
+    /* Enhance Flash: Emerge from light */
     @keyframes flash-badge {
         0% { transform: scale(1); filter: brightness(1); }
-        50% { transform: scale(1.05); filter: brightness(1.2); }
+        50% { transform: scale(1.15); filter: brightness(1.5) drop-shadow(0 0 10px gold); }
         100% { transform: scale(1); filter: brightness(1); }
     }
 
-    /* Badge Colors (Milestone Specific) */
+    /* Colors */
     .bg-pastel-sage { background: #A8D8B9; } .bg-pastel-apricot { background: #FFDAB9; }
     .bg-pastel-sky { background: #87CEEB; } .bg-pastel-rose { background: #FFB7B2; }
     .bg-pastel-lilac { background: #C8A2C8; } .bg-pastel-mint { background: #98FF98; }
@@ -275,23 +284,21 @@
     .modal-header { border-bottom: none; padding-bottom: 0; }
     #msModalIconBox { 
         width: 100px; height: 100px; 
-        /* Distorted shape handled in JS, but default here */
         border-radius: 50%; margin: 0 auto; 
         display: flex; align-items: center; justify-content: center; 
         font-size: 3rem; color: white;
         box-shadow: inset 0 0 10px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.2);
         position: relative;
+        /* Default distort will be applied in JS or keep circle for modal consistency */
     }
-    /* Inner ring for Modal too */
     #msModalIconBox::before {
-        content: ''; position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px;
-        border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); 
+        content: ''; position: absolute; top: 16px; left: 16px; right: 16px; bottom: 16px;
+        border-radius: 50%; border: 1px solid rgba(0,0,0,0.15); 
         box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2); pointer-events: none; z-index: 1;
     }
-    
     #msModalTipsBox { background-color: #E0F7FA; border-radius: 8px; padding: 15px; margin-top: 15px; color: #006064; font-size: 0.9rem; }
     
-    /* Full List Modal Grid (3 Column as well to match) */
+    /* Full List Modal Grid */
     .full-list-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; row-gap: 20px; margin-bottom: 20px; }
     .full-list-section { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
     .full-list-title { font-size: 1rem; font-weight: bold; margin-bottom: 15px; color: var(--brand-color); border-left: 4px solid var(--brand-color); padding-left: 10px; }
@@ -300,20 +307,23 @@
     #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 8px; height: 150px; overflow-y: scroll; margin: 20px; }
 
     /* Fireworks & Night Sky */
-    #fireworksCanvas {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        pointer-events: none; z-index: 2000; display: none;
-    }
     #nightSkyOverlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: radial-gradient(circle at center bottom, transparent 0%, rgba(0, 20, 60, 0.9) 100%);
-        opacity: 0; pointer-events: none; z-index: 1999;
+        opacity: 0; pointer-events: none; 
+        z-index: 2000; /* Sky above content */
         transition: opacity 1s ease-in-out;
+    }
+    #fireworksCanvas {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none; 
+        z-index: 2001; /* Fireworks above sky */
+        display: none;
     }
     
     /* Unified Button Colors */
-    .btn-secondary { background-color: #999; border-color: #999; color: white; }
-    .btn-secondary:hover, .btn-secondary:active { background-color: #777; border-color: #777; }
+    .btn-secondary { background-color: var(--brand-color); border-color: var(--brand-color); color: white; }
+    .btn-secondary:hover, .btn-secondary:active { background-color: #4aa3a2; border-color: #4aa3a2; }
   </style>
 </head>
 <body>
@@ -321,7 +331,7 @@
   <div id="nightSkyOverlay"></div>
   <canvas id="fireworksCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step5-WaxRefined</div>
+  <div id="log-stamp">v2025.12.14-Step5-FinalCheck</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -454,7 +464,7 @@
             </div>
         </div>
         <div class="modal-footer justify-content-center border-0 pb-4">
-            <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal" style="background-color: var(--brand-color); border:none;">閉じる</button>
+            <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">閉じる</button>
         </div>
       </div>
     </div>
@@ -470,7 +480,7 @@
         <div class="modal-body" id="allMilestonesBody">
             </div>
         <div class="modal-footer justify-content-center">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: var(--brand-color); border:none;">閉じる</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
         </div>
       </div>
     </div>
@@ -759,14 +769,17 @@
 
         let hasNewBadge = false;
 
-        // Render only Beginner Tier for the main view
         badges.filter(b => b.tier === '1_Beginner').forEach(badge => {
+            // DEBUG: Force Animation for ALL acquired badges
+            if (badge.is_acquired) {
+                badge.is_new = true; // <--- FORCE ANIMATION FOR TESTING
+            }
+
             const html = createBadgeHtml(badge);
             tier1Container.insertAdjacentHTML('beforeend', html);
             if (badge.is_new) hasNewBadge = true;
         });
         
-        // --- Setup Observer for New Badges ---
         if (hasNewBadge) setupMilestoneObserver();
 
         log('Milestones Rendered.');
@@ -788,7 +801,6 @@
              iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
         }
 
-        // Random organic shape
         const radiuses = [
             "48% 52% 53% 47% / 55% 45% 60% 40%",
             "52% 48% 40% 60% / 45% 55% 42% 58%",
@@ -807,49 +819,14 @@
             </div>
         `;
     }
-
+    
     function openAllMilestonesModal() {
         const modalBody = document.getElementById('allMilestonesBody');
         modalBody.innerHTML = '';
 
-        // Tiers Configuration
-        const tiers = [
-            { id: '1_Beginner', label: '🟢 初級: Basic Harmony', locked: false },
-            { id: '2_Intermediate', label: '🔵 中級: Advance Harmony', locked: false }, 
-            { id: '3_Advanced', label: '🔴 上級: Master Harmony', locked: false }
-        ];
-        
-        // Lock Logic:
-        // Tier 1 is always open.
-        // Tier 2 & 3 are "Grouped Locked" if Tier 2 is locked.
-        // Tier 3 is Locked if Tier 3 is locked but Tier 2 is open.
-        
-        // Conditions from requirement:
-        // 1. "初級のみ解放" -> 中級・上級を一挙にマスキング (Grouped Lock)
-        // 2. "中級を一つでも獲得" -> 上級を目隠し
-        
-        // Implementation:
-        // - "Beginner Only Unlocked": means (total_earned < 6 OR intermediateEarned == 0)?
-        //   Actually, the requirement says "if only beginner acquired".
-        //   Let's check if any Intermediate is acquired.
-        
         const intermediateEarnedCount = cachedMilestones.filter(b => b.tier === '2_Intermediate' && b.is_acquired).length;
-        
         // Grouped Lock Condition: No intermediate badges earned yet.
         const isGroupedLock = (intermediateEarnedCount === 0);
-        
-        // Advanced Lock Condition: (Grouped lock handles it) OR (Intermediate earned but Advanced not started? Actually requirement says just "mask advanced").
-        // So if Grouped Lock is false, we still need to lock Advanced? Yes.
-        // Wait, "if at least one intermediate earned, mask advanced". So Advanced is always masked until...?
-        // Let's assume Advanced is masked if no Advanced badges are earned? 
-        // Or strictly follow: "If intermediate >= 1, mask advanced".
-        // So Advanced is basically always masked unless... user didn't specify when Advanced opens. 
-        // Let's assume Advanced opens when some condition is met, but for now it's locked.
-        
-        // Rendering Strategy:
-        // 1. Render Beginner.
-        // 2. If isGroupedLock: Render a single "Coming Soon" block for "Step Up". Stop.
-        // 3. Else: Render Intermediate. Render "Coming Soon" block for Advanced.
 
         // 1. Render Beginner
         const beginnerBadges = cachedMilestones.filter(b => b.tier === '1_Beginner');
@@ -862,8 +839,9 @@
             </div>
         `);
 
-        // 2. Check Grouped Lock
+        // 2. Render Intermediate & Advanced
         if (isGroupedLock) {
+             // Grouped Lock for Int & Adv
              modalBody.insertAdjacentHTML('beforeend', `
                 <div class="tier-locked">
                     <div class="lock-overlay" style="position:relative; height:150px; border-radius:12px;">
@@ -872,9 +850,8 @@
                     </div>
                 </div>
              `);
-             // Do not render Int/Adv details
         } else {
-            // 3. Render Intermediate
+            // Tier 2 Open
             const intBadges = cachedMilestones.filter(b => b.tier === '2_Intermediate');
             let iHtml = '';
             intBadges.forEach(b => iHtml += createBadgeHtml(b));
@@ -885,7 +862,7 @@
                 </div>
             `);
             
-            // 4. Render Advanced Lock (Always locked for now if Intermediate is open)
+            // Tier 3 Locked
              modalBody.insertAdjacentHTML('beforeend', `
                 <div class="tier-locked">
                     <div class="lock-overlay" style="position:relative; height:150px; border-radius:12px;">
@@ -900,7 +877,7 @@
     }
 
     function setupMilestoneObserver() {
-        const options = { root: null, rootMargin: '0px', threshold: 0.1 };
+        const options = { root: null, rootMargin: '0px', threshold: 0.2 };
         const observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -939,9 +916,11 @@
         const isLocked = !badge.is_acquired;
         const iconBox = document.getElementById('msModalIconBox');
         
-        // Brand Color for modal icon
-        iconBox.className = isLocked ? 'bg-secondary' : 'wax-brand-main';
-        iconBox.style.backgroundColor = isLocked ? '#e0e0e0' : 'var(--brand-color)';
+        // Revert to badge specific color
+        iconBox.className = isLocked ? 'bg-secondary' : `bg-${badge.color}`;
+        iconBox.style.backgroundColor = ''; 
+        
+        if (badge.tier === '3_Advanced' && !isLocked) iconBox.classList.add('glitter-effect');
         
         iconBox.innerHTML = badge.icon 
             ? `<img src="https://drive.google.com/thumbnail?id=${extractFileId(badge.icon)}&sz=w200" style="width:60%;height:60%;object-fit:contain;">`
