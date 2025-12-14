@@ -111,8 +111,6 @@
         background: #fff; 
         padding: 15px 15px 20px 15px; 
         box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-        /* Ensure normal stacking context for content */
-        z-index: 1; 
     }
     
     .tier-header { font-size: 0.85rem; font-weight: 700; color: #666; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
@@ -147,13 +145,10 @@
     /* Sealing Wax Style Icon Box (70px x 70px) */
     .ms-icon-box { 
         width: 70px; height: 70px; 
-        /* Distorted Circle Border (Randomized via JS) */
         border-radius: 50%;
         display: flex; align-items: center; justify-content: center; 
         margin-bottom: 8px; 
         position: relative; overflow: hidden;
-        
-        /* Wax Effect */
         box-shadow: 
             inset 0 0 8px rgba(0,0,0,0.3), 
             inset 2px 2px 4px rgba(255,255,255,0.4), 
@@ -161,11 +156,11 @@
         border: none;
     }
     
-    /* Inner Perfect Circle (Smaller: 16px margin) */
+    /* Inner Perfect Circle (Smaller: 8px margin as requested) */
     .ms-icon-box::before {
         content: '';
         position: absolute;
-        top: 16px; left: 16px; right: 16px; bottom: 16px;
+        top: 8px; left: 8px; right: 8px; bottom: 8px;
         border-radius: 50%; 
         border: 1px solid rgba(0,0,0,0.15); 
         box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2), 0 0 0 20px rgba(0,0,0,0.02); 
@@ -190,22 +185,6 @@
     .ms-badge.locked .ms-icon-box::after { content: '🔒'; position: absolute; font-size: 1.2rem; color: #999; z-index: 3; }
     .ms-badge.locked .ms-icon-box img { opacity: 0.1; filter: grayscale(100%); }
 
-    /* Celebration Animation - Force High Z-Index */
-    /* Z-Index: Badge(2002) > Fireworks(2001) > Sky(2000) */
-    .ms-badge-new { z-index: 2002 !important; position: relative; } 
-    .ms-badge-new .ms-icon-box { 
-        animation: flash-badge 2.5s ease-out infinite; 
-        box-shadow: 0 0 25px #FFD700, inset 0 0 10px rgba(0,0,0,0.2); 
-        border: 2px solid #fff;
-    }
-    
-    /* Enhance Flash: Emerge from light */
-    @keyframes flash-badge {
-        0% { transform: scale(1); filter: brightness(1); }
-        50% { transform: scale(1.15); filter: brightness(1.5) drop-shadow(0 0 10px gold); }
-        100% { transform: scale(1); filter: brightness(1); }
-    }
-
     /* Colors */
     .bg-pastel-sage { background: #A8D8B9; } .bg-pastel-apricot { background: #FFDAB9; }
     .bg-pastel-sky { background: #87CEEB; } .bg-pastel-rose { background: #FFB7B2; }
@@ -228,10 +207,19 @@
     .bg-luxury-onyx { background: linear-gradient(45deg, #353839, #000000, #2c2c2c); }
     .bg-luxury-diamond { background: linear-gradient(45deg, #b9f2ff, #ffffff, #e0ffff); color:#000; border:1px solid #aaa; }
 
-    .glitter-effect::after {
-        content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-        background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
-        transform: rotate(45deg); animation: sparkle 3s infinite linear; pointer-events: none;
+    /* Cloned Badge for Animation (Highest Z-Index) */
+    .ms-badge-cloned {
+        position: fixed !important;
+        z-index: 2005 !important; /* Above Fireworks(2001) & Sky(2000) */
+        pointer-events: none;
+        transition: opacity 0.5s;
+        animation: appear-shine 3s ease-out forwards;
+    }
+    
+    @keyframes appear-shine {
+        0% { transform: scale(0.5); opacity: 0; filter: brightness(3) blur(2px); }
+        20% { transform: scale(1.2); opacity: 1; filter: brightness(2) blur(0); }
+        100% { transform: scale(1); opacity: 1; filter: brightness(1) drop-shadow(0 0 10px gold); }
     }
 
     /* Scroll Hint Fade */
@@ -280,7 +268,7 @@
         text-shadow: 0 2px 4px rgba(0,0,0,1);
     }
 
-    /* Modals - Branded */
+    /* Modals */
     .modal-header { border-bottom: none; padding-bottom: 0; }
     #msModalIconBox { 
         width: 100px; height: 100px; 
@@ -289,10 +277,9 @@
         font-size: 3rem; color: white;
         box-shadow: inset 0 0 10px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.2);
         position: relative;
-        /* Default distort will be applied in JS or keep circle for modal consistency */
     }
     #msModalIconBox::before {
-        content: ''; position: absolute; top: 16px; left: 16px; right: 16px; bottom: 16px;
+        content: ''; position: absolute; top: 12px; left: 12px; right: 12px; bottom: 12px;
         border-radius: 50%; border: 1px solid rgba(0,0,0,0.15); 
         box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2); pointer-events: none; z-index: 1;
     }
@@ -307,18 +294,15 @@
     #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 8px; height: 150px; overflow-y: scroll; margin: 20px; }
 
     /* Fireworks & Night Sky */
+    #fireworksCanvas {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none; z-index: 2001; display: none;
+    }
     #nightSkyOverlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: radial-gradient(circle at center bottom, transparent 0%, rgba(0, 20, 60, 0.9) 100%);
-        opacity: 0; pointer-events: none; 
-        z-index: 2000; /* Sky above content */
+        opacity: 0; pointer-events: none; z-index: 2000;
         transition: opacity 1s ease-in-out;
-    }
-    #fireworksCanvas {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        pointer-events: none; 
-        z-index: 2001; /* Fireworks above sky */
-        display: none;
     }
     
     /* Unified Button Colors */
@@ -331,7 +315,7 @@
   <div id="nightSkyOverlay"></div>
   <canvas id="fireworksCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step5-FinalCheck</div>
+  <div id="log-stamp">v2025.12.14-Step5-VisualFix</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -770,9 +754,9 @@
         let hasNewBadge = false;
 
         badges.filter(b => b.tier === '1_Beginner').forEach(badge => {
-            // DEBUG: Force Animation for ALL acquired badges
+            // Force Animation for testing
             if (badge.is_acquired) {
-                badge.is_new = true; // <--- FORCE ANIMATION FOR TESTING
+                badge.is_new = true; 
             }
 
             const html = createBadgeHtml(badge);
@@ -819,16 +803,40 @@
             </div>
         `;
     }
+
+    // CLONE FUNCTION FOR EFFECT VISIBILITY (TOP LAYER)
+    function highlightBadge(targetEl) {
+        const rect = targetEl.getBoundingClientRect();
+        const clone = targetEl.cloneNode(true);
+        
+        clone.style.position = 'fixed';
+        clone.style.top = rect.top + 'px';
+        clone.style.left = rect.left + 'px';
+        clone.style.width = rect.width + 'px';
+        clone.style.height = rect.height + 'px';
+        clone.style.margin = '0';
+        clone.classList.add('ms-badge-cloned'); // New class for top z-index
+        
+        // Remove onclick from clone to avoid duplicate trigger
+        clone.onclick = null;
+
+        document.body.appendChild(clone);
+        
+        // Remove after animation (3.5s to be safe)
+        setTimeout(() => {
+            clone.style.opacity = '0';
+            setTimeout(() => clone.remove(), 500);
+        }, 3500);
+    }
     
     function openAllMilestonesModal() {
         const modalBody = document.getElementById('allMilestonesBody');
         modalBody.innerHTML = '';
 
         const intermediateEarnedCount = cachedMilestones.filter(b => b.tier === '2_Intermediate' && b.is_acquired).length;
-        // Grouped Lock Condition: No intermediate badges earned yet.
         const isGroupedLock = (intermediateEarnedCount === 0);
 
-        // 1. Render Beginner
+        // 1. Beginner
         const beginnerBadges = cachedMilestones.filter(b => b.tier === '1_Beginner');
         let bHtml = '';
         beginnerBadges.forEach(b => bHtml += createBadgeHtml(b));
@@ -839,9 +847,8 @@
             </div>
         `);
 
-        // 2. Render Intermediate & Advanced
+        // 2. Intermediate & Advanced
         if (isGroupedLock) {
-             // Grouped Lock for Int & Adv
              modalBody.insertAdjacentHTML('beforeend', `
                 <div class="tier-locked">
                     <div class="lock-overlay" style="position:relative; height:150px; border-radius:12px;">
@@ -851,7 +858,6 @@
                 </div>
              `);
         } else {
-            // Tier 2 Open
             const intBadges = cachedMilestones.filter(b => b.tier === '2_Intermediate');
             let iHtml = '';
             intBadges.forEach(b => iHtml += createBadgeHtml(b));
@@ -862,7 +868,6 @@
                 </div>
             `);
             
-            // Tier 3 Locked
              modalBody.insertAdjacentHTML('beforeend', `
                 <div class="tier-locked">
                     <div class="lock-overlay" style="position:relative; height:150px; border-radius:12px;">
@@ -883,10 +888,12 @@
                 if (entry.isIntersecting) {
                     const el = entry.target;
                     const badgeId = el.getAttribute('data-id');
+                    
                     launchFireworks();
+                    highlightBadge(el); // Creates the glowing clone on top
                     markAsSeen(badgeId);
+                    
                     observer.unobserve(el);
-                    el.classList.remove('ms-badge-new'); 
                 }
             });
         }, options);
@@ -916,7 +923,6 @@
         const isLocked = !badge.is_acquired;
         const iconBox = document.getElementById('msModalIconBox');
         
-        // Revert to badge specific color
         iconBox.className = isLocked ? 'bg-secondary' : `bg-${badge.color}`;
         iconBox.style.backgroundColor = ''; 
         
