@@ -101,22 +101,54 @@
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
 
     /* =========================================
-       Milestone CSS (Step 4 Refined)
+       Milestone CSS (Step 4 Refined - Horizontal)
        ========================================= */
     .milestone-section { margin: 30px 20px 10px; }
-    .tier-container { margin-bottom: 20px; position: relative; border-radius: 12px; background: #fff; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: max-height 0.5s ease-out; }
-    .tier-header { font-size: 0.85rem; font-weight: 700; color: #666; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
     
-    /* 3-Column Grid for large badges */
-    .tier-badge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; row-gap: 20px; }
+    .tier-container { 
+        margin-bottom: 20px; 
+        position: relative; 
+        border-radius: 12px; 
+        background: #fff; 
+        padding: 15px 15px 20px 15px; /* Bottom padding for labels */
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+        transition: max-height 0.5s ease-out; 
+    }
     
+    .tier-header { font-size: 0.85rem; font-weight: 700; color: #666; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
+    
+    /* Horizontal Scroll Layout */
+    .tier-badge-grid { 
+        display: flex; 
+        flex-wrap: nowrap;
+        overflow-x: auto; 
+        gap: 15px; /* Spacing between items */
+        padding-bottom: 5px;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Hide scrollbar but keep functionality */
+    .tier-badge-grid::-webkit-scrollbar { display: none; }
+    .tier-badge-grid { -ms-overflow-style: none; scrollbar-width: none; }
+
     /* Badge Item */
-    .ms-badge { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.1s; position: relative; text-decoration: none; }
+    .ms-badge { 
+        flex: 0 0 auto; /* Do not shrink */
+        width: 75px; /* Container width slightly larger than icon */
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        cursor: pointer; 
+        position: relative; 
+        text-decoration: none; 
+        scroll-snap-align: start;
+    }
     .ms-badge:active { transform: scale(0.95); }
     
-    /* Sealing Wax Style Icon Box (100px x 100px) */
+    /* Sealing Wax Style Icon Box (70px x 70px) */
     .ms-icon-box { 
-        width: 100px; height: 100px; 
+        width: 70px; height: 70px; 
         border-radius: 50%; 
         display: flex; align-items: center; justify-content: center; 
         margin-bottom: 8px; 
@@ -124,23 +156,32 @@
         
         /* Sealing Wax Effect */
         box-shadow: 
-            inset 0 0 10px rgba(0,0,0,0.3), /* Deep inner shadow */
-            inset 2px 2px 5px rgba(255,255,255,0.4), /* Wax highlight */
-            0 4px 6px rgba(0,0,0,0.3); /* Drop shadow */
-        border: 4px solid rgba(0,0,0,0.05); /* Subtle rim */
+            inset 0 0 8px rgba(0,0,0,0.3), 
+            inset 2px 2px 4px rgba(255,255,255,0.4), 
+            0 4px 6px rgba(0,0,0,0.3);
+        border: 3px solid rgba(0,0,0,0.05);
     }
-    .ms-icon-box i { font-size: 2.5rem; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
+    .ms-icon-box i { font-size: 1.8rem; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
     .ms-icon-box img { width: 60%; height: 60%; object-fit: contain; z-index: 2; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
-    .ms-label { font-size: 0.7rem; font-weight: 700; color: #555; text-align: center; line-height: 1.2; width: 110%; white-space: normal; overflow: visible; }
+    
+    /* Label with fixed height for alignment */
+    .ms-label { 
+        font-size: 0.65rem; font-weight: 700; color: #555; 
+        text-align: center; line-height: 1.2; 
+        width: 100%; 
+        height: 2.4em; /* Approx 2 lines */
+        overflow: hidden; 
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    }
 
     /* Unacquired & Locked */
-    .ms-badge.locked .ms-icon-box { background: #e0e0e0 !important; box-shadow: inset 0 0 10px rgba(0,0,0,0.1); border-color: #d0d0d0; }
+    .ms-badge.locked .ms-icon-box { background: #e0e0e0 !important; box-shadow: inset 0 0 5px rgba(0,0,0,0.1); border-color: #d0d0d0; }
     .ms-badge.locked .ms-label { color: #aaa; }
-    .ms-badge.locked .ms-icon-box::after { content: '🔒'; position: absolute; font-size: 1.5rem; color: #999; z-index: 3; }
+    .ms-badge.locked .ms-icon-box::after { content: '🔒'; position: absolute; font-size: 1.2rem; color: #999; z-index: 3; }
     .ms-badge.locked .ms-icon-box img { opacity: 0.1; filter: grayscale(100%); }
 
     /* Celebration Animation (Flash) */
-    .ms-badge-new .ms-icon-box { animation: flash-badge 2s ease-out infinite; box-shadow: 0 0 20px #FFD700, inset 0 0 10px rgba(0,0,0,0.3); border-color: #FFD700; }
+    .ms-badge-new .ms-icon-box { animation: flash-badge 2s ease-out infinite; box-shadow: 0 0 15px #FFD700, inset 0 0 8px rgba(0,0,0,0.3); border-color: #FFD700; }
     @keyframes flash-badge {
         0% { transform: scale(1); filter: brightness(1); }
         50% { transform: scale(1.05); filter: brightness(1.2); }
@@ -174,17 +215,20 @@
         background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
         transform: rotate(45deg); animation: sparkle 3s infinite linear; pointer-events: none;
     }
+    @keyframes sparkle { 0% { transform: translateX(-100%) rotate(45deg); } 100% { transform: translateX(100%) rotate(45deg); } }
 
-    /* Peek Style */
-    .tier-peek { max-height: 120px; /* Adjusted for larger icons */ overflow: hidden; position: relative; }
-    .tier-peek::after {
-        content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 50px;
-        background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
+    /* Peek Style (Horizontal) */
+    /* No need for vertical mask, just let the 4th item be cut off by screen width */
+    /* We can add a gradient fade on the right edge to suggest scrolling */
+    .tier-container::after {
+        content: ''; position: absolute; top: 0; right: 0; width: 40px; height: 100%;
+        background: linear-gradient(to left, rgba(255,255,255,1), rgba(255,255,255,0));
         pointer-events: none; z-index: 5;
+        border-radius: 0 12px 12px 0;
     }
 
-    /* Luxury Lock Style (Diamond Quilt) */
-    .tier-locked { position: relative; min-height: 150px; }
+    /* Luxury Lock Style (Updated) */
+    .tier-locked { position: relative; min-height: 120px; }
     .lock-overlay {
         position: absolute; inset: 0; 
         background-color: #2c2c2c;
@@ -204,14 +248,14 @@
         border: 1px solid #444;
     }
     .lock-icon-gold {
-        font-size: 3.5rem; margin-bottom: 10px;
+        font-size: 3rem; margin-bottom: 8px;
         background: linear-gradient(to bottom, #fbf5b7 0%, #bf953f 40%, #b38728 60%, #fbf5b7 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         filter: drop-shadow(0 4px 4px rgba(0,0,0,0.8));
     }
     .lock-text {
         font-family: 'Times New Roman', serif;
-        font-size: 1.3rem; letter-spacing: 0.15em;
+        font-size: 1.2rem; letter-spacing: 0.15em;
         color: #fbf5b7;
         text-shadow: 0 2px 4px rgba(0,0,0,1);
     }
@@ -219,13 +263,10 @@
     /* Modal Styles */
     #milestoneModal .modal-header { border-bottom: none; padding-bottom: 0; }
     #msModalIconBox { 
-        width: 120px; height: 120px; border-radius: 50%; margin: 0 auto; 
+        width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; 
         display: flex; align-items: center; justify-content: center; 
-        font-size: 3.5rem; color: white;
-        box-shadow: 
-            inset 0 0 10px rgba(0,0,0,0.3),
-            inset 2px 2px 5px rgba(255,255,255,0.4),
-            0 8px 15px rgba(0,0,0,0.3);
+        font-size: 3rem; color: white;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.2);
         border: 4px solid rgba(0,0,0,0.05);
     }
     #msModalTipsBox { background-color: #E0F7FA; border-radius: 8px; padding: 15px; margin-top: 15px; color: #006064; font-size: 0.9rem; }
@@ -252,7 +293,7 @@
   <div id="nightSkyOverlay"></div>
   <canvas id="fireworksCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step4-Wax-NightSky</div>
+  <div id="log-stamp">v2025.12.14-Step4-HorizontalScroll</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -347,11 +388,11 @@
         <div class="tier-container" id="tier1-container">
             <div class="tier-header">🟢 初級: Basic Harmony</div>
             <div class="tier-badge-grid" id="tier1-grid">
-                <div class="text-center w-100 text-muted small" style="grid-column: span 3;" id="tier1-loading">Loading...</div>
+                <div class="text-center w-100 text-muted small" style="flex:1;" id="tier1-loading">Loading...</div>
             </div>
         </div>
 
-        <div class="tier-container tier-peek" id="tier2-container">
+        <div class="tier-container" id="tier2-container" style="display:none;">
             <div class="tier-header">🔵 中級: Advance Harmony</div>
             <div class="tier-badge-grid" id="tier2-grid">
                 </div>
@@ -731,13 +772,13 @@
             }
         });
         
-        if (tier1Grid.innerHTML === '') tier1Grid.innerHTML = '<div class="text-center w-100 small" style="grid-column: span 3;">データなし</div>';
+        if (tier1Grid.innerHTML === '') tier1Grid.innerHTML = '<div class="text-center w-100 small" style="flex:1;">データなし</div>';
 
         const t2Cont = document.getElementById('tier2-container');
         if (meta.show_intermediate_full) {
-            t2Cont.classList.remove('tier-peek'); 
+            t2Cont.style.display = 'block'; 
         } else if (meta.show_intermediate_peek) {
-            t2Cont.classList.add('tier-peek'); 
+            t2Cont.style.display = 'block'; 
         } else {
              if (!meta.show_intermediate_peek && !meta.show_intermediate_full) {
                  t2Cont.style.display = 'none';
@@ -745,26 +786,24 @@
         }
         
         // --- Setup Observer for New Badges ---
+        // Lower threshold to ensure triggering even if partially visible
         if (hasNewBadge) setupMilestoneObserver();
 
         log('Milestones Rendered.');
     }
 
     function setupMilestoneObserver() {
-        const options = { root: null, rootMargin: '0px', threshold: 0.5 };
+        // Updated threshold to 0.1 for better detection in horizontal scroll
+        const options = { root: null, rootMargin: '0px', threshold: 0.1 };
         const observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     const el = entry.target;
                     const badgeId = el.getAttribute('data-id');
                     
-                    // Trigger Effect
                     launchFireworks();
-                    
-                    // Call API to mark as seen
                     markAsSeen(badgeId);
                     
-                    // Stop observing this element
                     observer.unobserve(el);
                     el.classList.remove('ms-badge-new'); 
                 }
