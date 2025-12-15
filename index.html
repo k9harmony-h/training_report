@@ -343,25 +343,25 @@
         opacity: 0; transform: scale(0);
     }
     
-    /* Core Animation */
+    /* Core Animation (FINAL SIZE: 250px) */
     .anim-light {
         animation: light-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     @keyframes light-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; } /* Whiteout */
-        100% { transform: scale(22); opacity: 0.6; } /* Pedestal size 220px */
+        100% { transform: scale(25); opacity: 0.6; } /* Pedestal size 250px */
     }
 
-    /* Ring Animation */
+    /* Ring Animation (FINAL SIZE: 280px, Bottom Aligned to 250px Core) */
     .anim-ring {
         animation: ring-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     @keyframes ring-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; } /* Sync with Core */
-        /* scale(28) = 280px. translateY(-30px) for bottom alignment */
-        100% { transform: translateY(-30px) scale(28); opacity: 0.8; }
+        /* scale(28)=280px(R140), Core=250px(R125). Offset = 140-125 = 15px */
+        100% { transform: translateY(-15px) scale(28); opacity: 0.8; }
     }
 
     /* 4. Fireworks Canvas */
@@ -452,7 +452,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step12-Final-Fixed</div>
+  <div id="log-stamp">v2025.12.14-Step13-Core250px</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
