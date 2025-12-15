@@ -100,7 +100,7 @@
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
 
     /* =========================================
-       Milestone CSS
+       Milestone CSS (Static List)
        ========================================= */
     .milestone-section { margin: 30px 20px 10px; }
     
@@ -191,7 +191,6 @@
     .bg-pastel-sky { background: #87CEEB; } .bg-pastel-rose { background: #FFB7B2; }
     .bg-pastel-lilac { background: #C8A2C8; } .bg-pastel-mint { background: #98FF98; }
     .bg-pastel-coral { background: #FF7F50; } .bg-pastel-cocoa { background: #D2691E; }
-
     .bg-metallic-silver { background: linear-gradient(135deg, #e0e0e0, #ffffff, #b0b0b0); color: #333; }
     .bg-metallic-bronze { background: linear-gradient(135deg, #cd7f32, #ffcc99, #8b4513); }
     .bg-metallic-champagne { background: linear-gradient(135deg, #fad6a5, #fff8e7, #d2b48c); color: #5d4037; }
@@ -200,7 +199,6 @@
     .bg-metallic-rose-gold { background: linear-gradient(135deg, #b76e79, #ffd1dc, #a0522d); }
     .bg-metallic-coffee { background: linear-gradient(135deg, #6f4e37, #d2b48c, #3e2723); }
     .bg-metallic-ice { background: linear-gradient(135deg, #a5f2f3, #e0ffff, #00ced1); color: #00695c; }
-
     .bg-luxury-gold { background: linear-gradient(45deg, #FFD700, #FDB931, #FFD700); }
     .bg-luxury-platinum { background: linear-gradient(45deg, #E5E4E2, #ffffff, #BCC6CC); color:#333; }
     .bg-luxury-ruby { background: linear-gradient(45deg, #9b111e, #ff0000, #800000); }
@@ -327,8 +325,10 @@
         /* 中心30%まで純白、70%までかけて透明に */
         background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 30%, rgba(255,255,255,0) 70%);
         opacity: 0; transform: scale(0);
-        filter: blur(1.5px); /* Reduced blur for crisp core at scale */
-        box-shadow: 0 0 3px 2px rgba(255, 255, 255, 0.9);
+        /* 縮小時(18倍)に約18pxの柔らかいボケ足になるよう調整 */
+        filter: blur(1px); 
+        /* 縮小時に適度な光彩(約18px)になるよう調整 */
+        box-shadow: 0 0 1px 0.5px rgba(255, 255, 255, 0.9);
     }
     
     .anim-light {
@@ -337,7 +337,7 @@
     @keyframes light-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; } /* Whiteout */
-        100% { transform: scale(25); opacity: 0.6; } /* Pedestal size */
+        100% { transform: scale(18); opacity: 0.6; } /* Pedestal size (10px * 18 = 180px) */
     }
 
     /* 4. Fireworks Canvas */
@@ -379,7 +379,7 @@
     .celeb-badge-inner::before {
         content: '';
         position: absolute;
-        top: 16px; left: 16px; right: 16px; bottom: 16px;
+        top: 16px; left: 16px; right: 16px; bottom: 16px; /* Scaled margin */
         border-radius: 50%; 
         border: 2px solid rgba(0,0,0,0.15); 
         box-shadow: inset 2px 2px 4px rgba(0,0,0,0.2), 0 0 0 40px rgba(0,0,0,0.02); 
@@ -416,7 +416,7 @@
       </div>
   </div>
 
-  <div id="log-stamp">v2025.12.14-Step5-LightBloomCorrected</div>
+  <div id="log-stamp">v2025.12.14-Step5-LightBloomFinalV3</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -682,7 +682,7 @@
             // 4. Fireworks at exact timing (2.0s after start)
             setTimeout(() => {
                 launchCelebrationFireworks();
-            }, 2200);
+            }, 2000);
             
         }, 50);
     }
