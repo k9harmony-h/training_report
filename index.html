@@ -327,18 +327,18 @@
         /* 0%〜80%まで完全な白、100%へ向かって透明に */
         background: radial-gradient(circle, #fff 0%, #fff 80%, rgba(255,255,255,0.8) 90%, transparent 100%);
         opacity: 0; transform: scale(0);
-        /* 輪郭を柔らかくぼかす */
-        filter: blur(2px); 
+        /* ぼかしを削除してくっきりさせる */
+        filter: none; 
         box-shadow: none;
     }
 
-    /* 3.2 Donut Ring - Back (Modified for delicate, transparent look) */
+    /* 3.2 Donut Ring - Back (Fixed Visibility) */
     #celebLightRing {
         position: absolute;
         z-index: 1;
         width: 10px; height: 10px; border-radius: 50%;
-        /* 白い帯を狭くし、透明度を上げて奥を透けさせる */
-        background: radial-gradient(circle, transparent 48%, rgba(255,255,255,0.8) 50%, transparent 52%);
+        /* 白い帯の幅を広げ、不透明度を上げて視認性を高める */
+        background: radial-gradient(circle, transparent 45%, rgba(255,255,255,0.9) 50%, transparent 55%);
         filter: blur(0.5px); 
         opacity: 0; transform: scale(0);
     }
@@ -361,8 +361,8 @@
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; } 
         /* scale(28)=280px(R140), Core=250px(R125). Offset = 140-125 = 15px */
-        /* Final opacity reduced to 0.5 for transparency */
-        100% { transform: translateY(-15px) scale(28); opacity: 0.5; }
+        /* Final opacity increased to 0.7 for visibility */
+        100% { transform: translateY(-15px) scale(28); opacity: 0.7; }
     }
 
     /* 4. Fireworks Canvas */
@@ -453,7 +453,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step15-RingDelicate-FairyLonger</div>
+  <div id="log-stamp">v2025.12.14-Step16-RingFixed-FairyFineLong</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -791,7 +791,7 @@
             const cy = (1-t)**3*start.y + 3*(1-t)**2*t*cp1.y + 3*(1-t)*t**2*cp2.y + t**3*end.y;
             
             if (progress < 1) {
-                for(let i=0; i<4; i++) { // More particles per frame
+                for(let i=0; i<6; i++) { // More particles (6) per frame
                     particles.push({
                         x: cx + (Math.random()-0.5)*15,
                         y: cy + (Math.random()-0.5)*15,
@@ -799,7 +799,7 @@
                         vy: Math.random()*0.5 + 0.2, // Slower gravity
                         life: 1.0,
                         color: Math.random() > 0.3 ? '#FFD700' : '#FFFFFF',
-                        size: Math.random()*1.5 + 0.5 // Finer particles (0.5px - 2.0px)
+                        size: Math.random()*0.8 + 0.2 // Much finer particles (0.2px - 1.0px)
                     });
                 }
             }
@@ -814,7 +814,7 @@
                 
                 p.x += p.vx;
                 p.y += p.vy;
-                p.life -= 0.0025; // Slower decay (Longer life)
+                p.life -= 0.005; // Shorter life (~3s decay) to emphasize source movement
             }
             
             let aliveParticles = false;
