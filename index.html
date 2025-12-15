@@ -100,7 +100,7 @@
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
 
     /* =========================================
-       Milestone CSS (Step 5 Refined)
+       Milestone CSS
        ========================================= */
     .milestone-section { margin: 30px 20px 10px; }
     
@@ -146,12 +146,10 @@
     /* Sealing Wax Style Icon Box (70px x 70px) */
     .ms-icon-box { 
         width: 70px; height: 70px; 
-        /* Distorted Circle Border (Randomized via JS) */
         border-radius: 50%;
         display: flex; align-items: center; justify-content: center; 
         margin-bottom: 8px; 
         position: relative; overflow: hidden;
-        
         /* Wax Effect */
         box-shadow: 
             inset 0 0 8px rgba(0,0,0,0.3), 
@@ -160,11 +158,11 @@
         border: none;
     }
     
-    /* Inner Perfect Circle (8px margin) */
+    /* Inner Perfect Circle (9px margin) */
     .ms-icon-box::before {
         content: '';
         position: absolute;
-        top: 8px; left: 8px; right: 8px; bottom: 8px;
+        top: 9px; left: 9px; right: 9px; bottom: 9px;
         border-radius: 50%; 
         border: 1px solid rgba(0,0,0,0.15); 
         box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2), 0 0 0 20px rgba(0,0,0,0.02); 
@@ -210,6 +208,12 @@
     .bg-luxury-sapphire { background: linear-gradient(45deg, #0F52BA, #4169E1, #000080); }
     .bg-luxury-onyx { background: linear-gradient(45deg, #353839, #000000, #2c2c2c); }
     .bg-luxury-diamond { background: linear-gradient(45deg, #b9f2ff, #ffffff, #e0ffff); color:#000; border:1px solid #aaa; }
+
+    .glitter-effect::after {
+        content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+        background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+        transform: rotate(45deg); animation: sparkle 3s infinite linear; pointer-events: none;
+    }
 
     /* Scroll Hint Fade */
     .tier-container::after {
@@ -282,10 +286,10 @@
     #log-stamp { background: #d32f2f; color: white; text-align: center; font-weight: bold; padding: 5px; font-size: 0.8rem; }
     #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 8px; height: 150px; overflow-y: scroll; margin: 20px; }
 
-    /* --- Full Screen Celebration Overlay (Improved Z-Index: 10000+) --- */
+    /* --- Full Screen Celebration Overlay (Improved Z-Index) --- */
     #celebrationOverlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        z-index: 10000; /* Ensure Topmost */
+        z-index: 10000; /* Highest Z-Index */
         display: none;
     }
     #celebNightSky {
@@ -294,59 +298,73 @@
         opacity: 0; transition: opacity 0.5s;
         z-index: 10001;
     }
+    
+    /* Stars Container */
+    #celebStars {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 10002; pointer-events: none; opacity: 0; transition: opacity 1s;
+    }
+    .twinkling-star {
+        position: absolute; background: white; border-radius: 50%;
+        animation: twinkle 2s infinite ease-in-out;
+    }
+    @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px white; } }
+    
     #celebLightContainer {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         display: flex; justify-content: center; align-items: center;
         pointer-events: none;
-        z-index: 10004; /* Above Badge */
+        z-index: 10003; /* Behind Badge, Above Sky */
     }
     
+    /* Light Core - Expand then Shrink to Pedestal */
     #celebLightCore {
-        width: 20px; height: 20px; 
+        width: 10px; height: 10px; 
         border-radius: 50%;
         background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.8) 20%, rgba(255,255,255,0) 70%);
         opacity: 0;
-        transform: scale(1);
+        transform: scale(0);
         filter: blur(20px);
-        box-shadow: 0 0 40px 20px rgba(255, 255, 255, 0.9);
+        box-shadow: 0 0 80px 40px rgba(255, 255, 255, 0.9);
+    }
+    
+    .anim-light-sequence { animation: light-explode-pedestal 2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes light-explode-pedestal {
+        0% { transform: scale(0); opacity: 0; }
+        15% { transform: scale(300); opacity: 1; } /* Max expansion (Screen fill) */
+        100% { transform: scale(25); opacity: 0.7; } /* Settles as pedestal */
     }
     
     #celebFireworksCanvas {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         pointer-events: none;
-        z-index: 10002; /* Above Sky, Below Badge */
+        z-index: 10004; 
     }
+    
     #celebBadgeContainer {
         position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        width: 150px; height: 150px;
+        width: 180px; height: 180px;
         display: flex; align-items: center; justify-content: center;
         opacity: 0;
-        transform: translate(-50%, -50%) scale(0.2);
-        z-index: 10003; /* Above Fireworks */
+        transform: translate(-50%, -50%) scale(0.5); 
+        z-index: 10005; /* Topmost Element */
+        filter: brightness(0); /* Start dark */
     }
+    
+    .anim-badge-appear { animation: badge-emerge 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+    @keyframes badge-emerge {
+        0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; filter: brightness(0); }
+        100% { transform: translate(-50%, -50%) scale(1); opacity: 1; filter: brightness(1); }
+    }
+
     /* Modal Close Overlay Area */
     #celebCloseArea {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-        z-index: 10005; /* Top most for click */
+        z-index: 10006; /* User Interaction */
         cursor: pointer;
     }
-
-    /* Animation Classes */
-    .anim-flash { animation: flash-expand 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards; } 
-    @keyframes flash-expand {
-        0% { transform: scale(1); opacity: 0; }
-        15% { transform: scale(200); opacity: 1; }
-        40% { transform: scale(250); opacity: 0.8; }
-        100% { transform: scale(400); opacity: 0; } 
-    }
     
-    .anim-badge-emerge { animation: badge-pop 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-    @keyframes badge-pop {
-        0% { transform: translate(-50%, -50%) scale(0.2) rotate(-30deg); opacity: 0; filter: brightness(5) blur(5px); }
-        100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; filter: brightness(1) blur(0); }
-    }
-    
-    /* Celebration Badge Style (Larger) */
+    /* Celebration Badge Style */
     .celeb-badge-inner {
         width: 140px; height: 140px; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
@@ -370,17 +388,18 @@
 
   <div id="celebrationOverlay">
       <div id="celebNightSky"></div>
+      <div id="celebStars"></div>
       <div id="celebLightContainer"><div id="celebLightCore"></div></div>
       <canvas id="celebFireworksCanvas"></canvas>
       <div id="celebBadgeContainer">
           </div>
       <div id="celebCloseArea" onclick="closeCelebration()"></div>
-      <div style="position:absolute; bottom:50px; width:100%; text-align:center; color:white; z-index:10006; pointer-events:none; font-weight:bold; letter-spacing:0.1em; text-shadow:0 2px 5px black;">
+      <div style="position:absolute; bottom:50px; width:100%; text-align:center; color:white; z-index:10007; pointer-events:none; font-weight:bold; letter-spacing:0.1em; text-shadow:0 2px 5px black;">
           Tap to Close
       </div>
   </div>
 
-  <div id="log-stamp">v2025.12.14-Step5-ForcedTrigger</div>
+  <div id="log-stamp">v2025.12.14-Step5-ShowTimeFinal</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -575,6 +594,7 @@
         try {
             const overlay = document.getElementById('celebrationOverlay');
             const sky = document.getElementById('celebNightSky');
+            const stars = document.getElementById('celebStars');
             const light = document.getElementById('celebLightCore');
             const badgeCont = document.getElementById('celebBadgeContainer');
             const canvas = document.getElementById('celebFireworksCanvas');
@@ -582,53 +602,75 @@
             // Reset states
             overlay.style.display = 'block';
             sky.style.opacity = '0';
-            light.style.opacity = '0';
+            stars.innerHTML = ''; // Clear old stars
+            stars.style.opacity = '0';
             light.className = ''; 
-            badgeCont.style.opacity = '0';
+            light.style.opacity = '0';
             badgeCont.className = '';
+            badgeCont.style.opacity = '0';
             
-            // Phase 0: Night Sky Fade In
+            // 0s: Fade in Night Sky
             setTimeout(() => { sky.style.opacity = '1'; }, 100);
-            
-            // Phase 1: Flash (0.5s)
-            setTimeout(() => {
-                light.className = 'anim-flash'; 
+
+            // 0.5s: Fade in Stars
+            setTimeout(() => { 
+                generateStars();
+                stars.style.opacity = '1'; 
             }, 500);
             
-            // Phase 2: Converge & Prepare Badge (1.0s)
+            // 1.0s: Light Flash -> Pedestal
             setTimeout(() => {
-                // Render Badge with fallback
-                let iconHtml = '<i class="fa-solid fa-paw"></i>';
-                if (badge && badge.icon) {
-                     const fileId = extractFileId(badge.icon);
-                     if(fileId) {
-                         const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
-                         iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
-                     }
-                }
-                
-                const title = badge ? badge.title : 'Congratulations!';
-                const color = badge ? badge.color : 'pastel-sage';
-
-                badgeCont.innerHTML = `
-                    <div class="celeb-badge-inner bg-${color}">
-                        ${iconHtml}
-                    </div>
-                    <div style="position:absolute; bottom:-40px; width:200px; text-align:center; color:white; font-weight:bold; font-size:1.2rem; text-shadow:0 0 10px gold;">
-                        ${title} 獲得!
-                    </div>
-                `;
+                light.className = 'anim-light-sequence';
             }, 1000);
+
+            // Render Badge
+            let iconHtml = '<i class="fa-solid fa-paw"></i>';
+            if (badge && badge.icon) {
+                 const fileId = extractFileId(badge.icon);
+                 if(fileId) {
+                     const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
+                     iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
+                 }
+            }
             
-            // Phase 3: Badge Emerge & Fireworks (1.5s)
+            const title = badge ? badge.title : 'Congratulations!';
+            const color = badge ? badge.color : 'pastel-sage';
+
+            badgeCont.innerHTML = `
+                <div class="celeb-badge-inner bg-${color}">
+                    ${iconHtml}
+                </div>
+                <div style="position:absolute; bottom:-50px; width:250px; text-align:center; color:white; font-weight:bold; font-size:1.4rem; text-shadow:0 0 10px gold;">
+                    ${title} 獲得!
+                </div>
+            `;
+            
+            // 1.8s: Badge Appears (Dark -> Bright)
             setTimeout(() => {
-                 badgeCont.className = 'anim-badge-emerge'; 
+                 badgeCont.className = 'anim-badge-appear'; 
+            }, 1800);
+
+            // 2.2s: Fireworks
+            setTimeout(() => {
                  launchCelebrationFireworks();
-            }, 1500);
+            }, 2200);
         } catch(e) {
             log('Celebration Error: ' + e.message);
-            // Fallback: Just alert or close
-            alert('Celebration Error: ' + e.message);
+        }
+    }
+    
+    function generateStars() {
+        const container = document.getElementById('celebStars');
+        for(let i=0; i<30; i++) {
+            const s = document.createElement('div');
+            s.className = 'twinkling-star';
+            const size = Math.random() * 3 + 1;
+            s.style.width = size + 'px';
+            s.style.height = size + 'px';
+            s.style.left = Math.random() * 100 + '%';
+            s.style.top = Math.random() * 80 + '%'; // Upper 80%
+            s.style.animationDelay = (Math.random() * 2) + 's';
+            container.appendChild(s);
         }
     }
     
@@ -884,27 +926,33 @@
         const tier1Container = document.getElementById('tier1-scroll');
         if(tier1Container) tier1Container.innerHTML = '';
 
-        let acquiredBadges = [];
+        let hasNewBadge = false;
+        let firstNewBadge = null;
 
         badges.filter(b => b.tier === '1_Beginner').forEach(badge => {
-            // Normal Render
+            // DEBUG: Force Animation for ALL acquired badges
+            if (badge.is_acquired) {
+                badge.is_new = true; // Remove this line in production!
+            }
+
             const html = createBadgeHtml(badge);
             tier1Container.insertAdjacentHTML('beforeend', html);
             
-            if (badge.is_acquired) acquiredBadges.push(badge);
+            if (badge.is_new) {
+                hasNewBadge = true;
+                if (!firstNewBadge) firstNewBadge = badge;
+            }
         });
         
         if (tier1Container.innerHTML === '') tier1Container.innerHTML = '<div class="text-center w-100 small" style="flex:1;">データなし</div>';
         
-        // --- FORCE CELEBRATION (DEBUG MODE) ---
-        // If there's any acquired badge, play celebration for the first one automatically.
-        if (acquiredBadges.length > 0) {
-            log('Forcing Celebration for: ' + acquiredBadges[0].title);
-            setTimeout(() => {
-                showCelebration(acquiredBadges[0]);
-            }, 1000); // 1s delay after render
-        } else {
-            log('No acquired badges to celebrate.');
+        // --- FORCE CELEBRATION FOR FIRST NEW BADGE ---
+        if (hasNewBadge && firstNewBadge) {
+             // Delay slightly to allow rendering
+             setTimeout(() => {
+                 showCelebration(firstNewBadge);
+                 // markAsSeen(firstNewBadge.id); // Call API if needed
+             }, 1500); 
         }
 
         log('Milestones Rendered.');
@@ -931,7 +979,7 @@
         const randomRadius = radiuses[Math.floor(Math.random() * radiuses.length)];
         const randomRot = (Math.random() * 20 - 10) + 'deg';
 
-        // Tap action: Always Modal
+        // DEBUG: Clicking acquired badge triggers Detail Modal (Standard Behavior)
         const clickAction = `showMilestoneDetail('${badge.id}')`;
 
         return `
