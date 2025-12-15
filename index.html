@@ -100,7 +100,7 @@
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
 
     /* =========================================
-       Milestone CSS
+       Milestone CSS (Static List)
        ========================================= */
     .milestone-section { margin: 30px 20px 10px; }
     
@@ -319,16 +319,16 @@
         pointer-events: none; z-index: 10003;
     }
     
-    /* Corrected CSS: Clean Disc, No Blur, Transparent Edges */
+    /* REVISED CSS: Crisp Disc without double-vision */
     #celebLightCore {
         width: 10px; height: 10px; border-radius: 50%;
-        /* 0%〜50%まで完全な白、60%で透明に (芯のある円盤) */
-        background: radial-gradient(circle, #fff 0%, #fff 50%, transparent 60%);
+        /* 0%〜60%まで白、70%以降で急速に透明へ */
+        background: radial-gradient(circle, #fff 0%, #fff 60%, rgba(255,255,255,0.8) 70%, transparent 100%);
         opacity: 0; transform: scale(0);
-        /* 輪郭をぼかさない */
+        /* Blurなしで輪郭をくっきりさせる */
         filter: blur(0px); 
-        /* わずかな発光感のみ */
-        box-shadow: 0 0 1px 0px rgba(255, 255, 255, 0.5);
+        /* Box-shadow削除 (二重防止) */
+        box-shadow: none;
     }
     
     .anim-light {
@@ -337,7 +337,7 @@
     @keyframes light-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; } /* Whiteout */
-        100% { transform: scale(17); opacity: 0.5; } /* Pedestal size (170px), semi-transparent */
+        100% { transform: scale(18); opacity: 0.5; } /* Pedestal size (180px), semi-transparent */
     }
 
     /* 4. Fireworks Canvas */
@@ -425,7 +425,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step8-Final-CleanLight</div>
+  <div id="log-stamp">v2025.12.14-Step9-SingleRingFix</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -593,13 +593,16 @@
     const LIFF_ID = '2008546673-MJY7j3ox'; 
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
 
+    // Logging Function
     function log(msg) {
         const el = document.getElementById('debug-console');
         if(el) el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}<br>` + el.innerHTML;
         console.log(msg);
     }
 
-    const dogTips = [ "犬の鼻紋は指紋と同じで一頭一頭違います。", "犬は人間の約4倍の聴力を持っています。", "犬の嗅覚は人間の100万倍以上とも言われます。", "犬は足の裏（肉球）からしか汗をかけません。", "犬があくびをするのは、落ち着こうとしている時もあります。", "しっぽが右寄りなら「嬉しい」、左寄りなら「不安」な時があります。", "一般的に小型犬の方が大型犬より長生きする傾向があります。", "犬も夢を見ます。寝言や足の動きはその証拠です。", "ダルメシアンは生まれた時は真っ白で、後から斑点が出ます。", "犬が顔を舐めるのは、愛情表現やご飯の催促です。" ];
+    const dogTips = [
+      "犬の鼻紋は人間の指紋と同じで、一頭一頭違います。", "犬は人間の約4倍の聴力を持っています。", "犬の嗅覚は人間の100万倍〜1億倍とも言われます。", "犬は汗を肉球からしかかけません。", "犬があくびをするのは、ストレスを感じて落ち着こうとしている時もあります。", "犬のしっぽの振り方は、右寄りだと「嬉しい」、左寄りだと「不安」な時があります。", "小型犬の方が大型犬よりも長生きする傾向があります。", "犬は夢を見ます。寝言を言ったり足を動かすのはその証拠です。", "ダルメシアンは生まれた時は真っ白で、後から斑点が出てきます。", "犬が飼い主の顔を舐めるのは、愛情表現やご飯の催促です。"
+    ];
 
     let tipsTimer;
     let currentUserId = null;
@@ -612,9 +615,9 @@
     let cachedMilestones = [];
     let cachedMeta = {};
 
-    // ============================================================
-    // REVISED: Moment of Joy Logic (Single Light Disc)
-    // ============================================================
+    // ==========================================
+    // Moment of Joy Logic (Guaranteed Execution)
+    // ==========================================
 
     function startCelebrationSequence(badge) {
         const overlay = document.getElementById('celebrationOverlay');
@@ -626,7 +629,7 @@
         lightCore.className = '';
         badgeCont.className = '';
         
-        // 1. Prepare DOM content
+        // 1. Prepare DOM content first
         let iconHtml = '<i class="fa-solid fa-paw"></i>';
         if (badge && badge.icon) {
              const fileId = extractFileId(badge.icon);
@@ -635,28 +638,33 @@
                  iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
              }
         }
+        
         const title = badge ? badge.title : 'Congratulations!';
         const color = badge ? badge.color : 'pastel-sage';
 
-        // Generate Random Radius for Celebration Badge
-        const r = () => Math.floor(Math.random() * 21) + 40;
-        const randomBorderRadius = `${r()}% ${r()}% ${r()}% ${r()}% / ${r()}% ${r()}% ${r()}% ${r()}%`;
+        // Generate Random Radius for Celebration Badge too
+        const r1 = Math.floor(Math.random() * 21) + 40; const r2 = Math.floor(Math.random() * 21) + 40;
+        const r3 = Math.floor(Math.random() * 21) + 40; const r4 = Math.floor(Math.random() * 21) + 40;
+        const r5 = Math.floor(Math.random() * 21) + 40; const r6 = Math.floor(Math.random() * 21) + 40;
+        const r7 = Math.floor(Math.random() * 21) + 40; const r8 = Math.floor(Math.random() * 21) + 40;
+        const randomBorderRadius = `${r1}% ${r2}% ${r3}% ${r4}% / ${r5}% ${r6}% ${r7}% ${r8}%`;
 
+        // Apply EXACT classes to mimic .ms-icon-box
         badgeCont.innerHTML = `
             <div class="celeb-badge-inner bg-${color}" style="border-radius: ${randomBorderRadius};">
                 ${iconHtml}
             </div>
-            <div style="position:absolute; bottom:-60px; width:300px; text-align:center; color:white; font-weight:bold; letter-spacing:0.05em; font-size:1.5rem; text-shadow:0 2px 10px rgba(0,0,0,0.5);">
-                Congratulations!<br><span style="font-size:1.2rem;">獲得!</span>
+            <div style="position:absolute; bottom:-50px; width:250px; text-align:center; color:white; font-weight:bold; font-size:1.4rem; text-shadow:0 0 10px gold;">
+                ${title} 獲得!
             </div>
         `;
         
         // Generate Stars
         starsCont.innerHTML = '';
-        for(let i=0; i<40; i++) {
+        for(let i=0; i<30; i++) {
             const s = document.createElement('div');
             s.className = 'twinkling-star';
-            const size = Math.random() * 2 + 1;
+            const size = Math.random() * 3 + 1;
             s.style.width = size + 'px'; s.style.height = size + 'px';
             s.style.left = Math.random() * 100 + '%'; s.style.top = Math.random() * 80 + '%';
             s.style.animationDelay = (Math.random() * 2) + 's';
@@ -666,29 +674,29 @@
         // 2. Show Overlay (Phase 1: Dark Sky)
         overlay.style.display = 'block';
         
-        // 3. Trigger Animation Sequence
+        // 3. Trigger Animations via Class (Phase 2-4)
         setTimeout(() => {
             overlay.classList.add('active'); // Fade in Sky & Stars
             
-            // T+1.0s: Light Animation (Expand to Whiteout -> Shrink to Pedestal)
+            // 1.0s: Light Animation Trigger (Expanding & Shrinking)
             setTimeout(() => {
                 lightCore.classList.add('anim-light');
             }, 1000);
-
-            // T+1.2s: Fairy Dust Trigger (2.5s duration, finer particles)
+            
+            // 1.2s: Fairy Dust Trigger
             setTimeout(() => {
                 triggerFairyDust();
             }, 1200);
 
-            // T+1.5s: Badge Appearance Trigger (Out of light pedestal)
+            // 1.5s: Badge Appearance Trigger (Out of light)
             setTimeout(() => {
                 badgeCont.classList.add('anim-badge-appear');
             }, 1500);
             
-            // T+2.2s: Fireworks Launch
+            // 4. Fireworks at exact timing (2.0s after start)
             setTimeout(() => {
                 launchCelebrationFireworks();
-            }, 2200);
+            }, 2000);
             
         }, 50);
     }
@@ -843,12 +851,12 @@
         
         let fireworks = [];
         let launchCount = 0;
-        const totalLaunches = 12; // Increased slightly
+        const totalLaunches = 9;
         try { navigator.vibrate([100, 50, 100]); } catch(e){}
 
         const loop = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (launchCount < totalLaunches && Math.random() < 0.08) {
+            if (launchCount < totalLaunches && Math.random() < 0.05) {
                 fireworks.push(new Firework(ctx, canvas.width, canvas.height));
                 launchCount++;
             }
@@ -862,8 +870,6 @@
         loop();
     }
 
-    // ----------------------
-    // Main App Logic
     // ----------------------
 
     function startTipsSlider() {
@@ -1009,7 +1015,7 @@
 
         badges.filter(b => b.tier === '1_Beginner').forEach(badge => {
             // DEBUG: Force Animation for ALL acquired badges for testing
-            // 本番環境では `if (badge.is_new)` に戻すこと
+            // 本番では if (badge.is_new) を使用すること
             if (badge.is_acquired) {
                 badge.is_new = true; 
             }
@@ -1022,6 +1028,7 @@
         
         if (tier1Container.innerHTML === '') tier1Container.innerHTML = '<div class="text-center w-100 small" style="flex:1;">データなし</div>';
         
+        // Setup Observer to trigger animation when Scrolled Into View
         if (hasNewBadge) setupMilestoneObserver();
 
         log('Milestones Rendered.');
@@ -1031,6 +1038,8 @@
         const isLocked = !badge.is_acquired;
         const lockedClass = isLocked ? 'locked' : '';
         const colorClass = isLocked ? '' : `bg-${badge.color}`;
+        
+        // Add class for Observer target if new
         let newClass = badge.is_new ? 'ms-badge-new' : '';
         
         let iconHtml = '<i class="fa-solid fa-paw"></i>';
@@ -1040,12 +1049,19 @@
              iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
         }
 
-        const r = () => Math.floor(Math.random() * 21) + 40;
-        const randomBorderRadius = `${r()}% ${r()}% ${r()}% ${r()}% / ${r()}% ${r()}% ${r()}% ${r()}%`;
+        // Generate Random Radius Values (40% - 60%)
+        const r1 = Math.floor(Math.random() * 21) + 40; const r2 = Math.floor(Math.random() * 21) + 40;
+        const r3 = Math.floor(Math.random() * 21) + 40; const r4 = Math.floor(Math.random() * 21) + 40;
+        const r5 = Math.floor(Math.random() * 21) + 40; const r6 = Math.floor(Math.random() * 21) + 40;
+        const r7 = Math.floor(Math.random() * 21) + 40; const r8 = Math.floor(Math.random() * 21) + 40;
+        
+        const randomBorderRadius = `${r1}% ${r2}% ${r3}% ${r4}% / ${r5}% ${r6}% ${r7}% ${r8}%`;
         const randomRot = (Math.random() * 20 - 10) + 'deg';
 
+        // Tap always shows modal
         const clickAction = `showMilestoneDetail('${badge.id}')`;
 
+        // data-id attribute essential for observer
         return `
             <div class="ms-badge ${lockedClass} ${newClass}" data-id="${badge.id}" onclick="${clickAction}">
                 <div class="ms-icon-box ${colorClass}" style="border-radius:${randomBorderRadius}; transform: rotate(${randomRot});">
@@ -1057,7 +1073,7 @@
     }
     
     function setupMilestoneObserver() {
-        const options = { root: null, rootMargin: '0px', threshold: 0.1 };
+        const options = { root: null, rootMargin: '0px', threshold: 0.1 }; // 10% visible
         const observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -1067,10 +1083,15 @@
 
                     if (badgeData) {
                         log('Observer Triggered for: ' + badgeData.title);
+                        // Trigger Animation Sequence
                         startCelebrationSequence(badgeData);
+                        
+                        // Mark as seen in DB
                         markAsSeen(badgeId);
+                        
+                        // Stop observing this element
                         observer.unobserve(el);
-                        el.classList.remove('ms-badge-new');
+                        el.classList.remove('ms-badge-new'); // Prevent re-trigger
                     }
                 }
             });
@@ -1087,7 +1108,7 @@
         
         const beginnerBadges = cachedMilestones.filter(b => b.tier === '1_Beginner');
         let bHtml = '';
-        beginnerBadges.forEach(b => bHtml += createBadgeHtml(b).replace('ms-badge-new',''));
+        beginnerBadges.forEach(b => bHtml += createBadgeHtml(b).replace('ms-badge-new','')); // Remove trigger class in modal
         modalBody.insertAdjacentHTML('beforeend', `
             <div class="full-list-section">
                 <div class="full-list-title">🟢 初級: Basic Harmony</div>
@@ -1127,28 +1148,50 @@
                 </div>
              `);
         }
+        
         allMilestonesModal.show();
     }
 
     function markAsSeen(badgeId) {
         if(!currentUserId || !currentDogId) return;
-        const payload = { action: 'markMilestoneSeen', dogId: currentDogId, milestoneId: badgeId };
-        fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) }).then(r=>r.json()).then(d=>log('Marked seen: '+badgeId)).catch(e=>log('MarkErr:'+e));
+        const payload = {
+            action: 'markMilestoneSeen',
+            dogId: currentDogId,
+            milestoneId: badgeId
+        };
+        fetch(GAS_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        }).then(r=>r.json()).then(d=>log('Marked seen: '+badgeId)).catch(e=>log('MarkErr:'+e));
     }
 
     function showMilestoneDetail(badgeId) {
         const badge = cachedMilestones.find(b => b.id === badgeId);
         if (!badge) return;
+
         const isLocked = !badge.is_acquired;
         const iconBox = document.getElementById('msModalIconBox');
+        
         iconBox.className = isLocked ? 'bg-secondary' : `bg-${badge.color}`;
         iconBox.style.backgroundColor = ''; 
-        iconBox.innerHTML = badge.icon ? `<img src="https://drive.google.com/thumbnail?id=${extractFileId(badge.icon)}&sz=w200" style="width:60%;height:60%;object-fit:contain;">` : `<i class="fa-solid fa-paw"></i>`;
+        
+        // Remove glitter class logic from modal for simplicity, or keep if needed
+        iconBox.innerHTML = badge.icon 
+            ? `<img src="https://drive.google.com/thumbnail?id=${extractFileId(badge.icon)}&sz=w200" style="width:60%;height:60%;object-fit:contain;">`
+            : `<i class="fa-solid fa-paw"></i>`;
+        
         const img = iconBox.querySelector('img');
-        if(img) { img.onerror = function() { this.style.display='none'; iconBox.innerHTML = '<i class="fa-solid fa-paw"></i>'; }; }
+        if(img) {
+            img.onerror = function() {
+                this.style.display='none';
+                iconBox.innerHTML = '<i class="fa-solid fa-paw"></i>';
+            };
+        }
+
         document.getElementById('msModalTitle').innerText = badge.title + (isLocked ? ' (未獲得)' : '');
         document.getElementById('msModalDesc').innerText = badge.desc;
         document.getElementById('msModalTips').innerText = badge.tips || '---';
+
         milestoneModal.show();
     }
     
@@ -1168,8 +1211,10 @@
             btn.onclick = () => selectDog(dog.id);
             body.appendChild(btn);
         });
+        
         document.getElementById('loadingOverlay').style.opacity = 0;
         setTimeout(() => { document.getElementById('loadingOverlay').style.visibility = 'hidden'; }, 500);
+        
         new bootstrap.Modal(document.getElementById('dogSelectModal')).show();
     }
 
@@ -1177,35 +1222,49 @@
         const modalEl = document.getElementById('dogSelectModal');
         const modal = bootstrap.Modal.getInstance(modalEl);
         modal.hide();
+        
         document.getElementById('loadingOverlay').style.visibility = 'visible';
         document.getElementById('loadingOverlay').style.opacity = 1;
+        
         currentDogId = dogId;
         fetchTextData(currentUserId, dogId);
     }
 
     function updateHistoryLink() {
         const link = document.getElementById('historyLinkBtn');
-        if (currentDogId) { link.href = `history.html?dogId=${currentDogId}`; } else { link.href = `history.html`; }
+        if (currentDogId) {
+            link.href = `history.html?dogId=${currentDogId}`;
+        } else {
+            link.href = `history.html`;
+        }
     }
 
     function openMedicalPage() {
         let url = 'medical.html';
-        if (currentDogId) { url += `?dogId=${currentDogId}`; }
+        if (currentDogId) {
+            url += `?dogId=${currentDogId}`;
+        }
         window.location.href = url;
     }
 
     function handleDownloadPdf() {
-        if (!currentLessonData || !currentLessonData.latest) { alert("データが読み込まれていません。"); return; }
+        if (!currentLessonData || !currentLessonData.latest) {
+            alert("データが読み込まれていません。");
+            return;
+        }
+
         const btn = document.getElementById('pdfBtn');
         const originalText = btn.innerText;
         btn.innerText = "作成中...";
         btn.disabled = true;
+
         const formData = {
             training_unique_key: currentLessonData.latest.id || '', 
             dog_name: currentLessonData.dog.name,
             training_date: currentLessonData.latest.date,
             customer_unique_key: currentLessonData.customer.id,
             dog_unique_key: currentLessonData.dog.id,
+            
             goal: currentLessonData.latest.goal,
             done: currentLessonData.latest.done,
             unable: currentLessonData.latest.unable,
@@ -1213,6 +1272,7 @@
             next_goal: currentLessonData.latest.next_goal,
             comment_trainer: currentLessonData.latest.comment,
             training_remarks: '', 
+
             score_1: currentLessonData.latest.scores[0], score_detail_1: currentLessonData.latest.details[0],
             score_2: currentLessonData.latest.scores[1], score_detail_2: currentLessonData.latest.details[1],
             score_3: currentLessonData.latest.scores[2], score_detail_3: currentLessonData.latest.details[2],
@@ -1223,6 +1283,7 @@
             score_8: currentLessonData.latest.scores[7], score_detail_8: currentLessonData.latest.details[7],
             score_9: currentLessonData.latest.scores[8], score_detail_9: currentLessonData.latest.details[8],
             score_10: currentLessonData.latest.scores[9], score_detail_10: currentLessonData.latest.details[9],
+            
             training_photo_1: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[0] : '',
             training_photo_2: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[1] : '',
             training_photo_3: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[2] : '',
@@ -1230,47 +1291,92 @@
             training_photo_5: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[4] : ''
         };
 
-        if (typeof google === 'undefined' || !google.script) { alert('この機能はGASウェブアプリ上でのみ動作します。'); btn.innerText = originalText; btn.disabled = false; return; }
-        google.script.run.withSuccessHandler(function(response) {
-            btn.innerText = originalText; btn.disabled = false;
-            if (response.status === 'success') {
-                const isIos = /iP(ad|hone|od)/.test(navigator.userAgent);
-                if (isIos) { window.open(response.url, '_blank'); } else {
-                    const a = document.createElement('a'); a.href = response.url; a.download = `LessonReport_${formData.training_date}.pdf`; 
-                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        if (typeof google === 'undefined' || !google.script) {
+            alert('この機能はGASウェブアプリ上でのみ動作します。');
+            btn.innerText = originalText;
+            btn.disabled = false;
+            return;
+        }
+
+        google.script.run
+            .withSuccessHandler(function(response) {
+                btn.innerText = originalText;
+                btn.disabled = false;
+
+                if (response.status === 'success') {
+                    const isIos = /iP(ad|hone|od)/.test(navigator.userAgent);
+                    if (isIos) {
+                        window.open(response.url, '_blank');
+                    } else {
+                        const a = document.createElement('a');
+                        a.href = response.url;
+                        a.download = `LessonReport_${formData.training_date}.pdf`; 
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    }
+                    alert(response.message);
+                } else {
+                    alert('エラー: ' + response.message);
                 }
-                alert(response.message);
-            } else { alert('エラー: ' + response.message); }
-        }).withFailureHandler(function(e) { btn.innerText = originalText; btn.disabled = false; alert('サーバーエラー: ' + e); }).createPdfFromSlide(formData);
+            })
+            .withFailureHandler(function(e) {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                alert('サーバーエラー: ' + e);
+            })
+            .createPdfFromSlide(formData);
     }
 
     function fetchProfileImage(userId, dogId) {
       let url = `${GAS_URL}?userId=${userId}&type=img_profile`;
       if(dogId) url += `&dogId=${dogId}`;
-      fetch(url).then(res => res.json()).then(data => {
+      
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
            const container = document.getElementById('dogImgContainer');
-           if(data.image) { container.innerHTML = `<img src="${data.image}" class="dog-img" alt="Dog Photo">`; } else { container.innerHTML = 'No Image'; }
-        }).catch(e => console.log('Profile Image Error', e));
+           if(data.image) {
+               container.innerHTML = `<img src="${data.image}" class="dog-img" alt="Dog Photo">`;
+           } else {
+               container.innerHTML = 'No Image';
+           }
+        })
+        .catch(e => console.log('Profile Image Error', e));
     }
 
     function fetchLessonImages(userId, dogId) {
       let url = `${GAS_URL}?userId=${userId}&type=img_latest`;
       if(dogId) url += `&dogId=${dogId}`;
-      fetch(url).then(res => res.json()).then(data => {
-           const pArea = document.getElementById('photoArea'); pArea.innerHTML = ''; 
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+           const pArea = document.getElementById('photoArea');
+           pArea.innerHTML = ''; 
            if (data.images && data.images.length > 0) {
-             data.images.forEach(b64 => { const img = document.createElement('img'); img.src = b64; img.className = 'photo-item zoomable'; pArea.appendChild(img); });
+             data.images.forEach(b64 => {
+               const img = document.createElement('img');
+               img.src = b64; img.className = 'photo-item zoomable'; pArea.appendChild(img);
+             });
              mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
-           } else { pArea.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>'; }
-        }).catch(e => console.log('Lesson Image Error', e));
+           } else {
+             pArea.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
+           }
+        })
+        .catch(e => console.log('Lesson Image Error', e));
     }
 
     function renderTextData(data) {
-      const c = data.customer || {}; const d = data.dog || {};
+      const c = data.customer || {};
+      const d = data.dog || {};
       document.getElementById('custName').innerText = c.name + ' 様';
       document.getElementById('dogName').innerText = d.name_disp || d.name || 'Your Dog';
       document.getElementById('ticketCount').innerText = data.ticket_count;
-      checkBirthday(c.birth_date, 'custBirthdayMsg'); checkBirthday(d.birth_date, 'dogBirthdayMsg'); 
+
+      checkBirthday(c.birth_date, 'custBirthdayMsg'); 
+      checkBirthday(d.birth_date, 'dogBirthdayMsg'); 
+
       const l = data.latest;
       if (l) {
         document.getElementById('lessonDate').innerText = 'Last: ' + l.date;
@@ -1280,18 +1386,31 @@
         document.getElementById('homeworkText').innerText = l.homework;
         document.getElementById('trainerComment').innerText = l.comment;
         document.getElementById('nextGoalText').innerText = l.next_goal || 'トレーナーと相談しましょう';
-        if (l.recommend_date) { document.getElementById('reminderDate').innerText = l.recommend_date; document.getElementById('reminderArea').style.display = 'block'; } else { document.getElementById('reminderArea').style.display = 'none'; }
+
+        if (l.recommend_date) {
+            document.getElementById('reminderDate').innerText = l.recommend_date;
+            document.getElementById('reminderArea').style.display = 'block';
+        } else {
+            document.getElementById('reminderArea').style.display = 'none';
+        }
+
         let d1 = '', d2 = '';
         for(let i=0; i<5; i++) { d1 += `[${i+1}] ${l.details[i] || 'なし'}\n`; }
         for(let i=5; i<10; i++) { d2 += `[${i+1}] ${l.details[i] || 'なし'}\n`; }
         document.getElementById('detail1').innerText = d1 || '特になし';
         document.getElementById('detail2').innerText = d2 || '特になし';
-        if (chartInstance1) chartInstance1.destroy(); if (chartInstance2) chartInstance2.destroy();
+
+        if (chartInstance1) chartInstance1.destroy();
+        if (chartInstance2) chartInstance2.destroy();
+
         if (l.scores) {
             chartInstance1 = renderChart('chart1', l.scores.slice(0, 5), ['指示理解','集中力','報酬','ボディ','コンタクト'], 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 1)');
             chartInstance2 = renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト'], 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
         }
-      } else { document.getElementById('lessonDate').innerText = 'レッスン履歴なし'; }
+      } else {
+          document.getElementById('lessonDate').innerText = 'レッスン履歴なし';
+      }
+      
       finishLoading();
     }
 
@@ -1299,23 +1418,48 @@
         if (!dateStr) return;
         const today = new Date(); const bDate = new Date(dateStr); bDate.setFullYear(today.getFullYear());
         const diffTime = bDate.getTime() - today.getTime(); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        if (Math.abs(diffDays) <= 14 || Math.abs(diffDays - 365) <= 14 || Math.abs(diffDays + 365) <= 14) { document.getElementById(elementId).style.display = 'block'; }
+        if (Math.abs(diffDays) <= 14 || Math.abs(diffDays - 365) <= 14 || Math.abs(diffDays + 365) <= 14) {
+            document.getElementById(elementId).style.display = 'block';
+        }
     }
 
     function renderChart(id, data, labels, bgColor, borderColor) {
       const ctx = document.getElementById(id);
       return new Chart(ctx, {
         type: 'radar',
-        data: { labels: labels, datasets: [{ data: data, backgroundColor: bgColor, borderColor: borderColor, pointBackgroundColor: borderColor, borderWidth: 2 }] },
-        options: { scales: { r: { min: 0, max: 5, ticks: { display: false }, pointLabels: { font: { size: 11 } } } }, plugins: { legend: { display: false } } }
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: bgColor, borderColor: borderColor, pointBackgroundColor: borderColor, borderWidth: 2
+          }]
+        },
+        options: {
+          scales: { r: { min: 0, max: 5, ticks: { display: false }, pointLabels: { font: { size: 11 } } } },
+          plugins: { legend: { display: false } }
+        }
       });
     }
 
     function showError(title, msg, userId) {
-        finishLoading(); document.getElementById('mainContent').style.display = 'none';
-        const errDiv = document.getElementById('errorView'); errDiv.style.display = 'block';
-        document.getElementById('errorTitle').innerText = title; document.getElementById('errorMessage').innerText = msg;
-        if (userId) { const idBox = document.getElementById('dispLineId'); idBox.innerText = userId; idBox.style.display = 'block'; }
+        finishLoading();
+        document.getElementById('mainContent').style.display = 'none';
+        
+        const errDiv = document.getElementById('errorView');
+        errDiv.style.display = 'block';
+        document.getElementById('errorTitle').innerText = title;
+        document.getElementById('errorMessage').innerText = msg;
+        
+        if (userId) {
+            const idBox = document.getElementById('dispLineId');
+            idBox.innerText = userId;
+            idBox.style.display = 'block';
+        }
+    }
+    
+    function copyLineId() {
+        const idText = document.getElementById('dispLineId').innerText;
+        navigator.clipboard.writeText(idText).then(() => alert('IDをコピーしました'));
     }
   </script>
 </body>
