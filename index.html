@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <script>
-    // 特定のクエリパラメータがある場合、即座にmedical.htmlへリダイレクト
+    // [System] 特定のクエリパラメータがある場合、即座にmedical.htmlへリダイレクト
     (function() {
       if (new URLSearchParams(window.location.search).get('page') === 'medical') {
         window.location.replace('medical.html'); 
@@ -383,13 +383,12 @@
         z-index: 2; /* Between Core and Ring */
         width: 10px; height: 10px; border-radius: 50%;
         /* Alignment Calculation:
-           - Core Radius (Y): 87.5px (Bottom is +87.5)
-           - Oval Radius (Y): 105px / 2 = 52.5px (Bottom is +52.5)
-           - Base Gap: 87.5 - 52.5 = 35px (Needed to align bottoms)
-           - Additional Shift Requested: 15px
-           - Total Margin Top: 35 + 15 = 50px
+           - Base shift to align with pedestal bottom: +35px
+           - Previous additional shift: +15px (Total +50px)
+           - [Step24] Further shift requested: +15px
+           - New Total Margin Top: 50 + 15 = 65px
         */
-        margin-top: 50px;
+        margin-top: 65px;
         /* Same visual style as Ring */
         background: radial-gradient(circle, transparent 50%, rgba(255,255,255,1.0) 55%, transparent 60%);
         filter: blur(0.2px);
@@ -409,15 +408,16 @@
     @keyframes ring-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; }
-        100% { transform: scale(28); opacity: 0.6; } /* Opacity 0.6 */
+        100% { transform: scale(28); opacity: 0.4; } /* [Step24] Opacity changed to 0.4 */
     }
 
-    /* Oval Animation (FINAL SIZE: 400px x 105px) */
+    /* Oval Animation (FINAL SIZE: 300px x 105px) */
     .anim-oval { animation: oval-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes oval-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; }
-        100% { transform: scale(40, 10.5); opacity: 0.6; } /* ScaleX 40, ScaleY 10.5, Opacity 0.6 */
+        /* [Step24] Final scaleX changed from 40 (400px) to 30 (300px). ScaleY remains 10.5 (105px) */
+        100% { transform: scale(30, 10.5); opacity: 0.6; } 
     }
 
     /* 4. Fireworks Canvas */
@@ -509,7 +509,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step23-Core175px-Oval400px</div>
+  <div id="log-stamp">v2025.12.14-Step24-Oval300px-Lowered15px-RingOpacity04</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
