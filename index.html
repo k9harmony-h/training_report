@@ -353,9 +353,9 @@
         z-index: 3;
         width: 10px; height: 10px; border-radius: 50%;
         /* Core visual: Solid white center fading to transparent */
-        background: radial-gradient(circle, #fff 0%, #fff 80%, rgba(255,255,255,0.8) 90%, transparent 100%);
+        background: radial-gradient(circle, #fff 0%, #fff 80%, rgba(255,255,255,0.8) 100%, transparent 100%);
         opacity: 0; transform: scale(0);
-        filter: none; /* No Blur */
+        filter: blur(0.1px);
         box-shadow: none;
     }
 
@@ -366,11 +366,11 @@
         width: 10px; height: 10px; border-radius: 50%;
         /* Alignment Calculation:
            - Core Radius: 175px / 2 = 87.5px
-           - Ring Radius: 240px / 2 = 120px
-           - Bottom Alignment Difference: 120 - 87.5 = 32.5px
-           - Move Ring UP by 32.5px
+           - Ring Radius: 260px / 2 = 130px
+           - Bottom Alignment Difference: 130 - 87.5 = 42.5px
+           - Move Ring UP by 42.5px
         */
-        margin-top: -32.5px;
+        margin-top: -42.5px;
         /* Visual: Tight white band */
         background: radial-gradient(circle, transparent 50%, rgba(255,255,255,1.0) 55%, transparent 60%);
         filter: blur(0.2px); 
@@ -386,11 +386,11 @@
            - Base shift to align with pedestal bottom: +35px
            - Additional shift: +15px (Step23)
            - Further shift: +15px (Step24)
-           - New Total Margin Top: 35 + 15 + 15 = 65px
+           - Total Margin Top: 65px
         */
         margin-top: 65px;
         /* Same visual style as Ring */
-        background: radial-gradient(circle, transparent 50%, rgba(255,255,255,1.0) 55%, transparent 60%);
+        background: radial-gradient(circle, transparent 40%, rgba(255,255,255,1.0) 55%, transparent 665%);
         filter: blur(0.2px);
         opacity: 0; transform: scale(0);
     }
@@ -403,12 +403,12 @@
         100% { transform: scale(17.5); opacity: 0.6; } /* Opacity 0.6 */
     }
 
-    /* Ring Animation (FINAL SIZE: 240px) */
+    /* Ring Animation (FINAL SIZE: 260px) */
     .anim-ring { animation: ring-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes ring-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; }
-        100% { transform: scale(24); opacity: 0.4; } /* Opacity 0.4, Size 240px */
+        100% { transform: scale(26); opacity: 0.4; } /* Opacity 0.4, Size 260px */
     }
 
     /* Oval Animation (FINAL SIZE: 300px x 105px) */
@@ -509,7 +509,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step25-Final-Ring240-OvalOpacity08</div>
+  <div id="log-stamp">v2025.12.14-Step26-Final-Ring260-OvalOpacity08</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
