@@ -146,7 +146,7 @@
     /* Sealing Wax Style Icon Box (70px x 70px) */
     .ms-icon-box { 
         width: 70px; height: 70px; 
-        border-radius: 50%;
+        border-radius: 50%; /* Default, will be overridden by inline style */
         display: flex; align-items: center; justify-content: center; 
         margin-bottom: 8px; 
         position: relative; overflow: hidden;
@@ -339,7 +339,7 @@
     /* Celebration Badge Inner - Reusing .ms-icon-box styles */
     .celeb-badge-inner {
         width: 140px; height: 140px; /* Bigger than list */
-        border-radius: 50%;
+        border-radius: 50%; /* Default */
         display: flex; align-items: center; justify-content: center;
         position: relative; overflow: hidden;
         /* Exact copy of .ms-icon-box styles */
@@ -389,7 +389,7 @@
       </div>
   </div>
 
-  <div id="log-stamp">v2025.12.14-Step5-StableNoLight</div>
+  <div id="log-stamp">v2025.12.14-Step6-RandomWaxShape</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -601,9 +601,16 @@
         const title = badge ? badge.title : 'Congratulations!';
         const color = badge ? badge.color : 'pastel-sage';
 
-        // Apply EXACT classes to mimic .ms-icon-box
+        // Generate Random Radius for Celebration Badge too
+        const r1 = Math.floor(Math.random() * 21) + 40; const r2 = Math.floor(Math.random() * 21) + 40;
+        const r3 = Math.floor(Math.random() * 21) + 40; const r4 = Math.floor(Math.random() * 21) + 40;
+        const r5 = Math.floor(Math.random() * 21) + 40; const r6 = Math.floor(Math.random() * 21) + 40;
+        const r7 = Math.floor(Math.random() * 21) + 40; const r8 = Math.floor(Math.random() * 21) + 40;
+        const randomBorderRadius = `${r1}% ${r2}% ${r3}% ${r4}% / ${r5}% ${r6}% ${r7}% ${r8}%`;
+
+        // Apply EXACT classes and random border-radius
         badgeCont.innerHTML = `
-            <div class="celeb-badge-inner bg-${color}">
+            <div class="celeb-badge-inner bg-${color}" style="border-radius: ${randomBorderRadius};">
                 ${iconHtml}
             </div>
             <div style="position:absolute; bottom:-50px; width:250px; text-align:center; color:white; font-weight:bold; font-size:1.4rem; text-shadow:0 0 10px gold;">
@@ -905,13 +912,13 @@
              iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
         }
 
-        const radiuses = [
-            "48% 52% 53% 47% / 55% 45% 60% 40%",
-            "52% 48% 40% 60% / 45% 55% 42% 58%",
-            "50% 50% 58% 42% / 52% 48% 55% 45%",
-            "45% 55% 48% 52% / 50% 50% 45% 55%"
-        ];
-        const randomRadius = radiuses[Math.floor(Math.random() * radiuses.length)];
+        // Generate Random Radius Values (40% - 60%)
+        const r1 = Math.floor(Math.random() * 21) + 40; const r2 = Math.floor(Math.random() * 21) + 40;
+        const r3 = Math.floor(Math.random() * 21) + 40; const r4 = Math.floor(Math.random() * 21) + 40;
+        const r5 = Math.floor(Math.random() * 21) + 40; const r6 = Math.floor(Math.random() * 21) + 40;
+        const r7 = Math.floor(Math.random() * 21) + 40; const r8 = Math.floor(Math.random() * 21) + 40;
+        
+        const randomBorderRadius = `${r1}% ${r2}% ${r3}% ${r4}% / ${r5}% ${r6}% ${r7}% ${r8}%`;
         const randomRot = (Math.random() * 20 - 10) + 'deg';
 
         // Tap always shows modal
@@ -920,7 +927,7 @@
         // data-id attribute essential for observer
         return `
             <div class="ms-badge ${lockedClass} ${newClass}" data-id="${badge.id}" onclick="${clickAction}">
-                <div class="ms-icon-box ${colorClass}" style="border-radius:${randomRadius}; transform: rotate(${randomRot});">
+                <div class="ms-icon-box ${colorClass}" style="border-radius:${randomBorderRadius}; transform: rotate(${randomRot});">
                     ${iconHtml}
                 </div>
                 <div class="ms-label">${badge.title}</div>
