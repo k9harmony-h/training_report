@@ -319,7 +319,7 @@
         pointer-events: none; z-index: 10003;
     }
     
-    /* 3.1 Light Core (Pedestal) - Front (Modified: 185px, Opacity 0.6) */
+    /* 3.1 Light Core (Pedestal) - Front (Modified: 175px, Opacity 0.6) */
     #celebLightCore {
         position: absolute;
         z-index: 3;
@@ -331,7 +331,7 @@
         box-shadow: none;
     }
 
-    /* 3.2 Donut Ring - Back (Modified: Bottom Aligned to 185px Core) */
+    /* 3.2 Donut Ring - Back (Modified: Bottom Aligned to 175px Core) */
     #celebLightRing {
         position: absolute;
         z-index: 1;
@@ -342,25 +342,26 @@
         opacity: 0; transform: scale(0);
     }
     
-    /* Core Animation (FINAL SIZE: 185px) */
+    /* Core Animation (FINAL SIZE: 175px) */
     .anim-light {
         animation: light-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     @keyframes light-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; } /* Whiteout */
-        100% { transform: scale(18.5); opacity: 0.6; } /* Pedestal size 185px, Opacity 0.6 */
+        100% { transform: scale(17.5); opacity: 0.6; } /* Pedestal size 175px, Opacity 0.6 */
     }
 
-    /* Ring Animation (FINAL SIZE: 280px, Bottom Aligned to 185px Core) */
+    /* Ring Animation (FINAL SIZE: 280px, Bottom Aligned to 175px Core) */
     .anim-ring {
         animation: ring-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     @keyframes ring-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; } 
-        /* scale(28)=280px(R140), Core=185px(R92.5). Offset = 140-92.5 = 47.5px */
-        100% { transform: translateY(-47.5px) scale(28); opacity: 0.7; }
+        /* scale(28)=280px(R140), Core=175px(R87.5). Offset = 140-87.5 = 52.5px */
+        /* Opacity 0.9 for visibility */
+        100% { transform: translateY(-52.5px) scale(28); opacity: 0.9; }
     }
 
     /* 4. Fireworks Canvas */
@@ -451,7 +452,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step18-Core185px-FireworksColors</div>
+  <div id="log-stamp">v2025.12.14-Step19-Core175px-SeparatedTrails</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -788,8 +789,9 @@
             const cx = (1-t)**3*start.x + 3*(1-t)**2*t*cp1.x + 3*(1-t)*t**2*cp2.x + t**3*end.x;
             const cy = (1-t)**3*start.y + 3*(1-t)**2*t*cp1.y + 3*(1-t)*t**2*cp2.y + t**3*end.y;
             
-            // Calculate Sub Trails (Swirl)
-            const swirlRadius = 30 + Math.sin(t * Math.PI) * 20; // 30-50px breathing radius
+            // Calculate Sub Trails (Swirl) - Modified for wider separation
+            // Swirl radius increased from 30+sin*20 to 60+sin*40
+            const swirlRadius = 60 + Math.sin(t * Math.PI * 2) * 40; 
             const angle = t * 20; // fast rotation
             const sx1 = cx + Math.cos(angle) * swirlRadius;
             const sy1 = cy + Math.sin(angle) * swirlRadius;
