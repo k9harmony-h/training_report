@@ -322,12 +322,12 @@
     /* Corrected CSS: Center-weighted Gradient & Optimized Blur */
     #celebLightCore {
         width: 10px; height: 10px; border-radius: 50%;
-        /* 中心30%まで純白、70%までかけて透明に */
-        background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 30%, rgba(255,255,255,0) 70%);
+        /* 0%〜25%まで完全な白、60%へ向かって透明に (芯を太く、ドーナツ化防止) */
+        background: radial-gradient(circle, #fff 0%, #fff 25%, rgba(255,255,255,0) 60%);
         opacity: 0; transform: scale(0);
-        /* 縮小時(18倍)に約18pxの柔らかいボケ足になるよう調整 */
+        /* ボケを抑えて芯を強調 */
         filter: blur(1px); 
-        /* 縮小時に適度な光彩(約18px)になるよう調整 */
+        /* エッジが強くなりすぎないよう調整 */
         box-shadow: 0 0 1px 0.5px rgba(255, 255, 255, 0.9);
     }
     
@@ -390,6 +390,13 @@
     .celeb-badge-inner i { font-size: 3.6rem; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); color: #fff; z-index: 2; position: relative; }
     .celeb-badge-inner img { width: 55%; height: 55%; object-fit: contain; z-index: 2; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); position: relative; }
 
+    /* 6. Fairy Dust Layer (Topmost) */
+    #fairyDustCanvas {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none; z-index: 10010;
+        display: none;
+    }
+
     /* Close Area */
     #celebCloseArea {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
@@ -415,8 +422,10 @@
           Tap to Close
       </div>
   </div>
+  
+  <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step5-LightBloomFinalV3</div>
+  <div id="log-stamp">v2025.12.14-Step6-FairyDustAdded</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -674,6 +683,11 @@
                 lightCore.classList.add('anim-light');
             }, 1000);
             
+            // 1.2s: Fairy Dust Trigger
+            setTimeout(() => {
+                triggerFairyDust();
+            }, 1200);
+
             // 1.5s: Badge Appearance Trigger (Out of light)
             setTimeout(() => {
                 badgeCont.classList.add('anim-badge-appear');
@@ -697,6 +711,95 @@
             overlay.style.display = 'none';
         }, 500);
     }
+
+    // --- [Module] Fairy Dust Effect (Start) ---
+    function triggerFairyDust() {
+        const canvas = document.getElementById('fairyDustCanvas');
+        if(!canvas) return;
+        const ctx = canvas.getContext('2d');
+        canvas.style.display = 'block';
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        let startTime = null;
+        const duration = 1200; // 1.2s
+        const particles = [];
+        
+        // Random Start/End Points (Edges)
+        const sides = ['top', 'bottom', 'left', 'right'];
+        const startSide = sides[Math.floor(Math.random()*4)];
+        const endSide = sides.filter(s => s !== startSide)[Math.floor(Math.random()*3)];
+        
+        const getPoint = (side) => {
+            if(side === 'top') return { x: Math.random()*canvas.width, y: -20 };
+            if(side === 'bottom') return { x: Math.random()*canvas.width, y: canvas.height+20 };
+            if(side === 'left') return { x: -20, y: Math.random()*canvas.height };
+            return { x: canvas.width+20, y: Math.random()*canvas.height };
+        };
+        
+        const start = getPoint(startSide);
+        const end = getPoint(endSide);
+        // Control points for Bezier
+        const cp1 = { x: Math.random()*canvas.width, y: Math.random()*canvas.height };
+        const cp2 = { x: Math.random()*canvas.width, y: Math.random()*canvas.height };
+        
+        const loop = (timestamp) => {
+            if (!startTime) startTime = timestamp;
+            const progress = Math.min((timestamp - startTime) / duration, 1);
+            
+            // Clear entire canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Calculate Fairy Position (Cubic Bezier)
+            const t = progress;
+            const cx = (1-t)**3*start.x + 3*(1-t)**2*t*cp1.x + 3*(1-t)*t**2*cp2.x + t**3*end.x;
+            const cy = (1-t)**3*start.y + 3*(1-t)**2*t*cp1.y + 3*(1-t)*t**2*cp2.y + t**3*end.y;
+            
+            // Spawn Particles
+            if (progress < 1) {
+                for(let i=0; i<3; i++) {
+                    particles.push({
+                        x: cx + (Math.random()-0.5)*10,
+                        y: cy + (Math.random()-0.5)*10,
+                        vx: (Math.random()-0.5)*2,
+                        vy: Math.random()*2 + 1, // Gravity
+                        life: 1.0,
+                        color: Math.random() > 0.5 ? '#FFD700' : '#FFFFFF',
+                        size: Math.random()*3 + 1
+                    });
+                }
+            }
+            
+            // Draw & Update Particles
+            for(let i=0; i<particles.length; i++) {
+                const p = particles[i];
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                ctx.fill();
+                
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.02;
+            }
+            
+            // Remove dead particles
+            let aliveParticles = false;
+            for(let i=particles.length-1; i>=0; i--) {
+                if(particles[i].life <= 0) particles.splice(i, 1);
+                else aliveParticles = true;
+            }
+            
+            if (progress < 1 || aliveParticles) {
+                requestAnimationFrame(loop);
+            } else {
+                canvas.style.display = 'none'; // Cleanup
+            }
+        };
+        requestAnimationFrame(loop);
+    }
+    // --- [Module] Fairy Dust Effect (End) ---
 
     // --- Fireworks System (Canvas) ---
     class Firework {
