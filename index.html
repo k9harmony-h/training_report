@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <script>
+    // 特定のクエリパラメータがある場合、即座にmedical.htmlへリダイレクト
     (function() {
       if (new URLSearchParams(window.location.search).get('page') === 'medical') {
         window.location.replace('medical.html'); 
@@ -11,27 +12,54 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>K9 Harmony Portal</title>
+  
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/medium-zoom/dist/medium-zoom.min.js"></script>
+  
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 
   <style>
-    :root { --brand-color: #57C3C2; --brand-bg: #E0F7FA; --text-main: #333333; --accent-color: #F2A679; }
-    body { font-family: 'Montserrat', 'Noto Sans JP', sans-serif; background-color: #fafafa; color: var(--text-main); padding-bottom: 150px; overflow-x: hidden; }
+    /* =========================================
+       Global Styles & Variables
+       ========================================= */
+    :root { 
+        --brand-color: #57C3C2; 
+        --brand-bg: #E0F7FA; 
+        --text-main: #333333; 
+        --accent-color: #F2A679; 
+    }
+    body { 
+        font-family: 'Montserrat', 'Noto Sans JP', sans-serif; 
+        background-color: #fafafa; 
+        color: var(--text-main); 
+        padding-bottom: 150px; /* Footer overlap prevention */
+        overflow-x: hidden; 
+    }
     
-    #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; transition: opacity 0.5s ease-out, visibility 0.5s ease-out; }
+    /* Loading Overlay */
+    #loadingOverlay { 
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background-color: var(--brand-color); 
+        display: flex; flex-direction: column; justify-content: center; align-items: center; 
+        z-index: 9999; color: white; 
+        transition: opacity 0.5s ease-out, visibility 0.5s ease-out; 
+    }
     .spinner-border-white { border-color: white; border-right-color: transparent; }
     #tipsText { margin-top: 20px; font-weight: 500; font-size: 1rem; text-align: center; padding: 0 20px; height: 1.5em; }
     
     body.loaded #loadingOverlay { opacity: 0; visibility: hidden; pointer-events: none; }
     
+    /* Main Content Fade-in */
     #mainContent { opacity: 0; transform: scale(0.95); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
     body.loaded #mainContent { opacity: 1; transform: scale(1); }
     
+    /* =========================================
+       UI Component Styles (Header, Profile, Chart, etc.)
+       ========================================= */
     .header-area { padding: 20px 20px 10px; background: #fff; }
     .brand-title { color: var(--text-main); font-weight: 700; letter-spacing: 0.05em; font-size: 1.2rem; text-align: center; }
     
@@ -324,32 +352,45 @@
         position: absolute;
         z-index: 3;
         width: 10px; height: 10px; border-radius: 50%;
+        /* Core visual: Solid white center fading to transparent */
         background: radial-gradient(circle, #fff 0%, #fff 80%, rgba(255,255,255,0.8) 90%, transparent 100%);
         opacity: 0; transform: scale(0);
-        filter: none; 
+        filter: none; /* No Blur */
         box-shadow: none;
     }
 
-    /* 3.2 Donut Ring - Back (Adjusted for tighter band and less blur) */
+    /* 3.2 Donut Ring - Back (Adjusted for alignment) */
     #celebLightRing {
         position: absolute;
         z-index: 1;
         width: 10px; height: 10px; border-radius: 50%;
-        margin-top: -52.5px; /* Bottom aligned to 175px pedestal */
-        /* Tighter band: 50% to 60%, peak 1.0 at 55% */
+        /* Alignment Calculation:
+           - Core Radius: 175px / 2 = 87.5px
+           - Ring Radius: 280px / 2 = 140px
+           - Bottom Alignment Difference: 140 - 87.5 = 52.5px
+           - Move Ring UP by 52.5px
+        */
+        margin-top: -52.5px;
+        /* Visual: Tight white band */
         background: radial-gradient(circle, transparent 50%, rgba(255,255,255,1.0) 55%, transparent 60%);
-        filter: blur(0.2px); /* Reduced blur */
+        filter: blur(0.2px); 
         opacity: 0; transform: scale(0);
     }
 
-    /* 3.3 Oval Ring - Back (New element) */
+    /* 3.3 Oval Ring - Back (Adjusted for size and alignment) */
     #celebLightOval {
         position: absolute;
         z-index: 2; /* Between Core and Ring */
         width: 10px; height: 10px; border-radius: 50%;
-        /* Bottom aligned to pedestal: Pedestal bottom is +87.5y, Oval bottom is +52.5y. Offset needs to be +35y */
-        margin-top: 35px;
-        /* Same tight band settings as Ring */
+        /* Alignment Calculation:
+           - Core Radius (Y): 87.5px (Bottom is +87.5)
+           - Oval Radius (Y): 105px / 2 = 52.5px (Bottom is +52.5)
+           - Base Gap: 87.5 - 52.5 = 35px (Needed to align bottoms)
+           - Additional Shift Requested: 15px
+           - Total Margin Top: 35 + 15 = 50px
+        */
+        margin-top: 50px;
+        /* Same visual style as Ring */
         background: radial-gradient(circle, transparent 50%, rgba(255,255,255,1.0) 55%, transparent 60%);
         filter: blur(0.2px);
         opacity: 0; transform: scale(0);
@@ -360,7 +401,7 @@
     @keyframes light-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; }
-        100% { transform: scale(17.5); opacity: 0.6; }
+        100% { transform: scale(17.5); opacity: 0.6; } /* Opacity 0.6 */
     }
 
     /* Ring Animation (FINAL SIZE: 280px) */
@@ -368,15 +409,15 @@
     @keyframes ring-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; }
-        100% { transform: scale(28); opacity: 1.0; } /* Opacity 1.0 */
+        100% { transform: scale(28); opacity: 0.6; } /* Opacity 0.6 */
     }
 
-    /* Oval Animation (FINAL SIZE: 350px x 105px) */
+    /* Oval Animation (FINAL SIZE: 400px x 105px) */
     .anim-oval { animation: oval-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes oval-bloom {
         0% { transform: scale(0); opacity: 0; }
-        15% { transform: scale(300); opacity: 1; } /* Uniform expansion flash */
-        100% { transform: scale(35, 10.5); opacity: 1.0; } /* Non-uniform final scale, Opacity 1.0 */
+        15% { transform: scale(300); opacity: 1; }
+        100% { transform: scale(40, 10.5); opacity: 0.6; } /* ScaleX 40, ScaleY 10.5, Opacity 0.6 */
     }
 
     /* 4. Fireworks Canvas */
@@ -468,7 +509,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step22-OvalAdded-SharpRings</div>
+  <div id="log-stamp">v2025.12.14-Step23-Core175px-Oval400px</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -673,7 +714,7 @@
         // Reset states
         lightCore.className = '';
         lightRing.className = '';
-        lightOval.className = ''; // New
+        lightOval.className = ''; 
         badgeCont.className = '';
         
         // 1. Prepare DOM content first
@@ -729,7 +770,7 @@
             setTimeout(() => {
                 lightCore.classList.add('anim-light');
                 lightRing.classList.add('anim-ring');
-                lightOval.classList.add('anim-oval'); // New
+                lightOval.classList.add('anim-oval'); 
             }, 1000);
             
             // 1.2s: Fairy Dust Trigger
@@ -755,7 +796,7 @@
         overlay.classList.remove('active');
         document.getElementById('celebLightCore').classList.remove('anim-light');
         document.getElementById('celebLightRing').classList.remove('anim-ring');
-        document.getElementById('celebLightOval').classList.remove('anim-oval'); // New
+        document.getElementById('celebLightOval').classList.remove('anim-oval'); 
         document.getElementById('celebBadgeContainer').classList.remove('anim-badge-appear');
         
         setTimeout(() => {
@@ -934,6 +975,7 @@
         }
         explode() {
             this.exploded = true;
+            // Added light red (#FFC1C1) and light blue (#BBDEFB) for luxury feeling
             const colors = ['#FFD700', '#F7E7CE', '#C0C0C0', '#FFFFFF', '#FFC1C1', '#BBDEFB']; 
             for(let i=0; i<60; i++) {
                 this.particles.push(new Particle(this.x, this.y, colors[Math.floor(Math.random()*colors.length)]));
