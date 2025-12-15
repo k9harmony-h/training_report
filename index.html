@@ -319,15 +319,14 @@
         pointer-events: none; z-index: 10003;
     }
     
-    /* REVISED CSS: Crisp Disc without double-vision */
+    /* Corrected CSS: Clean Disc, Larger Size, Soft Edges */
     #celebLightCore {
         width: 10px; height: 10px; border-radius: 50%;
-        /* 0%〜60%まで白、70%以降で急速に透明へ */
-        background: radial-gradient(circle, #fff 0%, #fff 60%, rgba(255,255,255,0.8) 70%, transparent 100%);
+        /* 0%〜70%まで完全な白、100%へ向かって透明に (芯を大きく強調) */
+        background: radial-gradient(circle, #fff 0%, #fff 70%, rgba(255,255,255,0.8) 80%, transparent 100%);
         opacity: 0; transform: scale(0);
-        /* Blurなしで輪郭をくっきりさせる */
-        filter: blur(0px); 
-        /* Box-shadow削除 (二重防止) */
+        /* 輪郭を柔らかくぼかす */
+        filter: blur(2px); 
         box-shadow: none;
     }
     
@@ -337,7 +336,7 @@
     @keyframes light-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; } /* Whiteout */
-        100% { transform: scale(18); opacity: 0.5; } /* Pedestal size (180px), semi-transparent */
+        100% { transform: scale(22); opacity: 0.6; } /* Pedestal size (220px), semi-transparent */
     }
 
     /* 4. Fireworks Canvas */
@@ -425,7 +424,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step9-SingleRingFix</div>
+  <div id="log-stamp">v2025.12.14-Step10-Final-Restored</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -486,19 +485,6 @@
       <div class="chart-box"><canvas id="chart2"></canvas><div class="chart-caption">応用・対応</div></div>
     </div>
 
-    <div class="milestone-section">
-        <div class="section-title" style="margin: 0 0 10px;">マイルストーン (K9 Harmony)</div>
-        
-        <div class="tier-container" id="tier1-container">
-            <div class="tier-header">🟢 初級: Basic Harmony</div>
-            <div class="tier-badge-scroll" id="tier1-scroll">
-                <div class="text-center w-100 text-muted small" style="flex:1;" id="tier1-loading">Loading...</div>
-            </div>
-        </div>
-
-        <a class="ms-list-link" onclick="openAllMilestonesModal()">獲得マイルストーン一覧を見る &gt;</a>
-    </div>
-
     <div class="section-title">本日のテーマ・目標</div>
     <div class="feedback-box" id="goalText">---</div>
     <div class="section-title">できたこと (Done)</div>
@@ -527,6 +513,19 @@
     <div class="section-title">本日のショット</div>
     <div class="photo-scroll" id="photoArea"><div class="text-muted small ms-3" id="photoLoadingMsg">画像を読み込み中...</div></div>
     
+    <div class="milestone-section">
+        <div class="section-title" style="margin: 0 0 10px;">マイルストーン (K9 Harmony)</div>
+        
+        <div class="tier-container" id="tier1-container">
+            <div class="tier-header">🟢 初級: Basic Harmony</div>
+            <div class="tier-badge-scroll" id="tier1-scroll">
+                <div class="text-center w-100 text-muted small" style="flex:1;" id="tier1-loading">Loading...</div>
+            </div>
+        </div>
+
+        <a class="ms-list-link" onclick="openAllMilestonesModal()">獲得マイルストーン一覧を見る &gt;</a>
+    </div>
+
     <div class="footer-action">
       <button onclick="handleDownloadPdf()" class="btn-pdf" id="pdfBtn">
           📄 レポートをPDFで保存
@@ -712,7 +711,7 @@
         }, 500);
     }
 
-    // --- [Module] Fairy Dust Effect (Revised: 2.5s, Finer, Longer Life) ---
+    // --- [Module] Fairy Dust Effect (Revised: 5.0s, Finer, Longer Life) ---
     function triggerFairyDust() {
         const canvas = document.getElementById('fairyDustCanvas');
         if(!canvas) return;
@@ -722,7 +721,7 @@
         canvas.height = window.innerHeight;
         
         let startTime = null;
-        const duration = 2500; // 2.5s duration
+        const duration = 5000; // 5.0s duration
         const particles = [];
         
         const sides = ['top', 'bottom', 'left', 'right'];
@@ -775,7 +774,7 @@
                 
                 p.x += p.vx;
                 p.y += p.vy;
-                p.life -= 0.008; // Longer life (~2s decay)
+                p.life -= 0.005; // Longer life (~3s decay)
             }
             
             let aliveParticles = false;
