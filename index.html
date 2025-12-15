@@ -158,11 +158,11 @@
         border: none;
     }
     
-    /* Inner Perfect Circle (9px margin) */
+    /* Inner Perfect Circle (8px margin) */
     .ms-icon-box::before {
         content: '';
         position: absolute;
-        top: 9px; left: 9px; right: 9px; bottom: 9px;
+        top: 8px; left: 8px; right: 8px; bottom: 8px;
         border-radius: 50%; 
         border: 1px solid rgba(0,0,0,0.15); 
         box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2), 0 0 0 20px rgba(0,0,0,0.02); 
@@ -209,12 +209,6 @@
     .bg-luxury-onyx { background: linear-gradient(45deg, #353839, #000000, #2c2c2c); }
     .bg-luxury-diamond { background: linear-gradient(45deg, #b9f2ff, #ffffff, #e0ffff); color:#000; border:1px solid #aaa; }
 
-    .glitter-effect::after {
-        content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-        background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
-        transform: rotate(45deg); animation: sparkle 3s infinite linear; pointer-events: none;
-    }
-
     /* Scroll Hint Fade */
     .tier-container::after {
         content: ''; position: absolute; top: 0; right: 0; width: 30px; height: 100%;
@@ -230,7 +224,7 @@
     }
     .ms-list-link:hover { text-decoration: underline; }
 
-    /* Locked Overlay (Grouped) */
+    /* Locked Overlay */
     .tier-locked { position: relative; min-height: 120px; margin-bottom: 20px; border-radius: 12px; overflow: hidden; }
     .lock-overlay {
         position: absolute; inset: 0; 
@@ -399,7 +393,7 @@
       </div>
   </div>
 
-  <div id="log-stamp">v2025.12.14-Step5-ShowTimeFinal</div>
+  <div id="log-stamp">v2025.12.14-Step5-Perfect</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -567,7 +561,6 @@
     const LIFF_ID = '2008546673-MJY7j3ox'; 
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
 
-    // Logging Function
     function log(msg) {
         const el = document.getElementById('debug-console');
         if(el) el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}<br>` + el.innerHTML;
@@ -927,34 +920,29 @@
         if(tier1Container) tier1Container.innerHTML = '';
 
         let hasNewBadge = false;
-        let firstNewBadge = null;
 
         badges.filter(b => b.tier === '1_Beginner').forEach(badge => {
-            // DEBUG: Force Animation for ALL acquired badges
-            if (badge.is_acquired) {
-                badge.is_new = true; // Remove this line in production!
-            }
-
+            // No forced animation in list
             const html = createBadgeHtml(badge);
             tier1Container.insertAdjacentHTML('beforeend', html);
             
-            if (badge.is_new) {
-                hasNewBadge = true;
-                if (!firstNewBadge) firstNewBadge = badge;
+            // Check for new badges (real logic)
+            // if (badge.is_new) hasNewBadge = true;
+
+            // --- DEBUG: Force trigger for ANY acquired badge for testing ---
+            if (badge.is_acquired && !hasNewBadge) {
+                 hasNewBadge = true;
+                 // Delay slightly to allow rendering
+                 setTimeout(() => {
+                     showCelebration(badge);
+                     // markAsSeen(badge.id); // Call API if needed
+                 }, 1500); 
             }
+            // -------------------------------------------------------------
         });
         
         if (tier1Container.innerHTML === '') tier1Container.innerHTML = '<div class="text-center w-100 small" style="flex:1;">データなし</div>';
         
-        // --- FORCE CELEBRATION FOR FIRST NEW BADGE ---
-        if (hasNewBadge && firstNewBadge) {
-             // Delay slightly to allow rendering
-             setTimeout(() => {
-                 showCelebration(firstNewBadge);
-                 // markAsSeen(firstNewBadge.id); // Call API if needed
-             }, 1500); 
-        }
-
         log('Milestones Rendered.');
     }
 
@@ -962,6 +950,8 @@
         const isLocked = !badge.is_acquired;
         const lockedClass = isLocked ? 'locked' : '';
         const colorClass = isLocked ? '' : `bg-${badge.color}`;
+        
+        // Remove animation class for static list
         
         let iconHtml = '<i class="fa-solid fa-paw"></i>';
         if (badge.icon) {
