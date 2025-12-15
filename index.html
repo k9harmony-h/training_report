@@ -100,7 +100,7 @@
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
 
     /* =========================================
-       Milestone CSS (Static List)
+       Milestone CSS
        ========================================= */
     .milestone-section { margin: 30px 20px 10px; }
     
@@ -146,7 +146,7 @@
     /* Sealing Wax Style Icon Box (70px x 70px) */
     .ms-icon-box { 
         width: 70px; height: 70px; 
-        border-radius: 50%; /* Default, will be overridden by inline style */
+        border-radius: 50%;
         display: flex; align-items: center; justify-content: center; 
         margin-bottom: 8px; 
         position: relative; overflow: hidden;
@@ -191,6 +191,7 @@
     .bg-pastel-sky { background: #87CEEB; } .bg-pastel-rose { background: #FFB7B2; }
     .bg-pastel-lilac { background: #C8A2C8; } .bg-pastel-mint { background: #98FF98; }
     .bg-pastel-coral { background: #FF7F50; } .bg-pastel-cocoa { background: #D2691E; }
+
     .bg-metallic-silver { background: linear-gradient(135deg, #e0e0e0, #ffffff, #b0b0b0); color: #333; }
     .bg-metallic-bronze { background: linear-gradient(135deg, #cd7f32, #ffcc99, #8b4513); }
     .bg-metallic-champagne { background: linear-gradient(135deg, #fad6a5, #fff8e7, #d2b48c); color: #5d4037; }
@@ -199,6 +200,7 @@
     .bg-metallic-rose-gold { background: linear-gradient(135deg, #b76e79, #ffd1dc, #a0522d); }
     .bg-metallic-coffee { background: linear-gradient(135deg, #6f4e37, #d2b48c, #3e2723); }
     .bg-metallic-ice { background: linear-gradient(135deg, #a5f2f3, #e0ffff, #00ced1); color: #00695c; }
+
     .bg-luxury-gold { background: linear-gradient(45deg, #FFD700, #FDB931, #FFD700); }
     .bg-luxury-platinum { background: linear-gradient(45deg, #E5E4E2, #ffffff, #BCC6CC); color:#333; }
     .bg-luxury-ruby { background: linear-gradient(45deg, #9b111e, #ff0000, #800000); }
@@ -221,7 +223,7 @@
     }
     .ms-list-link:hover { text-decoration: underline; }
 
-    /* Locked Overlay */
+    /* Locked Overlay (Grouped) */
     .tier-locked { position: relative; min-height: 120px; margin-bottom: 20px; border-radius: 12px; overflow: hidden; }
     .lock-overlay {
         position: absolute; inset: 0; 
@@ -312,24 +314,48 @@
         50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 4px gold; } 
     }
 
-    /* 3. Fireworks Canvas */
-    #celebFireworksCanvas {
+    /* 3. Light Flash & Pedestal (NEW: Guaranteed Implementation) */
+    #celebLightContainer {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; justify-content: center; align-items: center;
         pointer-events: none; z-index: 10003;
     }
-
-    /* 4. Badge Appearance */
-    #celebBadgeContainer {
-        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        width: 160px; height: 160px; 
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        opacity: 0;
-        z-index: 10004; /* Top element */
+    #celebLightCore {
+        width: 10px; height: 10px; border-radius: 50%;
+        /* 中心が白、外側へ透明になるグラデーション */
+        background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.8) 20%, rgba(255,255,255,0) 70%);
+        opacity: 0; transform: scale(0);
+        filter: blur(20px);
+        box-shadow: 0 0 80px 40px rgba(255, 255, 255, 0.9);
     }
     
-    .start-animation #celebBadgeContainer {
+    /* Animation: Expand(Flash) -> Shrink(Pedestal) */
+    .anim-light {
+        animation: light-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes light-bloom {
+        0% { transform: scale(0); opacity: 0; }
+        15% { transform: scale(300); opacity: 1; } /* Whiteout */
+        100% { transform: scale(25); opacity: 0.6; } /* Pedestal size */
+    }
+
+    /* 4. Fireworks Canvas */
+    #celebFireworksCanvas {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none; z-index: 10004;
+    }
+
+    /* 5. Badge Appearance */
+    #celebBadgeContainer {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 180px; height: 180px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        opacity: 0;
+        z-index: 10005; /* Top element */
+    }
+    
+    .anim-badge-appear {
         animation: badge-sequence 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        animation-delay: 0.8s; /* Start after sky/stars */
     }
     @keyframes badge-sequence {
         0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; filter: brightness(0); }
@@ -339,7 +365,7 @@
     /* Celebration Badge Inner - Reusing .ms-icon-box styles */
     .celeb-badge-inner {
         width: 140px; height: 140px; /* Bigger than list */
-        border-radius: 50%; /* Default */
+        border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         position: relative; overflow: hidden;
         /* Exact copy of .ms-icon-box styles */
@@ -380,6 +406,7 @@
   <div id="celebrationOverlay">
       <div id="celebNightSky"></div>
       <div id="celebStars"></div>
+      <div id="celebLightContainer"><div id="celebLightCore"></div></div>
       <canvas id="celebFireworksCanvas"></canvas>
       <div id="celebBadgeContainer">
           </div>
@@ -389,7 +416,7 @@
       </div>
   </div>
 
-  <div id="log-stamp">v2025.12.14-Step6-RandomWaxShape</div>
+  <div id="log-stamp">v2025.12.14-Step5-LightBloomComplete</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -587,6 +614,11 @@
         const overlay = document.getElementById('celebrationOverlay');
         const badgeCont = document.getElementById('celebBadgeContainer');
         const starsCont = document.getElementById('celebStars');
+        const lightCore = document.getElementById('celebLightCore');
+        
+        // Reset states
+        lightCore.className = '';
+        badgeCont.className = '';
         
         // 1. Prepare DOM content first
         let iconHtml = '<i class="fa-solid fa-paw"></i>';
@@ -608,7 +640,7 @@
         const r7 = Math.floor(Math.random() * 21) + 40; const r8 = Math.floor(Math.random() * 21) + 40;
         const randomBorderRadius = `${r1}% ${r2}% ${r3}% ${r4}% / ${r5}% ${r6}% ${r7}% ${r8}%`;
 
-        // Apply EXACT classes and random border-radius
+        // Apply EXACT classes to mimic .ms-icon-box
         badgeCont.innerHTML = `
             <div class="celeb-badge-inner bg-${color}" style="border-radius: ${randomBorderRadius};">
                 ${iconHtml}
@@ -637,20 +669,30 @@
         setTimeout(() => {
             overlay.classList.add('active'); // Fade in Sky & Stars
             
-            // Start Badge Sequence (Light removed for now)
-            overlay.classList.add('start-animation'); 
+            // 1.0s: Light Animation Trigger
+            setTimeout(() => {
+                lightCore.classList.add('anim-light');
+            }, 1000);
+            
+            // 1.5s: Badge Appearance Trigger (Out of light)
+            setTimeout(() => {
+                badgeCont.classList.add('anim-badge-appear');
+            }, 1500);
             
             // 4. Fireworks at exact timing (2.0s after start)
             setTimeout(() => {
                 launchCelebrationFireworks();
-            }, 2000);
+            }, 2200);
             
         }, 50);
     }
     
     function closeCelebration() {
         const overlay = document.getElementById('celebrationOverlay');
-        overlay.classList.remove('active', 'start-animation');
+        overlay.classList.remove('active');
+        document.getElementById('celebLightCore').classList.remove('anim-light');
+        document.getElementById('celebBadgeContainer').classList.remove('anim-badge-appear');
+        
         setTimeout(() => {
             overlay.style.display = 'none';
         }, 500);
