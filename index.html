@@ -319,7 +319,7 @@
         pointer-events: none; z-index: 10003;
     }
     
-    /* 3.1 Light Core (Pedestal) - Front (Modified: 175px, Opacity 0.6) */
+    /* 3.1 Light Core (Pedestal) - Front */
     #celebLightCore {
         position: absolute;
         z-index: 3;
@@ -327,16 +327,20 @@
         /* 0%〜80%まで完全な白、100%へ向かって透明に */
         background: radial-gradient(circle, #fff 0%, #fff 80%, rgba(255,255,255,0.8) 90%, transparent 100%);
         opacity: 0; transform: scale(0);
-        filter: none; 
+        filter: none; /* No Blur */
         box-shadow: none;
     }
 
-    /* 3.2 Donut Ring - Back (Modified: Bottom Aligned to 175px Core) */
+    /* 3.2 Donut Ring - Back (Adjusted margin for alignment) */
     #celebLightRing {
         position: absolute;
         z-index: 1;
         width: 10px; height: 10px; border-radius: 50%;
-        /* 帯の幅を広げ、不透明度を上げて視認性を高める */
+        /* Margin Offset Calculation: 
+           Ring Radius (280/2 = 140) - Core Radius (175/2 = 87.5) = 52.5px
+           Move Ring UP by 52.5px to align bottoms. */
+        margin-top: -52.5px;
+        /* White band definition */
         background: radial-gradient(circle, transparent 40%, rgba(255,255,255,0.9) 50%, transparent 60%);
         filter: blur(0.5px); 
         opacity: 0; transform: scale(0);
@@ -352,16 +356,15 @@
         100% { transform: scale(17.5); opacity: 0.6; } /* Pedestal size 175px, Opacity 0.6 */
     }
 
-    /* Ring Animation (FINAL SIZE: 280px, Bottom Aligned to 175px Core) */
+    /* Ring Animation (FINAL SIZE: 280px) */
     .anim-ring {
         animation: ring-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     @keyframes ring-bloom {
         0% { transform: scale(0); opacity: 0; }
-        15% { transform: scale(300); opacity: 1; } 
-        /* scale(28)=280px(R140), Core=175px(R87.5). Offset = 140-87.5 = 52.5px */
-        /* Opacity 0.9 for strong visibility */
-        100% { transform: translateY(-52.5px) scale(28); opacity: 0.9; }
+        15% { transform: scale(300); opacity: 1; } /* Sync with Core */
+        /* scale(28)=280px. Position handled by margin-top. Opacity 0.9 */
+        100% { transform: scale(28); opacity: 0.9; }
     }
 
     /* 4. Fireworks Canvas */
@@ -452,7 +455,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step20-Core175px-SeparatedTrailsWide</div>
+  <div id="log-stamp">v2025.12.14-Step21-Final-Waypoints-MarginFixed</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -743,7 +746,7 @@
         }, 500);
     }
 
-    // --- [Module] Fairy Dust Effect (Multi-Trail Swirl) ---
+    // --- [Module] Fairy Dust Effect (Guaranteed 5s Stay - Waypoints) ---
     function triggerFairyDust() {
         const canvas = document.getElementById('fairyDustCanvas');
         if(!canvas) return;
@@ -753,82 +756,107 @@
         canvas.height = window.innerHeight;
         
         let startTime = null;
-        const duration = 5000; // 5.0s guaranteed source movement
+        const duration = 5000; // Guaranteed 5s
         const particles = [];
         
-        const sides = ['top', 'bottom', 'left', 'right'];
-        const startSide = sides[Math.floor(Math.random()*4)];
-        const endSide = sides.filter(s => s !== startSide)[Math.floor(Math.random()*3)];
+        // 1. Initial State
+        const w = canvas.width;
+        const h = canvas.height;
+        const padding = 50; // Safety margin
         
-        const getPoint = (side) => {
-            if(side === 'top') return { x: Math.random()*canvas.width, y: -50 };
-            if(side === 'bottom') return { x: Math.random()*canvas.width, y: canvas.height+50 };
-            if(side === 'left') return { x: -50, y: Math.random()*canvas.height };
-            return { x: canvas.width+50, y: Math.random()*canvas.height };
-        };
+        // Start from random edge
+        const startSides = ['top', 'bottom', 'left', 'right'];
+        const side = startSides[Math.floor(Math.random()*4)];
+        let currentPos = { x: w/2, y: h/2 }; 
         
-        const start = getPoint(startSide);
-        const end = getPoint(endSide);
-        const cp1 = { 
-            x: (Math.random() - 0.5) * 3 * canvas.width + canvas.width/2, 
-            y: (Math.random() - 0.5) * 3 * canvas.height + canvas.height/2 
-        };
-        const cp2 = { 
-            x: (Math.random() - 0.5) * 3 * canvas.width + canvas.width/2, 
-            y: (Math.random() - 0.5) * 3 * canvas.height + canvas.height/2 
-        };
+        if(side==='top') currentPos = {x: Math.random()*w, y: -50};
+        else if(side==='bottom') currentPos = {x: Math.random()*w, y: h+50};
+        else if(side==='left') currentPos = {x: -50, y: Math.random()*h};
+        else currentPos = {x: w+50, y: Math.random()*h};
+        
+        // Movement Target Logic
+        let targetPos = getRandomSafePoint();
+        let velocity = { x: 0, y: 0 };
+        const speed = 8; // Movement speed
+        
+        function getRandomSafePoint() {
+            return {
+                x: padding + Math.random() * (w - padding*2),
+                y: padding + Math.random() * (h - padding*2)
+            };
+        }
         
         const loop = (timestamp) => {
             if (!startTime) startTime = timestamp;
-            const progress = Math.min((timestamp - startTime) / duration, 1);
+            const elapsed = timestamp - startTime;
             
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, w, h);
             
-            // Calculate Main Trail Position
-            const t = progress;
-            const cx = (1-t)**3*start.x + 3*(1-t)**2*t*cp1.x + 3*(1-t)*t**2*cp2.x + t**3*end.x;
-            const cy = (1-t)**3*start.y + 3*(1-t)**2*t*cp1.y + 3*(1-t)*t**2*cp2.y + t**3*end.y;
+            // --- Update Source Position (Waypoints) ---
+            if (elapsed < duration) {
+                // Determine direction to target
+                const dx = targetPos.x - currentPos.x;
+                const dy = targetPos.y - currentPos.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if (dist < 20) {
+                    // Reached target, pick new safe target
+                    targetPos = getRandomSafePoint();
+                } else {
+                    // Move towards target
+                    velocity.x = (dx / dist) * speed;
+                    velocity.y = (dy / dist) * speed;
+                    currentPos.x += velocity.x;
+                    currentPos.y += velocity.y;
+                }
+            } else {
+                // Time's up: Exit screen
+                if (elapsed < duration + 100) { // Calculate exit point once
+                     // Pick nearest edge or random edge to exit
+                     const exits = [{x:w/2, y:-100}, {x:w/2, y:h+100}, {x:-100, y:h/2}, {x:w+100, y:h/2}];
+                     targetPos = exits[Math.floor(Math.random()*4)];
+                }
+                
+                const dx = targetPos.x - currentPos.x;
+                const dy = targetPos.y - currentPos.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if (dist > 10) {
+                    velocity.x = (dx / dist) * speed * 1.5; // Exit faster
+                    velocity.y = (dy / dist) * speed * 1.5;
+                    currentPos.x += velocity.x;
+                    currentPos.y += velocity.y;
+                }
+            }
             
-            // Calculate Sub Trails (Swirl) - Modified for wider separation
-            // Swirl radius increased from 30+sin*20 to 60+sin*40
-            const swirlRadius = 60 + Math.sin(t * Math.PI * 2) * 40; 
-            const angle = t * 20; // fast rotation
-            const sx1 = cx + Math.cos(angle) * swirlRadius;
-            const sy1 = cy + Math.sin(angle) * swirlRadius;
-            const sx2 = cx + Math.cos(angle + Math.PI) * swirlRadius;
-            const sy2 = cy + Math.sin(angle + Math.PI) * swirlRadius;
-
-            if (progress < 1) {
-                // Main Trail Particles
+            // --- Generate Particles at currentPos ---
+            // Only generate if not finished exiting (approx 6s total)
+            if (elapsed < duration + 1000) {
+                // Main Trail
                 for(let i=0; i<6; i++) { 
                     particles.push({
-                        x: cx + (Math.random()-0.5)*15, y: cy + (Math.random()-0.5)*15,
+                        x: currentPos.x + (Math.random()-0.5)*10, y: currentPos.y + (Math.random()-0.5)*10,
                         vx: (Math.random()-0.5)*1, vy: Math.random()*0.5 + 0.2,
                         life: 1.0, color: Math.random() > 0.3 ? '#FFD700' : '#FFFFFF',
                         size: Math.random()*0.8 + 0.2
                     });
                 }
-                // Sub Trail 1 Particles (Finer)
+                
+                // Swirl Trails (Calculated around currentPos)
+                const tVal = elapsed * 0.005; 
+                const swirlR = 60 + Math.sin(tVal * 5) * 30; // 30-90px radius
+                const sx1 = currentPos.x + Math.cos(tVal * 10) * swirlR;
+                const sy1 = currentPos.y + Math.sin(tVal * 10) * swirlR;
+                const sx2 = currentPos.x + Math.cos(tVal * 10 + Math.PI) * swirlR;
+                const sy2 = currentPos.y + Math.sin(tVal * 10 + Math.PI) * swirlR;
+                
                 for(let i=0; i<3; i++) {
-                    particles.push({
-                        x: sx1 + (Math.random()-0.5)*5, y: sy1 + (Math.random()-0.5)*5,
-                        vx: (Math.random()-0.5)*0.5, vy: Math.random()*0.3 + 0.1,
-                        life: 0.8, color: '#A8D8B9', // Pale Green tint
-                        size: Math.random()*0.5 + 0.1 // 0.1-0.6px
-                    });
-                }
-                // Sub Trail 2 Particles (Finer)
-                for(let i=0; i<3; i++) {
-                    particles.push({
-                        x: sx2 + (Math.random()-0.5)*5, y: sy2 + (Math.random()-0.5)*5,
-                        vx: (Math.random()-0.5)*0.5, vy: Math.random()*0.3 + 0.1,
-                        life: 0.8, color: '#87CEEB', // Sky Blue tint
-                        size: Math.random()*0.5 + 0.1
-                    });
+                    particles.push({ x: sx1 + (Math.random()-0.5)*5, y: sy1 + (Math.random()-0.5)*5, vx: (Math.random()-0.5)*0.5, vy: Math.random()*0.3, life: 0.8, color: '#A8D8B9', size: Math.random()*0.5+0.1 });
+                    particles.push({ x: sx2 + (Math.random()-0.5)*5, y: sy2 + (Math.random()-0.5)*5, vx: (Math.random()-0.5)*0.5, vy: Math.random()*0.3, life: 0.8, color: '#87CEEB', size: Math.random()*0.5+0.1 });
                 }
             }
-            
-            // Draw & Update Particles
+
+            // --- Update & Draw Particles ---
             for(let i=0; i<particles.length; i++) {
                 const p = particles[i];
                 ctx.globalAlpha = p.life;
@@ -839,7 +867,7 @@
                 
                 p.x += p.vx;
                 p.y += p.vy;
-                p.life -= 0.005; // ~3.3s life span
+                p.life -= 0.005; 
             }
             
             // Clean dead particles
@@ -849,7 +877,7 @@
                 else aliveParticles = true;
             }
             
-            if (progress < 1 || aliveParticles) {
+            if (elapsed < duration + 3000 || aliveParticles) { // Keep loop until particles fade
                 requestAnimationFrame(loop);
             } else {
                 canvas.style.display = 'none';
@@ -889,7 +917,6 @@
         }
         explode() {
             this.exploded = true;
-            // Added light red (#FFC1C1) and light blue (#BBDEFB) for luxury feeling
             const colors = ['#FFD700', '#F7E7CE', '#C0C0C0', '#FFFFFF', '#FFC1C1', '#BBDEFB']; 
             for(let i=0; i<60; i++) {
                 this.particles.push(new Particle(this.x, this.y, colors[Math.floor(Math.random()*colors.length)]));
