@@ -324,47 +324,59 @@
         position: absolute;
         z-index: 3;
         width: 10px; height: 10px; border-radius: 50%;
-        /* 0%〜80%まで完全な白、100%へ向かって透明に */
         background: radial-gradient(circle, #fff 0%, #fff 80%, rgba(255,255,255,0.8) 90%, transparent 100%);
         opacity: 0; transform: scale(0);
-        filter: none; /* No Blur */
+        filter: none; 
         box-shadow: none;
     }
 
-    /* 3.2 Donut Ring - Back (Adjusted margin for alignment) */
+    /* 3.2 Donut Ring - Back (Adjusted for tighter band and less blur) */
     #celebLightRing {
         position: absolute;
         z-index: 1;
         width: 10px; height: 10px; border-radius: 50%;
-        /* Margin Offset Calculation: 
-           Ring Radius (280/2 = 140) - Core Radius (175/2 = 87.5) = 52.5px
-           Move Ring UP by 52.5px to align bottoms. */
-        margin-top: -52.5px;
-        /* White band definition */
-        background: radial-gradient(circle, transparent 40%, rgba(255,255,255,0.9) 50%, transparent 60%);
-        filter: blur(0.5px); 
+        margin-top: -52.5px; /* Bottom aligned to 175px pedestal */
+        /* Tighter band: 50% to 60%, peak 1.0 at 55% */
+        background: radial-gradient(circle, transparent 50%, rgba(255,255,255,1.0) 55%, transparent 60%);
+        filter: blur(0.2px); /* Reduced blur */
+        opacity: 0; transform: scale(0);
+    }
+
+    /* 3.3 Oval Ring - Back (New element) */
+    #celebLightOval {
+        position: absolute;
+        z-index: 2; /* Between Core and Ring */
+        width: 10px; height: 10px; border-radius: 50%;
+        /* Bottom aligned to pedestal: Pedestal bottom is +87.5y, Oval bottom is +52.5y. Offset needs to be +35y */
+        margin-top: 35px;
+        /* Same tight band settings as Ring */
+        background: radial-gradient(circle, transparent 50%, rgba(255,255,255,1.0) 55%, transparent 60%);
+        filter: blur(0.2px);
         opacity: 0; transform: scale(0);
     }
     
     /* Core Animation (FINAL SIZE: 175px) */
-    .anim-light {
-        animation: light-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
+    .anim-light { animation: light-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes light-bloom {
         0% { transform: scale(0); opacity: 0; }
-        15% { transform: scale(300); opacity: 1; } /* Whiteout */
-        100% { transform: scale(17.5); opacity: 0.6; } /* Pedestal size 175px, Opacity 0.6 */
+        15% { transform: scale(300); opacity: 1; }
+        100% { transform: scale(17.5); opacity: 0.6; }
     }
 
     /* Ring Animation (FINAL SIZE: 280px) */
-    .anim-ring {
-        animation: ring-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
+    .anim-ring { animation: ring-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes ring-bloom {
         0% { transform: scale(0); opacity: 0; }
-        15% { transform: scale(300); opacity: 1; } /* Sync with Core */
-        /* scale(28)=280px. Position handled by margin-top. Opacity 0.9 */
-        100% { transform: scale(28); opacity: 0.9; }
+        15% { transform: scale(300); opacity: 1; }
+        100% { transform: scale(28); opacity: 1.0; } /* Opacity 1.0 */
+    }
+
+    /* Oval Animation (FINAL SIZE: 350px x 105px) */
+    .anim-oval { animation: oval-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes oval-bloom {
+        0% { transform: scale(0); opacity: 0; }
+        15% { transform: scale(300); opacity: 1; } /* Uniform expansion flash */
+        100% { transform: scale(35, 10.5); opacity: 1.0; } /* Non-uniform final scale, Opacity 1.0 */
     }
 
     /* 4. Fireworks Canvas */
@@ -443,6 +455,7 @@
       <div id="celebLightContainer">
           <div id="celebLightCore"></div>
           <div id="celebLightRing"></div>
+          <div id="celebLightOval"></div>
       </div>
       <canvas id="celebFireworksCanvas"></canvas>
       <div id="celebBadgeContainer">
@@ -455,7 +468,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step21-Final-Waypoints-MarginFixed</div>
+  <div id="log-stamp">v2025.12.14-Step22-OvalAdded-SharpRings</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -655,10 +668,12 @@
         const starsCont = document.getElementById('celebStars');
         const lightCore = document.getElementById('celebLightCore');
         const lightRing = document.getElementById('celebLightRing');
+        const lightOval = document.getElementById('celebLightOval'); // New
         
         // Reset states
         lightCore.className = '';
         lightRing.className = '';
+        lightOval.className = ''; // New
         badgeCont.className = '';
         
         // 1. Prepare DOM content first
@@ -714,6 +729,7 @@
             setTimeout(() => {
                 lightCore.classList.add('anim-light');
                 lightRing.classList.add('anim-ring');
+                lightOval.classList.add('anim-oval'); // New
             }, 1000);
             
             // 1.2s: Fairy Dust Trigger
@@ -739,6 +755,7 @@
         overlay.classList.remove('active');
         document.getElementById('celebLightCore').classList.remove('anim-light');
         document.getElementById('celebLightRing').classList.remove('anim-ring');
+        document.getElementById('celebLightOval').classList.remove('anim-oval'); // New
         document.getElementById('celebBadgeContainer').classList.remove('anim-badge-appear');
         
         setTimeout(() => {
