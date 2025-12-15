@@ -324,8 +324,8 @@
         position: absolute;
         z-index: 3;
         width: 10px; height: 10px; border-radius: 50%;
-        /* 0%〜70%まで完全な白、100%へ向かって透明に */
-        background: radial-gradient(circle, #fff 0%, #fff 70%, rgba(255,255,255,0.8) 80%, transparent 100%);
+        /* 0%〜80%まで完全な白、100%へ向かって透明に (白領域を拡大) */
+        background: radial-gradient(circle, #fff 0%, #fff 80%, rgba(255,255,255,0.8) 90%, transparent 100%);
         opacity: 0; transform: scale(0);
         /* 輪郭を柔らかくぼかす */
         filter: blur(2px); 
@@ -350,7 +350,7 @@
     @keyframes light-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; } /* Whiteout */
-        100% { transform: scale(25); opacity: 0.6; } /* Pedestal size 250px */
+        100% { transform: scale(25); opacity: 0.8; } /* Pedestal size 250px, opacity 0.8 */
     }
 
     /* Ring Animation (FINAL SIZE: 280px, Bottom Aligned to 250px Core) */
@@ -384,7 +384,7 @@
     }
     @keyframes badge-sequence {
         0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; filter: brightness(0); }
-        100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; filter: brightness(1); }
+        100% { transform: translate(-50%, -50%) scale(1.0); opacity: 1; filter: brightness(1); }
     }
     
     /* Celebration Badge Inner - Strict Sealing Wax Style */
@@ -452,7 +452,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step13-Core250px</div>
+  <div id="log-stamp">v2025.12.14-Step14-BadgeScaledDown</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
