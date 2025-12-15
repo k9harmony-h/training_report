@@ -100,7 +100,7 @@
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
 
     /* =========================================
-       Milestone CSS
+       Milestone CSS (Static List)
        ========================================= */
     .milestone-section { margin: 30px 20px 10px; }
     
@@ -150,6 +150,7 @@
         display: flex; align-items: center; justify-content: center; 
         margin-bottom: 8px; 
         position: relative; overflow: hidden;
+        /* Wax Effect */
         box-shadow: 
             inset 0 0 8px rgba(0,0,0,0.3), 
             inset 2px 2px 4px rgba(255,255,255,0.4), 
@@ -191,6 +192,7 @@
     .bg-pastel-sky { background: #87CEEB; } .bg-pastel-rose { background: #FFB7B2; }
     .bg-pastel-lilac { background: #C8A2C8; } .bg-pastel-mint { background: #98FF98; }
     .bg-pastel-coral { background: #FF7F50; } .bg-pastel-cocoa { background: #D2691E; }
+
     .bg-metallic-silver { background: linear-gradient(135deg, #e0e0e0, #ffffff, #b0b0b0); color: #333; }
     .bg-metallic-bronze { background: linear-gradient(135deg, #cd7f32, #ffcc99, #8b4513); }
     .bg-metallic-champagne { background: linear-gradient(135deg, #fad6a5, #fff8e7, #d2b48c); color: #5d4037; }
@@ -199,6 +201,7 @@
     .bg-metallic-rose-gold { background: linear-gradient(135deg, #b76e79, #ffd1dc, #a0522d); }
     .bg-metallic-coffee { background: linear-gradient(135deg, #6f4e37, #d2b48c, #3e2723); }
     .bg-metallic-ice { background: linear-gradient(135deg, #a5f2f3, #e0ffff, #00ced1); color: #00695c; }
+
     .bg-luxury-gold { background: linear-gradient(45deg, #FFD700, #FDB931, #FFD700); }
     .bg-luxury-platinum { background: linear-gradient(45deg, #E5E4E2, #ffffff, #BCC6CC); color:#333; }
     .bg-luxury-ruby { background: linear-gradient(45deg, #9b111e, #ff0000, #800000); }
@@ -221,7 +224,7 @@
     }
     .ms-list-link:hover { text-decoration: underline; }
 
-    /* Locked Overlay */
+    /* Locked Overlay (Grouped) */
     .tier-locked { position: relative; min-height: 120px; margin-bottom: 20px; border-radius: 12px; overflow: hidden; }
     .lock-overlay {
         position: absolute; inset: 0; 
@@ -278,7 +281,7 @@
     #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 8px; height: 150px; overflow-y: scroll; margin: 20px; }
 
     /* =========================================================================
-       [Moment of Joy] Celebration Overlay Styles (Defined in HTML, Controlled by JS)
+       [Moment of Joy] Celebration Overlay Styles
        ========================================================================= */
     #celebrationOverlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -345,7 +348,7 @@
     /* 5. Badge Appearance */
     #celebBadgeContainer {
         position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        width: 180px; height: 180px;
+        width: 140px; height: 140px; /* Same size as inner badge */
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         opacity: 0;
         z-index: 10005; /* Top element */
@@ -357,9 +360,37 @@
     }
     @keyframes badge-sequence {
         0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; filter: brightness(0); }
-        100% { transform: translate(-50%, -50%) scale(1); opacity: 1; filter: brightness(1); }
+        100% { transform: translate(-50%, -50%) scale(2); opacity: 1; filter: brightness(1); } /* Scale 2 for larger appearance */
     }
     
+    /* Celebration Badge Inner - Reusing .ms-icon-box styles */
+    .celeb-badge-inner {
+        width: 140px; height: 140px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        position: relative; overflow: hidden;
+        /* Exact copy of .ms-icon-box styles */
+        box-shadow: 
+            inset 0 0 16px rgba(0,0,0,0.3), 
+            inset 4px 4px 8px rgba(255,255,255,0.4), 
+            0 8px 12px rgba(0,0,0,0.3);
+        border: none;
+    }
+    
+    .celeb-badge-inner::before {
+        content: '';
+        position: absolute;
+        top: 16px; left: 16px; right: 16px; bottom: 16px; /* Scaled margin */
+        border-radius: 50%; 
+        border: 2px solid rgba(0,0,0,0.15); 
+        box-shadow: inset 2px 2px 4px rgba(0,0,0,0.2), 0 0 0 40px rgba(0,0,0,0.02); 
+        pointer-events: none;
+        z-index: 1;
+    }
+    
+    .celeb-badge-inner i { font-size: 3.6rem; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); color: #fff; z-index: 2; position: relative; }
+    .celeb-badge-inner img { width: 55%; height: 55%; object-fit: contain; z-index: 2; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); position: relative; }
+
     /* Close Area */
     #celebCloseArea {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
@@ -386,7 +417,7 @@
       </div>
   </div>
 
-  <div id="log-stamp">v2025.12.14-Step5-FinalImplementation</div>
+  <div id="log-stamp">v2025.12.14-Step5-FinalImplementation-V2</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -598,6 +629,7 @@
         const title = badge ? badge.title : 'Congratulations!';
         const color = badge ? badge.color : 'pastel-sage';
 
+        // Apply strict classes to mimic .ms-icon-box
         badgeCont.innerHTML = `
             <div class="celeb-badge-inner bg-${color}">
                 ${iconHtml}
@@ -623,7 +655,6 @@
         overlay.style.display = 'block';
         
         // 3. Trigger Animations via Class (Phase 2-4)
-        // Small delay to ensure display:block is rendered
         setTimeout(() => {
             overlay.classList.add('active'); // Fade in Sky & Stars
             
@@ -867,11 +898,10 @@
         let hasNewBadge = false;
 
         badges.filter(b => b.tier === '1_Beginner').forEach(badge => {
-            // DEBUG: is_acquired=true のバッジを is_new として扱う (テスト用)
-            // 本番では if (badge.is_new) を使用すること
-            if (badge.is_acquired) {
-                badge.is_new = true; 
-            }
+            // DEBUG: Force Animation for ALL acquired badges
+            // if (badge.is_acquired) {
+            //    badge.is_new = true; // Remove this line in production!
+            // }
 
             const html = createBadgeHtml(badge);
             tier1Container.insertAdjacentHTML('beforeend', html);
@@ -881,7 +911,8 @@
         
         if (tier1Container.innerHTML === '') tier1Container.innerHTML = '<div class="text-center w-100 small" style="flex:1;">データなし</div>';
         
-        // Setup Observer to trigger animation when Scrolled Into View
+        // --- Setup Observer for New Badges ---
+        // For Debug: Trigger automatically if any new badge
         if (hasNewBadge) setupMilestoneObserver();
 
         log('Milestones Rendered.');
@@ -892,8 +923,8 @@
         const lockedClass = isLocked ? 'locked' : '';
         const colorClass = isLocked ? '' : `bg-${badge.color}`;
         
-        // Add class for Observer target if new
-        let newClass = badge.is_new ? 'ms-badge-new' : '';
+        let animationClass = '';
+        if (badge.is_new) animationClass = 'ms-badge-new';
         
         let iconHtml = '<i class="fa-solid fa-paw"></i>';
         if (badge.icon) {
@@ -911,12 +942,11 @@
         const randomRadius = radiuses[Math.floor(Math.random() * radiuses.length)];
         const randomRot = (Math.random() * 20 - 10) + 'deg';
 
-        // Tap always shows modal
-        const clickAction = `showMilestoneDetail('${badge.id}')`;
+        // DEBUG: Clicking acquired badge triggers Celebration instead of Modal
+        const clickAction = (badge.is_acquired) ? `showMilestoneDetail('${badge.id}')` : `showMilestoneDetail('${badge.id}')`;
 
-        // data-id attribute essential for observer
         return `
-            <div class="ms-badge ${lockedClass} ${newClass}" data-id="${badge.id}" onclick="${clickAction}">
+            <div class="ms-badge ${lockedClass} ${animationClass}" data-id="${badge.id}" onclick="${clickAction}">
                 <div class="ms-icon-box ${colorClass}" style="border-radius:${randomRadius}; transform: rotate(${randomRot});">
                     ${iconHtml}
                 </div>
@@ -925,8 +955,60 @@
         `;
     }
     
+    function openAllMilestonesModal() {
+        const modalBody = document.getElementById('allMilestonesBody');
+        modalBody.innerHTML = '';
+
+        const intermediateEarnedCount = cachedMilestones.filter(b => b.tier === '2_Intermediate' && b.is_acquired).length;
+        const isGroupedLock = (intermediateEarnedCount === 0);
+
+        // 1. Render Beginner
+        const beginnerBadges = cachedMilestones.filter(b => b.tier === '1_Beginner');
+        let bHtml = '';
+        beginnerBadges.forEach(b => bHtml += createBadgeHtml(b));
+        modalBody.insertAdjacentHTML('beforeend', `
+            <div class="full-list-section">
+                <div class="full-list-title">🟢 初級: Basic Harmony</div>
+                <div class="full-list-grid">${bHtml}</div>
+            </div>
+        `);
+
+        // 2. Render Intermediate & Advanced
+        if (isGroupedLock) {
+             modalBody.insertAdjacentHTML('beforeend', `
+                <div class="tier-locked">
+                    <div class="lock-overlay" style="position:relative; height:150px; border-radius:12px;">
+                        <div class="lock-icon-gold"><i class="fa-solid fa-lock"></i></div>
+                        <div class="lock-text">Step Up: Next Challenge</div>
+                    </div>
+                </div>
+             `);
+        } else {
+            const intBadges = cachedMilestones.filter(b => b.tier === '2_Intermediate');
+            let iHtml = '';
+            intBadges.forEach(b => iHtml += createBadgeHtml(b));
+             modalBody.insertAdjacentHTML('beforeend', `
+                <div class="full-list-section">
+                    <div class="full-list-title">🔵 中級: Advance Harmony</div>
+                    <div class="full-list-grid">${iHtml}</div>
+                </div>
+            `);
+            
+             modalBody.insertAdjacentHTML('beforeend', `
+                <div class="tier-locked">
+                    <div class="lock-overlay" style="position:relative; height:150px; border-radius:12px;">
+                        <div class="lock-icon-gold"><i class="fa-solid fa-lock"></i></div>
+                        <div class="lock-text">Master Harmony: Coming Soon</div>
+                    </div>
+                </div>
+             `);
+        }
+
+        allMilestonesModal.show();
+    }
+
     function setupMilestoneObserver() {
-        const options = { root: null, rootMargin: '0px', threshold: 0.6 }; // 60% visible
+        const options = { root: null, rootMargin: '0px', threshold: 0.2 };
         const observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -934,17 +1016,12 @@
                     const badgeId = el.getAttribute('data-id');
                     const badgeData = cachedMilestones.find(b => b.id === badgeId);
 
-                    if (badgeData) {
-                        log('Observer Triggered for: ' + badgeData.title);
-                        // Trigger Animation Sequence
-                        startCelebrationSequence(badgeData);
-                        
-                        // Mark as seen in DB
+                    // Debug: Trigger if acquired
+                    if (badgeData && badgeData.is_acquired) {
+                        showCelebration(badgeData);
                         markAsSeen(badgeId);
-                        
-                        // Stop observing this element
                         observer.unobserve(el);
-                        el.classList.remove('ms-badge-new'); // Prevent re-trigger
+                        el.classList.remove('ms-badge-new'); 
                     }
                 }
             });
@@ -953,23 +1030,6 @@
         document.querySelectorAll('.ms-badge-new').forEach(el => {
             observer.observe(el);
         });
-    }
-
-    function openAllMilestonesModal() {
-        const modalBody = document.getElementById('allMilestonesBody');
-        modalBody.innerHTML = '';
-        // (省略: 一覧表示ロジックは変更なし)
-        const beginnerBadges = cachedMilestones.filter(b => b.tier === '1_Beginner');
-        let bHtml = '';
-        beginnerBadges.forEach(b => bHtml += createBadgeHtml(b).replace('ms-badge-new','')); // Remove trigger class in modal
-        modalBody.insertAdjacentHTML('beforeend', `
-            <div class="full-list-section">
-                <div class="full-list-title">🟢 初級: Basic Harmony</div>
-                <div class="full-list-grid">${bHtml}</div>
-            </div>
-        `);
-        // ... (Intermediate logic same as before) ...
-        allMilestonesModal.show();
     }
 
     function markAsSeen(badgeId) {
@@ -995,6 +1055,7 @@
         iconBox.className = isLocked ? 'bg-secondary' : `bg-${badge.color}`;
         iconBox.style.backgroundColor = ''; 
         
+        // Remove glitter class logic from modal for simplicity, or keep if needed
         iconBox.innerHTML = badge.icon 
             ? `<img src="https://drive.google.com/thumbnail?id=${extractFileId(badge.icon)}&sz=w200" style="width:60%;height:60%;object-fit:contain;">`
             : `<i class="fa-solid fa-paw"></i>`;
