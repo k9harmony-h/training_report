@@ -324,7 +324,7 @@
         position: absolute;
         z-index: 3;
         width: 10px; height: 10px; border-radius: 50%;
-        /* 0%〜80%まで完全な白、100%へ向かって透明に (白領域を拡大) */
+        /* 0%〜80%まで完全な白、100%へ向かって透明に */
         background: radial-gradient(circle, #fff 0%, #fff 80%, rgba(255,255,255,0.8) 90%, transparent 100%);
         opacity: 0; transform: scale(0);
         /* 輪郭を柔らかくぼかす */
@@ -332,14 +332,14 @@
         box-shadow: none;
     }
 
-    /* 3.2 Donut Ring - Back */
+    /* 3.2 Donut Ring - Back (Modified for delicate, transparent look) */
     #celebLightRing {
         position: absolute;
         z-index: 1;
         width: 10px; height: 10px; border-radius: 50%;
-        /* 中心透明 -> 白芯(45-55%) -> 外側透明 */
-        background: radial-gradient(circle, transparent 40%, #fff 55%, transparent 70%);
-        filter: blur(0.25px); 
+        /* 白い帯を狭くし、透明度を上げて奥を透けさせる */
+        background: radial-gradient(circle, transparent 48%, rgba(255,255,255,0.8) 50%, transparent 52%);
+        filter: blur(0.5px); 
         opacity: 0; transform: scale(0);
     }
     
@@ -359,9 +359,10 @@
     }
     @keyframes ring-bloom {
         0% { transform: scale(0); opacity: 0; }
-        15% { transform: scale(300); opacity: 1; } /* Sync with Core */
+        15% { transform: scale(300); opacity: 1; } 
         /* scale(28)=280px(R140), Core=250px(R125). Offset = 140-125 = 15px */
-        100% { transform: translateY(-15px) scale(28); opacity: 0.8; }
+        /* Final opacity reduced to 0.5 for transparency */
+        100% { transform: translateY(-15px) scale(28); opacity: 0.5; }
     }
 
     /* 4. Fireworks Canvas */
@@ -452,7 +453,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.14-Step14-BadgeScaledDown</div>
+  <div id="log-stamp">v2025.12.14-Step15-RingDelicate-FairyLonger</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -813,7 +814,7 @@
                 
                 p.x += p.vx;
                 p.y += p.vy;
-                p.life -= 0.005; // Longer life (~3s decay)
+                p.life -= 0.0025; // Slower decay (Longer life)
             }
             
             let aliveParticles = false;
