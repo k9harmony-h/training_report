@@ -177,12 +177,15 @@
     }
     .ms-badge:active { transform: scale(0.95); }
     
+    /* Shake Animation for Locked Items (CSS only - for browsers that support :active well) */
     @keyframes shake-refuse {
         0%, 100% { transform: translateX(0); }
         25%, 75% { transform: translateX(-4px); }
         50% { transform: translateX(4px); }
     }
-    .ms-badge.locked:active .ms-icon-box { animation: shake-refuse 0.3s ease-in-out; }
+    
+    /* [追加] JSで付与する揺れアニメーションクラス (iPhone対策) */
+    .anim-shake .ms-icon-box { animation: shake-refuse 0.4s ease-in-out; }
 
     .ms-badge.teaser { pointer-events: none; opacity: 0.7; }
     .ms-badge.teaser .ms-icon-box { clip-path: inset(0 0 50% 0); background: #eee; box-shadow: none; }
@@ -229,7 +232,7 @@
     .ms-badge.locked .ms-icon-box { background: #e0e0e0 !important; box-shadow: inset 0 0 5px rgba(0,0,0,0.1); }
     .ms-badge.locked .ms-label { color: #aaa; }
     
-    /* [修正] 未獲得バッジ上のロックアイコン (1.2remに縮小) */
+    /* 未獲得バッジ上のロックアイコン (1.2rem) */
     .tier-lock-icon-small {
         font-size: 1.2rem;
         background: linear-gradient(to bottom, #fbf5b7 0%, #bf953f 40%, #b38728 60%, #fbf5b7 100%);
@@ -344,8 +347,19 @@
     #celebBadgeContainer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 180px; height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; z-index: 10005; }
     .anim-badge-appear { animation: badge-sequence 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
     @keyframes badge-sequence { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; filter: brightness(0); } 100% { transform: translate(-50%, -50%) scale(1.0); opacity: 1; filter: brightness(1); } }
+    
+    /* Celebration Badge Inner */
     .celeb-badge-inner { width: 140px; height: 140px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; box-shadow: inset 0 0 16px rgba(0,0,0,0.3), inset 4px 4px 8px rgba(255,255,255,0.4), 0 8px 12px rgba(0,0,0,0.3); border: none; }
     .celeb-badge-inner::before { content: ''; position: absolute; top: 16px; left: 16px; right: 16px; bottom: 16px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.15); box-shadow: inset 2px 2px 4px rgba(0,0,0,0.2), 0 0 0 40px rgba(0,0,0,0.02); pointer-events: none; z-index: 1; }
+    
+    /* [追加] 獲得演出用バッジのさらなる内側の円 (5px inside) */
+    .celeb-badge-inner::after { 
+        content: ''; position: absolute; 
+        top: 21px; left: 21px; right: 21px; bottom: 21px; /* 16px + 5px */
+        border-radius: 50%; border: 1px solid rgba(255,255,255,0.4); 
+        pointer-events: none; z-index: 1; 
+    }
+
     .celeb-badge-inner i { font-size: 3.6rem; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); color: #fff; z-index: 2; position: relative; }
     .celeb-badge-inner img { width: 55%; height: 55%; object-fit: contain; z-index: 2; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); position: relative; }
     #fairyDustCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10010; display: none; }
@@ -353,7 +367,7 @@
     .btn-secondary { background-color: var(--brand-color); border-color: var(--brand-color); color: white; }
     .btn-secondary:hover, .btn-secondary:active { background-color: #4aa3a2; border-color: #4aa3a2; }
     
-    /* [追加] モーダルのZ-Index調整 (一覧より手前に) */
+    /* モーダルのZ-Index調整 (一覧より手前に) */
     #milestoneModal { z-index: 2000; }
   </style>
 </head>
@@ -378,7 +392,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.17-Final-Modal-Fix</div>
+  <div id="log-stamp">v2025.12.17-Iphone-Anim-Fix</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -970,11 +984,10 @@
     }
 
     function createBadgeHtml(badge, isTeaser = false) {
-        const isLocked = !badge.is_acquired && !isTeaser; // Normal unacquired
+        const isLocked = !badge.is_acquired && !isTeaser;
         const lockedClass = isLocked ? 'locked' : '';
         const teaserClass = isTeaser ? 'teaser' : '';
         
-        // Tier Color Class
         let colorClass = 'bg-trust';
         if (!isLocked && !isTeaser) {
             if (badge.color) {
@@ -992,7 +1005,6 @@
         
         let iconHtml = '<i class="fa-solid fa-paw"></i>';
         if (isLocked) {
-            // [修正] ロック時はリッチな鍵アイコンを表示
             iconHtml = '<i class="fa-solid fa-lock tier-lock-icon-small"></i>';
         } else if (badge.icon) {
              const fileId = extractFileId(badge.icon);
@@ -1000,8 +1012,8 @@
              iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
         }
 
-        // [修正] 未獲得時はクリックアクションを無効化（モーダル阻止）
-        const clickAction = isLocked ? '' : (isTeaser ? '' : `showMilestoneDetail('${badge.id}')`);
+        // [修正] onclick で JS関数を呼ぶように変更 (iPhone対策)
+        const clickAction = isLocked ? 'triggerShake(this)' : (isTeaser ? '' : `showMilestoneDetail('${badge.id}')`);
 
         return `
             <div class="ms-badge ${lockedClass} ${teaserClass} ${newClass}" data-id="${badge.id}" onclick="${clickAction}">
@@ -1013,6 +1025,15 @@
         `;
     }
     
+    // [追加] iPhone用アニメーション発火関数
+    function triggerShake(el) {
+        if(el.classList.contains('anim-shake')) return; // 連打防止
+        el.classList.add('anim-shake');
+        setTimeout(() => {
+            el.classList.remove('anim-shake');
+        }, 400); // アニメーション時間(0.4s)に合わせる
+    }
+
     function getRandomWaxBorder() {
         const r = () => Math.floor(Math.random() * (60 - 40) + 40) + "%";
         return `${r()} ${r()} ${r()} ${r()}`; 
@@ -1060,11 +1081,9 @@
         const modalBody = document.getElementById('allMilestonesBody');
         modalBody.innerHTML = '';
         
-        // Helper to generate full list
         const renderSection = (tierKey, title) => {
             const tierBadges = cachedMilestones.filter(b => b.tier === tierKey);
             if (tierBadges.length === 0) return '';
-            
             let html = '';
             tierBadges.forEach(b => html += createBadgeHtml(b).replace('ms-badge-new',''));
             return `
@@ -1088,14 +1107,13 @@
 
         if (counts['2_Intermediate'] >= 8) {
             modalBody.insertAdjacentHTML('beforeend', renderSection('3_Advanced', '🔴 上級: HARMONY'));
-        } else if (counts['1_Beginner'] >= 8) { 
+        } else if (counts['1_Beginner'] >= 8) {
              modalBody.insertAdjacentHTML('beforeend', createLockHtml('Master Harmony: Coming Soon'));
         }
         
         allMilestonesModal.show();
     }
     
-    // [追加] onclickイベントを追加
     function createLockHtml(text) {
         return `
             <div class="tier-locked" onclick="shakeLockIcon(this)">
@@ -1107,13 +1125,11 @@
         `;
     }
 
-    // [追加] 鍵揺らしアニメーション関数
     function shakeLockIcon(el) {
         const icon = el.querySelector('.tier-lock-icon');
         if(icon) {
-            // アニメーションをリセットして再発火させる
             icon.style.animation = 'none';
-            icon.offsetHeight; /* trigger reflow */
+            icon.offsetHeight;
             icon.style.animation = 'shake-refuse 0.4s ease-in-out';
         }
     }
