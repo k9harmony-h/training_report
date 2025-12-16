@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -61,21 +62,6 @@
        UI Component Styles
        ========================================= */
     .header-area { padding: 20px 20px 10px; background: #fff; }
-    
-    /* ロゴ用スタイル (Added from medical.html) */
-    .logo-container { 
-        display: flex; 
-        justify-content: center; 
-        margin-bottom: 10px; 
-        margin-top: 0;
-        padding-top: 10px; 
-    }
-    .logo-img { 
-        width: 35%; 
-        height: auto; 
-        display: block; 
-    }
-
     .brand-title { color: var(--text-main); font-weight: 700; letter-spacing: 0.05em; font-size: 1.2rem; text-align: center; }
     
     .profile-card { margin-top: 20px; display: flex; align-items: center; }
@@ -227,13 +213,13 @@
         border: none;
     }
     
-    /* Inner Double Line (3px inset) */
+    /* Inner Double Line (15px gap + 3px double line) */
     .ms-icon-box::before {
         content: '';
         position: absolute;
-        top: 3px; left: 3px; right: 3px; bottom: 3px; 
+        top: 15px; left: 15px; right: 15px; bottom: 15px; 
         border-radius: inherit; /* Follow parent shape */
-        border: 2px solid rgba(0,0,0,0.1); 
+        border: 3px double rgba(0,0,0,0.15); /* Double line */
         box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1); 
         pointer-events: none;
         z-index: 1;
@@ -256,9 +242,27 @@
     .ms-badge.locked .ms-icon-box::after { content: '🔒'; position: absolute; font-size: 1.2rem; color: #999; z-index: 3; }
     .ms-badge.locked .ms-icon-box img { opacity: 0.1; filter: grayscale(100%); }
 
-    /* Tier Colors */
-    .tier-trust .ms-icon-box { background: #A8D8B9; } /* Pastel Sage */
-    /* Overwrite specific colors if needed, but using classes for flexibility */
+    /* Colors (Fully Imported) */
+    .bg-pastel-sage { background: #A8D8B9; } .bg-pastel-apricot { background: #FFDAB9; }
+    .bg-pastel-sky { background: #87CEEB; } .bg-pastel-rose { background: #FFB7B2; }
+    .bg-pastel-lilac { background: #C8A2C8; } .bg-pastel-mint { background: #98FF98; }
+    .bg-pastel-coral { background: #FF7F50; } .bg-pastel-cocoa { background: #D2691E; }
+    .bg-metallic-silver { background: linear-gradient(135deg, #e0e0e0, #ffffff, #b0b0b0); color: #333; }
+    .bg-metallic-bronze { background: linear-gradient(135deg, #cd7f32, #ffcc99, #8b4513); }
+    .bg-metallic-champagne { background: linear-gradient(135deg, #fad6a5, #fff8e7, #d2b48c); color: #5d4037; }
+    .bg-metallic-slate { background: linear-gradient(135deg, #708090, #b0c4de, #2f4f4f); }
+    .bg-metallic-pearl { background: linear-gradient(135deg, #f0f8ff, #ffffff, #dcdcdc); color: #333; border: 1px solid #ddd; }
+    .bg-metallic-rose-gold { background: linear-gradient(135deg, #b76e79, #ffd1dc, #a0522d); }
+    .bg-metallic-coffee { background: linear-gradient(135deg, #6f4e37, #d2b48c, #3e2723); }
+    .bg-metallic-ice { background: linear-gradient(135deg, #a5f2f3, #e0ffff, #00ced1); color: #00695c; }
+    .bg-luxury-gold { background: linear-gradient(45deg, #FFD700, #FDB931, #FFD700); }
+    .bg-luxury-platinum { background: linear-gradient(45deg, #E5E4E2, #ffffff, #BCC6CC); color:#333; }
+    .bg-luxury-ruby { background: linear-gradient(45deg, #9b111e, #ff0000, #800000); }
+    .bg-luxury-sapphire { background: linear-gradient(45deg, #0F52BA, #4169E1, #000080); }
+    .bg-luxury-onyx { background: linear-gradient(45deg, #353839, #000000, #2c2c2c); }
+    .bg-luxury-diamond { background: linear-gradient(45deg, #b9f2ff, #ffffff, #e0ffff); color:#000; border:1px solid #aaa; }
+
+    /* Default Tier Fallbacks (Used if no color specified) */
     .bg-trust { background: #A8D8B9; }
     .bg-bond { background: linear-gradient(135deg, #e0e0e0, #ffffff, #b0b0b0); color: #333; }
     .bg-harmony { background: linear-gradient(45deg, #FFD700, #FDB931, #FFD700); }
@@ -268,6 +272,40 @@
         content: ''; position: absolute; top: 0; right: 0; width: 30px; height: 100%;
         background: linear-gradient(to left, rgba(255,255,255,1), rgba(255,255,255,0));
         pointer-events: none; z-index: 5; border-radius: 0 12px 12px 0;
+    }
+
+    /* Locked Overlay */
+    .tier-lock-overlay {
+        position: absolute; inset: 0; 
+        background-color: rgba(30, 30, 30, 0.95);
+        background-image: radial-gradient(circle at 50% 50%, #2a2a2a 20%, transparent 20%), radial-gradient(circle at 0% 0%, #2a2a2a 20%, transparent 20%);
+        background-size: 40px 40px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        z-index: 10; color: #fff;
+        opacity: 1; transition: opacity 1.5s ease-out, transform 1.5s ease-in;
+    }
+    .tier-lock-icon {
+        font-size: 3.5rem; margin-bottom: 10px;
+        background: linear-gradient(to bottom, #fbf5b7 0%, #bf953f 40%, #b38728 60%, #fbf5b7 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 4px 4px rgba(0,0,0,0.8));
+    }
+    .tier-lock-text {
+        font-family: 'Times New Roman', serif;
+        font-size: 1.1rem; letter-spacing: 0.15em; color: #fbf5b7;
+        text-shadow: 0 2px 4px rgba(0,0,0,1);
+    }
+    
+    /* Unlock Animation Keyframes */
+    @keyframes lock-shake-fall {
+        0%, 10%, 20%, 30%, 40% { transform: translateX(-5px); }
+        5%, 15%, 25%, 35% { transform: translateX(5px); }
+        45% { transform: translateX(0); }
+        50% { transform: translateY(0); opacity: 1; }
+        100% { transform: translateY(100px); opacity: 0; }
+    }
+    .anim-unlock {
+        animation: lock-shake-fall 2.5s forwards;
     }
 
     /* All List Link */
@@ -350,50 +388,58 @@
         position: absolute;
         z-index: 3;
         width: 10px; height: 10px; border-radius: 50%;
+        /* Core visual: Solid white center fading to transparent */
         background: radial-gradient(circle, #fff 0%, #fff 80%, rgba(255,255,255,0.8) 90%, transparent 100%);
         opacity: 0; transform: scale(0);
-        filter: none; box-shadow: none;
+        filter: none; /* No Blur */
+        box-shadow: none;
     }
 
-    /* 3.2 Donut Ring */
+    /* 3.2 Donut Ring - Back (Adjusted for alignment) */
     #celebLightRing {
-        position: absolute; z-index: 1;
+        position: absolute;
+        z-index: 1;
         width: 10px; height: 10px; border-radius: 50%;
         margin-top: -32.5px;
+        /* Visual: Tight white band */
         background: radial-gradient(circle, transparent 50%, rgba(255,255,255,1.0) 55%, transparent 60%);
-        filter: blur(0.2px); opacity: 0; transform: scale(0);
+        filter: blur(0.2px); 
+        opacity: 0; transform: scale(0);
     }
 
-    /* 3.3 Oval Ring */
+    /* 3.3 Oval Ring - Back (Adjusted for size and alignment) */
     #celebLightOval {
-        position: absolute; z-index: 2;
+        position: absolute;
+        z-index: 2; /* Between Core and Ring */
         width: 10px; height: 10px; border-radius: 50%;
         margin-top: 65px;
         background: radial-gradient(circle, transparent 50%, rgba(255,255,255,1.0) 55%, transparent 60%);
-        filter: blur(0.2px); opacity: 0; transform: scale(0);
+        filter: blur(0.2px);
+        opacity: 0; transform: scale(0);
     }
     
-    /* Core Animation */
+    /* Core Animation (FINAL SIZE: 175px) */
     .anim-light { animation: light-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes light-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; }
-        100% { transform: scale(17.5); opacity: 0.6; }
+        100% { transform: scale(17.5); opacity: 0.6; } /* Opacity 0.6 */
     }
 
-    /* Ring Animation */
+    /* Ring Animation (FINAL SIZE: 240px) */
     .anim-ring { animation: ring-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes ring-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; }
-        100% { transform: scale(24); opacity: 0.4; }
+        100% { transform: scale(24); opacity: 0.4; } /* Opacity 0.4, Size 240px */
     }
 
-    /* Oval Animation */
+    /* Oval Animation (FINAL SIZE: 300px x 105px) */
     .anim-oval { animation: oval-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes oval-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; }
+        /* Final scaleX 30 (300px), ScaleY 10.5 (105px), Opacity 0.8 */
         100% { transform: scale(30, 10.5); opacity: 0.8; } 
     }
 
@@ -409,7 +455,7 @@
         width: 180px; height: 180px;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         opacity: 0;
-        z-index: 10005;
+        z-index: 10005; /* Top element */
     }
     
     .anim-badge-appear {
@@ -420,7 +466,7 @@
         100% { transform: translate(-50%, -50%) scale(1.0); opacity: 1; filter: brightness(1); }
     }
     
-    /* Celebration Badge Inner */
+    /* Celebration Badge Inner - Strict Sealing Wax Style */
     .celeb-badge-inner {
         width: 140px; height: 140px; 
         border-radius: 50%;
@@ -436,7 +482,7 @@
     .celeb-badge-inner::before {
         content: '';
         position: absolute;
-        top: 16px; left: 16px; right: 16px; bottom: 16px;
+        top: 16px; left: 16px; right: 16px; bottom: 16px; /* Scaled margin */
         border-radius: 50%; 
         border: 2px solid rgba(0,0,0,0.15); 
         box-shadow: inset 2px 2px 4px rgba(0,0,0,0.2), 0 0 0 40px rgba(0,0,0,0.02); 
@@ -447,18 +493,20 @@
     .celeb-badge-inner i { font-size: 3.6rem; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); color: #fff; z-index: 2; position: relative; }
     .celeb-badge-inner img { width: 55%; height: 55%; object-fit: contain; z-index: 2; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); position: relative; }
 
-    /* 6. Fairy Dust Layer */
+    /* 6. Fairy Dust Layer (Topmost) */
     #fairyDustCanvas {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         pointer-events: none; z-index: 10010;
         display: none;
     }
 
+    /* Close Area */
     #celebCloseArea {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
         z-index: 10006; cursor: pointer;
     }
 
+    /* Unified Button Colors */
     .btn-secondary { background-color: var(--brand-color); border-color: var(--brand-color); color: white; }
     .btn-secondary:hover, .btn-secondary:active { background-color: #4aa3a2; border-color: #4aa3a2; }
   </style>
@@ -484,7 +532,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.16-Step1-VisualMock-Fix-WithLogo</div>
+  <div id="log-stamp">v2025.12.16-Step2-Wax-Refined</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -504,9 +552,6 @@
 
   <div id="mainContent">
     <div class="header-area">
-      <div class="logo-container">
-          <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="logo-img" alt="K9 Harmony Logo" onerror="this.style.display='none'">
-      </div>
       <h1 class="brand-title">K9 Harmony</h1>
       
       <div class="profile-card">
@@ -712,14 +757,20 @@
         }
         
         const title = badge ? badge.title : 'Congratulations!';
-        const tierClass = badge ? (TIER_CONFIG[badge.tier]?.colorClass || 'bg-trust') : 'bg-trust';
+        
+        // Priority: badge.color -> Tier color
+        let badgeColorClass = badge && badge.color ? `bg-${badge.color}` : 'bg-trust';
+        if(!badge.color && badge) {
+             const tierConfig = TIER_CONFIG[badge.tier];
+             if(tierConfig) badgeColorClass = tierConfig.colorClass;
+        }
 
         // Generate Random Radius for Celebration Badge too
         const randomBorderRadius = getRandomWaxBorder();
 
         // Apply EXACT classes to mimic .ms-icon-box
         badgeCont.innerHTML = `
-            <div class="celeb-badge-inner ${tierClass}" style="border-radius: ${randomBorderRadius};">
+            <div class="celeb-badge-inner ${badgeColorClass}" style="border-radius: ${randomBorderRadius};">
                 ${iconHtml}
             </div>
             <div style="position:absolute; bottom:-50px; width:250px; text-align:center; color:white; font-weight:bold; font-size:1.4rem; text-shadow:0 0 10px gold;">
@@ -965,9 +1016,9 @@
     class Particle {
         constructor(x, y, color) {
             this.x = x; this.y = y; this.color = color;
-            this.angle = Math.random() * Math.PI * 2;
-            this.speed = Math.random() * 4 + 1;
-            this.vx = Math.cos(this.angle) * this.speed; this.vy = Math.sin(this.angle) * this.speed;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 4 + 1;
+            this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
             this.alpha = 1; this.decay = Math.random() * 0.02 + 0.01;
         }
         update() { this.x += this.vx; this.y += this.vy; this.vy += 0.05; this.alpha -= this.decay; }
@@ -1213,9 +1264,16 @@
         const lockedClass = isLocked ? 'locked' : '';
         const teaserClass = isTeaser ? 'teaser' : '';
         
-        // Tier Color Class
-        const tierConfig = TIER_CONFIG[badge.tier];
-        const colorClass = (isLocked || isTeaser) ? '' : (tierConfig ? tierConfig.colorClass : 'bg-trust');
+        // Tier Color Class logic: Priority to DB 'color' > Tier Config > Default
+        let colorClass = '';
+        if (!isLocked && !isTeaser) {
+            if (badge.color) {
+                colorClass = `bg-${badge.color}`; // Use DB color class
+            } else {
+                const tierConfig = TIER_CONFIG[badge.tier];
+                colorClass = tierConfig ? tierConfig.colorClass : 'bg-trust';
+            }
+        }
         
         // Random Shape
         const randomBorderRadius = getRandomWaxBorder();
@@ -1245,9 +1303,9 @@
     }
     
     function getRandomWaxBorder() {
-        // Generate 8 values between 30% and 70%
-        const r = () => Math.floor(Math.random() * (70 - 30) + 30) + "%";
-        return `${r()} ${r()} ${r()} ${r()} / ${r()} ${r()} ${r()} ${r()}`;
+        // Generate 4 values between 45% and 60% to avoid extreme distortion
+        const r = () => Math.floor(Math.random() * (60 - 45) + 45) + "%";
+        return `${r()} ${r()} ${r()} ${r()}`;
     }
 
     function getTierColor(tierKey) {
@@ -1366,7 +1424,6 @@
 
         const isLocked = !badge.is_acquired;
         const iconBox = document.getElementById('msModalIconBox');
-        const tierConfig = TIER_CONFIG[badge.tier];
         
         // Remove old classes
         iconBox.className = '';
@@ -1374,7 +1431,14 @@
         if (isLocked) {
             iconBox.classList.add('bg-secondary');
         } else {
-            iconBox.classList.add(tierConfig ? tierConfig.colorClass : 'bg-trust');
+            let colorClass = 'bg-trust';
+            if (badge.color) {
+                colorClass = `bg-${badge.color}`;
+            } else {
+                const tierConfig = TIER_CONFIG[badge.tier];
+                if(tierConfig) colorClass = tierConfig.colorClass;
+            }
+            iconBox.classList.add(colorClass);
         }
         iconBox.style.borderRadius = getRandomWaxBorder(); // Dynamic shape for modal too
         
