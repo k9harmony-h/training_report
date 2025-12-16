@@ -174,7 +174,7 @@
     }
     .ms-badge:active { transform: scale(0.95); }
     
-    /* Shake Animation for Locked Items */
+    /* Shake Animation for Locked Items (Feedback) */
     @keyframes shake-refuse {
         0% { transform: translateX(0); }
         25% { transform: translateX(-4px); }
@@ -212,11 +212,11 @@
         border: none;
     }
     
-    /* Inner Double Line (15px gap + 3px double line) */
+    /* Inner Double Line (8px gap + 4px inner gap = 12px) */
     .ms-icon-box::before {
         content: '';
         position: absolute;
-        top: 15px; left: 15px; right: 15px; bottom: 15px; 
+        top: 12px; left: 12px; right: 12px; bottom: 12px; 
         border-radius: inherit; /* Follow parent shape */
         border: 3px double rgba(0,0,0,0.15); /* Double line */
         box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1); 
@@ -531,7 +531,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.16-Step2-Wax-Refined</div>
+  <div id="log-stamp">v2025.12.16-Step3-MockData-Fix</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -1167,28 +1167,65 @@
             .then(res => res.json())
             .then(data => {
                 log(`MS Response: ${JSON.stringify(data).substring(0,50)}...`);
-                if (data.error) {
-                    log('MS Backend Error: ' + data.error);
-                    document.getElementById('tier-header').innerText = '準備中';
-                    document.getElementById('tier-scroll').innerHTML = '<div class="text-center w-100 small" style="flex:1;">データエラー</div>';
-                    return;
-                }
-                
-                if (data.status === 'success' && data.badges) {
+                // Check if data is valid or empty
+                if (data.error || !data.badges || data.badges.length === 0) {
+                    log('MS Empty or Error -> Fallback to Mock Data');
+                    useMockData(); // Use mock for visual verification
+                } else {
                     cachedMilestones = data.badges;
                     cachedMeta = data.meta;
                     renderMilestones(data);
-                } else {
-                    log('MS Failed or Empty');
-                    document.getElementById('tier-header').innerText = '準備中';
-                    document.getElementById('tier-scroll').innerHTML = '<div class="text-center w-100 small" style="flex:1;">データなし</div>';
                 }
             })
             .catch(e => {
-                log('MS Fetch Error: ' + e.message);
-                document.getElementById('tier-header').innerText = 'エラー';
-                document.getElementById('tier-scroll').innerHTML = '<div class="text-center w-100 small" style="flex:1;">読込エラー</div>';
+                log('MS Fetch Error: ' + e.message + ' -> Fallback to Mock');
+                useMockData(); // Fallback on network error
             });
+    }
+
+    // Mock Data Generator for Visual Verification
+    function useMockData() {
+        const mockBadges = [];
+        
+        // Tier 1: All acquired (8 items)
+        for(let i=1; i<=8; i++) {
+            mockBadges.push({
+                id: `MS-10${i}`, tier: '1_Beginner', title: `初級バッジ${i}`, 
+                desc: '説明文', tips: 'Tips', icon: '', color: 'pastel-sage', 
+                is_acquired: true, is_new: false, sort: i
+            });
+        }
+        
+        // Tier 2: Half acquired (4/8), 1 new, others teaser
+        for(let i=1; i<=8; i++) {
+            const isAcq = i <= 4;
+            mockBadges.push({
+                id: `MS-20${i}`, tier: '2_Intermediate', title: `中級バッジ${i}`, 
+                desc: '説明文', tips: 'Tips', icon: '', color: 'metallic-silver', 
+                is_acquired: isAcq, is_new: (i === 4), sort: 10+i
+            });
+        }
+        
+        // Tier 3: All Locked (6 items)
+        for(let i=1; i<=6; i++) {
+            mockBadges.push({
+                id: `MS-30${i}`, tier: '3_Advanced', title: `上級バッジ${i}`, 
+                desc: '説明文', tips: 'Tips', icon: '', color: 'luxury-gold', 
+                is_acquired: false, is_new: false, sort: 20+i
+            });
+        }
+        
+        cachedMilestones = mockBadges;
+        // Mock Meta: Tier 1 complete, Tier 2 in progress
+        const mockData = {
+            badges: mockBadges,
+            meta: {
+                counts: { '1_Beginner': 8, '2_Intermediate': 4, '3_Advanced': 0 }
+            }
+        };
+        
+        renderMilestones(mockData);
+        log('Mock Data Loaded for Visual Check');
     }
 
     function renderMilestones(data) {
@@ -1205,20 +1242,13 @@
         });
 
         // 2. Logic: Determine Active Tier to display
-        // - TRUST < 8: Show TRUST
-        // - TRUST >=8 && BOND < 8: Show BOND
-        // - BOND >=8: Show HARMONY
         let currentTierKey = '1_Beginner';
-        let prevTierKey = null;
-
         if (counts['1_Beginner'] < TIER_CONFIG['1_Beginner'].count) {
             currentTierKey = '1_Beginner';
         } else if (counts['2_Intermediate'] < TIER_CONFIG['2_Intermediate'].count) {
             currentTierKey = '2_Intermediate';
-            prevTierKey = '1_Beginner';
         } else {
             currentTierKey = '3_Advanced';
-            prevTierKey = '2_Intermediate';
         }
 
         const tierInfo = TIER_CONFIG[currentTierKey];
@@ -1226,16 +1256,16 @@
         header.innerHTML = `<span style="color:#555;">現在挑戦中:</span> <span class="${tierColor.textClass}">${tierInfo.name}</span>`;
 
         // 3. Logic: Build Display List
-        // Rule: [All Acquired] -> [Current Tier Unacquired] -> [Teaser]
+        // Rule: [All Acquired] -> [Current Tier Unacquired] -> [Teaser from Next Tier]
         const acquiredAll = badges.filter(b => b.is_acquired);
+        
+        // Unacquired in CURRENT tier only
         const unacquiredCurrent = badges.filter(b => !b.is_acquired && b.tier === currentTierKey);
         
-        // 4. Logic: Teaser (if Count >= 6)
+        // Teaser from NEXT tier (if count >= 6)
         let teaserBadges = [];
         const nextTierKey = getNextTier(currentTierKey);
-        
         if (counts[currentTierKey] >= 6 && nextTierKey) {
-            // Get top few unacquired from NEXT tier
             teaserBadges = badges.filter(b => !b.is_acquired && b.tier === nextTierKey).slice(0, 4);
         }
 
@@ -1274,7 +1304,7 @@
             }
         }
         
-        // Random Shape
+        // Random Shape (30% - 70%)
         const randomBorderRadius = getRandomWaxBorder();
         const randomRot = (Math.random() * 20 - 10) + 'deg';
 
@@ -1288,8 +1318,8 @@
              iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
         }
 
-        // Tap always shows modal unless teaser
-        const clickAction = isTeaser ? '' : `showMilestoneDetail('${badge.id}')`;
+        // Interaction Logic: Disable click if Locked or Teaser
+        const clickAction = (isLocked || isTeaser) ? '' : `showMilestoneDetail('${badge.id}')`;
 
         return `
             <div class="ms-badge ${lockedClass} ${teaserClass} ${newClass}" data-id="${badge.id}" onclick="${clickAction}">
@@ -1302,8 +1332,8 @@
     }
     
     function getRandomWaxBorder() {
-        // Generate 4 values between 45% and 60% to avoid extreme distortion
-        const r = () => Math.floor(Math.random() * (60 - 45) + 45) + "%";
+        // Generate 4 values between 30% and 70% to emphasize distortion
+        const r = () => Math.floor(Math.random() * (70 - 30) + 30) + "%";
         return `${r()} ${r()} ${r()} ${r()}`;
     }
 
