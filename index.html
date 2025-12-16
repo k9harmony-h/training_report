@@ -128,7 +128,7 @@
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
 
     /* =========================================
-       Milestone CSS (Refined Visuals)
+       Milestone CSS (Refined Visuals v3)
        ========================================= */
     .milestone-section { margin: 30px 20px 10px; }
     
@@ -186,7 +186,7 @@
         animation: shake-refuse 0.3s ease-in-out;
     }
 
-    /* Teaser Style (Upper Half Only) */
+    /* Teaser Style (Upper Half Only) - for Modal */
     .ms-badge.teaser {
         pointer-events: none; /* No interaction */
         opacity: 0.7;
@@ -212,13 +212,13 @@
         border: none;
     }
     
-    /* Inner Double Line (8px gap + 4px inner gap = 12px) */
+    /* Inner Double Line (8px gap + 2px double line) */
     .ms-icon-box::before {
         content: '';
         position: absolute;
-        top: 12px; left: 12px; right: 12px; bottom: 12px; 
-        border-radius: inherit; /* Follow parent shape */
-        border: 3px double rgba(0,0,0,0.15); /* Double line */
+        top: 8px; left: 8px; right: 8px; bottom: 8px; 
+        border-radius: 50%; /* Perfect circle */
+        border: 2px double rgba(0,0,0,0.15); /* Thinner double line */
         box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1); 
         pointer-events: none;
         z-index: 1;
@@ -531,7 +531,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.16-Step3-MockData-Fix</div>
+  <div id="log-stamp">v2025.12.16-Step4-MockData-ActiveTier</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -1196,7 +1196,7 @@
             });
         }
         
-        // Tier 2: Half acquired (4/8), 1 new, others teaser
+        // Tier 2: Half acquired (4/8), 1 new
         for(let i=1; i<=8; i++) {
             const isAcq = i <= 4;
             mockBadges.push({
@@ -1255,27 +1255,24 @@
         const tierColor = getTierColor(currentTierKey);
         header.innerHTML = `<span style="color:#555;">現在挑戦中:</span> <span class="${tierColor.textClass}">${tierInfo.name}</span>`;
 
-        // 3. Logic: Build Display List
-        // Rule: [All Acquired] -> [Current Tier Unacquired] -> [Teaser from Next Tier]
-        const acquiredAll = badges.filter(b => b.is_acquired);
+        // 3. Logic: Build Display List (ACTIVE TIER ONLY)
+        // Rule: Only items from the Current Tier (Acquired + Unacquired)
+        const activeTierBadges = badges.filter(b => b.tier === currentTierKey);
         
-        // Unacquired in CURRENT tier only
-        const unacquiredCurrent = badges.filter(b => !b.is_acquired && b.tier === currentTierKey);
-        
-        // Teaser from NEXT tier (if count >= 6)
-        let teaserBadges = [];
-        const nextTierKey = getNextTier(currentTierKey);
-        if (counts[currentTierKey] >= 6 && nextTierKey) {
-            teaserBadges = badges.filter(b => !b.is_acquired && b.tier === nextTierKey).slice(0, 4);
-        }
+        // Sort: Acquired first, then Unacquired
+        activeTierBadges.sort((a, b) => {
+            if (a.is_acquired && !b.is_acquired) return -1;
+            if (!a.is_acquired && b.is_acquired) return 1;
+            return a.sort - b.sort; // Keep original order within same status
+        });
 
-        let displayList = [...acquiredAll, ...unacquiredCurrent, ...teaserBadges];
+        let displayList = activeTierBadges;
         
         // Render
         let hasNewBadge = false;
         displayList.forEach(badge => {
-            const isTeaser = teaserBadges.includes(badge);
-            const html = createBadgeHtml(badge, isTeaser);
+            // No teaser on main screen
+            const html = createBadgeHtml(badge, false);
             container.insertAdjacentHTML('beforeend', html);
             if (badge.is_new) hasNewBadge = true;
         });
@@ -1304,7 +1301,7 @@
             }
         }
         
-        // Random Shape (30% - 70%)
+        // Random Shape (40% - 60%)
         const randomBorderRadius = getRandomWaxBorder();
         const randomRot = (Math.random() * 20 - 10) + 'deg';
 
@@ -1332,8 +1329,8 @@
     }
     
     function getRandomWaxBorder() {
-        // Generate 4 values between 30% and 70% to emphasize distortion
-        const r = () => Math.floor(Math.random() * (70 - 30) + 30) + "%";
+        // Generate 4 values between 40% and 60%
+        const r = () => Math.floor(Math.random() * (60 - 40) + 40) + "%";
         return `${r()} ${r()} ${r()} ${r()}`;
     }
 
@@ -1390,7 +1387,12 @@
             if (tierBadges.length === 0) return '';
             
             let html = '';
-            tierBadges.forEach(b => html += createBadgeHtml(b).replace('ms-badge-new',''));
+            // For modal, show teasers if needed, or normal items
+            tierBadges.forEach(b => {
+                // In modal, locked items are just locked, no teaser style unless specified by logic
+                // But for simplicity, we show them as locked/unlocked
+                html += createBadgeHtml(b).replace('ms-badge-new',''); 
+            });
             return `
                 <div class="full-list-section">
                     <div class="full-list-title">${title}</div>
@@ -1398,6 +1400,21 @@
                 </div>
             `;
         };
+        
+        // Teaser Render Helper
+        const renderTeaserSection = (tierKey, title) => {
+             const tierBadges = cachedMilestones.filter(b => b.tier === tierKey).slice(0,4); // Show first 4 as sample
+             let html = '';
+             tierBadges.forEach(b => {
+                 html += createBadgeHtml(b, true); // Force Teaser style
+             });
+             return `
+                <div class="full-list-section">
+                    <div class="full-list-title">${title}</div>
+                    <div class="full-list-grid">${html}</div>
+                </div>
+            `;
+        }
 
         // Determine locks based on counts
         let counts = { '1_Beginner': 0, '2_Intermediate': 0, '3_Advanced': 0 };
@@ -1409,6 +1426,9 @@
         // BOND: Visible if TRUST complete (>=8)
         if (counts['1_Beginner'] >= 8) {
             modalBody.insertAdjacentHTML('beforeend', renderSection('2_Intermediate', '🔵 中級: BOND'));
+        } else if (counts['1_Beginner'] >= 6) {
+            // Teaser Phase
+            modalBody.insertAdjacentHTML('beforeend', renderTeaserSection('2_Intermediate', '🔵 中級: BOND (Coming Soon)'));
         } else {
             modalBody.insertAdjacentHTML('beforeend', createLockHtml('Step Up: Next Challenge'));
         }
@@ -1416,6 +1436,9 @@
         // HARMONY: Visible if BOND complete (>=8)
         if (counts['2_Intermediate'] >= 8) {
             modalBody.insertAdjacentHTML('beforeend', renderSection('3_Advanced', '🔴 上級: HARMONY'));
+        } else if (counts['2_Intermediate'] >= 6) {
+             // Teaser Phase
+             modalBody.insertAdjacentHTML('beforeend', renderTeaserSection('3_Advanced', '🔴 上級: HARMONY (Coming Soon)'));
         } else if (counts['1_Beginner'] >= 8) { // Only show lock if previous tier is unlocked
              modalBody.insertAdjacentHTML('beforeend', createLockHtml('Master Harmony: Coming Soon'));
         }
