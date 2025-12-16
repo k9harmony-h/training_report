@@ -58,7 +58,7 @@
     body.loaded #mainContent { opacity: 1; transform: scale(1); }
     
     /* =========================================
-       UI Component Styles (Header, Profile, Chart, etc.)
+       UI Component Styles
        ========================================= */
     .header-area { padding: 20px 20px 10px; background: #fff; }
     .brand-title { color: var(--text-main); font-weight: 700; letter-spacing: 0.05em; font-size: 1.2rem; text-align: center; }
@@ -128,21 +128,22 @@
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
 
     /* =========================================
-       Milestone CSS (Static List)
+       Milestone CSS (Refined Visuals)
        ========================================= */
     .milestone-section { margin: 30px 20px 10px; }
     
     .tier-container { 
-        margin-bottom: 10px; 
+        margin-bottom: 20px; 
         position: relative; 
         border-radius: 12px; 
         background: #fff; 
         padding: 15px 15px 20px 15px; 
         box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
         z-index: 1; 
+        overflow: hidden;
     }
     
-    .tier-header { font-size: 0.85rem; font-weight: 700; color: #666; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
+    .tier-header { font-size: 0.9rem; font-weight: 700; color: #666; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
     
     /* Horizontal Scroll Layout */
     .tier-badge-scroll { 
@@ -153,6 +154,7 @@
         padding-bottom: 5px;
         scroll-snap-type: x mandatory;
         -webkit-overflow-scrolling: touch;
+        min-height: 100px;
     }
     .tier-badge-scroll::-webkit-scrollbar { display: none; }
     .tier-badge-scroll { -ms-overflow-style: none; scrollbar-width: none; }
@@ -168,39 +170,58 @@
         position: relative; 
         text-decoration: none; 
         scroll-snap-align: start;
+        transition: transform 0.1s;
     }
     .ms-badge:active { transform: scale(0.95); }
     
+    /* Shake Animation for Locked Items */
+    @keyframes shake-refuse {
+        0% { transform: translateX(0); }
+        25% { transform: translateX(-4px); }
+        50% { transform: translateX(4px); }
+        75% { transform: translateX(-4px); }
+        100% { transform: translateX(0); }
+    }
+    .ms-badge.locked:active .ms-icon-box {
+        animation: shake-refuse 0.3s ease-in-out;
+    }
+
+    /* Teaser Style (Upper Half Only) */
+    .ms-badge.teaser {
+        pointer-events: none; /* No interaction */
+        opacity: 0.7;
+    }
+    .ms-badge.teaser .ms-icon-box {
+        clip-path: inset(0 0 50% 0); /* Show top 50% */
+        background: #eee;
+        box-shadow: none; /* Flat look for teaser */
+    }
+    .ms-badge.teaser .ms-label { display: none; } /* Hide label */
+
     /* Sealing Wax Style Icon Box (70px x 70px) */
     .ms-icon-box { 
         width: 70px; height: 70px; 
-        /* border-radius is handled by JS for organic shape */
+        /* border-radius set dynamically via JS */
         display: flex; align-items: center; justify-content: center; 
         margin-bottom: 8px; 
         position: relative; overflow: hidden;
+        box-shadow: 
+            inset 0 0 8px rgba(0,0,0,0.3), 
+            inset 2px 2px 4px rgba(255,255,255,0.4), 
+            0 4px 6px rgba(0,0,0,0.3);
         border: none;
-
-        /* [Modified] Golden Ratio Wax Effect */
-        filter: url(#wax-seal-filter);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.4);
     }
     
-    /* [Modified] Double Ring Implementation */
+    /* Inner Double Line (3px inset) */
     .ms-icon-box::before {
         content: '';
         position: absolute;
-        inset: 6px;
-        border-radius: inherit; /* Follows the organic shape */
-        
-        /* Outer Line */
-        border: 1px solid rgba(0,0,0,0.15); 
-        
-        /* Inner Line (simulated with shadow for gap) */
-        box-shadow: inset 0 0 0 3px transparent, inset 0 0 0 4.5px rgba(0,0,0,0.15);
-        
+        top: 3px; left: 3px; right: 3px; bottom: 3px; 
+        border-radius: inherit; /* Follow parent shape */
+        border: 2px solid rgba(0,0,0,0.1); 
+        box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1); 
         pointer-events: none;
-        z-index: 10;
-        opacity: 0.7;
+        z-index: 1;
     }
 
     .ms-icon-box i { font-size: 1.8rem; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3)); color: #fff; z-index: 2; position: relative; }
@@ -215,31 +236,17 @@
     }
 
     /* Unacquired & Locked */
-    .ms-badge.locked .ms-icon-box { background: #e0e0e0 !important; box-shadow: inset 0 0 5px rgba(0,0,0,0.1); filter: none; }
+    .ms-badge.locked .ms-icon-box { background: #e0e0e0 !important; box-shadow: inset 0 0 5px rgba(0,0,0,0.1); }
     .ms-badge.locked .ms-label { color: #aaa; }
     .ms-badge.locked .ms-icon-box::after { content: '🔒'; position: absolute; font-size: 1.2rem; color: #999; z-index: 3; }
     .ms-badge.locked .ms-icon-box img { opacity: 0.1; filter: grayscale(100%); }
-    .ms-badge.locked .ms-icon-box::before { display: none; } /* No rings on locked items */
 
-    /* Colors */
-    .bg-pastel-sage { background: #A8D8B9; } .bg-pastel-apricot { background: #FFDAB9; }
-    .bg-pastel-sky { background: #87CEEB; } .bg-pastel-rose { background: #FFB7B2; }
-    .bg-pastel-lilac { background: #C8A2C8; } .bg-pastel-mint { background: #98FF98; }
-    .bg-pastel-coral { background: #FF7F50; } .bg-pastel-cocoa { background: #D2691E; }
-    .bg-metallic-silver { background: linear-gradient(135deg, #e0e0e0, #ffffff, #b0b0b0); color: #333; }
-    .bg-metallic-bronze { background: linear-gradient(135deg, #cd7f32, #ffcc99, #8b4513); }
-    .bg-metallic-champagne { background: linear-gradient(135deg, #fad6a5, #fff8e7, #d2b48c); color: #5d4037; }
-    .bg-metallic-slate { background: linear-gradient(135deg, #708090, #b0c4de, #2f4f4f); }
-    .bg-metallic-pearl { background: linear-gradient(135deg, #f0f8ff, #ffffff, #dcdcdc); color: #333; border: 1px solid #ddd; }
-    .bg-metallic-rose-gold { background: linear-gradient(135deg, #b76e79, #ffd1dc, #a0522d); }
-    .bg-metallic-coffee { background: linear-gradient(135deg, #6f4e37, #d2b48c, #3e2723); }
-    .bg-metallic-ice { background: linear-gradient(135deg, #a5f2f3, #e0ffff, #00ced1); color: #00695c; }
-    .bg-luxury-gold { background: linear-gradient(45deg, #FFD700, #FDB931, #FFD700); }
-    .bg-luxury-platinum { background: linear-gradient(45deg, #E5E4E2, #ffffff, #BCC6CC); color:#333; }
-    .bg-luxury-ruby { background: linear-gradient(45deg, #9b111e, #ff0000, #800000); }
-    .bg-luxury-sapphire { background: linear-gradient(45deg, #0F52BA, #4169E1, #000080); }
-    .bg-luxury-onyx { background: linear-gradient(45deg, #353839, #000000, #2c2c2c); }
-    .bg-luxury-diamond { background: linear-gradient(45deg, #b9f2ff, #ffffff, #e0ffff); color:#000; border:1px solid #aaa; }
+    /* Tier Colors */
+    .tier-trust .ms-icon-box { background: #A8D8B9; } /* Pastel Sage */
+    /* Overwrite specific colors if needed, but using classes for flexibility */
+    .bg-trust { background: #A8D8B9; }
+    .bg-bond { background: linear-gradient(135deg, #e0e0e0, #ffffff, #b0b0b0); color: #333; }
+    .bg-harmony { background: linear-gradient(45deg, #FFD700, #FDB931, #FFD700); }
 
     /* Scroll Hint Fade */
     .tier-container::after {
@@ -256,37 +263,6 @@
     }
     .ms-list-link:hover { text-decoration: underline; }
 
-    /* Locked Overlay */
-    .tier-locked { position: relative; min-height: 120px; margin-bottom: 20px; border-radius: 12px; overflow: hidden; }
-    .lock-overlay {
-        position: absolute; inset: 0; 
-        background-color: #2c2c2c;
-        background-image: 
-            linear-gradient(135deg, #333 25%, transparent 25%), 
-            linear-gradient(225deg, #333 25%, transparent 25%), 
-            linear-gradient(45deg, #333 25%, transparent 25%), 
-            linear-gradient(315deg, #333 25%, transparent 25%);
-        background-position: 10px 0, 10px 0, 0 0, 0 0;
-        background-size: 20px 20px;
-        background-repeat: repeat;
-        opacity: 0.95;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        z-index: 10; color: #fff;
-        box-shadow: inset 0 0 15px #000;
-        border: 1px solid #444;
-    }
-    .lock-icon-gold {
-        font-size: 3rem; margin-bottom: 8px;
-        background: linear-gradient(to bottom, #fbf5b7 0%, #bf953f 40%, #b38728 60%, #fbf5b7 100%);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        filter: drop-shadow(0 4px 4px rgba(0,0,0,0.8));
-    }
-    .lock-text {
-        font-family: 'Times New Roman', serif;
-        font-size: 1.2rem; letter-spacing: 0.15em; color: #fbf5b7;
-        text-shadow: 0 2px 4px rgba(0,0,0,1);
-    }
-
     /* Modals - Branded */
     .modal-header { border-bottom: none; padding-bottom: 0; }
     #msModalIconBox { 
@@ -296,16 +272,11 @@
         font-size: 3rem; color: white;
         box-shadow: inset 0 0 10px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.2);
         position: relative;
-        /* [Modified] Apply same filter to modal */
-        filter: url(#wax-seal-filter);
     }
-    /* [Modified] Double Ring for Modal */
     #msModalIconBox::before {
-        content: ''; position: absolute; inset: 8px;
-        border-radius: 50%; 
-        border: 1px solid rgba(0,0,0,0.15); 
-        box-shadow: inset 0 0 0 4px transparent, inset 0 0 0 6px rgba(0,0,0,0.15); 
-        pointer-events: none; z-index: 1;
+        content: ''; position: absolute; top: 12px; left: 12px; right: 12px; bottom: 12px;
+        border-radius: 50%; border: 1px solid rgba(0,0,0,0.15); 
+        box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2); pointer-events: none; z-index: 1;
     }
     #msModalTipsBox { background-color: #E0F7FA; border-radius: 8px; padding: 15px; margin-top: 15px; color: #006064; font-size: 0.9rem; }
     
@@ -366,54 +337,48 @@
         width: 10px; height: 10px; border-radius: 50%;
         background: radial-gradient(circle, #fff 0%, #fff 80%, rgba(255,255,255,0.8) 90%, transparent 100%);
         opacity: 0; transform: scale(0);
-        filter: none;
-        box-shadow: none;
+        filter: none; box-shadow: none;
     }
 
-    /* 3.2 Donut Ring - Back (Adjusted for alignment) */
+    /* 3.2 Donut Ring */
     #celebLightRing {
-        position: absolute;
-        z-index: 1;
+        position: absolute; z-index: 1;
         width: 10px; height: 10px; border-radius: 50%;
         margin-top: -32.5px;
         background: radial-gradient(circle, transparent 50%, rgba(255,255,255,1.0) 55%, transparent 60%);
-        filter: blur(0.2px); 
-        opacity: 0; transform: scale(0);
+        filter: blur(0.2px); opacity: 0; transform: scale(0);
     }
 
-    /* 3.3 Oval Ring - Back (Adjusted for size and alignment) */
+    /* 3.3 Oval Ring */
     #celebLightOval {
-        position: absolute;
-        z-index: 2; /* Between Core and Ring */
+        position: absolute; z-index: 2;
         width: 10px; height: 10px; border-radius: 50%;
         margin-top: 65px;
         background: radial-gradient(circle, transparent 50%, rgba(255,255,255,1.0) 55%, transparent 60%);
-        filter: blur(0.2px);
-        opacity: 0; transform: scale(0);
+        filter: blur(0.2px); opacity: 0; transform: scale(0);
     }
     
-    /* Core Animation (FINAL SIZE: 175px) */
+    /* Core Animation */
     .anim-light { animation: light-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes light-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; }
-        100% { transform: scale(17.5); opacity: 0.6; } /* Opacity 0.6 */
+        100% { transform: scale(17.5); opacity: 0.6; }
     }
 
-    /* Ring Animation (FINAL SIZE: 240px) */
+    /* Ring Animation */
     .anim-ring { animation: ring-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes ring-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; }
-        100% { transform: scale(24); opacity: 0.4; } /* Opacity 0.4, Size 240px */
+        100% { transform: scale(24); opacity: 0.4; }
     }
 
-    /* Oval Animation (FINAL SIZE: 300px x 105px) */
+    /* Oval Animation */
     .anim-oval { animation: oval-bloom 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes oval-bloom {
         0% { transform: scale(0); opacity: 0; }
         15% { transform: scale(300); opacity: 1; }
-        /* Final scaleX 30 (300px), ScaleY 10.5 (105px), Opacity 0.8 */
         100% { transform: scale(30, 10.5); opacity: 0.8; } 
     }
 
@@ -429,7 +394,7 @@
         width: 180px; height: 180px;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         opacity: 0;
-        z-index: 10005; /* Top element */
+        z-index: 10005;
     }
     
     .anim-badge-appear {
@@ -440,28 +405,26 @@
         100% { transform: translate(-50%, -50%) scale(1.0); opacity: 1; filter: brightness(1); }
     }
     
-    /* Celebration Badge Inner - Strict Sealing Wax Style */
+    /* Celebration Badge Inner */
     .celeb-badge-inner {
         width: 140px; height: 140px; 
+        border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         position: relative; overflow: hidden;
+        box-shadow: 
+            inset 0 0 16px rgba(0,0,0,0.3), 
+            inset 4px 4px 8px rgba(255,255,255,0.4), 
+            0 8px 12px rgba(0,0,0,0.3);
         border: none;
-        
-        /* [Modified] Apply wax filter */
-        filter: url(#wax-seal-filter);
-        box-shadow: 0 8px 15px rgba(0,0,0,0.5);
     }
     
     .celeb-badge-inner::before {
         content: '';
         position: absolute;
-        top: 16px; left: 16px; right: 16px; bottom: 16px; /* Scaled margin */
-        border-radius: inherit; 
-        
-        /* [Modified] Double Ring Style match */
+        top: 16px; left: 16px; right: 16px; bottom: 16px;
+        border-radius: 50%; 
         border: 2px solid rgba(0,0,0,0.15); 
-        box-shadow: inset 0 0 0 4px transparent, inset 0 0 0 6px rgba(0,0,0,0.15); 
-        
+        box-shadow: inset 2px 2px 4px rgba(0,0,0,0.2), 0 0 0 40px rgba(0,0,0,0.02); 
         pointer-events: none;
         z-index: 1;
     }
@@ -469,42 +432,23 @@
     .celeb-badge-inner i { font-size: 3.6rem; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); color: #fff; z-index: 2; position: relative; }
     .celeb-badge-inner img { width: 55%; height: 55%; object-fit: contain; z-index: 2; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); position: relative; }
 
-    /* 6. Fairy Dust Layer (Topmost) */
+    /* 6. Fairy Dust Layer */
     #fairyDustCanvas {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         pointer-events: none; z-index: 10010;
         display: none;
     }
 
-    /* Close Area */
     #celebCloseArea {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
         z-index: 10006; cursor: pointer;
     }
 
-    /* Unified Button Colors */
     .btn-secondary { background-color: var(--brand-color); border-color: var(--brand-color); color: white; }
     .btn-secondary:hover, .btn-secondary:active { background-color: #4aa3a2; border-color: #4aa3a2; }
   </style>
 </head>
 <body>
-
-  <svg style="position: absolute; width: 0; height: 0; pointer-events: none;">
-    <defs>
-      <filter id="wax-seal-filter" x="-20%" y="-20%" width="140%" height="140%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" result="noise" />
-        
-        <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" result="displaced" />
-        
-        <feSpecularLighting in="noise" surfaceScale="2" specularConstant="0.7" specularExponent="20" lighting-color="#ffffff" result="specular">
-          <fePointLight x="-5000" y="-10000" z="20000" />
-        </feSpecularLighting>
-        
-        <feComposite in="specular" in2="displaced" operator="in" result="specularComposite" />
-        <feComposite in="SourceGraphic" in2="specularComposite" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />
-      </filter>
-    </defs>
-  </svg>
 
   <div id="celebrationOverlay">
       <div id="celebNightSky"></div>
@@ -525,7 +469,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.16-WaxSeal-Updated</div>
+  <div id="log-stamp">v2025.12.16-Step1-VisualMock-Fix</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -617,11 +561,10 @@
     <div class="milestone-section">
         <div class="section-title" style="margin: 0 0 10px;">マイルストーン (K9 Harmony)</div>
         
-        <div class="tier-container" id="tier1-container">
-            <div class="tier-header">🟢 初級: Basic Harmony</div>
-            <div class="tier-badge-scroll" id="tier1-scroll">
-                <div class="text-center w-100 text-muted small" style="flex:1;" id="tier1-loading">Loading...</div>
-            </div>
+        <div class="tier-container" id="milestone-container">
+            <div class="tier-header" id="tier-header">Loading...</div>
+            <div class="tier-badge-scroll" id="tier-scroll">
+                </div>
         </div>
 
         <a class="ms-list-link" onclick="openAllMilestonesModal()">獲得マイルストーン一覧を見る &gt;</a>
@@ -648,7 +591,7 @@
         </div>
         <div class="modal-body text-center pt-0">
             <div id="msModalIconBox">
-                </div>
+            </div>
             <h4 class="fw-bold mt-3 mb-2" id="msModalTitle" style="color: var(--brand-color);">Title</h4>
             <p class="text-muted small mb-3" id="msModalDesc">Description</p>
             
@@ -672,7 +615,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" id="allMilestonesBody">
-            </div>
+        </div>
         <div class="modal-footer justify-content-center">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
         </div>
@@ -703,6 +646,13 @@
     const dogTips = [
       "犬の鼻紋は人間の指紋と同じで、一頭一頭違います。", "犬は人間の約4倍の聴力を持っています。", "犬の嗅覚は人間の100万倍〜1億倍とも言われます。", "犬は汗を肉球からしかかけません。", "犬があくびをするのは、ストレスを感じて落ち着こうとしている時もあります。", "犬のしっぽの振り方は、右寄りだと「嬉しい」、左寄りだと「不安」な時があります。", "小型犬の方が大型犬よりも長生きする傾向があります。", "犬は夢を見ます。寝言を言ったり足を動かすのはその証拠です。", "ダルメシアンは生まれた時は真っ白で、後から斑点が出てきます。", "犬が飼い主の顔を舐めるのは、愛情表現やご飯の催促です。"
     ];
+
+    // Tier Definitions
+    const TIER_CONFIG = {
+        '1_Beginner': { code: 'TRUST', name: 'TRUST (初級)', colorClass: 'bg-trust', count: 8 },
+        '2_Intermediate': { code: 'BOND', name: 'BOND (中級)', colorClass: 'bg-bond', count: 8 },
+        '3_Advanced': { code: 'HARMONY', name: 'HARMONY (上級)', colorClass: 'bg-harmony', count: 6 }
+    };
 
     let tipsTimer;
     let currentUserId = null;
@@ -744,18 +694,14 @@
         }
         
         const title = badge ? badge.title : 'Congratulations!';
-        const color = badge ? badge.color : 'pastel-sage';
+        const tierClass = badge ? (TIER_CONFIG[badge.tier]?.colorClass || 'bg-trust') : 'bg-trust';
 
         // Generate Random Radius for Celebration Badge too
-        const r1 = Math.floor(Math.random() * 21) + 40; const r2 = Math.floor(Math.random() * 21) + 40;
-        const r3 = Math.floor(Math.random() * 21) + 40; const r4 = Math.floor(Math.random() * 21) + 40;
-        const r5 = Math.floor(Math.random() * 21) + 40; const r6 = Math.floor(Math.random() * 21) + 40;
-        const r7 = Math.floor(Math.random() * 21) + 40; const r8 = Math.floor(Math.random() * 21) + 40;
-        const randomBorderRadius = `${r1}% ${r2}% ${r3}% ${r4}% / ${r5}% ${r6}% ${r7}% ${r8}%`;
+        const randomBorderRadius = getRandomWaxBorder();
 
         // Apply EXACT classes to mimic .ms-icon-box
         badgeCont.innerHTML = `
-            <div class="celeb-badge-inner bg-${color}" style="border-radius: ${randomBorderRadius};">
+            <div class="celeb-badge-inner ${tierClass}" style="border-radius: ${randomBorderRadius};">
                 ${iconHtml}
             </div>
             <div style="position:absolute; bottom:-50px; width:250px; text-align:center; color:white; font-weight:bold; font-size:1.4rem; text-shadow:0 0 10px gold;">
@@ -1155,7 +1101,8 @@
                 log(`MS Response: ${JSON.stringify(data).substring(0,50)}...`);
                 if (data.error) {
                     log('MS Backend Error: ' + data.error);
-                    document.getElementById('tier1-loading').innerText = '準備中: ' + data.error;
+                    document.getElementById('tier-header').innerText = '準備中';
+                    document.getElementById('tier-scroll').innerHTML = '<div class="text-center w-100 small" style="flex:1;">データエラー</div>';
                     return;
                 }
                 
@@ -1165,48 +1112,97 @@
                     renderMilestones(data);
                 } else {
                     log('MS Failed or Empty');
-                    document.getElementById('tier1-loading').innerText = 'データなし';
+                    document.getElementById('tier-header').innerText = '準備中';
+                    document.getElementById('tier-scroll').innerHTML = '<div class="text-center w-100 small" style="flex:1;">データなし</div>';
                 }
             })
             .catch(e => {
                 log('MS Fetch Error: ' + e.message);
-                document.getElementById('tier1-loading').innerText = '読込エラー';
+                document.getElementById('tier-header').innerText = 'エラー';
+                document.getElementById('tier-scroll').innerHTML = '<div class="text-center w-100 small" style="flex:1;">読込エラー</div>';
             });
     }
 
     function renderMilestones(data) {
         const badges = data.badges;
-        const tier1Container = document.getElementById('tier1-scroll');
-        if(tier1Container) tier1Container.innerHTML = '';
+        const container = document.getElementById('tier-scroll');
+        const header = document.getElementById('tier-header');
+        
+        container.innerHTML = '';
 
+        // 1. Logic: Count per Tier
+        let counts = { '1_Beginner': 0, '2_Intermediate': 0, '3_Advanced': 0 };
+        badges.forEach(b => {
+            if (b.is_acquired && counts[b.tier] !== undefined) counts[b.tier]++;
+        });
+
+        // 2. Logic: Determine Active Tier to display
+        // - TRUST < 8: Show TRUST
+        // - TRUST >=8 && BOND < 8: Show BOND
+        // - BOND >=8: Show HARMONY
+        let currentTierKey = '1_Beginner';
+        let prevTierKey = null;
+
+        if (counts['1_Beginner'] < TIER_CONFIG['1_Beginner'].count) {
+            currentTierKey = '1_Beginner';
+        } else if (counts['2_Intermediate'] < TIER_CONFIG['2_Intermediate'].count) {
+            currentTierKey = '2_Intermediate';
+            prevTierKey = '1_Beginner';
+        } else {
+            currentTierKey = '3_Advanced';
+            prevTierKey = '2_Intermediate';
+        }
+
+        const tierInfo = TIER_CONFIG[currentTierKey];
+        const tierColor = getTierColor(currentTierKey);
+        header.innerHTML = `<span style="color:#555;">現在挑戦中:</span> <span class="${tierColor.textClass}">${tierInfo.name}</span>`;
+
+        // 3. Logic: Build Display List
+        // Rule: [All Acquired] -> [Current Tier Unacquired] -> [Teaser]
+        const acquiredAll = badges.filter(b => b.is_acquired);
+        const unacquiredCurrent = badges.filter(b => !b.is_acquired && b.tier === currentTierKey);
+        
+        // 4. Logic: Teaser (if Count >= 6)
+        let teaserBadges = [];
+        const nextTierKey = getNextTier(currentTierKey);
+        
+        if (counts[currentTierKey] >= 6 && nextTierKey) {
+            // Get top few unacquired from NEXT tier
+            teaserBadges = badges.filter(b => !b.is_acquired && b.tier === nextTierKey).slice(0, 4);
+        }
+
+        let displayList = [...acquiredAll, ...unacquiredCurrent, ...teaserBadges];
+        
+        // Render
         let hasNewBadge = false;
-
-        badges.filter(b => b.tier === '1_Beginner').forEach(badge => {
-            // DEBUG: Force Animation for ALL acquired badges for testing
-            // 本番では if (badge.is_new) を使用すること
-            if (badge.is_acquired) {
-                badge.is_new = true; 
-            }
-
-            const html = createBadgeHtml(badge);
-            tier1Container.insertAdjacentHTML('beforeend', html);
-            
+        displayList.forEach(badge => {
+            const isTeaser = teaserBadges.includes(badge);
+            const html = createBadgeHtml(badge, isTeaser);
+            container.insertAdjacentHTML('beforeend', html);
             if (badge.is_new) hasNewBadge = true;
         });
+
+        if (displayList.length === 0) container.innerHTML = '<div class="text-center w-100 small" style="flex:1;">データなし</div>';
         
-        if (tier1Container.innerHTML === '') tier1Container.innerHTML = '<div class="text-center w-100 small" style="flex:1;">データなし</div>';
-        
-        // Setup Observer to trigger animation when Scrolled Into View
+        // Setup Observer
         if (hasNewBadge) setupMilestoneObserver();
 
-        log('Milestones Rendered.');
+        log('Milestones Rendered: ' + currentTierKey);
     }
 
-    function createBadgeHtml(badge) {
-        const isLocked = !badge.is_acquired;
+    function createBadgeHtml(badge, isTeaser = false) {
+        const isLocked = !badge.is_acquired && !isTeaser; // Normal unacquired
         const lockedClass = isLocked ? 'locked' : '';
-        const colorClass = isLocked ? '' : `bg-${badge.color}`;
+        const teaserClass = isTeaser ? 'teaser' : '';
         
+        // Tier Color Class
+        const tierConfig = TIER_CONFIG[badge.tier];
+        const colorClass = (isLocked || isTeaser) ? '' : (tierConfig ? tierConfig.colorClass : 'bg-trust');
+        
+        // Random Shape
+        const randomBorderRadius = getRandomWaxBorder();
+        const randomRot = (Math.random() * 20 - 10) + 'deg';
+
         // Add class for Observer target if new
         let newClass = badge.is_new ? 'ms-badge-new' : '';
         
@@ -1217,27 +1213,36 @@
              iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
         }
 
-        // Generate Random Radius Values (30% - 70% range for more organic shape)
-        const r1 = Math.floor(Math.random() * 40) + 30; const r2 = Math.floor(Math.random() * 40) + 30;
-        const r3 = Math.floor(Math.random() * 40) + 30; const r4 = Math.floor(Math.random() * 40) + 30;
-        const r5 = Math.floor(Math.random() * 40) + 30; const r6 = Math.floor(Math.random() * 40) + 30;
-        const r7 = Math.floor(Math.random() * 40) + 30; const r8 = Math.floor(Math.random() * 40) + 30;
-        
-        const randomBorderRadius = `${r1}% ${r2}% ${r3}% ${r4}% / ${r5}% ${r6}% ${r7}% ${r8}%`;
-        const randomRot = (Math.random() * 20 - 10) + 'deg';
+        // Tap always shows modal unless teaser
+        const clickAction = isTeaser ? '' : `showMilestoneDetail('${badge.id}')`;
 
-        // Tap always shows modal
-        const clickAction = `showMilestoneDetail('${badge.id}')`;
-
-        // data-id attribute essential for observer
         return `
-            <div class="ms-badge ${lockedClass} ${newClass}" data-id="${badge.id}" onclick="${clickAction}">
+            <div class="ms-badge ${lockedClass} ${teaserClass} ${newClass}" data-id="${badge.id}" onclick="${clickAction}">
                 <div class="ms-icon-box ${colorClass}" style="border-radius:${randomBorderRadius}; transform: rotate(${randomRot});">
                     ${iconHtml}
                 </div>
                 <div class="ms-label">${badge.title}</div>
             </div>
         `;
+    }
+    
+    function getRandomWaxBorder() {
+        // Generate 8 values between 30% and 70%
+        const r = () => Math.floor(Math.random() * (70 - 30) + 30) + "%";
+        return `${r()} ${r()} ${r()} ${r()} / ${r()} ${r()} ${r()} ${r()}`;
+    }
+
+    function getTierColor(tierKey) {
+        if(tierKey === '1_Beginner') return { bgClass: 'bg-trust', textClass: 'text-success' };
+        if(tierKey === '2_Intermediate') return { bgClass: 'bg-bond', textClass: 'text-secondary' };
+        if(tierKey === '3_Advanced') return { bgClass: 'bg-harmony', textClass: 'text-warning' };
+        return { bgClass: 'bg-trust', textClass: 'text-dark' };
+    }
+
+    function getNextTier(currentKey) {
+        if (currentKey === '1_Beginner') return '2_Intermediate';
+        if (currentKey === '2_Intermediate') return '3_Advanced';
+        return null;
     }
     
     function setupMilestoneObserver() {
@@ -1274,50 +1279,54 @@
         const modalBody = document.getElementById('allMilestonesBody');
         modalBody.innerHTML = '';
         
-        const beginnerBadges = cachedMilestones.filter(b => b.tier === '1_Beginner');
-        let bHtml = '';
-        beginnerBadges.forEach(b => bHtml += createBadgeHtml(b).replace('ms-badge-new','')); // Remove trigger class in modal
-        modalBody.insertAdjacentHTML('beforeend', `
-            <div class="full-list-section">
-                <div class="full-list-title">🟢 初級: Basic Harmony</div>
-                <div class="full-list-grid">${bHtml}</div>
-            </div>
-        `);
-        
-        const intermediateEarnedCount = cachedMilestones.filter(b => b.tier === '2_Intermediate' && b.is_acquired).length;
-        const isGroupedLock = (intermediateEarnedCount === 0);
-
-        if (isGroupedLock) {
-             modalBody.insertAdjacentHTML('beforeend', `
-                <div class="tier-locked">
-                    <div class="lock-overlay" style="position:relative; height:150px; border-radius:12px;">
-                        <div class="lock-icon-gold"><i class="fa-solid fa-lock"></i></div>
-                        <div class="lock-text">Step Up: Next Challenge</div>
-                    </div>
-                </div>
-             `);
-        } else {
-            const intBadges = cachedMilestones.filter(b => b.tier === '2_Intermediate');
-            let iHtml = '';
-            intBadges.forEach(b => iHtml += createBadgeHtml(b));
-             modalBody.insertAdjacentHTML('beforeend', `
-                <div class="full-list-section">
-                    <div class="full-list-title">🔵 中級: Advance Harmony</div>
-                    <div class="full-list-grid">${iHtml}</div>
-                </div>
-            `);
+        // Helper to generate full list
+        const renderSection = (tierKey, title) => {
+            const tierBadges = cachedMilestones.filter(b => b.tier === tierKey);
+            if (tierBadges.length === 0) return '';
             
-             modalBody.insertAdjacentHTML('beforeend', `
-                <div class="tier-locked">
-                    <div class="lock-overlay" style="position:relative; height:150px; border-radius:12px;">
-                        <div class="lock-icon-gold"><i class="fa-solid fa-lock"></i></div>
-                        <div class="lock-text">Master Harmony: Coming Soon</div>
-                    </div>
+            let html = '';
+            tierBadges.forEach(b => html += createBadgeHtml(b).replace('ms-badge-new',''));
+            return `
+                <div class="full-list-section">
+                    <div class="full-list-title">${title}</div>
+                    <div class="full-list-grid">${html}</div>
                 </div>
-             `);
+            `;
+        };
+
+        // Determine locks based on counts
+        let counts = { '1_Beginner': 0, '2_Intermediate': 0, '3_Advanced': 0 };
+        cachedMilestones.forEach(b => { if(b.is_acquired) counts[b.tier]++; });
+
+        // TRUST: Always Visible
+        modalBody.insertAdjacentHTML('beforeend', renderSection('1_Beginner', '🟢 初級: TRUST'));
+
+        // BOND: Visible if TRUST complete (>=8)
+        if (counts['1_Beginner'] >= 8) {
+            modalBody.insertAdjacentHTML('beforeend', renderSection('2_Intermediate', '🔵 中級: BOND'));
+        } else {
+            modalBody.insertAdjacentHTML('beforeend', createLockHtml('Step Up: Next Challenge'));
+        }
+
+        // HARMONY: Visible if BOND complete (>=8)
+        if (counts['2_Intermediate'] >= 8) {
+            modalBody.insertAdjacentHTML('beforeend', renderSection('3_Advanced', '🔴 上級: HARMONY'));
+        } else if (counts['1_Beginner'] >= 8) { // Only show lock if previous tier is unlocked
+             modalBody.insertAdjacentHTML('beforeend', createLockHtml('Master Harmony: Coming Soon'));
         }
         
         allMilestonesModal.show();
+    }
+    
+    function createLockHtml(text) {
+        return `
+            <div class="tier-locked">
+                <div class="lock-overlay" style="position:relative; height:150px; border-radius:12px;">
+                    <div class="lock-icon-gold"><i class="fa-solid fa-lock"></i></div>
+                    <div class="lock-text">${text}</div>
+                </div>
+            </div>
+        `;
     }
 
     function markAsSeen(badgeId) {
@@ -1339,9 +1348,17 @@
 
         const isLocked = !badge.is_acquired;
         const iconBox = document.getElementById('msModalIconBox');
+        const tierConfig = TIER_CONFIG[badge.tier];
         
-        iconBox.className = isLocked ? 'bg-secondary' : `bg-${badge.color}`;
-        iconBox.style.backgroundColor = ''; 
+        // Remove old classes
+        iconBox.className = '';
+        // Add new classes
+        if (isLocked) {
+            iconBox.classList.add('bg-secondary');
+        } else {
+            iconBox.classList.add(tierConfig ? tierConfig.colorClass : 'bg-trust');
+        }
+        iconBox.style.borderRadius = getRandomWaxBorder(); // Dynamic shape for modal too
         
         // Remove glitter class logic from modal for simplicity, or keep if needed
         iconBox.innerHTML = badge.icon 
