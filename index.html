@@ -680,7 +680,7 @@
 
   <script>
     const LIFF_ID = '2008546673-MJY7j3ox'; 
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIqH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec';
     
     // Tips Array
     const dogTips = [
@@ -725,7 +725,8 @@
         if(tipsTimer) clearInterval(tipsTimer);
     }
 
-    window.onload = async function() {
+    // ★重要: window.onload から DOMContentLoaded に変更 (フリーズ対策)
+    document.addEventListener('DOMContentLoaded', async function() {
         startTipsSlider();
         if (typeof liff === 'undefined') { showError('LIFF SDK not loaded.'); return; }
         
@@ -745,7 +746,7 @@
             fetchTextData(currentUserId, currentDogId);
             
         } catch (e) { showError('Init Error: ' + e.message); }
-    };
+    });
 
     function fetchTextData(userId, dogId) {
         let url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}`;
@@ -885,8 +886,8 @@
             if (t === 3) {
                 if (!meta.show_advanced_peek) continue; 
                 if (meta.show_advanced_peek) { // Assuming full unlock logic is similar
-                     isLocked = true;
-                     showOverlay = true;
+                      isLocked = true;
+                      showOverlay = true;
                 }
             }
 
