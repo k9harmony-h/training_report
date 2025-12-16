@@ -62,7 +62,7 @@
        ========================================= */
     .header-area { padding: 20px 20px 10px; background: #fff; }
 
-    /* [復旧] ロゴ用スタイル */
+    /* ロゴ用スタイル */
     .logo-container { 
         display: flex; 
         justify-content: center; 
@@ -143,7 +143,7 @@
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
 
     /* =========================================
-       Milestone CSS (Updated)
+       Milestone CSS (Refined Visuals v3)
        ========================================= */
     .milestone-section { margin: 30px 20px 10px; }
     
@@ -188,7 +188,7 @@
     .ms-badge.teaser .ms-icon-box { clip-path: inset(0 0 50% 0); background: #eee; box-shadow: none; }
     .ms-badge.teaser .ms-label { display: none; }
 
-    /* Sealing Wax Style Icon Box (70px x 70px) - Updated Structure */
+    /* Sealing Wax Style Icon Box (70px x 70px) */
     .ms-icon-box { 
         width: 70px; height: 70px; 
         /* border-radius set dynamically via JS (4 values) */
@@ -204,17 +204,17 @@
         content: ''; position: absolute;
         top: 8px; left: 8px; right: 8px; bottom: 8px; 
         border-radius: 50%; 
-        border: 2px double rgba(0,0,0,0.15); /* 既存デザイン維持でdouble */
+        border: 2px double rgba(0,0,0,0.15); /* Double line */
         box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1); 
         pointer-events: none; z-index: 1;
     }
 
-    /* さらに内側の円: 中の円から4px (計12px), solid 2px */
+    /* さらに内側の円: 中の円から4px (計12px), solid 0.5px */
     .ms-icon-box::after {
         content: ''; position: absolute;
         top: 12px; left: 12px; right: 12px; bottom: 12px;
         border-radius: 50%;
-        border: 2px solid rgba(255,255,255,0.4); /* 控えめな色でsolid */
+        border: 0.5px solid rgba(255,255,255,0.4); /* [修正] 極細線 */
         pointer-events: none; z-index: 1;
     }
 
@@ -226,10 +226,17 @@
         width: 100%; height: 2.4em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
     }
 
+    /* ロック状態のスタイル */
     .ms-badge.locked .ms-icon-box { background: #e0e0e0 !important; box-shadow: inset 0 0 5px rgba(0,0,0,0.1); }
     .ms-badge.locked .ms-label { color: #aaa; }
-    .ms-badge.locked .ms-icon-box i::after { content: '🔒'; position: absolute; top:0; left:0; font-size: 1.2rem; color: #999; }
-    .ms-badge.locked .ms-icon-box img { opacity: 0.1; filter: grayscale(100%); }
+    /* バッジ上のロックアイコン (画像imgは非表示にされる) */
+    .tier-lock-icon-small {
+        font-size: 1.8rem;
+        background: linear-gradient(to bottom, #fbf5b7 0%, #bf953f 40%, #b38728 60%, #fbf5b7 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+        z-index: 3;
+    }
 
     /* Colors */
     .bg-trust { background: #A8D8B9; }
@@ -261,13 +268,34 @@
         pointer-events: none; z-index: 5; border-radius: 0 12px 12px 0;
     }
 
+    /* [修正] 一覧ロック画面のテクスチャと高級感 */
     .tier-locked {
-        position: relative; height: 150px; border-radius: 12px; background: #f0f0f0; 
+        position: relative; height: 150px; border-radius: 12px; 
+        background: #f0f0f0; 
         display:flex; align-items:center; justify-content:center;
+        overflow: hidden;
     }
-    .lock-overlay { text-align: center; color: #999; }
-    .lock-icon-gold { font-size: 3rem; margin-bottom: 10px; color: #d4af37; }
-    .lock-text { font-family:serif; letter-spacing:0.1em; }
+    .tier-lock-overlay {
+        position: absolute; inset: 0; 
+        background-color: rgba(0, 0, 0, 0.85); /* 黒半透明 */
+        /* 高級感のあるストライプテクスチャ */
+        background-image: 
+            radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03) 0%, transparent 40%),
+            repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 10px);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        z-index: 10; color: #fff;
+    }
+    .tier-lock-icon {
+        font-size: 3.5rem; margin-bottom: 10px;
+        background: linear-gradient(to bottom, #fbf5b7 0%, #bf953f 40%, #b38728 60%, #fbf5b7 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.9)); /* 強いシャドウ */
+    }
+    .tier-lock-text {
+        font-family: 'Times New Roman', serif;
+        font-size: 1.1rem; letter-spacing: 0.15em; color: #fbf5b7;
+        text-shadow: 0 2px 4px rgba(0,0,0,1);
+    }
 
     .ms-list-link {
         display: block; text-align: center; color: var(--brand-color); 
@@ -296,7 +324,7 @@
     #log-stamp { background: #d32f2f; color: white; text-align: center; font-weight: bold; padding: 5px; font-size: 0.8rem; }
     #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 8px; height: 150px; overflow-y: scroll; margin: 20px; }
 
-    /* [Moment of Joy Styles omitted for brevity, assumed same as before] */
+    /* [Moment of Joy Styles] */
     #celebrationOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; display: none; pointer-events: auto; }
     #celebNightSky { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center bottom, #00143c 0%, #000 90%); opacity: 0; transition: opacity 0.5s ease-out; z-index: 10001; }
     #celebrationOverlay.active #celebNightSky { opacity: 1; }
@@ -349,7 +377,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.17-CSS-Restored-Visual-Fix</div>
+  <div id="log-stamp">v2025.12.17-Visual-Polish-Final</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -460,7 +488,7 @@
       </button>
 
       <button id="btnSwitchDog" class="btn-pdf mt-2" style="display:none; border-color:var(--brand-color); color:var(--brand-color);">
-          犬を選択
+          愛犬情報の切替
       </button>
 
       <a href="#" class="btn-reserve">予約する / Reserve</a>
@@ -514,7 +542,7 @@
   <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-modal="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center" style="color:var(--brand-color);">愛犬情報を切替</h5></div>
+        <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center" style="color:var(--brand-color);">愛犬情報の切替</h5></div>
         <div class="modal-body" id="dogSelectBody"></div>
       </div>
     </div>
@@ -941,10 +969,11 @@
     }
 
     function createBadgeHtml(badge, isTeaser = false) {
-        const isLocked = !badge.is_acquired && !isTeaser;
+        const isLocked = !badge.is_acquired && !isTeaser; // Normal unacquired
         const lockedClass = isLocked ? 'locked' : '';
         const teaserClass = isTeaser ? 'teaser' : '';
         
+        // Tier Color Class
         let colorClass = 'bg-trust';
         if (!isLocked && !isTeaser) {
             if (badge.color) {
@@ -955,20 +984,23 @@
             }
         }
         
-        // [修正] 4値のランダム生成関数を呼び出し
         const randomBorderRadius = getRandomWaxBorder();
         const randomRot = (Math.random() * 20 - 10) + 'deg';
 
         let newClass = badge.is_new ? 'ms-badge-new' : '';
         
         let iconHtml = '<i class="fa-solid fa-paw"></i>';
-        if (badge.icon) {
+        if (isLocked) {
+            // [変更] ロック時はリッチな鍵アイコンを表示
+            iconHtml = '<i class="fa-solid fa-lock tier-lock-icon-small"></i>';
+        } else if (badge.icon) {
              const fileId = extractFileId(badge.icon);
              const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
              iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
         }
 
-        const clickAction = isTeaser ? '' : `showMilestoneDetail('${badge.id}')`;
+        // [変更] 未獲得時はクリックアクションを無効化（モーダル阻止）
+        const clickAction = isLocked ? '' : (isTeaser ? '' : `showMilestoneDetail('${badge.id}')`);
 
         return `
             <div class="ms-badge ${lockedClass} ${teaserClass} ${newClass}" data-id="${badge.id}" onclick="${clickAction}">
@@ -980,10 +1012,9 @@
         `;
     }
     
-    // [修正] 4値生成に変更 (40% - 60%)
     function getRandomWaxBorder() {
         const r = () => Math.floor(Math.random() * (60 - 40) + 40) + "%";
-        return `${r()} ${r()} ${r()} ${r()}`; // 4値を返す
+        return `${r()} ${r()} ${r()} ${r()}`; 
     }
 
     function getTierColor(tierKey) {
@@ -1000,7 +1031,7 @@
     }
     
     function setupMilestoneObserver() {
-        const options = { root: null, rootMargin: '0px', threshold: 0.1 };
+        const options = { root: null, rootMargin: '0px', threshold: 0.1 }; // 10% visible
         const observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -1010,10 +1041,15 @@
 
                     if (badgeData) {
                         log('Observer Triggered for: ' + badgeData.title);
+                        // Trigger Animation Sequence
                         startCelebrationSequence(badgeData);
+                        
+                        // Mark as seen in DB
                         markAsSeen(badgeId);
+                        
+                        // Stop observing this element
                         observer.unobserve(el);
-                        el.classList.remove('ms-badge-new');
+                        el.classList.remove('ms-badge-new'); // Prevent re-trigger
                     }
                 }
             });
@@ -1028,9 +1064,11 @@
         const modalBody = document.getElementById('allMilestonesBody');
         modalBody.innerHTML = '';
         
+        // Helper to generate full list
         const renderSection = (tierKey, title) => {
             const tierBadges = cachedMilestones.filter(b => b.tier === tierKey);
             if (tierBadges.length === 0) return '';
+            
             let html = '';
             tierBadges.forEach(b => html += createBadgeHtml(b).replace('ms-badge-new',''));
             return `
@@ -1041,20 +1079,24 @@
             `;
         };
 
+        // Determine locks based on counts
         let counts = { '1_Beginner': 0, '2_Intermediate': 0, '3_Advanced': 0 };
         cachedMilestones.forEach(b => { if(b.is_acquired) counts[b.tier]++; });
 
+        // TRUST: Always Visible
         modalBody.insertAdjacentHTML('beforeend', renderSection('1_Beginner', '🟢 初級: TRUST'));
 
+        // BOND: Visible if TRUST complete (>=8)
         if (counts['1_Beginner'] >= 8) {
             modalBody.insertAdjacentHTML('beforeend', renderSection('2_Intermediate', '🔵 中級: BOND'));
         } else {
             modalBody.insertAdjacentHTML('beforeend', createLockHtml('Step Up: Next Challenge'));
         }
 
+        // HARMONY: Visible if BOND complete (>=8)
         if (counts['2_Intermediate'] >= 8) {
             modalBody.insertAdjacentHTML('beforeend', renderSection('3_Advanced', '🔴 上級: HARMONY'));
-        } else if (counts['1_Beginner'] >= 8) {
+        } else if (counts['1_Beginner'] >= 8) { // Only show lock if previous tier is unlocked
              modalBody.insertAdjacentHTML('beforeend', createLockHtml('Master Harmony: Coming Soon'));
         }
         
@@ -1064,9 +1106,9 @@
     function createLockHtml(text) {
         return `
             <div class="tier-locked">
-                <div class="lock-overlay" style="position:relative; height:150px; border-radius:12px;">
-                    <div class="lock-icon-gold"><i class="fa-solid fa-lock"></i></div>
-                    <div class="lock-text">${text}</div>
+                <div class="tier-lock-overlay">
+                    <div class="tier-lock-icon"><i class="fa-solid fa-lock"></i></div>
+                    <div class="tier-lock-text">${text}</div>
                 </div>
             </div>
         `;
@@ -1091,8 +1133,11 @@
 
         const isLocked = !badge.is_acquired;
         const iconBox = document.getElementById('msModalIconBox');
+        const tierConfig = TIER_CONFIG[badge.tier];
         
+        // Remove old classes
         iconBox.className = '';
+        // Add new classes
         if (isLocked) {
             iconBox.classList.add('bg-secondary');
         } else {
@@ -1105,8 +1150,9 @@
             }
             iconBox.classList.add(colorClass);
         }
-        iconBox.style.borderRadius = getRandomWaxBorder();
+        iconBox.style.borderRadius = getRandomWaxBorder(); // Dynamic shape for modal too
         
+        // Remove glitter class logic from modal for simplicity, or keep if needed
         iconBox.innerHTML = badge.icon 
             ? `<img src="https://drive.google.com/thumbnail?id=${extractFileId(badge.icon)}&sz=w200" style="width:60%;height:60%;object-fit:contain;">`
             : `<i class="fa-solid fa-paw"></i>`;
