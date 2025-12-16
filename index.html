@@ -128,7 +128,7 @@
     .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
 
     /* =========================================
-       Milestone CSS (Refined Visuals v4)
+       Milestone CSS (Refined Visuals)
        ========================================= */
     .milestone-section { margin: 30px 20px 10px; }
     
@@ -174,7 +174,7 @@
     }
     .ms-badge:active { transform: scale(0.95); }
     
-    /* Shake Animation for Locked Items (Feedback) */
+    /* Shake Animation for Locked Items */
     @keyframes shake-refuse {
         0% { transform: translateX(0); }
         25% { transform: translateX(-4px); }
@@ -212,17 +212,14 @@
         border: none;
     }
     
-    /* Inner Double Line with 4px Gap */
-    /* top:8px means distance from outer edge. */
-    /* To create 4px gap, we use box-shadow tricks on the pseudo element */
+    /* Inner Double Line (15px gap + 3px double line) */
     .ms-icon-box::before {
         content: '';
         position: absolute;
-        top: 8px; left: 8px; right: 8px; bottom: 8px; 
-        border-radius: 50%; /* Perfect circle inside */
-        border: 1px solid rgba(0,0,0,0.15); /* Outer thin line */
-        /* Inset shadow creates the gap (4px transparent) then the inner line (1px color) */
-        box-shadow: inset 0 0 0 4px transparent, inset 0 0 0 5px rgba(0,0,0,0.15);
+        top: 15px; left: 15px; right: 15px; bottom: 15px; 
+        border-radius: inherit; /* Follow parent shape */
+        border: 3px double rgba(0,0,0,0.15); /* Double line */
+        box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1); 
         pointer-events: none;
         z-index: 1;
     }
@@ -534,7 +531,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.16-Step5-ForceMock</div>
+  <div id="log-stamp">v2025.12.16-Step2-Wax-Refined</div>
 
   <div id="loadingOverlay">
     <div class="spinner-border spinner-border-white" role="status"></div>
@@ -700,7 +697,6 @@
   <script>
     const LIFF_ID = '2008546673-MJY7j3ox'; 
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
-    const FORCE_MOCK_DATA = true; // ★ FORCE MOCK DATA FOR VISUAL CHECK ★
 
     // Logging Function
     function log(msg) {
@@ -741,13 +737,15 @@
         const starsCont = document.getElementById('celebStars');
         const lightCore = document.getElementById('celebLightCore');
         const lightRing = document.getElementById('celebLightRing');
-        const lightOval = document.getElementById('celebLightOval'); 
+        const lightOval = document.getElementById('celebLightOval'); // New
         
+        // Reset states
         lightCore.className = '';
         lightRing.className = '';
         lightOval.className = ''; 
         badgeCont.className = '';
         
+        // 1. Prepare DOM content first
         let iconHtml = '<i class="fa-solid fa-paw"></i>';
         if (badge && badge.icon) {
              const fileId = extractFileId(badge.icon);
@@ -758,14 +756,18 @@
         }
         
         const title = badge ? badge.title : 'Congratulations!';
+        
+        // Priority: badge.color -> Tier color
         let badgeColorClass = badge && badge.color ? `bg-${badge.color}` : 'bg-trust';
         if(!badge.color && badge) {
              const tierConfig = TIER_CONFIG[badge.tier];
              if(tierConfig) badgeColorClass = tierConfig.colorClass;
         }
 
+        // Generate Random Radius for Celebration Badge too
         const randomBorderRadius = getRandomWaxBorder();
 
+        // Apply EXACT classes to mimic .ms-icon-box
         badgeCont.innerHTML = `
             <div class="celeb-badge-inner ${badgeColorClass}" style="border-radius: ${randomBorderRadius};">
                 ${iconHtml}
@@ -775,6 +777,7 @@
             </div>
         `;
         
+        // Generate Stars
         starsCont.innerHTML = '';
         for(let i=0; i<30; i++) {
             const s = document.createElement('div');
@@ -786,18 +789,35 @@
             starsCont.appendChild(s);
         }
 
+        // 2. Show Overlay (Phase 1: Dark Sky)
         overlay.style.display = 'block';
         
+        // 3. Trigger Animations via Class (Phase 2-4)
         setTimeout(() => {
-            overlay.classList.add('active'); 
+            overlay.classList.add('active'); // Fade in Sky & Stars
+            
+            // 1.0s: Light Animation Trigger (Expanding & Shrinking)
             setTimeout(() => {
                 lightCore.classList.add('anim-light');
                 lightRing.classList.add('anim-ring');
                 lightOval.classList.add('anim-oval'); 
             }, 1000);
-            setTimeout(() => { triggerFairyDust(); }, 1200);
-            setTimeout(() => { badgeCont.classList.add('anim-badge-appear'); }, 1500);
-            setTimeout(() => { launchCelebrationFireworks(); }, 2000);
+            
+            // 1.2s: Fairy Dust Trigger
+            setTimeout(() => {
+                triggerFairyDust();
+            }, 1200);
+
+            // 1.5s: Badge Appearance Trigger (Out of light)
+            setTimeout(() => {
+                badgeCont.classList.add('anim-badge-appear');
+            }, 1500);
+            
+            // 4. Fireworks at exact timing (2.0s after start)
+            setTimeout(() => {
+                launchCelebrationFireworks();
+            }, 2000);
+            
         }, 50);
     }
     
@@ -808,9 +828,13 @@
         document.getElementById('celebLightRing').classList.remove('anim-ring');
         document.getElementById('celebLightOval').classList.remove('anim-oval'); 
         document.getElementById('celebBadgeContainer').classList.remove('anim-badge-appear');
-        setTimeout(() => { overlay.style.display = 'none'; }, 500);
+        
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 500);
     }
 
+    // --- [Module] Fairy Dust Effect (Guaranteed 5s Stay - Waypoints) ---
     function triggerFairyDust() {
         const canvas = document.getElementById('fairyDustCanvas');
         if(!canvas) return;
@@ -820,11 +844,15 @@
         canvas.height = window.innerHeight;
         
         let startTime = null;
-        const duration = 5000; 
+        const duration = 5000; // Guaranteed 5s
         const particles = [];
+        
+        // 1. Initial State
         const w = canvas.width;
         const h = canvas.height;
-        const padding = 50; 
+        const padding = 50; // Safety margin
+        
+        // Start from random edge
         const startSides = ['top', 'bottom', 'left', 'right'];
         const side = startSides[Math.floor(Math.random()*4)];
         let currentPos = { x: w/2, y: h/2 }; 
@@ -834,9 +862,10 @@
         else if(side==='left') currentPos = {x: -50, y: Math.random()*h};
         else currentPos = {x: w+50, y: Math.random()*h};
         
+        // Movement Target Logic
         let targetPos = getRandomSafePoint();
         let velocity = { x: 0, y: 0 };
-        const speed = 8; 
+        const speed = 8; // Movement speed
         
         function getRandomSafePoint() {
             return {
@@ -848,36 +877,50 @@
         const loop = (timestamp) => {
             if (!startTime) startTime = timestamp;
             const elapsed = timestamp - startTime;
+            
             ctx.clearRect(0, 0, w, h);
             
+            // --- Update Source Position (Waypoints) ---
             if (elapsed < duration) {
+                // Determine direction to target
                 const dx = targetPos.x - currentPos.x;
                 const dy = targetPos.y - currentPos.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist < 20) { targetPos = getRandomSafePoint(); } 
-                else {
+                
+                if (dist < 20) {
+                    // Reached target, pick new safe target
+                    targetPos = getRandomSafePoint();
+                } else {
+                    // Move towards target
                     velocity.x = (dx / dist) * speed;
                     velocity.y = (dy / dist) * speed;
                     currentPos.x += velocity.x;
                     currentPos.y += velocity.y;
                 }
             } else {
-                if (elapsed < duration + 100) { 
+                // Time's up: Exit screen
+                if (elapsed < duration + 100) { // Calculate exit point once
+                     // Pick nearest edge or random edge to exit
                      const exits = [{x:w/2, y:-100}, {x:w/2, y:h+100}, {x:-100, y:h/2}, {x:w+100, y:h/2}];
                      targetPos = exits[Math.floor(Math.random()*4)];
                 }
+                
                 const dx = targetPos.x - currentPos.x;
                 const dy = targetPos.y - currentPos.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
+                
                 if (dist > 10) {
-                    velocity.x = (dx / dist) * speed * 1.5; 
+                    velocity.x = (dx / dist) * speed * 1.5; // Exit faster
                     velocity.y = (dy / dist) * speed * 1.5;
                     currentPos.x += velocity.x;
                     currentPos.y += velocity.y;
                 }
             }
             
+            // --- Generate Particles at currentPos ---
+            // Only generate if not finished exiting (approx 6s total)
             if (elapsed < duration + 1000) {
+                // Main Trail
                 for(let i=0; i<6; i++) { 
                     particles.push({
                         x: currentPos.x + (Math.random()-0.5)*10, y: currentPos.y + (Math.random()-0.5)*10,
@@ -886,8 +929,22 @@
                         size: Math.random()*0.8 + 0.2
                     });
                 }
+                
+                // Swirl Trails (Calculated around currentPos)
+                const tVal = elapsed * 0.005; 
+                const swirlR = 60 + Math.sin(tVal * 5) * 30; // 30-90px radius
+                const sx1 = currentPos.x + Math.cos(tVal * 10) * swirlR;
+                const sy1 = currentPos.y + Math.sin(tVal * 10) * swirlR;
+                const sx2 = currentPos.x + Math.cos(tVal * 10 + Math.PI) * swirlR;
+                const sy2 = currentPos.y + Math.sin(tVal * 10 + Math.PI) * swirlR;
+                
+                for(let i=0; i<3; i++) {
+                    particles.push({ x: sx1 + (Math.random()-0.5)*5, y: sy1 + (Math.random()-0.5)*5, vx: (Math.random()-0.5)*0.5, vy: Math.random()*0.3, life: 0.8, color: '#A8D8B9', size: Math.random()*0.5+0.1 });
+                    particles.push({ x: sx2 + (Math.random()-0.5)*5, y: sy2 + (Math.random()-0.5)*5, vx: (Math.random()-0.5)*0.5, vy: Math.random()*0.3, life: 0.8, color: '#87CEEB', size: Math.random()*0.5+0.1 });
+                }
             }
 
+            // --- Update & Draw Particles ---
             for(let i=0; i<particles.length; i++) {
                 const p = particles[i];
                 ctx.globalAlpha = p.life;
@@ -895,21 +952,29 @@
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
                 ctx.fill();
-                p.x += p.vx; p.y += p.vy; p.life -= 0.005; 
+                
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.005; 
             }
             
+            // Clean dead particles
             let aliveParticles = false;
             for(let i=particles.length-1; i>=0; i--) {
                 if(particles[i].life <= 0) particles.splice(i, 1);
                 else aliveParticles = true;
             }
             
-            if (elapsed < duration + 3000 || aliveParticles) { requestAnimationFrame(loop); } 
-            else { canvas.style.display = 'none'; }
+            if (elapsed < duration + 3000 || aliveParticles) { // Keep loop until particles fade
+                requestAnimationFrame(loop);
+            } else {
+                canvas.style.display = 'none';
+            }
         };
         requestAnimationFrame(loop);
     }
 
+    // --- Fireworks System (Canvas) ---
     class Firework {
         constructor(ctx, w, h) {
             this.ctx = ctx; this.w = w; this.h = h;
@@ -940,6 +1005,7 @@
         }
         explode() {
             this.exploded = true;
+            // Added light red (#FFC1C1) and light blue (#BBDEFB) for luxury feeling
             const colors = ['#FFD700', '#F7E7CE', '#C0C0C0', '#FFFFFF', '#FFC1C1', '#BBDEFB']; 
             for(let i=0; i<60; i++) {
                 this.particles.push(new Particle(this.x, this.y, colors[Math.floor(Math.random()*colors.length)]));
@@ -964,6 +1030,7 @@
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+        
         let fireworks = [];
         let launchCount = 0;
         const totalLaunches = 9;
@@ -978,10 +1045,14 @@
             fireworks.forEach(f => f.update());
             fireworks.forEach(f => f.draw());
             fireworks = fireworks.filter(f => !f.dead);
-            if (launchCount >= totalLaunches && fireworks.length === 0) { } else { requestAnimationFrame(loop); }
+            if (launchCount >= totalLaunches && fireworks.length === 0) {
+                // finish
+            } else { requestAnimationFrame(loop); }
         };
         loop();
     }
+
+    // ----------------------
 
     function startTipsSlider() {
       const tipsText = document.getElementById('tipsText');
@@ -997,7 +1068,10 @@
     function finishLoading() {
       clearInterval(tipsTimer);
       const overlay = document.getElementById('loadingOverlay');
-      if (overlay) { overlay.style.visibility = ''; overlay.style.opacity = ''; }
+      if (overlay) {
+          overlay.style.visibility = '';
+          overlay.style.opacity = '';
+      }
       document.body.classList.add('loaded');
       mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
     }
@@ -1038,71 +1112,83 @@
       fetch(url)
         .then(res => res.json())
         .then(data => {
-          if (data.multiple_dogs) { showDogSelectModal(data.multiple_dogs); return; }
-          if (data.error) { showError(data.error); return; }
+          if (data.multiple_dogs) {
+              showDogSelectModal(data.multiple_dogs);
+              return;
+          }
+          if (data.error) {
+              log('API Error: ' + data.error);
+              if (data.error === 'Unregistered') {
+                  showError('未登録のユーザーです', 'IDをトレーナーにお伝えください', userId);
+              } else {
+                  showError('データ取得エラー', data.error);
+              }
+              return;
+          }
 
           try {
               currentLessonData = data;
               renderTextData(data);
+              
               currentDogId = data.dog.id || null;
               updateHistoryLink();
               log(`DogID: ${currentDogId}`);
+
               fetchProfileImage(userId, currentDogId);
-              if (data.latest && data.latest.has_photos) { fetchLessonImages(userId, currentDogId); } 
-              else { document.getElementById('photoArea').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>'; }
+              if (data.latest && data.latest.has_photos) {
+                  fetchLessonImages(userId, currentDogId);
+              } else {
+                  document.getElementById('photoArea').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
+              }
 
-              if (currentDogId) { fetchMilestones(userId, currentDogId); }
+              if (currentDogId) {
+                  fetchMilestones(userId, currentDogId);
+              }
 
-          } catch (e) { showError('描画エラー', e.message); }
+          } catch (e) {
+              console.error(e);
+              log('Render Error: ' + e.message);
+              showError('描画エラー', 'データの表示中に問題が発生しました: ' + e.message);
+          }
         })
-        .catch(err => { showError('通信エラー', err.message); });
+        .catch(err => {
+          log('Network Error: ' + err.message);
+          showError('通信エラー', err.message);
+        });
     }
+
+    // --- Milestone Functions ---
 
     function fetchMilestones(userId, dogId) {
-        if (FORCE_MOCK_DATA) {
-            useMockData();
-            return;
-        }
-        // ... (Real fetch logic hidden for mock mode) ...
-    }
-
-    // Mock Data for Verification
-    function useMockData() {
-        const mockBadges = [];
+        log('Fetching Milestones...');
+        let url = `${GAS_URL}?userId=${userId}&dogId=${dogId}&type=milestone`;
         
-        // Tier 1: All acquired (8 items)
-        for(let i=1; i<=8; i++) {
-            mockBadges.push({
-                id: `MS-10${i}`, tier: '1_Beginner', title: `初級バッジ${i}`, 
-                desc: '説明文', tips: 'Tips', icon: '', color: 'pastel-sage', 
-                is_acquired: true, is_new: false, sort: i
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                log(`MS Response: ${JSON.stringify(data).substring(0,50)}...`);
+                if (data.error) {
+                    log('MS Backend Error: ' + data.error);
+                    document.getElementById('tier-header').innerText = '準備中';
+                    document.getElementById('tier-scroll').innerHTML = '<div class="text-center w-100 small" style="flex:1;">データエラー</div>';
+                    return;
+                }
+                
+                if (data.status === 'success' && data.badges) {
+                    cachedMilestones = data.badges;
+                    cachedMeta = data.meta;
+                    renderMilestones(data);
+                } else {
+                    log('MS Failed or Empty');
+                    document.getElementById('tier-header').innerText = '準備中';
+                    document.getElementById('tier-scroll').innerHTML = '<div class="text-center w-100 small" style="flex:1;">データなし</div>';
+                }
+            })
+            .catch(e => {
+                log('MS Fetch Error: ' + e.message);
+                document.getElementById('tier-header').innerText = 'エラー';
+                document.getElementById('tier-scroll').innerHTML = '<div class="text-center w-100 small" style="flex:1;">読込エラー</div>';
             });
-        }
-        
-        // Tier 2: 6 Acquired, 1 New, 1 Locked
-        for(let i=1; i<=8; i++) {
-            const isAcq = i <= 6; // 6 acquired
-            mockBadges.push({
-                id: `MS-20${i}`, tier: '2_Intermediate', title: `中級バッジ${i}`, 
-                desc: '説明文', tips: 'Tips', icon: '', color: 'metallic-silver', 
-                is_acquired: isAcq, is_new: (i === 6), sort: 10+i
-            });
-        }
-        
-        // Tier 3: All Locked
-        for(let i=1; i<=6; i++) {
-            mockBadges.push({
-                id: `MS-30${i}`, tier: '3_Advanced', title: `上級バッジ${i}`, 
-                desc: '説明文', tips: 'Tips', icon: '', color: 'luxury-gold', 
-                is_acquired: false, is_new: false, sort: 20+i
-            });
-        }
-        
-        cachedMilestones = mockBadges;
-        const mockData = { badges: mockBadges };
-        
-        renderMilestones(mockData);
-        log('Mock Data Loaded: Tier 1(8) -> Tier 2(6) -> Tier 3(Teaser)');
     }
 
     function renderMilestones(data) {
@@ -1119,36 +1205,47 @@
         });
 
         // 2. Logic: Determine Active Tier to display
+        // - TRUST < 8: Show TRUST
+        // - TRUST >=8 && BOND < 8: Show BOND
+        // - BOND >=8: Show HARMONY
         let currentTierKey = '1_Beginner';
+        let prevTierKey = null;
+
         if (counts['1_Beginner'] < TIER_CONFIG['1_Beginner'].count) {
             currentTierKey = '1_Beginner';
         } else if (counts['2_Intermediate'] < TIER_CONFIG['2_Intermediate'].count) {
             currentTierKey = '2_Intermediate';
+            prevTierKey = '1_Beginner';
         } else {
             currentTierKey = '3_Advanced';
+            prevTierKey = '2_Intermediate';
         }
 
         const tierInfo = TIER_CONFIG[currentTierKey];
         const tierColor = getTierColor(currentTierKey);
         header.innerHTML = `<span style="color:#555;">現在挑戦中:</span> <span class="${tierColor.textClass}">${tierInfo.name}</span>`;
 
-        // 3. Logic: Build Display List (ACTIVE TIER ONLY)
-        // Rule: Only items from the Current Tier (Acquired + Unacquired)
-        const activeTierBadges = badges.filter(b => b.tier === currentTierKey);
+        // 3. Logic: Build Display List
+        // Rule: [All Acquired] -> [Current Tier Unacquired] -> [Teaser]
+        const acquiredAll = badges.filter(b => b.is_acquired);
+        const unacquiredCurrent = badges.filter(b => !b.is_acquired && b.tier === currentTierKey);
         
-        // Sort: Acquired first, then Unacquired
-        activeTierBadges.sort((a, b) => {
-            if (a.is_acquired && !b.is_acquired) return -1;
-            if (!a.is_acquired && b.is_acquired) return 1;
-            return a.sort - b.sort; 
-        });
+        // 4. Logic: Teaser (if Count >= 6)
+        let teaserBadges = [];
+        const nextTierKey = getNextTier(currentTierKey);
+        
+        if (counts[currentTierKey] >= 6 && nextTierKey) {
+            // Get top few unacquired from NEXT tier
+            teaserBadges = badges.filter(b => !b.is_acquired && b.tier === nextTierKey).slice(0, 4);
+        }
 
-        let displayList = activeTierBadges;
+        let displayList = [...acquiredAll, ...unacquiredCurrent, ...teaserBadges];
         
         // Render
         let hasNewBadge = false;
         displayList.forEach(badge => {
-            const html = createBadgeHtml(badge, false);
+            const isTeaser = teaserBadges.includes(badge);
+            const html = createBadgeHtml(badge, isTeaser);
             container.insertAdjacentHTML('beforeend', html);
             if (badge.is_new) hasNewBadge = true;
         });
@@ -1166,17 +1263,18 @@
         const lockedClass = isLocked ? 'locked' : '';
         const teaserClass = isTeaser ? 'teaser' : '';
         
+        // Tier Color Class logic: Priority to DB 'color' > Tier Config > Default
         let colorClass = '';
         if (!isLocked && !isTeaser) {
             if (badge.color) {
-                colorClass = `bg-${badge.color}`;
+                colorClass = `bg-${badge.color}`; // Use DB color class
             } else {
                 const tierConfig = TIER_CONFIG[badge.tier];
                 colorClass = tierConfig ? tierConfig.colorClass : 'bg-trust';
             }
         }
         
-        // Random Shape (40% - 60%)
+        // Random Shape
         const randomBorderRadius = getRandomWaxBorder();
         const randomRot = (Math.random() * 20 - 10) + 'deg';
 
@@ -1190,7 +1288,8 @@
              iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
         }
 
-        const clickAction = (isLocked || isTeaser) ? '' : `showMilestoneDetail('${badge.id}')`;
+        // Tap always shows modal unless teaser
+        const clickAction = isTeaser ? '' : `showMilestoneDetail('${badge.id}')`;
 
         return `
             <div class="ms-badge ${lockedClass} ${teaserClass} ${newClass}" data-id="${badge.id}" onclick="${clickAction}">
@@ -1203,7 +1302,8 @@
     }
     
     function getRandomWaxBorder() {
-        const r = () => Math.floor(Math.random() * (60 - 40) + 40) + "%";
+        // Generate 4 values between 45% and 60% to avoid extreme distortion
+        const r = () => Math.floor(Math.random() * (60 - 45) + 45) + "%";
         return `${r()} ${r()} ${r()} ${r()}`;
     }
 
@@ -1221,7 +1321,7 @@
     }
     
     function setupMilestoneObserver() {
-        const options = { root: null, rootMargin: '0px', threshold: 0.1 }; 
+        const options = { root: null, rootMargin: '0px', threshold: 0.1 }; // 10% visible
         const observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -1230,10 +1330,16 @@
                     const badgeData = cachedMilestones.find(b => b.id === badgeId);
 
                     if (badgeData) {
+                        log('Observer Triggered for: ' + badgeData.title);
+                        // Trigger Animation Sequence
                         startCelebrationSequence(badgeData);
+                        
+                        // Mark as seen in DB
                         markAsSeen(badgeId);
+                        
+                        // Stop observing this element
                         observer.unobserve(el);
-                        el.classList.remove('ms-badge-new'); 
+                        el.classList.remove('ms-badge-new'); // Prevent re-trigger
                     }
                 }
             });
@@ -1248,11 +1354,13 @@
         const modalBody = document.getElementById('allMilestonesBody');
         modalBody.innerHTML = '';
         
+        // Helper to generate full list
         const renderSection = (tierKey, title) => {
             const tierBadges = cachedMilestones.filter(b => b.tier === tierKey);
             if (tierBadges.length === 0) return '';
+            
             let html = '';
-            tierBadges.forEach(b => { html += createBadgeHtml(b).replace('ms-badge-new',''); });
+            tierBadges.forEach(b => html += createBadgeHtml(b).replace('ms-badge-new',''));
             return `
                 <div class="full-list-section">
                     <div class="full-list-title">${title}</div>
@@ -1260,19 +1368,8 @@
                 </div>
             `;
         };
-        
-        const renderTeaserSection = (tierKey, title) => {
-             const tierBadges = cachedMilestones.filter(b => b.tier === tierKey).slice(0,4); 
-             let html = '';
-             tierBadges.forEach(b => { html += createBadgeHtml(b, true); });
-             return `
-                <div class="full-list-section">
-                    <div class="full-list-title">${title}</div>
-                    <div class="full-list-grid">${html}</div>
-                </div>
-            `;
-        }
 
+        // Determine locks based on counts
         let counts = { '1_Beginner': 0, '2_Intermediate': 0, '3_Advanced': 0 };
         cachedMilestones.forEach(b => { if(b.is_acquired) counts[b.tier]++; });
 
@@ -1282,8 +1379,6 @@
         // BOND: Visible if TRUST complete (>=8)
         if (counts['1_Beginner'] >= 8) {
             modalBody.insertAdjacentHTML('beforeend', renderSection('2_Intermediate', '🔵 中級: BOND'));
-        } else if (counts['1_Beginner'] >= 6) {
-            modalBody.insertAdjacentHTML('beforeend', renderTeaserSection('2_Intermediate', '🔵 中級: BOND (Coming Soon)'));
         } else {
             modalBody.insertAdjacentHTML('beforeend', createLockHtml('Step Up: Next Challenge'));
         }
@@ -1291,9 +1386,7 @@
         // HARMONY: Visible if BOND complete (>=8)
         if (counts['2_Intermediate'] >= 8) {
             modalBody.insertAdjacentHTML('beforeend', renderSection('3_Advanced', '🔴 上級: HARMONY'));
-        } else if (counts['2_Intermediate'] >= 6) {
-             modalBody.insertAdjacentHTML('beforeend', renderTeaserSection('3_Advanced', '🔴 上級: HARMONY (Coming Soon)'));
-        } else if (counts['1_Beginner'] >= 8) {
+        } else if (counts['1_Beginner'] >= 8) { // Only show lock if previous tier is unlocked
              modalBody.insertAdjacentHTML('beforeend', createLockHtml('Master Harmony: Coming Soon'));
         }
         
@@ -1313,8 +1406,15 @@
 
     function markAsSeen(badgeId) {
         if(!currentUserId || !currentDogId) return;
-        const payload = { action: 'markMilestoneSeen', dogId: currentDogId, milestoneId: badgeId };
-        fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) }).catch(e=>{});
+        const payload = {
+            action: 'markMilestoneSeen',
+            dogId: currentDogId,
+            milestoneId: badgeId
+        };
+        fetch(GAS_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        }).then(r=>r.json()).then(d=>log('Marked seen: '+badgeId)).catch(e=>log('MarkErr:'+e));
     }
 
     function showMilestoneDetail(badgeId) {
@@ -1324,23 +1424,35 @@
         const isLocked = !badge.is_acquired;
         const iconBox = document.getElementById('msModalIconBox');
         
+        // Remove old classes
         iconBox.className = '';
+        // Add new classes
         if (isLocked) {
             iconBox.classList.add('bg-secondary');
         } else {
             let colorClass = 'bg-trust';
-            if (badge.color) { colorClass = `bg-${badge.color}`; } 
-            else { const tierConfig = TIER_CONFIG[badge.tier]; if(tierConfig) colorClass = tierConfig.colorClass; }
+            if (badge.color) {
+                colorClass = `bg-${badge.color}`;
+            } else {
+                const tierConfig = TIER_CONFIG[badge.tier];
+                if(tierConfig) colorClass = tierConfig.colorClass;
+            }
             iconBox.classList.add(colorClass);
         }
-        iconBox.style.borderRadius = getRandomWaxBorder();
+        iconBox.style.borderRadius = getRandomWaxBorder(); // Dynamic shape for modal too
         
+        // Remove glitter class logic from modal for simplicity, or keep if needed
         iconBox.innerHTML = badge.icon 
             ? `<img src="https://drive.google.com/thumbnail?id=${extractFileId(badge.icon)}&sz=w200" style="width:60%;height:60%;object-fit:contain;">`
             : `<i class="fa-solid fa-paw"></i>`;
         
         const img = iconBox.querySelector('img');
-        if(img) { img.onerror = function() { this.style.display='none'; iconBox.innerHTML = '<i class="fa-solid fa-paw"></i>'; }; }
+        if(img) {
+            img.onerror = function() {
+                this.style.display='none';
+                iconBox.innerHTML = '<i class="fa-solid fa-paw"></i>';
+            };
+        }
 
         document.getElementById('msModalTitle').innerText = badge.title + (isLocked ? ' (未獲得)' : '');
         document.getElementById('msModalDesc').innerText = badge.desc;
@@ -1365,8 +1477,10 @@
             btn.onclick = () => selectDog(dog.id);
             body.appendChild(btn);
         });
+        
         document.getElementById('loadingOverlay').style.opacity = 0;
         setTimeout(() => { document.getElementById('loadingOverlay').style.visibility = 'hidden'; }, 500);
+        
         new bootstrap.Modal(document.getElementById('dogSelectModal')).show();
     }
 
@@ -1374,40 +1488,245 @@
         const modalEl = document.getElementById('dogSelectModal');
         const modal = bootstrap.Modal.getInstance(modalEl);
         modal.hide();
+        
         document.getElementById('loadingOverlay').style.visibility = 'visible';
         document.getElementById('loadingOverlay').style.opacity = 1;
+        
         currentDogId = dogId;
         fetchTextData(currentUserId, dogId);
     }
 
     function updateHistoryLink() {
         const link = document.getElementById('historyLinkBtn');
-        if (currentDogId) { link.href = `history.html?dogId=${currentDogId}`; } else { link.href = `history.html`; }
+        if (currentDogId) {
+            link.href = `history.html?dogId=${currentDogId}`;
+        } else {
+            link.href = `history.html`;
+        }
     }
 
     function openMedicalPage() {
         let url = 'medical.html';
-        if (currentDogId) { url += `?dogId=${currentDogId}`; }
+        if (currentDogId) {
+            url += `?dogId=${currentDogId}`;
+        }
         window.location.href = url;
     }
 
     function handleDownloadPdf() {
-        if (!currentLessonData || !currentLessonData.latest) { alert("データが読み込まれていません。"); return; }
+        if (!currentLessonData || !currentLessonData.latest) {
+            alert("データが読み込まれていません。");
+            return;
+        }
+
         const btn = document.getElementById('pdfBtn');
         const originalText = btn.innerText;
         btn.innerText = "作成中...";
         btn.disabled = true;
-        // (PDF Logic Omitted for brevity, assumed same as previous)
-        // ... (Existing implementation kept)
+
+        const formData = {
+            training_unique_key: currentLessonData.latest.id || '', 
+            dog_name: currentLessonData.dog.name,
+            training_date: currentLessonData.latest.date,
+            customer_unique_key: currentLessonData.customer.id,
+            dog_unique_key: currentLessonData.dog.id,
+            
+            goal: currentLessonData.latest.goal,
+            done: currentLessonData.latest.done,
+            unable: currentLessonData.latest.unable,
+            next_homework: currentLessonData.latest.homework, 
+            next_goal: currentLessonData.latest.next_goal,
+            comment_trainer: currentLessonData.latest.comment,
+            training_remarks: '', 
+
+            score_1: currentLessonData.latest.scores[0], score_detail_1: currentLessonData.latest.details[0],
+            score_2: currentLessonData.latest.scores[1], score_detail_2: currentLessonData.latest.details[1],
+            score_3: currentLessonData.latest.scores[2], score_detail_3: currentLessonData.latest.details[2],
+            score_4: currentLessonData.latest.scores[3], score_detail_4: currentLessonData.latest.details[3],
+            score_5: currentLessonData.latest.scores[4], score_detail_5: currentLessonData.latest.details[4],
+            score_6: currentLessonData.latest.scores[5], score_detail_6: currentLessonData.latest.details[5],
+            score_7: currentLessonData.latest.scores[6], score_detail_7: currentLessonData.latest.details[6],
+            score_8: currentLessonData.latest.scores[7], score_detail_8: currentLessonData.latest.details[7],
+            score_9: currentLessonData.latest.scores[8], score_detail_9: currentLessonData.latest.details[8],
+            score_10: currentLessonData.latest.scores[9], score_detail_10: currentLessonData.latest.details[9],
+            
+            training_photo_1: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[0] : '',
+            training_photo_2: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[1] : '',
+            training_photo_3: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[2] : '',
+            training_photo_4: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[3] : '',
+            training_photo_5: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[4] : ''
+        };
+
+        if (typeof google === 'undefined' || !google.script) {
+            alert('この機能はGASウェブアプリ上でのみ動作します。');
+            btn.innerText = originalText;
+            btn.disabled = false;
+            return;
+        }
+
+        google.script.run
+            .withSuccessHandler(function(response) {
+                btn.innerText = originalText;
+                btn.disabled = false;
+
+                if (response.status === 'success') {
+                    const isIos = /iP(ad|hone|od)/.test(navigator.userAgent);
+                    if (isIos) {
+                        window.open(response.url, '_blank');
+                    } else {
+                        const a = document.createElement('a');
+                        a.href = response.url;
+                        a.download = `LessonReport_${formData.training_date}.pdf`; 
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    }
+                    alert(response.message);
+                } else {
+                    alert('エラー: ' + response.message);
+                }
+            })
+            .withFailureHandler(function(e) {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                alert('サーバーエラー: ' + e);
+            })
+            .createPdfFromSlide(formData);
     }
 
-    function fetchProfileImage(userId, dogId) { /* ... */ }
-    function fetchLessonImages(userId, dogId) { /* ... */ }
-    function renderTextData(data) { /* ... */ }
-    function checkBirthday(dateStr, elementId) { /* ... */ }
-    function renderChart(id, data, labels, bgColor, borderColor) { /* ... */ }
-    function showError(title, msg, userId) { /* ... */ }
-    function copyLineId() { /* ... */ }
+    function fetchProfileImage(userId, dogId) {
+      let url = `${GAS_URL}?userId=${userId}&type=img_profile`;
+      if(dogId) url += `&dogId=${dogId}`;
+      
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+           const container = document.getElementById('dogImgContainer');
+           if(data.image) {
+               container.innerHTML = `<img src="${data.image}" class="dog-img" alt="Dog Photo">`;
+           } else {
+               container.innerHTML = 'No Image';
+           }
+        })
+        .catch(e => console.log('Profile Image Error', e));
+    }
+
+    function fetchLessonImages(userId, dogId) {
+      let url = `${GAS_URL}?userId=${userId}&type=img_latest`;
+      if(dogId) url += `&dogId=${dogId}`;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+           const pArea = document.getElementById('photoArea');
+           pArea.innerHTML = ''; 
+           if (data.images && data.images.length > 0) {
+             data.images.forEach(b64 => {
+               const img = document.createElement('img');
+               img.src = b64; img.className = 'photo-item zoomable'; pArea.appendChild(img);
+             });
+             mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
+           } else {
+             pArea.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
+           }
+        })
+        .catch(e => console.log('Lesson Image Error', e));
+    }
+
+    function renderTextData(data) {
+      const c = data.customer || {};
+      const d = data.dog || {};
+      document.getElementById('custName').innerText = c.name + ' 様';
+      document.getElementById('dogName').innerText = d.name_disp || d.name || 'Your Dog';
+      document.getElementById('ticketCount').innerText = data.ticket_count;
+
+      checkBirthday(c.birth_date, 'custBirthdayMsg'); 
+      checkBirthday(d.birth_date, 'dogBirthdayMsg'); 
+
+      const l = data.latest;
+      if (l) {
+        document.getElementById('lessonDate').innerText = 'Last: ' + l.date;
+        document.getElementById('goalText').innerText = l.goal;
+        document.getElementById('doneText').innerText = l.done;
+        document.getElementById('unableText').innerText = l.unable;
+        document.getElementById('homeworkText').innerText = l.homework;
+        document.getElementById('trainerComment').innerText = l.comment;
+        document.getElementById('nextGoalText').innerText = l.next_goal || 'トレーナーと相談しましょう';
+
+        if (l.recommend_date) {
+            document.getElementById('reminderDate').innerText = l.recommend_date;
+            document.getElementById('reminderArea').style.display = 'block';
+        } else {
+            document.getElementById('reminderArea').style.display = 'none';
+        }
+
+        let d1 = '', d2 = '';
+        for(let i=0; i<5; i++) { d1 += `[${i+1}] ${l.details[i] || 'なし'}\n`; }
+        for(let i=5; i<10; i++) { d2 += `[${i+1}] ${l.details[i] || 'なし'}\n`; }
+        document.getElementById('detail1').innerText = d1 || '特になし';
+        document.getElementById('detail2').innerText = d2 || '特になし';
+
+        if (chartInstance1) chartInstance1.destroy();
+        if (chartInstance2) chartInstance2.destroy();
+
+        if (l.scores) {
+            chartInstance1 = renderChart('chart1', l.scores.slice(0, 5), ['指示理解','集中力','報酬','ボディ','コンタクト'], 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 1)');
+            chartInstance2 = renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト'], 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
+        }
+      } else {
+          document.getElementById('lessonDate').innerText = 'レッスン履歴なし';
+      }
+      
+      finishLoading();
+    }
+
+    function checkBirthday(dateStr, elementId) {
+        if (!dateStr) return;
+        const today = new Date(); const bDate = new Date(dateStr); bDate.setFullYear(today.getFullYear());
+        const diffTime = bDate.getTime() - today.getTime(); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (Math.abs(diffDays) <= 14 || Math.abs(diffDays - 365) <= 14 || Math.abs(diffDays + 365) <= 14) {
+            document.getElementById(elementId).style.display = 'block';
+        }
+    }
+
+    function renderChart(id, data, labels, bgColor, borderColor) {
+      const ctx = document.getElementById(id);
+      return new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: bgColor, borderColor: borderColor, pointBackgroundColor: borderColor, borderWidth: 2
+          }]
+        },
+        options: {
+          scales: { r: { min: 0, max: 5, ticks: { display: false }, pointLabels: { font: { size: 11 } } } },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function showError(title, msg, userId) {
+        finishLoading();
+        document.getElementById('mainContent').style.display = 'none';
+        
+        const errDiv = document.getElementById('errorView');
+        errDiv.style.display = 'block';
+        document.getElementById('errorTitle').innerText = title;
+        document.getElementById('errorMessage').innerText = msg;
+        
+        if (userId) {
+            const idBox = document.getElementById('dispLineId');
+            idBox.innerText = userId;
+            idBox.style.display = 'block';
+        }
+    }
+    
+    function copyLineId() {
+        const idText = document.getElementById('dispLineId').innerText;
+        navigator.clipboard.writeText(idText).then(() => alert('IDをコピーしました'));
+    }
   </script>
 </body>
 </html>
