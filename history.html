@@ -17,32 +17,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Lato:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600&display=swap" rel="stylesheet">
 
     <style>
-        /* =========================================
-           1. Brand Foundation
-           ========================================= */
         :root { 
-            /* Identity */
             --c-main-turquoise: #57C3C2; 
             --c-sub-deep-ocean: #2F5D62; 
-            --c-accent-copper: #C87A56; /* CV Button ONLY */
-            
-            /* Foundation */
+            --c-accent-copper: #C87A56;
             --c-base-washi: #FAFAFA;
             --c-bg-mist: #F4F7F7;
             --c-sub-beige: #C7B299;
-            
-            /* Typography */
             --c-text-sumi: #333333;
             --c-text-gray: #666666;
-
-            /* Fonts */
             --font-serif-en: 'Cormorant Garamond', serif;
             --font-serif-jp: 'Noto Serif JP', serif;
             --font-sans-jp: 'Noto Sans JP', sans-serif;
             --font-lato: 'Lato', sans-serif;
             --font-cinzel: 'Cinzel', serif;
-
-            /* Motion */
             --ease-luxury: cubic-bezier(0.25, 0.1, 0.25, 1.0);
         }
         
@@ -50,12 +38,12 @@
             font-family: var(--font-sans-jp); 
             background-color: var(--c-base-washi); 
             color: var(--c-text-sumi); 
-            padding-bottom: 160px; 
+            padding-bottom: 50px; /* Footer static adjustment */
             overflow-x: hidden; 
             line-height: 1.8;
         }
 
-        /* Loading Overlay (Spinner Maintained) */
+        /* Loading Overlay */
         #loadingOverlay { 
             position: fixed; inset: 0; background-color: var(--c-base-washi); z-index: 9999;
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
@@ -70,10 +58,6 @@
         #tipsText { font-family: var(--font-serif-jp); font-weight: 500; font-size: 0.9rem; letter-spacing: 0.05em; }
         body.loaded #loadingOverlay { opacity: 0; visibility: hidden; pointer-events: none; }
 
-        /* =========================================
-           2. UI Components
-           ========================================= */
-        
         /* Header */
         .header-area { background: #fff; padding: 15px 20px 25px; border-bottom: 1px solid rgba(0,0,0,0.03); position: relative; text-align: center; }
         .back-nav-btn { 
@@ -84,7 +68,6 @@
         }
         .back-nav-btn:active { opacity: 0.5; }
 
-        /* Profile Image */
         .profile-img-wrapper {
             width: 130px; height: 130px; margin: 10px auto 15px;
             border-radius: 50%; border: 3px solid var(--c-main-turquoise);
@@ -99,29 +82,22 @@
             font-family: var(--font-serif-en); font-weight: 700; letter-spacing: 0.05em;
             color: var(--c-sub-deep-ocean); margin: 0; font-size: 1.6rem; 
         }
-        .sub-title { font-size: 0.8rem; color: var(--c-text-gray); margin-top: -5px; letter-spacing: 0.05em; }
 
         .content-container { padding: 0 20px; }
 
-        /* --- Mastery Seal (Silver Guilloche) --- */
+        /* Mastery Seal */
         .mastery-seal-container {
             display: inline-flex; align-items: center; justify-content: center;
             vertical-align: middle; margin-right: 12px;
         }
         .mastery-seal {
-            width: 42px; height: 42px; border-radius: 50%; position: relative; overflow: hidden;
+            width: 40px; height: 40px; border-radius: 50%; position: relative; overflow: hidden;
             display: flex; align-items: center; justify-content: center;
-            /* Silver Base with Guilloche */
-            background: 
-                repeating-radial-gradient(circle at 50% 50%, #e0e0e0 0px, #e0e0e0 0.5px, #f5f5f5 1px, #f5f5f5 1.5px),
-                linear-gradient(135deg, #d0d0d0 0%, #ffffff 50%, #a0a0a0 100%);
-            box-shadow: 
-                inset 0 1px 2px rgba(255,255,255,0.8), 
-                inset 0 -1px 2px rgba(0,0,0,0.2), 
-                0 4px 8px rgba(0,0,0,0.15);
+            background: repeating-radial-gradient(circle at 50% 50%, #e0e0e0 0px, #e0e0e0 0.5px, #f5f5f5 1px, #f5f5f5 1.5px),
+                        linear-gradient(135deg, #d0d0d0 0%, #ffffff 50%, #a0a0a0 100%);
+            box-shadow: inset 0 1px 2px rgba(255,255,255,0.8), inset 0 -1px 2px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.15);
             border: 1px solid #ccc;
         }
-        /* Double Reflection (Scroll Linked) */
         .mastery-seal::before, .mastery-seal::after { content: ''; position: absolute; inset: -150%; pointer-events: none; z-index: 2; will-change: transform; }
         .mastery-seal::before { 
             background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.8) 50%, transparent 60%); 
@@ -131,12 +107,9 @@
             background: linear-gradient(135deg, transparent 45%, rgba(255, 250, 240, 0.5) 50%, transparent 55%); 
             transform: translate(var(--posB, -100%), var(--posB, -100%)); 
         }
-        /* Number */
         .seal-number {
-            font-family: var(--font-serif-en); font-style: italic; font-weight: 700; font-size: 1.4rem;
-            position: relative; z-index: 3; color: #888;
-            text-shadow: 0px 1px 0px rgba(255,255,255,1);
-            /* Engraved Effect */
+            font-family: var(--font-serif-en); font-style: italic; font-weight: 700; font-size: 1.3rem;
+            position: relative; z-index: 3; color: #888; text-shadow: 0px 1px 0px rgba(255,255,255,1);
             -webkit-text-stroke: 0.5px #999;
         }
 
@@ -162,31 +135,27 @@
         }
         .gallery-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 20px; -webkit-overflow-scrolling: touch; }
         .gallery-item { 
-            flex: 0 0 29%; /* 4th item peek */
+            flex: 0 0 29%; 
             position: relative; height: 110px; border-radius: 12px; 
             border: 1px solid rgba(0,0,0,0.05); overflow: hidden; background: var(--c-bg-mist); 
             box-shadow: 0 4px 10px rgba(0,0,0,0.03);
         }
         .gallery-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.8s var(--ease-luxury); }
         .gallery-img.loaded { opacity: 1; }
-        
         .gallery-overlay { 
             position: absolute; inset: 0; background: rgba(47, 93, 98, 0.85); color: #fff; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
             font-size: 0.75rem; font-weight: 700; cursor: pointer; text-align: center; 
             font-family: var(--font-lato); letter-spacing: 0.05em;
-            transition: background 0.3s;
         }
-        .gallery-overlay:active { background: rgba(47, 93, 98, 0.95); }
 
         /* Logs */
         .log-item { 
             border: none; margin-bottom: 12px; border-radius: 12px; background: #fff; 
             box-shadow: 0 2px 8px rgba(0,0,0,0.03); padding: 18px 20px; cursor: pointer; 
-            transition: transform 0.2s var(--ease-luxury), box-shadow 0.2s; border: 1px solid rgba(0,0,0,0.02);
+            transition: transform 0.2s var(--ease-luxury); border: 1px solid rgba(0,0,0,0.02);
         }
         .log-item:active { transform: scale(0.98); background: var(--c-bg-mist); }
-        
         .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .log-date { font-family: var(--font-lato); font-weight: 700; color: var(--c-main-turquoise); font-size: 1rem; letter-spacing: 0.05em; }
         .badge-done { 
@@ -197,17 +166,16 @@
         .log-avg { font-family: var(--font-serif-en); font-weight: 700; color: var(--c-sub-deep-ocean); font-size: 1.1rem; }
         .log-comment { font-size: 0.85rem; color: var(--c-text-gray); line-height: 1.5; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
-        /* Footer */
+        /* Footer (Static) */
         .footer-action-area {
-            position: fixed; bottom: 0; left: 0; width: 100%; background: #fff;
-            border-top: 1px solid rgba(0,0,0,0.05); padding: 15px 20px 25px; z-index: 1000;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.03);
-            display: flex; flex-direction: column; gap: 12px;
+            background: #fff; margin-top: 30px;
+            border-top: 1px solid rgba(0,0,0,0.05); padding: 30px 20px 40px;
+            display: flex; flex-direction: column; gap: 15px;
         }
         
         .dog-select-btn { 
-            width: 100%; padding: 16px; 
-            font-weight: 700; font-size: 1.0rem; border-radius: 12px; background: #fff; 
+            width: 100%; margin-bottom: 12px; padding: 16px; 
+            font-weight: 700; font-size: 1.05rem; border-radius: 12px; background: #fff; 
             border: 1px solid var(--c-main-turquoise); color: var(--c-main-turquoise); 
             transition: all 0.3s var(--ease-luxury); box-shadow: 0 4px 10px rgba(87, 195, 194, 0.1);
             font-family: var(--font-sans-jp); letter-spacing: 0.05em;
@@ -230,27 +198,21 @@
         .avg-item { flex: 1; background: var(--c-bg-mist); border-radius: 12px; padding: 15px; text-align: center; border: 1px solid rgba(0,0,0,0.03); }
         .avg-label { font-size: 0.7rem; color: var(--c-text-gray); font-weight: 700; display: block; margin-bottom: 5px; letter-spacing: 0.05em; }
         .avg-val { font-size: 1.8rem; color: var(--c-main-turquoise); font-weight: 700; font-family: var(--font-serif-en); line-height: 1; }
-        
-        .modal-score-item { 
-            margin-bottom: 8px; font-size: 0.95rem; border-bottom: 1px dashed rgba(0,0,0,0.05); 
-            padding-bottom: 6px; display: flex; justify-content: space-between; 
-        }
+        .modal-score-item { margin-bottom: 8px; font-size: 0.95rem; border-bottom: 1px dashed rgba(0,0,0,0.05); padding-bottom: 6px; display: flex; justify-content: space-between; }
         .modal-score-val { font-family: var(--font-serif-en); font-weight: 700; color: var(--c-sub-deep-ocean); font-size: 1.1rem; }
-
         .detail-card-in-modal { background: var(--c-bg-mist); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
         .detail-label { font-size: 0.75rem; font-weight: 700; color: var(--c-sub-deep-ocean); margin-bottom: 8px; display: block; border-left: 3px solid var(--c-main-turquoise); padding-left: 8px; }
 
         #errorContainer { display: none; padding: 40px 20px; text-align: center; }
         .error-box { background: #fff; padding: 30px 20px; border-radius: 12px; border: 1px solid #f8d7da; color: #721c24; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
 
-        /* Dev Tools */
         #log-stamp { background: #333; color: #666; text-align: center; font-size: 0.7rem; padding: 2px; }
         #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 0; height: 100px; overflow-y: scroll; margin-top: 20px; display: none; }
     </style>
 </head>
 <body>
 
-    <div id="log-stamp">v2025.12.17-FIX-HISTORY</div>
+    <div id="log-stamp">v2025.12.17-FIX-HISTORY-FINAL</div>
 
     <div id="loadingOverlay">
         <div class="spinner-border spinner-border-brand" role="status"></div>
@@ -268,15 +230,11 @@
     <div id="mainWrapper">
         <div class="header-area">
             <a href="#" id="backLink" class="back-nav-btn">&lt; Back</a>
-            
             <div class="profile-img-wrapper" id="dogImgContainer"></div>
-            
             <h1 id="pageTitle" class="page-title">Lesson History</h1>
-            <p class="sub-title">レッスンの記録と成長の軌跡</p>
         </div>
 
         <div class="content-container">
-            
             <p class="text-muted small text-center mt-4 mb-2" style="font-family:var(--font-serif-jp);">スコア推移 (最新10回)</p>
             <div id="chartArea"></div>
 
@@ -288,13 +246,13 @@
             <div class="section-label">Logs</div>
             <div id="lessonList"></div>
         </div>
-    </div>
-
-    <div class="footer-action-area">
-        <button id="btnSwitchDog" class="dog-select-btn" style="display:none;" onclick="openDogSelectModal()">
-            愛犬情報の切替
-        </button>
-        <a href="#" id="footerBackLink" class="btn-back-home">Return to Home</a>
+        
+        <div class="footer-action-area">
+            <button id="btnSwitchDog" class="dog-select-btn" style="display:none;" onclick="openDogSelectModal()">
+                愛犬情報の切替
+            </button>
+            <a href="#" id="footerBackLink" class="btn-back-home">Return to Home</a>
+        </div>
     </div>
 
     <div class="modal fade" id="historyDetailModal" tabindex="-1">
@@ -308,29 +266,23 @@
                     <div class="text-center mb-4">
                         <span id="modalDate" style="font-family:var(--font-lato); font-weight:700; font-size:1.1rem; color:var(--c-main-turquoise); border-bottom:1px solid var(--c-main-turquoise); padding-bottom:2px;"></span>
                     </div>
-                    
                     <div id="modalAvgArea"></div>
-                    
                     <div class="detail-card-in-modal">
                         <span class="detail-label">SCORE DETAILS</span>
                         <div id="modalScores"></div>
                     </div>
-
                     <div class="detail-card-in-modal">
                         <span class="detail-label">ACHIEVEMENTS (Done)</span>
                         <p id="modalDone" class="small mb-0" style="white-space: pre-wrap; line-height:1.6;"></p>
                     </div>
-
                     <div class="detail-card-in-modal" style="background:#fff; border:1px solid var(--c-sub-beige);">
                         <span class="detail-label">FEEDBACK</span>
                         <p id="modalComment" class="small mb-0" style="white-space: pre-wrap; line-height:1.6;"></p>
                     </div>
-
                     <div class="detail-card-in-modal" style="border:1px solid var(--c-main-turquoise); background:#fff;">
                         <span class="detail-label" style="color:var(--c-main-turquoise);">HOMEWORK</span>
                         <p id="modalHomework" class="small mb-0" style="white-space: pre-wrap; line-height:1.6;"></p>
                     </div>
-                    
                     <div class="text-center mt-3">
                          <a href="#" id="driveLink" target="_blank" style="display:none; color:var(--c-main-turquoise); font-weight:bold; text-decoration:none; font-size:0.9rem; font-family:var(--font-lato);">View original data on Drive &gt;</a>
                     </div>
@@ -379,7 +331,6 @@
             if(el) el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}<br>` + el.innerHTML;
         }
 
-        // --- Helper: Extract ID ---
         function extractFileId(url) {
             if (!url) return null;
             const match = url.match(/id=([-\w]{25,})/) || url.match(/\/d\/([-\w]{25,})/) || url.match(/[-\w]{25,}/);
@@ -404,16 +355,12 @@
             document.body.classList.add('loaded');
         }
 
-        // --- Scroll Effect for Mastery Seal ---
         window.addEventListener('scroll', () => {
-            // スクロールに応じた光沢の移動 (Double Reflection)
             const docHeight = document.documentElement.scrollHeight - window.innerHeight;
             if (docHeight <= 0) return;
             const scrollPercent = window.scrollY / docHeight;
-            
-            const posA = (scrollPercent * 300) - 150; // -150% -> 150%
-            const posB = (scrollPercent * 250) - 130; // ズレを作る
-            
+            const posA = (scrollPercent * 300) - 150; 
+            const posB = (scrollPercent * 250) - 130; 
             document.documentElement.style.setProperty('--posA', `${posA}%`);
             document.documentElement.style.setProperty('--posB', `${posB}%`);
         });
@@ -463,7 +410,6 @@
                     customerData = data.customer || {};
                     if(data.dog) currentDogId = data.dog.id;
                     
-                    // 犬切替ボタン
                     if (data.all_dogs && data.all_dogs.length > 1) {
                         globalDogList = data.all_dogs;
                         document.getElementById('btnSwitchDog').style.display = 'block';
@@ -471,23 +417,15 @@
 
                     updateLinks(); 
                     
-                    // Render Profile Image
-                    const imgCont = document.getElementById('dogImgContainer');
-                    const photoVal = data.dog ? data.dog.photo_val : null;
-                    const fileId = extractFileId(photoVal);
-                    if (fileId) {
-                        imgCont.innerHTML = `<img src="https://drive.google.com/thumbnail?id=${fileId}&sz=w400" class="dog-profile-img" onload="this.classList.add('loaded')">`;
-                    } else {
-                        imgCont.innerHTML = '<span class="text-muted small">No Image</span>';
-                    }
-                    // Title update with dog name
                     if (data.dog && data.dog.name_disp) {
                         document.getElementById('pageTitle').innerText = `${data.dog.name_disp}'s History`;
                     }
 
+                    // Profile Image (Fetch as Base64 to handle auth)
+                    fetchProfileImage(userId, currentDogId);
+
                     renderHistory(data);
                     
-                    // 画像取得 (Gallery)
                     if (allHistoryData.length > 0 || (data.latest && data.latest.has_photos)) {
                         fetchGalleryImages(userId, currentDogId);
                     } else { 
@@ -500,6 +438,63 @@
                     showError('通信エラー: ' + err.message); 
                     finishLoading();
                 });
+        }
+
+        function fetchProfileImage(userId, dogId) {
+            let url = `${GAS_URL}?userId=${userId}&type=img_profile`;
+            if(dogId) url += `&dogId=${dogId}`;
+            
+            fetch(url).then(res => res.json()).then(data => {
+                const imgCont = document.getElementById('dogImgContainer');
+                if(data.image) {
+                    imgCont.innerHTML = `<img src="${data.image}" class="dog-profile-img" onload="this.classList.add('loaded')">`;
+                } else {
+                    imgCont.innerHTML = '<span class="text-muted small">No Image</span>';
+                }
+            }).catch(e => log('Profile Image Error: '+e));
+        }
+
+        function fetchGalleryImages(userId, dogId) {
+            let url = `${GAS_URL}?userId=${userId}&type=img_latest`;
+            if(dogId) url += `&dogId=${dogId}`;
+
+            fetch(url).then(res => res.json()).then(d => {
+                const gallery = document.getElementById('mainGalleryContainer'); 
+                gallery.innerHTML = ''; 
+                
+                if (d.images && Array.isArray(d.images) && d.images.length > 0) {
+                    const displayImages = d.images.slice(0, 4);
+                    
+                    displayImages.forEach((b64, idx) => {
+                        let html = '';
+                        if (idx === 3) {
+                            const driveUrl = customerData.shared_folder_url || '#';
+                            html = `
+                                <div class="gallery-item" onclick="window.open('${driveUrl}', '_blank')">
+                                    <img src="${b64}" class="gallery-img" onload="this.classList.add('loaded')">
+                                    <div class="gallery-overlay">
+                                        <i class="fa-solid fa-folder-open mb-1" style="font-size:1.2rem;"></i>
+                                        <span>More<br>on Drive</span>
+                                    </div>
+                                </div>`;
+                        } else {
+                            html = `
+                                <div class="gallery-item">
+                                    <img src="${b64}" class="gallery-img zoomable" onload="this.classList.add('loaded')">
+                                </div>`;
+                        }
+                        gallery.insertAdjacentHTML('beforeend', html);
+                    });
+                    
+                    setTimeout(() => {
+                        mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.85)' });
+                    }, 500);
+
+                } else { gallery.innerHTML = '<div class="text-muted small ms-3">写真はまだありません</div>'; }
+            }).catch(e => {
+                console.error("Gallery Error:", e);
+                document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-muted small ms-3">読み込みエラー</div>'; 
+            });
         }
 
         function updateLinks() {
@@ -544,55 +539,6 @@
             log('Error: ' + msg);
         }
         
-        function fetchGalleryImages(userId, dogId) {
-            let url = `${GAS_URL}?userId=${userId}&type=img_latest`;
-            if(dogId) url += `&dogId=${dogId}`;
-
-            fetch(url).then(res => res.json()).then(d => {
-                const gallery = document.getElementById('mainGalleryContainer'); 
-                gallery.innerHTML = ''; 
-                
-                if (d.images && Array.isArray(d.images) && d.images.length > 0) {
-                    const displayImages = d.images.slice(0, 4);
-                    
-                    displayImages.forEach((rawUrl, idx) => {
-                        const fileId = extractFileId(rawUrl);
-                        if(!fileId) return;
-                        const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
-                        
-                        let html = '';
-                        if (idx === 3) {
-                            // 4th item: Link to Drive
-                            const driveUrl = customerData.shared_folder_url || '#';
-                            html = `
-                                <div class="gallery-item" onclick="window.open('${driveUrl}', '_blank')">
-                                    <img src="${thumbUrl}" class="gallery-img" onload="this.classList.add('loaded')">
-                                    <div class="gallery-overlay">
-                                        <i class="fa-solid fa-folder-open mb-1" style="font-size:1.2rem;"></i>
-                                        <span>More<br>on Drive</span>
-                                    </div>
-                                </div>`;
-                        } else {
-                            // 1-3: Zoomable
-                            html = `
-                                <div class="gallery-item">
-                                    <img src="${thumbUrl}" class="gallery-img zoomable" onload="this.classList.add('loaded')">
-                                </div>`;
-                        }
-                        gallery.insertAdjacentHTML('beforeend', html);
-                    });
-                    
-                    setTimeout(() => {
-                        mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.85)' });
-                    }, 500);
-
-                } else { gallery.innerHTML = '<div class="text-muted small ms-3">写真はまだありません</div>'; }
-            }).catch(e => {
-                console.error("Gallery Error:", e);
-                document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-muted small ms-3">読み込みエラー</div>'; 
-            });
-        }
-        
         function renderHistory(data) {
             const chartArea = document.getElementById('chartArea'); 
             const lessonList = document.getElementById('lessonList');
@@ -604,9 +550,7 @@
                 return; 
             }
 
-            // --- Log List Render (Newest First) ---
             const listHistory = [...allHistoryData].sort((a,b)=>new Date(b.date)-new Date(a.date));
-            
             listHistory.forEach(h => {
                 const comment = (h.comment && String(h.comment).trim()) ? h.comment : 'コメントなし';
                 const numScores = h.scores.map(Number);
@@ -624,7 +568,6 @@
                     </div>`);
             });
 
-            // --- Chart Render (Oldest to Newest, Last 10) ---
             const chartHistory = [...allHistoryData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
             const recent10Chart = chartHistory.slice(-10);
             const dates = recent10Chart.map(h => {
@@ -632,10 +575,10 @@
                 return `${d.getMonth()+1}/${d.getDate()}`;
             });
             
-            // Check Mastery (5x3) Logic
+            // Mastery Seal Logic (5x3 consecutive - relaxed for display to available data)
             const recent3 = chartHistory.slice(-3);
             const masteryMap = {};
-            if (chartHistory.length >= 3) {
+            if (recent3.length > 0) {
                 for(let i=0; i<10; i++) {
                     if (recent3.every(h => Number(h.scores[i]) === 5)) {
                         masteryMap[i] = true;
@@ -645,8 +588,8 @@
 
             for (let i = 0; i < 10; i++) {
                 const itemLabel = scoreLabels[i]; 
-                const isBasic = i < 5; // 0-4 are Basic
-                const color = isBasic ? '#57C3C2' : '#2F5D62'; // Brand Colors
+                const isBasic = i < 5; 
+                const color = isBasic ? '#57C3C2' : '#2F5D62'; 
                 const scores = recent10Chart.map(h => Number(h.scores[i]));
                 
                 const latestScore = scores[scores.length - 1]; 
@@ -659,7 +602,6 @@
                     else if (diff < 0) { comparisonText = 'DOWN'; comparisonClass = 'status-steady'; }
                 } else { comparisonText = 'Start'; }
                 
-                // Mastery Seal Logic
                 const sealHtml = masteryMap[i] ? `
                     <div class="mastery-seal-container">
                         <div class="mastery-seal">
@@ -685,11 +627,11 @@
                             label: itemLabel, 
                             data: scores, 
                             borderColor: color, 
-                            backgroundColor: color + '1A', /* 10% opacity hex approx */
+                            backgroundColor: color + '1A', 
                             borderWidth: 2, 
                             pointRadius: 3, 
-                            pointBackgroundColor: '#fff',
-                            pointBorderColor: color,
+                            pointBackgroundColor: '#fff', 
+                            pointBorderColor: color, 
                             fill: true, 
                             tension: 0.3 
                         }] 
