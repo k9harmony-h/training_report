@@ -20,144 +20,101 @@
             --font-sans-jp: 'Noto Sans JP', sans-serif; --font-lato: 'Lato', sans-serif; --ease-luxury: cubic-bezier(0.25, 0.1, 0.25, 1.0);
         }
         
-        body { font-family: var(--font-sans-jp); background-color: var(--c-base-washi); color: #333; padding-bottom: 80px; overflow-x: hidden; }
+        body { font-family: var(--font-sans-jp); background-color: var(--c-base-washi); color: #333; padding-bottom: 120px; overflow-x: hidden; }
 
-        /* index.html共通ローディング (中央) */
-        #loadingOverlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background-color: var(--c-base-washi); z-index: 9999;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; 
-        }
-        .loading-content { text-align: center; }
-        .spinner-border-brand { 
-            border-color: var(--c-main-turquoise); border-right-color: transparent; 
-            width: 3rem; height: 3rem; margin-bottom: 20px;
-            animation: spinner-border .75s linear infinite, breathe 2.0s var(--ease-luxury) infinite;
-        }
+        /* Loading */
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--c-base-washi); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner-border-brand { border-color: var(--c-main-turquoise); border-right-color: transparent; width: 3rem; height: 3rem; margin-bottom: 20px; animation: spinner-border .75s linear infinite, breathe 2.0s var(--ease-luxury) infinite; }
         @keyframes breathe { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.0); } }
-        #tipsText { font-family: var(--font-serif-jp); font-weight: 500; font-size: 0.95rem; color: var(--c-sub-deep-ocean); height: 1.5em; }
-        body.loaded #loadingOverlay { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.8s var(--ease-luxury), visibility 0.8s var(--ease-luxury); }
+        body.loaded #loadingOverlay { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.8s var(--ease-luxury); }
 
-        /* Mastery Seal */
+        /* Mastery Seal - いぶし銀ギョーシェ */
         .mastery-seal {
-            width: 44px; height: 44px; border-radius: 50%; position: relative; overflow: hidden;
+            width: 46px; height: 46px; border-radius: 50%; position: relative; overflow: hidden;
             display: inline-flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;
-            background: repeating-radial-gradient(circle, #ced4d4 0, #ced4d4 0.5px, #e2e8e8 0.5px, #e2e8e8 1.5px);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1), inset 0 0 8px rgba(255,255,255,0.5); border: 0.5px solid rgba(0,0,0,0.1);
+            background: 
+                repeating-radial-gradient(circle at 50% 50%, #444 0px, #444 0.2px, #888 0.5px, #888 1.0px),
+                linear-gradient(135deg, #a9a9a9 0%, #dcdcdc 50%, #808080 100%);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15), inset 0 0 10px rgba(0,0,0,0.2); border: 1px solid rgba(0,0,0,0.1);
         }
-        .mastery-seal::before, .mastery-seal::after { content: ''; position: absolute; inset: -150%; pointer-events: none; }
-        .mastery-seal::before { background: linear-gradient(135deg, transparent 45%, rgba(255,255,255,0.9) 50%, transparent 55%); z-index: 2; transform: translate(var(--posA, -100%), var(--posA, -100%)); }
-        .mastery-seal::after { background: linear-gradient(45deg, transparent 40%, rgba(250, 235, 215, 0.4) 50%, transparent 60%); z-index: 1; transform: translate(var(--posB, -100%), var(--posB, -100%)); }
+        .mastery-seal::before, .mastery-seal::after { content: ''; position: absolute; inset: -150%; pointer-events: none; z-index: 2; }
+        /* 高輝度ホワイトの光 */
+        .mastery-seal::before { background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.8) 50%, transparent 60%); transform: translate(var(--posA, -100%), var(--posA, -100%)); }
+        /* シャンパンゴールドの光 */
+        .mastery-seal::after { background: linear-gradient(105deg, transparent 35%, rgba(250, 235, 215, 0.4) 50%, transparent 65%); transform: translate(var(--posB, -100%), var(--posB, -100%)); }
 
-        .seal-number {
-            font-family: var(--font-serif-en); font-style: italic; font-weight: 700; font-size: 1.55rem;
-            position: relative; z-index: 3; color: var(--c-sub-deep-ocean); -webkit-text-stroke: 1.2px rgba(255,255,255,0.9);
-        }
+        .seal-number { font-family: var(--font-serif-en); font-style: italic; font-weight: 700; font-size: 1.6rem; position: relative; z-index: 3; color: var(--c-sub-deep-ocean); -webkit-text-stroke: 1.5px rgba(255,255,255,0.8); }
+
+        /* Gallery Layout */
+        .gallery-scroll-container { display: flex; gap: 10px; overflow-x: auto; padding: 0 20px 20px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+        .gallery-item { flex: 0 0 30%; position: relative; scroll-snap-align: start; height: 110px; border-radius: 12px; background: #eee; overflow: hidden; border: 1px solid #ddd; }
+        .gallery-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.8s ease; }
+        .gallery-img.loaded { opacity: 1; }
+        .gallery-more-overlay { position: absolute; inset: 0; background: rgba(47, 93, 98, 0.7); color: #fff; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.7rem; font-weight: bold; cursor: pointer; }
+
+        /* Dog Switcher (Bottom) */
+        .dog-switcher-footer { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; border-top: 1px solid #eee; padding: 12px 20px; display: flex; gap: 15px; overflow-x: auto; z-index: 1000; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); }
+        .btn-dog-switch { display: flex; align-items: center; gap: 8px; background: #f8f9f9; border: 1px solid #eee; border-radius: 50px; padding: 6px 15px; white-space: nowrap; text-decoration: none; color: #555; transition: all 0.3s; }
+        .btn-dog-switch.active { background: var(--c-main-turquoise); color: #fff; border-color: var(--c-main-turquoise); }
+        .thumb-mini { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
 
         .header-area { background: #fff; padding: 20px; border-bottom: 1px solid rgba(0,0,0,0.03); position: relative; }
-        .back-link { color: var(--c-main-turquoise); font-weight: bold; text-decoration: none; font-size: 1.1rem; position: absolute; top: 25px; left: 20px; z-index: 10; font-family: var(--font-lato); }
-        .dog-profile-large { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 3px solid var(--c-main-turquoise); padding: 3px; background: #fff; box-shadow: 0 10px 30px -10px rgba(87, 195, 194, 0.3); }
-        
-        .chart-card { background: #fff; border-radius: 12px; margin: 25px 15px; padding: 20px; box-shadow: 0 10px 40px -10px rgba(47,93,98,0.08); }
-        .chart-header { display: flex; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
-        .chart-title { font-family: var(--font-serif-jp); font-size: 1rem; font-weight: 600; color: var(--c-sub-deep-ocean); margin: 0; }
-        .chart-container { position: relative; height: 180px; width: 100%; }
-
-        .section-title { font-family: var(--font-serif-jp); font-size: 1.15rem; color: var(--c-sub-deep-ocean); margin: 40px 20px 15px; border-left: 3px solid var(--c-main-turquoise); padding-left: 12px; font-weight: 600; }
-        .photo-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 0 20px 20px; }
-        .gallery-img { height: 130px; border-radius: 12px; border: 1px solid #ddd; object-fit: cover; cursor: pointer; }
-
-        .list-group-item { border: none; margin: 0 20px 12px; border-radius: 12px; background: #fff; border: 1px solid #eee; padding: 20px; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
-        .list-header { font-weight: 700; color: var(--c-main-turquoise); font-family: var(--font-serif-jp); }
-        .list-date { font-family: var(--font-lato); color: #888; font-weight: 400; font-size: 0.9rem; }
-        
-        .modal-avg-box { display: flex; gap: 10px; margin-bottom: 20px; }
-        .avg-item { flex: 1; background: var(--c-bg-mist); border-radius: 8px; padding: 10px; text-align: center; }
-        .avg-val { font-size: 1.5rem; color: var(--c-main-turquoise); font-weight: 700; font-family: var(--font-serif-en); }
+        .back-link { color: var(--c-main-turquoise); font-weight: bold; text-decoration: none; position: absolute; top: 25px; left: 20px; z-index: 10; font-family: var(--font-lato); }
+        .dog-profile-large { width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 3px solid var(--c-main-turquoise); padding: 3px; opacity: 0; transition: opacity 0.8s ease; }
+        .dog-profile-large.loaded { opacity: 1; }
     </style>
 </head>
 <body>
 
     <div id="loadingOverlay">
-        <div class="loading-content">
-            <div class="spinner-border-brand" role="status"></div>
-            <p id="tipsText">Loading Archives...</p>
-        </div>
+        <div class="spinner-border-brand"></div>
+        <p id="tipsText">Fetching your history...</p>
     </div>
 
     <div id="mainWrapper">
         <div class="header-area">
-            <a href="index.html" id="backLinkBtn" class="back-link">&lt; Back</a>
-            <div id="dogImgContainer" style="display:flex; justify-content:center;"></div>
+            <a href="index.html" class="back-link">&lt; Back</a>
+            <div id="dogImgContainer" style="display:flex; justify-content:center; height:140px; background:radial-gradient(circle, #f0f0f0 0%, transparent 70%);"></div>
             <h1 id="pageTitle" style="text-align:center; font-family:var(--font-serif-jp); font-weight:600; font-size:1.2rem; color:var(--c-sub-deep-ocean); margin-top:15px;">Archives</h1>
         </div>
 
-        <div class="content-container">
-            <div id="performanceArea"></div>
-            <h3 class="section-title">Gallery</h3>
-            <div id="mainGalleryContainer" class="photo-scroll"></div>
-            <h3 class="section-title">Lesson Logs</h3>
-            <div id="lessonList" class="list-group"></div>
-        </div>
+        <div id="performanceArea"></div>
+
+        <h3 class="section-title">Gallery</h3>
+        <div id="mainGalleryContainer" class="gallery-scroll-container"></div>
+
+        <h3 class="section-title">Lesson Logs</h3>
+        <div id="lessonList" class="list-group"></div>
     </div>
 
-    <div class="modal fade" id="historyDetailModal" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content" style="border-radius:12px;">
-          <div class="modal-header">
-            <h5 class="modal-title fw-bold">Lesson Detail: <span id="modalDate"></span></h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body p-4">
-            <div id="modalAvgArea"></div>
-            <h6 class="mt-2 text-muted small fw-bold">SCORE DETAILS</h6>
-            <div id="modalScores"></div>
-            <h6 class="mt-4 text-muted small fw-bold">DOG FEEDBACK</h6>
-            <p id="modalComment" style="white-space: pre-wrap; background:#f7f7f7; padding:15px; border-radius:8px; font-size:0.9rem;"></p>
-            <h6 class="mt-4 text-muted small fw-bold">HOMEWORK</h6>
-            <p id="modalHomework" style="white-space: pre-wrap; background:#f7f7f7; padding:15px; border-radius:8px; font-size:0.9rem;"></p>
-            <div class="text-end mt-3"><a href="#" id="driveLink" style="display:none; color:var(--c-main-turquoise); text-decoration:none; font-weight:bold; font-size:0.85rem;">Google Drive &gt;</a></div>
-          </div>
-          <div class="modal-footer"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">閉じる</button></div>
-        </div>
-      </div>
-    </div>
+    <div class="dog-switcher-footer" id="dogSwitcher"></div>
 
     <script>
         const LIFF_ID = '2008546673-MJY7j3ox'; 
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec'; 
         const scoreLabels = [ '指示理解', '集中力', '報酬', 'ボディ', 'コンタクト', '指示出し', '対応力', 'リード', 'ボディ', 'コンタクト' ];
-        const dogTips = ["犬の鼻紋は人間の指紋と同じです。", "犬は人間の約4倍の聴力を持っています。", "犬は汗を肉球からしかかけません。", "犬があくびをするのは落ち着こうとしている時もあります。"];
+        let allHistoryData = []; let customerData = {};
 
-        let allHistoryData = []; let customerData = {}; 
-        let tipsTimer;
-
-        function startTipsSlider() {
-            const el = document.getElementById('tipsText');
-            let idx = 0; el.innerText = dogTips[0];
-            tipsTimer = setInterval(() => { idx = (idx + 1) % dogTips.length; el.innerText = dogTips[idx]; }, 2500);
-        }
-
+        // スクロール反射の計算式を全バッジ対応に修正
         window.addEventListener('scroll', () => {
             const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
             document.querySelectorAll('.mastery-seal').forEach((seal, idx) => {
-                seal.style.setProperty('--posA', `${(scrollPercent * 240) - 120 + (idx * 5)}%`);
-                seal.style.setProperty('--posB', `${(scrollPercent * 180) - 90}%`);
+                // バッジごとにタイミングをオフセットして全員が光るように
+                const offset = idx * 0.15;
+                seal.style.setProperty('--posA', `${((scrollPercent + offset) * 300) - 150}%`);
+                seal.style.setProperty('--posB', `${((scrollPercent + offset) * 250) - 125}%`);
             });
         });
 
         async function main() {
-            startTipsSlider();
-            try {
-                await liff.init({ liffId: LIFF_ID });
-                if (!liff.isLoggedIn()) { liff.login(); return; }
-                const profile = await liff.getProfile();
-                const dogId = new URLSearchParams(window.location.search).get('dogId');
-                fetchTextData(profile.userId, dogId);
-            } catch (err) { console.error(err); }
+            await liff.init({ liffId: LIFF_ID });
+            if (!liff.isLoggedIn()) { liff.login(); return; }
+            const profile = await liff.getProfile();
+            const dogId = new URLSearchParams(window.location.search).get('dogId');
+            fetchData(profile.userId, dogId);
         }
 
-        function fetchTextData(userId, dogId) {
+        function fetchData(userId, dogId) {
             fetch(`${GAS_URL}?userId=${userId}&dogId=${dogId || ''}`)
                 .then(res => res.json())
                 .then(data => {
@@ -165,36 +122,22 @@
                     customerData = data.customer || {};
                     const dog = data.dog || {};
 
-                    // Image Display Restore (from index logic)
-                    fetchProfileImage(userId, dogId);
-                    fetchGalleryImages(userId, dogId);
+                    // プロフィール写真（ふわっと表示）
+                    const cont = document.getElementById('dogImgContainer');
+                    const img = new Image();
+                    img.className = 'dog-profile-large';
+                    img.src = dog.img || dog.img_url;
+                    img.onload = () => img.classList.add('loaded');
+                    cont.appendChild(img);
 
                     document.getElementById('pageTitle').innerText = `${dog.name_disp || 'Partner'}'s Records`;
-                    renderPerformance();
-                    renderLogs();
                     
-                    clearInterval(tipsTimer);
+                    renderPerformance();
+                    renderGallery(data.latest?.images || [], customerData.shared_folder_url);
+                    renderLogs();
+                    renderDogSwitcher(data.dogs || [], dogId);
+                    
                     document.body.classList.add('loaded');
-                });
-        }
-
-        function fetchProfileImage(userId, dogId) {
-            fetch(`${GAS_URL}?userId=${userId}&type=img_profile&dogId=${dogId || ''}`)
-                .then(res => res.json()).then(data => {
-                    const cont = document.getElementById('dogImgContainer');
-                    cont.innerHTML = data.image ? `<img src="${data.image}" class="dog-profile-large">` : 'No Image';
-                });
-        }
-
-        function fetchGalleryImages(userId, dogId) {
-            fetch(`${GAS_URL}?userId=${userId}&type=img_latest&dogId=${dogId || ''}`)
-                .then(res => res.json()).then(data => {
-                    const gal = document.getElementById('mainGalleryContainer');
-                    gal.innerHTML = '';
-                    if (data.images && data.images.length > 0) {
-                        data.images.forEach(src => gal.insertAdjacentHTML('beforeend', `<div class="gallery-img-wrapper"><img src="${src}" class="gallery-img zoomable"></div>`));
-                        mediumZoom('.zoomable');
-                    } else { gal.innerHTML = '<p class="small text-muted ms-3">No Photos</p>'; }
                 });
         }
 
@@ -218,45 +161,52 @@
                         labels: chartHistory.map(h => h.date.split('/').slice(1).join('/')),
                         datasets: [{ data: chartHistory.map(h => h.scores[i]), borderColor: color, backgroundColor: color + '11', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3 }]
                     },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 5 } }, plugins: { legend: { display: false } } }
                 });
             }
         }
 
-        function renderLogs() {
-            const list = document.getElementById('lessonList');
-            list.innerHTML = '';
-            allHistoryData.forEach(h => {
-                const avg = (h.scores.map(Number).reduce((a,b)=>a+b,0)/10).toFixed(1);
-                const item = document.createElement('div');
-                item.className = 'list-group-item';
-                item.onclick = () => showLessonDetail(h.id);
-                item.innerHTML = `
-                    <div class="d-flex w-100 justify-content-between align-items-center">
-                        <span class="list-header">Lesson: ${h.date}</span>
-                        <span class="fw-bold" style="color:var(--c-main-turquoise);">Avg: ${avg}</span>
-                    </div>
-                    <p class="small text-muted mb-0 text-truncate">${h.comment || ''}</p>
-                `;
-                list.appendChild(item);
+        function renderGallery(images, driveUrl) {
+            const gal = document.getElementById('mainGalleryContainer');
+            gal.innerHTML = '';
+            images.slice(0, 4).forEach((src, idx) => {
+                const isLast = idx === 3;
+                const html = `
+                    <div class="gallery-item" ${isLast ? `onclick="window.open('${driveUrl}', '_blank')"` : ''}>
+                        <img src="${src}" class="gallery-img" onload="this.classList.add('loaded')">
+                        ${isLast ? `<div class="gallery-more-overlay"><i class="fas fa-images"></i><span>さらに見る</span></div>` : ''}
+                    </div>`;
+                gal.insertAdjacentHTML('beforeend', html);
+            });
+            mediumZoom('.gallery-img:not(:last-child)');
+        }
+
+        function renderDogSwitcher(dogs, currentId) {
+            const nav = document.getElementById('dogSwitcher');
+            dogs.forEach(d => {
+                const isActive = d.id == currentId;
+                nav.insertAdjacentHTML('beforeend', `
+                    <a href="history.html?dogId=${d.id}" class="btn-dog-switch ${isActive ? 'active' : ''}">
+                        <img src="${d.img_url}" class="thumb-mini">
+                        <span>${d.name_disp}</span>
+                    </a>
+                `);
             });
         }
 
-        function showLessonDetail(id) {
-            const h = allHistoryData.find(x => x.id === id); if (!h) return;
-            document.getElementById('modalDate').innerText = h.date;
-            document.getElementById('modalComment').innerText = h.comment || 'なし';
-            document.getElementById('modalHomework').innerText = h.homework || 'なし';
-            const s = h.scores.map(Number);
-            document.getElementById('modalAvgArea').innerHTML = `
-                <div class="avg-item"><span class="small d-block text-muted">犬の評価</span><span class="avg-val">${(s.slice(0,5).reduce((a,b)=>a+b,0)/5).toFixed(1)}</span></div>
-                <div class="avg-item"><span class="small d-block text-muted">飼い主の評価</span><span class="avg-val">${(s.slice(5,10).reduce((a,b)=>a+b,0)/5).toFixed(1)}</span></div>`;
-            let scoreHtml = '';
-            scoreLabels.forEach((l, i) => scoreHtml += `<div class="d-flex justify-content-between py-1 border-bottom border-light"><span>${l}</span><b style="color:var(--c-main-turquoise)">${s[i]}</b></div>`);
-            document.getElementById('modalScores').innerHTML = scoreHtml;
-            const driveLink = document.getElementById('driveLink');
-            if (customerData.shared_folder_url) { driveLink.href = customerData.shared_folder_url; driveLink.style.display = 'block'; }
-            new bootstrap.Modal(document.getElementById('historyDetailModal')).show();
+        function renderLogs() {
+            const list = document.getElementById('lessonList');
+            allHistoryData.forEach(h => {
+                list.insertAdjacentHTML('beforeend', `
+                    <div class="list-group-item" style="border-radius:12px; margin-bottom:10px; border:1px solid #eee;">
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-bold" style="color:var(--c-main-turquoise)">${h.date}</span>
+                            <span class="small fw-bold" style="font-family:Lato">Avg: ${(h.scores.reduce((a,b)=>Number(a)+Number(b),0)/10).toFixed(1)}</span>
+                        </div>
+                        <p class="small text-muted mb-0 mt-1">${h.comment || ''}</p>
+                    </div>
+                `);
+            });
         }
 
         main();
