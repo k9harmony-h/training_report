@@ -4,355 +4,193 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>レッスン履歴 | K9 Harmony</title>
-    
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.0.8/dist/medium-zoom.min.js"></script>
-    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600;1,700&family=Lato:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
     <style>
-        /* =========================================
-           1. Foundation
-           ========================================= */
         :root { 
-            --c-main-turquoise: #57C3C2;
-            --c-sub-deep-ocean: #2F5D62;
-            --c-accent-copper: #C87A56;
-            --c-base-washi: #FAFAFA;
-            --c-bg-mist: #F4F7F7;
-            --c-text-sumi: #333333;
-            --c-text-gray: #666666;
-            
-            --font-serif-en: 'Cormorant Garamond', serif;
-            --font-serif-jp: 'Noto Serif JP', serif;
-            --font-sans-jp: 'Noto Sans JP', sans-serif;
-            --font-sans-en: 'Lato', sans-serif;
-
-            --ease-luxury: cubic-bezier(0.25, 0.1, 0.25, 1.0);
+            --c-main-turquoise: #57C3C2; --c-sub-deep-ocean: #2F5D62; --c-accent-copper: #C87A56;
+            --c-base-washi: #FAFAFA; --c-bg-mist: #F4F7F7; --c-text-sumi: #333333;
+            --font-serif-en: 'Cormorant Garamond', serif; --font-serif-jp: 'Noto Serif JP', serif;
+            --font-sans-jp: 'Noto Sans JP', sans-serif; --ease-luxury: cubic-bezier(0.25, 0.1, 0.25, 1.0);
         }
 
-        body { 
-            font-family: var(--font-sans-jp); 
-            background-color: var(--c-base-washi); 
-            color: var(--c-text-sumi); 
-            line-height: 1.8;
-            padding-bottom: 80px; 
-            overflow-x: hidden;
-        }
+        body { font-family: var(--font-sans-jp); background-color: var(--c-base-washi); color: var(--c-text-sumi); line-height: 1.8; padding-bottom: 80px; }
 
-        /* Loading */
-        #loadingOverlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background-color: var(--c-base-washi); 
-            display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            z-index: 9999; color: var(--c-sub-deep-ocean); 
-            transition: opacity 0.8s var(--ease-luxury), visibility 0.8s var(--ease-luxury);
-        }
-        .spinner-border-brand { 
-            border-color: var(--c-main-turquoise); border-right-color: transparent; 
-            width: 3rem; height: 3rem; margin-bottom: 20px;
-            animation: spinner-border .75s linear infinite, breathe 2.0s var(--ease-luxury) infinite;
-        }
-        @keyframes breathe { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.0); } }
-        #tipsText { font-family: var(--font-serif-jp); font-size: 0.95rem; }
-        body.loaded #loadingOverlay { opacity: 0; visibility: hidden; pointer-events: none; }
-
-        #mainWrapper { opacity: 0; transform: translateY(10px); transition: all 0.8s var(--ease-luxury); }
-        body.loaded #mainWrapper { opacity: 1; transform: translateY(0); }
-
-        /* =========================================
-           2. Mastery Seal (Chrono-Seal)
-           ========================================= */
+        /* Mastery Seal (Chrono-Seal) */
         .mastery-seal {
-            width: 38px; height: 38px; border-radius: 50%;
-            position: relative; overflow: hidden;
-            display: inline-flex; align-items: center; justify-content: center;
-            margin-right: 12px; flex-shrink: 0;
-            background-color: var(--c-bg-mist); /* 獲得前の空押し状態 */
-            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1), inset -1px -1px 2px rgba(255,255,255,0.8);
-            transition: all 0.5s var(--ease-luxury);
+            width: 36px; height: 36px; border-radius: 50%; position: relative; overflow: hidden;
+            display: inline-flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;
+            background-color: #e8eeee; box-shadow: inset 2px 2px 4px rgba(0,0,0,0.08);
         }
-
-        /* 獲得済みのシルバープレート */
         .mastery-seal.acquired {
-            background: repeating-radial-gradient(circle, #d0d0d0 0, #d0d0d0 1px, #e0e0e0 1px, #e0e0e0 2px); /* ギョーシェ彫り */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 0 10px rgba(0,0,0,0.05);
-            border: 1px solid rgba(0,0,0,0.05);
+            /* ギョーシェ彫り: 密度を上げて視認性を向上 */
+            background: repeating-radial-gradient(circle, #ced4d4 0, #ced4d4 0.5px, #e2e8e8 0.5px, #e2e8e8 1.5px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1), inset 0 0 8px rgba(255,255,255,0.5);
+            border: 0.5px solid rgba(0,0,0,0.1);
         }
-
-        .mastery-seal.acquired::before,
+        .mastery-seal.acquired::before, .mastery-seal.acquired::after {
+            content: ''; position: absolute; inset: -150%; pointer-events: none;
+        }
+        .mastery-seal.acquired::before {
+            background: linear-gradient(135deg, transparent 45%, rgba(255,255,255,0.9) 50%, transparent 55%);
+            z-index: 2; transform: translate(var(--posA, -100%), var(--posA, -100%));
+        }
         .mastery-seal.acquired::after {
-            content: ''; position: absolute; inset: -100%;
-            background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.8) 50%, transparent 60%);
-            pointer-events: none; z-index: 2;
+            background: linear-gradient(45deg, transparent 40%, rgba(250, 235, 215, 0.4) 50%, transparent 60%);
+            z-index: 1; transform: translate(var(--posB, -100%), var(--posB, -100%));
         }
 
-        /* 光源B (かすかなシャンパン) */
-        .mastery-seal.acquired::after {
-            background: linear-gradient(45deg, transparent 30%, rgba(250, 235, 215, 0.4) 50%, transparent 70%);
-            z-index: 1;
-        }
-
-        /* カリグラフィ数字 */
         .seal-number {
-            font-family: var(--font-serif-en); font-style: italic; font-weight: 700;
-            font-size: 1.2rem; position: relative; z-index: 3; color: transparent;
-            -webkit-text-stroke: 0.5px #999; /* 袋文字 */
-            transition: color 0.5s;
+            font-family: var(--font-serif-en); font-style: italic; font-weight: 700; font-size: 1.15rem;
+            position: relative; z-index: 3; color: transparent; -webkit-text-stroke: 0.8px rgba(0,0,0,0.15);
         }
         .acquired .seal-number {
-            color: rgba(47, 93, 98, 0.8); /* 獲得後のインク色 */
-            -webkit-text-stroke: 0.5px rgba(255,255,255,0.4);
+            color: var(--c-sub-deep-ocean); -webkit-text-stroke: 1px rgba(255,255,255,0.6); /* 袋文字の強化 */
         }
 
-        /* =========================================
-           3. Layout Components
-           ========================================= */
-        .header-area { 
-            background: #fff; padding: 20px; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.03); 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
-        }
-        .back-link { 
-            color: var(--c-sub-deep-ocean); text-decoration: none; font-family: var(--font-sans-en); 
-            font-weight: 700; position: absolute; left: 20px; top: 24px; font-size: 0.9rem;
-        }
-        .dog-profile-large { 
-            width: 120px; height: 120px; border-radius: 50%; border: 3px solid var(--c-main-turquoise);
-            padding: 3px; box-shadow: 0 10px 30px -10px rgba(87, 195, 194, 0.3);
-        }
-        .page-title { 
-            font-family: var(--font-serif-jp); font-weight: 600; color: var(--c-sub-deep-ocean); 
-            margin-top: 15px; letter-spacing: 0.1em; font-size: 1.2rem;
-        }
+        .chart-card { background: #fff; border-radius: 12px; margin: 20px; padding: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.04); }
+        .chart-header { display: flex; align-items: center; margin-bottom: 15px; }
+        .chart-title { font-family: var(--font-serif-jp); font-weight: 600; color: var(--c-sub-deep-ocean); font-size: 1rem; margin: 0; }
+        
+        /* グラフの高さを200pxに固定 */
+        .chart-container { position: relative; height: 200px; width: 100%; }
 
-        .chart-card { 
-            background: #fff; border-radius: 12px; margin: 30px 20px; padding: 25px 20px;
-            box-shadow: 0 10px 40px -10px rgba(47, 93, 98, 0.08);
-        }
-        .chart-header { display: flex; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f0f0f0; padding-bottom: 12px; }
-        .chart-title { font-family: var(--font-serif-jp); font-weight: 600; color: var(--c-sub-deep-ocean); font-size: 1.05rem; margin: 0; flex-grow: 1; }
-
-        .list-group-item { 
-            border: none; margin: 0 20px 15px; border-radius: 12px; background: var(--c-bg-mist);
-            padding: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); transition: all 0.3s;
-        }
-        .list-group-item:active { transform: scale(0.98); background: #eef2f2; }
-        .section-title { 
-            font-family: var(--font-serif-jp); color: var(--c-sub-deep-ocean); margin: 50px 20px 20px; 
-            font-size: 1.15rem; border-left: 3px solid var(--c-main-turquoise); padding-left: 12px;
-        }
-
-        /* Modal Custom */
-        .modal-content { border-radius: 16px; border: none; }
-        .avg-val { font-family: var(--font-serif-en); font-size: 2rem; color: var(--c-accent-copper); font-weight: 700; }
-        .btn-secondary { background: var(--c-sub-deep-ocean); border: none; border-radius: 50px; padding: 10px 30px; }
+        .dog-profile-large { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid var(--c-main-turquoise); background: #eee; }
+        .section-title { font-family: var(--font-serif-jp); color: var(--c-sub-deep-ocean); margin: 40px 20px 15px; border-left: 3px solid var(--c-main-turquoise); padding-left: 12px; font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
-    <div id="loadingOverlay">
-        <div class="loading-content">
-            <div class="spinner-border spinner-border-brand" role="status"></div>
-            <p id="tipsText">Archivesを構築しております...</p>
-        </div>
-    </div>
+    <div id="loadingOverlay"><div class="text-center"><div class="spinner-border text-info mb-3"></div><p>Loading Archives...</p></div></div>
 
     <div id="mainWrapper">
-        <div class="header-area">
-            <a href="index.html" id="backLinkBtn" class="back-link">&lt; Back</a>
-            <div class="profile-img-container"><img id="dogProfileImg" src="" class="dog-profile-large" alt="愛犬"></div>
-            <h1 class="page-title">Performance Records</h1>
+        <div class="text-center py-4 bg-white border-bottom position-relative">
+            <a href="index.html" class="position-absolute start-0 top-0 p-4 text-decoration-none text-dark" style="font-weight:700;">&lt;</a>
+            <img id="dogProfileImg" src="" class="dog-profile-large" alt="Profile">
+            <h1 id="dogNameTitle" class="mt-3 h5 fw-bold text-secondary">---</h1>
         </div>
 
-        <div id="performanceArea">
-            </div>
+        <div id="performanceArea"></div>
 
         <h3 class="section-title">Gallery</h3>
-        <div id="mainGalleryContainer" class="d-flex overflow-auto gap-3 px-3 pb-3"></div>
+        <div id="mainGalleryContainer" class="d-flex overflow-auto gap-2 px-3 pb-3"></div>
 
-        <h3 class="section-title">Lesson Logs</h3>
+        <h3 class="section-title">History Logs</h3>
         <div id="lessonList"></div>
     </div>
 
-    <div class="modal fade" id="historyDetailModal" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-body p-4">
-            <h5 class="text-center fw-bold mb-4" style="font-family:var(--font-serif-jp);">Lesson Detail</h5>
-            <div id="modalAvgArea" class="d-flex gap-3 mb-4"></div>
-            <div id="modalScores" class="small mb-4"></div>
-            <h6 class="text-muted small mb-1">Feedback</h6>
-            <p id="modalComment" class="p-3 bg-light rounded small mb-3"></p>
-            <h6 class="text-muted small mb-1">Homework</h6>
-            <p id="modalHomework" class="p-3 border border-info rounded small"></p>
-            <div class="text-center mt-4">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <script>
-        const LIFF_ID = '2008546673-MJY7j3ox'; 
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
-        const scoreLabels = [ '指示理解', '集中力', '報酬', 'ボディ', 'コンタクト', '指示出し', '対応力', 'リード', 'ボディ', 'コンタクト' ];
+        const scoreLabels = ['指示理解', '集中力', '報酬', 'ボディ', 'コンタクト', '指示出し', '対応力', 'リード', 'ボディ', 'コンタクト'];
 
-        let allHistoryData = [];
-        let masteredItems = []; // 3回連続5点の項目
-
-        // スクロール連動の光源移動処理
         window.addEventListener('scroll', () => {
-            const seals = document.querySelectorAll('.mastery-seal.acquired');
             const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
-            
-            seals.forEach((seal, idx) => {
-                const before = seal.style;
-                // 光源A: スクロールに対し1.2倍速
-                const posA = (scrollPercent * 200) - 100 + (idx * 10);
-                // 光源B: スクロールに対し0.8倍速
-                const posB = (scrollPercent * 150) - 75;
-                
-                seal.style.setProperty('--posA', `${posA}%`);
-                seal.style.setProperty('--posB', `${posB}%`);
+            document.querySelectorAll('.mastery-seal.acquired').forEach((seal, idx) => {
+                seal.style.setProperty('--posA', `${(scrollPercent * 240) - 120 + (idx * 5)}%`);
+                seal.style.setProperty('--posB', `${(scrollPercent * 180) - 90}%`);
             });
         });
 
-        // CSS変数を動的に更新するためのスタイル追加
-        const dynamicStyle = document.createElement('style');
-        dynamicStyle.innerHTML = `
-            .mastery-seal.acquired::before { transform: translate(var(--posA, -100%), var(--posA, -100%)); }
-            .mastery-seal.acquired::after { transform: translate(var(--posB, -100%), var(--posB, -100%)); }
-        `;
-        document.head.appendChild(dynamicStyle);
-
-        async function main() {
-            try {
-                await liff.init({ liffId: LIFF_ID });
-                if (!liff.isLoggedIn()) { liff.login(); return; }
-                const profile = await liff.getProfile();
-                const urlParams = new URLSearchParams(window.location.search);
-                const dogId = urlParams.get('dogId');
-                fetchData(profile.userId, dogId);
-            } catch (err) { console.error(err); }
-        }
-
-        function fetchData(userId, dogId) {
-            fetch(`${GAS_URL}?userId=${userId}&dogId=${dogId || ''}`)
+        async function init() {
+            await liff.init({ liffId: '2008546673-MJY7j3ox' });
+            if (!liff.isLoggedIn()) { liff.login(); return; }
+            const profile = await liff.getProfile();
+            const dogId = new URLSearchParams(window.location.search).get('dogId');
+            
+            fetch(`${GAS_URL}?userId=${profile.userId}&dogId=${dogId || ''}`)
                 .then(res => res.json())
                 .then(data => {
-                    allHistoryData = data.score_history || [];
-                    document.getElementById('dogProfileImg').src = data.dog?.img || '';
-                    analyzeMastery();
-                    renderPerformance();
-                    renderGallery(data.latest?.images || []);
-                    renderLogs();
+                    const dog = data.dog || {};
+                    const history = data.score_history || [];
+                    
+                    // 画像の読み込み（複数のパス候補に対応）
+                    const profileImg = document.getElementById('dogProfileImg');
+                    profileImg.src = dog.img || dog.img_url || 'https://via.placeholder.com/150?text=K9';
+                    document.getElementById('dogNameTitle').innerText = `${dog.name_disp || 'Partner'}'s Archives`;
+
+                    // マスタリー判定（直近3回が全て5点）
+                    const mastered = [];
+                    if (history.length >= 3) {
+                        const recent = history.slice(-3);
+                        for(let i=0; i<10; i++) {
+                            if(recent.every(h => Number(h.scores[i]) === 5)) mastered.push(i);
+                        }
+                    }
+
+                    // グラフ描画
+                    const perfArea = document.getElementById('performanceArea');
+                    const chartHistory = [...history].sort((a,b) => new Date(a.date) - new Date(b.date)).slice(-8);
+
+                    for(let i=0; i<10; i++) {
+                        const isAcquired = mastered.includes(i);
+                        perfArea.insertAdjacentHTML('beforeend', `
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <div class="mastery-seal ${isAcquired?'acquired':''}">
+                                        <span class="seal-number">${i+1}</span>
+                                    </div>
+                                    <h4 class="chart-title">${scoreLabels[i]}</h4>
+                                </div>
+                                <div class="chart-container"><canvas id="chart-${i}"></canvas></div>
+                            </div>
+                        `);
+                        new Chart(document.getElementById(`chart-${i}`), {
+                            type: 'line',
+                            data: {
+                                labels: chartHistory.map(h => h.date.split('/').slice(1).join('/')),
+                                datasets: [{
+                                    data: chartHistory.map(h => h.scores[i]),
+                                    borderColor: i < 5 ? '#57C3C2' : '#2F5D62',
+                                    backgroundColor: 'rgba(87, 195, 194, 0.1)',
+                                    fill: true, tension: 0.4, borderWidth: 2, pointRadius: 2
+                                }]
+                            },
+                            options: {
+                                responsive: true, maintainAspectRatio: false,
+                                scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } }, x: { grid: { display: false } } },
+                                plugins: { legend: { display: false } }
+                            }
+                        });
+                    }
+
+                    // ギャラリー（画像URLの配列を想定）
+                    const gal = document.getElementById('mainGalleryContainer');
+                    const images = data.latest?.images || [];
+                    if(images.length) {
+                        images.forEach(src => {
+                            gal.insertAdjacentHTML('beforeend', `<img src="${src}" class="zoomable rounded" style="height:120px; object-fit:cover;">`);
+                        });
+                        mediumZoom('.zoomable');
+                    } else {
+                        gal.innerHTML = '<p class="small text-muted ms-3">No recent photos available.</p>';
+                    }
+
+                    // ログ
+                    const list = document.getElementById('lessonList');
+                    history.forEach(h => {
+                        list.insertAdjacentHTML('beforeend', `
+                            <div class="list-group-item bg-white m-3 p-3 rounded shadow-sm">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span class="fw-bold">${h.date}</span>
+                                    <span class="text-info">Score Avg: ${(h.scores.reduce((a,b)=>Number(a)+Number(b),0)/10).toFixed(1)}</span>
+                                </div>
+                                <div class="small text-muted text-truncate">${h.comment || ''}</div>
+                            </div>
+                        `);
+                    });
+
                     document.body.classList.add('loaded');
                 });
         }
-
-        function analyzeMastery() {
-            masteredItems = [];
-            if (allHistoryData.length < 3) return;
-            const sorted = [...allHistoryData].sort((a,b) => new Date(a.date) - new Date(b.date));
-            const recent3 = sorted.slice(-3);
-            for(let i=0; i<10; i++) {
-                if(recent3.every(h => Number(h.scores[i]) === 5)) masteredItems.push(i);
-            }
-        }
-
-        function renderPerformance() {
-            const area = document.getElementById('performanceArea');
-            const chartData = [...allHistoryData].sort((a,b) => new Date(a.date) - new Date(b.date)).slice(-8);
-
-            for (let i = 0; i < 10; i++) {
-                const isAcquired = masteredItems.includes(i);
-                const color = i < 5 ? '#57C3C2' : '#2F5D62';
-                const bgColor = i < 5 ? 'rgba(87, 195, 194, 0.15)' : 'rgba(47, 93, 98, 0.15)';
-
-                area.insertAdjacentHTML('beforeend', `
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <div class="mastery-seal ${isAcquired ? 'acquired' : ''}">
-                                <span class="seal-number">${i+1}</span>
-                            </div>
-                            <h4 class="chart-title">${scoreLabels[i]}</h4>
-                            <span class="small ${isAcquired?'status-great':''}" style="font-family:var(--font-sans-en)">${isAcquired?'Mastered':''}</span>
-                        </div>
-                        <canvas id="chart-${i}" style="height:180px;"></canvas>
-                    </div>
-                `);
-
-                new Chart(document.getElementById(`chart-${i}`), {
-                    type: 'line',
-                    data: {
-                        labels: chartData.map(h => h.date.split('/')[1]+'/'+h.date.split('/')[2]),
-                        datasets: [{ 
-                            data: chartData.map(h => h.scores[i]),
-                            borderColor: color, backgroundColor: bgColor, fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } }, x: { grid: { display: false } } },
-                        plugins: { legend: { display: false } }
-                    }
-                });
-            }
-        }
-
-        function renderGallery(images) {
-            const cont = document.getElementById('mainGalleryContainer');
-            if(!images.length) { cont.innerHTML = '<p class="small text-muted ms-3">No Photos</p>'; return; }
-            images.forEach(src => {
-                cont.insertAdjacentHTML('beforeend', `<img src="${src}" class="zoomable rounded shadow-sm" style="height:120px; flex-shrink:0;">`);
-            });
-            mediumZoom('.zoomable', { background: 'rgba(0,0,0,0.9)', margin: 20 });
-        }
-
-        function renderLogs() {
-            const list = document.getElementById('lessonList');
-            allHistoryData.forEach(h => {
-                const avg = (h.scores.map(Number).reduce((a,b)=>a+b,0)/10).toFixed(1);
-                list.insertAdjacentHTML('beforeend', `
-                    <div class="list-group-item" onclick="showDetail('${h.id}')">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span style="font-family:var(--font-sans-en); font-weight:700;">${h.date}</span>
-                            <span class="small fw-bold" style="color:var(--c-accent-copper)">Score: ${avg}</span>
-                        </div>
-                        <p class="small text-muted mb-0 text-truncate">${h.comment || 'No comment recorded.'}</p>
-                    </div>
-                `);
-            });
-        }
-
-        function showDetail(id) {
-            const h = allHistoryData.find(x => x.id === id);
-            const s = h.scores.map(Number);
-            document.getElementById('modalAvgArea').innerHTML = `
-                <div class="avg-item text-center flex-fill p-3 bg-light rounded-3">
-                    <span class="d-block small text-muted">基礎領域</span><span class="avg-val">${(s.slice(0,5).reduce((a,b)=>a+b,0)/5).toFixed(1)}</span>
-                </div>
-                <div class="avg-item text-center flex-fill p-3 bg-light rounded-3">
-                    <span class="d-block small text-muted">応用領域</span><span class="avg-val">${(s.slice(5,10).reduce((a,b)=>a+b,0)/5).toFixed(1)}</span>
-                </div>`;
-            
-            let scoreHtml = '';
-            scoreLabels.forEach((l, i) => scoreHtml += `<div class="d-flex justify-content-between py-1 border-bottom border-light"><span>${l}</span><span class="fw-bold">${s[i]}</span></div>`);
-            document.getElementById('modalScores').innerHTML = scoreHtml;
-            document.getElementById('modalComment').innerText = h.comment || '---';
-            document.getElementById('modalHomework').innerText = h.homework || '---';
-            new bootstrap.Modal(document.getElementById('historyDetailModal')).show();
-        }
-
-        main();
+        init();
     </script>
 </body>
 </html>
