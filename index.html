@@ -21,38 +21,41 @@
         
         body { font-family: 'Noto Sans JP', sans-serif; background-color: var(--c-base-washi); color: #333; padding-bottom: 120px; overflow-x: hidden; }
 
-        /* index共通ローディング */
-        #loadingOverlay { position: fixed; inset: 0; background-color: var(--c-base-washi); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        /* index共通ローディング (完全中央) */
+        #loadingOverlay { 
+            position: fixed; inset: 0; background-color: var(--c-base-washi); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+        }
         .spinner-border-brand { border-color: var(--c-main-turquoise); border-right-color: transparent; width: 3rem; height: 3rem; margin-bottom: 20px; animation: spinner-border .75s linear infinite, breathe 2.0s var(--ease-luxury) infinite; }
         @keyframes breathe { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.0); } }
         body.loaded #loadingOverlay { opacity: 0; visibility: hidden; transition: opacity 0.8s var(--ease-luxury); }
 
-        /* Mastery Seal - 視認性を改善したギョーシェ */
+        /* Mastery Seal - 視認性を追求したいぶし銀ギョーシェ */
         .mastery-seal {
             width: 46px; height: 46px; border-radius: 50%; position: relative; overflow: hidden;
             display: inline-flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;
             background: 
-                repeating-radial-gradient(circle at 50% 50%, #888 0px, #888 0.2px, #bbb 0.5px, #bbb 1.2px),
+                repeating-radial-gradient(circle at 50% 50%, #666 0px, #666 0.2px, #999 0.5px, #999 1.2px),
                 linear-gradient(135deg, #a0a0a0 0%, #ffffff 50%, #777 100%);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15), inset 0 0 10px rgba(255,255,255,0.5); border: 1px solid #999;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2), inset 0 0 10px rgba(255,255,255,0.4); border: 1px solid #888;
         }
         .mastery-seal::before, .mastery-seal::after { content: ''; position: absolute; inset: -150%; pointer-events: none; z-index: 2; }
         .mastery-seal::before { background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.8) 50%, transparent 60%); transform: translate(var(--posA, -100%), var(--posA, -100%)); }
         .mastery-seal::after { background: linear-gradient(105deg, transparent 35%, rgba(250, 235, 215, 0.4) 50%, transparent 65%); transform: translate(var(--posB, -100%), var(--posB, -100%)); }
         .seal-number { font-family: var(--font-serif-en); font-style: italic; font-weight: 700; font-size: 1.7rem; position: relative; z-index: 3; color: var(--c-sub-deep-ocean); -webkit-text-stroke: 1.5px rgba(255,255,255,0.9); }
 
-        /* Image Display */
-        .dog-profile-large { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 3px solid var(--c-main-turquoise); background: #eee; opacity: 0; transition: opacity 0.8s ease; }
+        /* Image Display & Animation */
+        .dog-profile-large { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 3px solid var(--c-main-turquoise); opacity: 0; transition: opacity 0.8s ease; }
         .dog-profile-large.loaded { opacity: 1; }
 
-        /* Gallery */
+        /* Gallery 3枚+見切れ */
         .gallery-scroll-container { display: flex; gap: 12px; overflow-x: auto; padding: 0 20px 20px; }
         .gallery-item { flex: 0 0 31%; position: relative; height: 110px; border-radius: 12px; background: #eee; overflow: hidden; border: 1px solid #ddd; }
         .gallery-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.8s ease; }
         .gallery-img.loaded { opacity: 1; }
         .gallery-more-overlay { position: absolute; inset: 0; background: rgba(47, 93, 98, 0.75); color: #fff; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
 
-        /* Bottom Switcher */
+        /* Switcher Footer */
         .dog-switcher-footer { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; border-top: 1px solid #eee; padding: 12px 20px; display: flex; gap: 15px; overflow-x: auto; z-index: 1000; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); }
         .btn-dog-switch { display: flex; align-items: center; gap: 8px; background: #f8f9f9; border: 1px solid #eee; border-radius: 50px; padding: 6px 15px; white-space: nowrap; text-decoration: none; color: #555; }
         .btn-dog-switch.active { background: var(--c-main-turquoise); color: #fff; border-color: var(--c-main-turquoise); }
@@ -65,8 +68,8 @@
 
     <div id="mainWrapper">
         <div class="header-area text-center py-4 bg-white border-bottom position-relative">
-            <a href="index.html" class="position-absolute start-0 top-0 p-4 text-decoration-none text-dark" style="font-weight:700;">&lt; Back</a>
-            <div id="dogImgContainer" style="display:flex; justify-content:center;"></div>
+            <a href="index.html" class="position-absolute start-0 top-0 p-4 text-decoration-none text-dark" style="font-weight:700;">&lt;</a>
+            <div id="dogImgContainer" style="display:flex; justify-content:center; height:140px;"></div>
             <h1 id="pageTitle" style="font-family:'Noto Serif JP'; font-weight:600; color:var(--c-sub-deep-ocean); margin-top:15px; font-size:1.2rem;">Archives</h1>
         </div>
 
@@ -103,16 +106,23 @@
             if (!liff.isLoggedIn()) { liff.login(); return; }
             const profile = await liff.getProfile();
             const dogId = new URLSearchParams(window.location.search).get('dogId');
+            
             fetch(`${GAS_URL}?userId=${profile.userId}&dogId=${dogId || ''}`)
-                .then(res => res.json()).then(data => {
+                .then(res => res.json())
+                .then(data => {
                     allHistoryData = data.score_history || [];
                     const dog = data.dog || {};
+
+                    // 画像表示ロジックの復旧
                     const imgCont = document.getElementById('dogImgContainer');
-                    const img = new Image(); img.src = dog.img || dog.img_url; img.className = 'dog-profile-large';
+                    const img = new Image();
+                    img.src = dog.img || dog.img_url || '';
+                    img.className = 'dog-profile-large';
                     img.onload = () => img.classList.add('loaded');
                     imgCont.appendChild(img);
 
                     document.getElementById('pageTitle').innerText = `${dog.name_disp || 'Partner'}'s Records`;
+                    
                     renderPerformance();
                     renderGallery(data.latest?.images || data.latest?.image_paths || [], data.customer?.shared_folder_url);
                     renderLogs();
@@ -138,12 +148,12 @@
                     type: 'line', data: { 
                         labels: history.map(h => {
                             if(!h.date) return '';
-                            const parts = h.date.split('/');
+                            const parts = String(h.date).split('/');
                             return parts.length > 2 ? parts[1]+'/'+parts[2] : h.date;
                         }), 
-                        datasets:[{ data:history.map(h=>h.scores[i]), borderColor:i<5?'#57C3C2':'#2F5D62', tension:0.4, fill:true, backgroundColor:i<5?'#57C3C211':'#2F5D6211' }]
+                        datasets:[{ data:history.map(h=>h.scores[i]), borderColor:i<5?'#57C3C2':'#2F5D62', tension:0.4, fill:true, backgroundColor:i<5?'#57C3C211':'#2F5D6211', borderWidth:2, pointRadius:3 }]
                     },
-                    options: { responsive:true, maintainAspectRatio:false, scales:{y:{min:0,max:5}}}
+                    options: { responsive:true, maintainAspectRatio:false, scales:{y:{min:0,max:5,ticks:{stepSize:1}}}}
                 });
             }
         }
@@ -164,8 +174,14 @@
 
         function renderLogs() {
             const list = document.getElementById('lessonList');
+            list.innerHTML = '';
             allHistoryData.forEach(h => {
-                list.insertAdjacentHTML('beforeend', `<div class="p-3 m-3 bg-white rounded shadow-sm" onclick="showDetail('${h.id}')"><b>${h.date}</b><p class="small text-muted mb-0">${h.comment || ''}</p></div>`);
+                const item = document.createElement('div');
+                item.className = 'p-3 m-3 bg-white rounded shadow-sm';
+                item.style.cursor = 'pointer';
+                item.onclick = () => showDetail(h.id);
+                item.innerHTML = `<b>${h.date}</b><p class="small text-muted mb-0">${h.comment || ''}</p>`;
+                list.appendChild(item);
             });
         }
 
@@ -175,13 +191,21 @@
             document.getElementById('modalAvgArea').innerHTML = `<div class="d-flex gap-2 mb-3"><div class="flex-fill bg-light p-2 text-center rounded small">犬: ${(s.slice(0,5).reduce((a,b)=>a+b,0)/5).toFixed(1)}</div><div class="flex-fill bg-light p-2 text-center rounded small">飼い主: ${(s.slice(5,10).reduce((a,b)=>a+b,0)/5).toFixed(1)}</div></div>`;
             document.getElementById('modalComment').innerText = h.comment || '';
             document.getElementById('modalHomework').innerText = h.homework || '';
+            let html = '';
+            scoreLabels.forEach((l, i) => html += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:5px 0;"><span>${l}</span><b>${s[i]}</b></div>`);
+            document.getElementById('modalScores').innerHTML = html;
             new bootstrap.Modal(document.getElementById('historyDetailModal')).show();
         }
 
         function renderDogSwitcher(dogs, currentId) {
             const nav = document.getElementById('dogSwitcher');
-            dogs.forEach(d => { nav.insertAdjacentHTML('beforeend', `<a href="history.html?dogId=${d.id}" class="btn-dog-switch ${d.id==currentId?'active':''}">
-                <img src="${d.img_url}" class="thumb-mini"><span>${d.name_disp}</span></a>`);
+            nav.innerHTML = '';
+            dogs.forEach(d => {
+                nav.insertAdjacentHTML('beforeend', `
+                    <a href="history.html?dogId=${d.id}" class="btn-dog-switch ${d.id==currentId?'active':''}">
+                        <img src="${d.img_url}" class="thumb-mini">
+                        <span>${d.name_disp}</span>
+                    </a>`);
             });
         }
         main();
