@@ -38,7 +38,7 @@
             font-family: var(--font-sans-jp); 
             background-color: var(--c-base-washi); 
             color: var(--c-text-sumi); 
-            padding-bottom: 50px; /* Footer static adjustment */
+            padding-bottom: 50px;
             overflow-x: hidden; 
             line-height: 1.8;
         }
@@ -55,7 +55,11 @@
             width: 3rem; height: 3rem; margin-bottom: 20px; 
             animation: spinner-border .75s linear infinite; 
         }
-        #tipsText { font-family: var(--font-serif-jp); font-weight: 500; font-size: 0.9rem; letter-spacing: 0.05em; }
+        #tipsText { 
+            margin-top: 20px; font-weight: 500; font-size: 0.95rem; 
+            font-family: var(--font-serif-jp); letter-spacing: 0.05em; 
+            padding: 0 20px; height: 1.5em; text-align: center;
+        }
         body.loaded #loadingOverlay { opacity: 0; visibility: hidden; pointer-events: none; }
 
         /* Header */
@@ -85,7 +89,7 @@
 
         .content-container { padding: 0 20px; }
 
-        /* Mastery Seal */
+        /* Mastery Seal (High Contrast Silver Guilloche) */
         .mastery-seal-container {
             display: inline-flex; align-items: center; justify-content: center;
             vertical-align: middle; margin-right: 12px;
@@ -93,24 +97,33 @@
         .mastery-seal {
             width: 40px; height: 40px; border-radius: 50%; position: relative; overflow: hidden;
             display: flex; align-items: center; justify-content: center;
-            background: repeating-radial-gradient(circle at 50% 50%, #e0e0e0 0px, #e0e0e0 0.5px, #f5f5f5 1px, #f5f5f5 1.5px),
-                        linear-gradient(135deg, #d0d0d0 0%, #ffffff 50%, #a0a0a0 100%);
-            box-shadow: inset 0 1px 2px rgba(255,255,255,0.8), inset 0 -1px 2px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.15);
-            border: 1px solid #ccc;
+            /* 背景層2: 溝(#bbb)とハイライト(#eee)のコントラストを強化して刻印感を出す */
+            background: 
+                repeating-radial-gradient(circle at 50% 50%, #bbb 0px, #bbb 0.5px, #eee 1px, #eee 1.5px),
+                linear-gradient(135deg, #ccc 0%, #fff 50%, #999 100%);
+            box-shadow: 
+                inset 0 1px 2px rgba(255,255,255,0.9), /* 上部のハイライト */
+                inset 0 -1px 2px rgba(0,0,0,0.3), /* 下部の影 */
+                0 4px 8px rgba(0,0,0,0.15); /* ドロップシャドウ */
+            border: 1px solid #aaa;
         }
+        /* 光沢アニメーション (個別計算用変数) */
         .mastery-seal::before, .mastery-seal::after { content: ''; position: absolute; inset: -150%; pointer-events: none; z-index: 2; will-change: transform; }
+        /* 鋭い白光 */
         .mastery-seal::before { 
-            background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.8) 50%, transparent 60%); 
-            transform: translate(var(--posA, -100%), var(--posA, -100%)); 
+            background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.9) 50%, transparent 60%); 
+            transform: translate(var(--posA, -150%), var(--posA, -150%)); 
         }
+        /* 柔らかなシャンパン光 */
         .mastery-seal::after { 
-            background: linear-gradient(135deg, transparent 45%, rgba(255, 250, 240, 0.5) 50%, transparent 55%); 
-            transform: translate(var(--posB, -100%), var(--posB, -100%)); 
+            background: linear-gradient(135deg, transparent 40%, rgba(255, 245, 230, 0.6) 50%, transparent 60%); 
+            transform: translate(var(--posB, -150%), var(--posB, -150%)); 
         }
         .seal-number {
             font-family: var(--font-serif-en); font-style: italic; font-weight: 700; font-size: 1.3rem;
-            position: relative; z-index: 3; color: #888; text-shadow: 0px 1px 0px rgba(255,255,255,1);
-            -webkit-text-stroke: 0.5px #999;
+            position: relative; z-index: 3; color: #666; /* 文字色は少し濃く */
+            text-shadow: 0px 1px 0px rgba(255,255,255,1);
+            -webkit-text-stroke: 0.5px #888; /* 輪郭線で視認性確保 */
         }
 
         /* Charts */
@@ -163,7 +176,7 @@
             font-size: 0.7rem; padding: 3px 10px; border-radius: 20px; margin-left: 10px; 
             font-weight: 700; vertical-align: middle; letter-spacing: 0.05em;
         }
-        .log-avg { font-family: var(--font-serif-en); font-weight: 700; color: var(--c-sub-deep-ocean); font-size: 1.1rem; }
+        .log-avg { font-family: var(--font-sans-jp); font-weight: 700; color: var(--c-sub-deep-ocean); font-size: 1.1rem; }
         .log-comment { font-size: 0.85rem; color: var(--c-text-gray); line-height: 1.5; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
         /* Footer (Static) */
@@ -212,7 +225,7 @@
 </head>
 <body>
 
-    <div id="log-stamp">v2025.12.17-FIX-HISTORY-FINAL</div>
+    <div id="log-stamp">v2025.12.17-FIX-HISTORY-SEAL-TEST</div>
 
     <div id="loadingOverlay">
         <div class="spinner-border spinner-border-brand" role="status"></div>
@@ -294,7 +307,7 @@
         </div>
     </div>
 
-    <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal fade" id="dogSelectModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center" style="color:var(--c-sub-deep-ocean); font-family:var(--font-serif-jp);">愛犬情報の切替</h5></div>
@@ -355,14 +368,26 @@
             document.body.classList.add('loaded');
         }
 
+        // --- Mastery Seal Individual Calculation ---
         window.addEventListener('scroll', () => {
-            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            if (docHeight <= 0) return;
-            const scrollPercent = window.scrollY / docHeight;
-            const posA = (scrollPercent * 300) - 150; 
-            const posB = (scrollPercent * 250) - 130; 
-            document.documentElement.style.setProperty('--posA', `${posA}%`);
-            document.documentElement.style.setProperty('--posB', `${posB}%`);
+            const seals = document.querySelectorAll('.mastery-seal');
+            if (seals.length === 0) return;
+            
+            const vH = window.innerHeight;
+            
+            seals.forEach(seal => {
+                const rect = seal.getBoundingClientRect();
+                // 画面内での位置 (0.0:上端 〜 1.0:下端)
+                // 少し範囲を広げて(-0.2〜1.2)光が通り抜けるようにする
+                const relY = rect.top / vH;
+                
+                // 上から下へスクロールする時、光は左上から右下へ抜ける
+                const posA = (relY * 300) - 150; 
+                const posB = (relY * 250) - 130;
+                
+                seal.style.setProperty('--posA', `${posA}%`);
+                seal.style.setProperty('--posB', `${posB}%`);
+            });
         });
 
         window.onload = function() {
@@ -421,7 +446,6 @@
                         document.getElementById('pageTitle').innerText = `${data.dog.name_disp}'s History`;
                     }
 
-                    // Profile Image (Fetch as Base64 to handle auth)
                     fetchProfileImage(userId, currentDogId);
 
                     renderHistory(data);
@@ -575,15 +599,12 @@
                 return `${d.getMonth()+1}/${d.getDate()}`;
             });
             
-            // Mastery Seal Logic (5x3 consecutive - relaxed for display to available data)
+            // Mastery Seal Logic (Test: Always True)
             const recent3 = chartHistory.slice(-3);
             const masteryMap = {};
-            if (recent3.length > 0) {
-                for(let i=0; i<10; i++) {
-                    if (recent3.every(h => Number(h.scores[i]) === 5)) {
-                        masteryMap[i] = true;
-                    }
-                }
+            // 【TEST MODE】 本来は if (recent3.length >= 3) だが、テストのため全表示
+            for(let i=0; i<10; i++) {
+                masteryMap[i] = true;
             }
 
             for (let i = 0; i < 10; i++) {
