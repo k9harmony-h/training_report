@@ -65,9 +65,6 @@
         /* Header */
         .header-area { background: #fff; padding: 20px 20px 25px; border-bottom: 1px solid rgba(0,0,0,0.03); position: relative; text-align: center; }
         
-        /* * FIX: 2025-12-18
-         * ロゴサイズを70%から40%に変更（指示対応）
-         */
         .header-logo { width: 40%; max-width: 300px; height: auto; margin: 0 auto 15px; display: block; filter: contrast(0.95); }
 
         .back-nav-btn { 
@@ -95,7 +92,7 @@
 
         .content-container { padding: 0 20px; }
 
-        /* Mastery Seal (High Contrast Silver Guilloche) */
+        /* Mastery Seal */
         .mastery-seal-container {
             display: inline-flex; align-items: center; justify-content: center;
             vertical-align: middle; margin-right: 12px;
@@ -103,9 +100,6 @@
         .mastery-seal {
             width: 40px; height: 40px; border-radius: 50%; position: relative; overflow: hidden;
             display: flex; align-items: center; justify-content: center;
-            /* * FIX: 2025-12-18
-             * 溝の色を #888 から #bbb に変更（指示対応）
-             */
             background: 
                 repeating-radial-gradient(circle at 50% 50%, #bbb 0px, #bbb 0.5px, #f0f0f0 1px, #f0f0f0 1.5px),
                 linear-gradient(135deg, #ccc 0%, #fff 50%, #999 100%);
@@ -115,28 +109,26 @@
                 0 4px 8px rgba(0,0,0,0.15);
             border: 1px solid #aaa;
         }
-        /* 光沢層: 角度はJSで制御 (var使用) */
         .mastery-seal::before, .mastery-seal::after { content: ''; position: absolute; inset: -150%; pointer-events: none; z-index: 2; will-change: transform; opacity: 0; transition: opacity 0.5s; }
-        
-        /* Active時のみ表示 */
         .mastery-seal.active::before, .mastery-seal.active::after { opacity: 1; }
 
-        /* 鋭い白光 */
         .mastery-seal::before { 
             background: linear-gradient(var(--angleA, 115deg), transparent 40%, rgba(255,255,255,0.9) 50%, transparent 60%); 
             transform: translate(var(--posA, -150%), var(--posA, -150%)); 
         }
-        /* 柔らかなシャンパン光 */
         .mastery-seal::after { 
             background: linear-gradient(var(--angleB, 135deg), transparent 45%, rgba(255, 245, 230, 0.6) 50%, transparent 55%); 
             transform: translate(var(--posB, -150%), var(--posB, -150%)); 
         }
         
+        /* FIX: マスタリーバッジのみ Cinzel を使用 */
         .seal-number {
-            font-family: var(--font-serif-en); font-style: italic; font-weight: 700; font-size: 1.3rem;
+            font-family: var(--font-cinzel); 
+            font-style: normal; /* Cinzelはitalic不要な場合が多いですが、好みで調整 */
+            font-weight: 700; font-size: 1.3rem;
             position: relative; z-index: 3; color: #555; 
             text-shadow: 0px 1px 0px rgba(255,255,255,1);
-            -webkit-text-stroke: 0.5px #777; /* 輪郭強化 */
+            -webkit-text-stroke: 0.5px #777; 
         }
 
         /* Charts */
@@ -198,7 +190,6 @@
             border-top: 1px solid rgba(0,0,0,0.05); padding: 30px 20px 40px;
             display: flex; flex-direction: column; gap: 15px;
         }
-        
         .dog-select-btn { 
             width: 100%; margin-bottom: 12px; padding: 16px; 
             font-weight: 700; font-size: 1.05rem; border-radius: 12px; background: #fff; 
@@ -207,7 +198,6 @@
             font-family: var(--font-sans-jp); letter-spacing: 0.05em;
         }
         .dog-select-btn:active { background: var(--c-bg-mist); transform: scale(0.98); }
-
         .btn-back-home {
             display: block; width: 100%; text-align: center; padding: 16px;
             background: var(--c-sub-deep-ocean); color: #fff; text-decoration: none;
@@ -223,12 +213,22 @@
         .modal-avg-box { display: flex; gap: 15px; margin-bottom: 25px; }
         .avg-item { flex: 1; background: var(--c-bg-mist); border-radius: 12px; padding: 15px; text-align: center; border: 1px solid rgba(0,0,0,0.03); }
         .avg-label { font-size: 0.7rem; color: var(--c-text-gray); font-weight: 700; display: block; margin-bottom: 5px; letter-spacing: 0.05em; }
+        /* FIX: アベレージ数字は serif-en */
         .avg-val { font-size: 1.8rem; color: var(--c-main-turquoise); font-weight: 700; font-family: var(--font-serif-en); line-height: 1; }
         .modal-score-item { margin-bottom: 8px; font-size: 0.95rem; border-bottom: 1px dashed rgba(0,0,0,0.05); padding-bottom: 6px; display: flex; justify-content: space-between; }
+        /* FIX: 評価点数字は serif-en */
         .modal-score-val { font-family: var(--font-serif-en); font-weight: 700; color: var(--c-sub-deep-ocean); font-size: 1.1rem; }
-        .detail-card-in-modal { background: var(--c-bg-mist); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        .detail-label { font-size: 0.75rem; font-weight: 700; color: var(--c-sub-deep-ocean); margin-bottom: 8px; display: block; border-left: 3px solid var(--c-main-turquoise); padding-left: 8px; }
-
+        
+        /* FIX: モーダル内詳細セクションのスタイル定義変更 */
+        .detail-section-common {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 5px 0 5px 12px; /* 左線からの余白 */
+            margin-bottom: 15px;
+        }
+        .detail-label { font-size: 0.75rem; font-weight: 700; color: var(--c-sub-deep-ocean); margin-bottom: 8px; display: block; }
+        
         #errorContainer { display: none; padding: 40px 20px; text-align: center; }
         .error-box { background: #fff; padding: 30px 20px; border-radius: 12px; border: 1px solid #f8d7da; color: #721c24; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
 
@@ -238,7 +238,7 @@
 </head>
 <body>
 
-    <div id="log-stamp">v2025.12.18-UI-FIX-MODAL-LOGO</div>
+    <div id="log-stamp">v2025.12.18-UI-FINAL-ADJUST</div>
 
     <div id="loadingOverlay">
         <div class="spinner-border spinner-border-brand" role="status"></div>
@@ -294,25 +294,26 @@
                 </div>
                 <div class="modal-body p-4 pt-2">
                     <div class="text-center mb-4">
-                        <span id="modalDate" style="font-family:var(--font-cinzel); font-weight:700; font-size:1.1rem; color:var(--c-main-turquoise); border-bottom:1px solid var(--c-main-turquoise); padding-bottom:2px;"></span>
+                        <span id="modalDate" style="font-family:var(--font-serif-en); font-weight:700; font-size:1.3rem; color:var(--c-main-turquoise); border-bottom:1px solid var(--c-main-turquoise); padding-bottom:2px;"></span>
                     </div>
                     <div id="modalAvgArea"></div>
-                    <div class="detail-card-in-modal">
-                        <span class="detail-label">SCORE DETAILS</span>
+                    
+                    <div style="background:var(--c-bg-mist); border-radius:12px; padding:15px; margin-bottom:15px;">
+                        <span class="detail-label" style="border-left:3px solid var(--c-main-turquoise); padding-left:8px;">SCORE DETAILS</span>
                         <div id="modalScores"></div>
                     </div>
                     
-                    <div class="detail-card-in-modal" style="border: 2px solid var(--c-sub-beige); background: rgba(199, 178, 153, 0.1);">
+                    <div class="detail-section-common" style="border-left: 4px solid var(--c-sub-beige);">
                         <span class="detail-label">ACHIEVEMENTS (Done)</span>
                         <p id="modalDone" class="small mb-0" style="white-space: pre-wrap; line-height:1.6;"></p>
                     </div>
 
-                    <div class="detail-card-in-modal" style="border: 2px solid var(--c-sub-deep-ocean); background: rgba(47, 93, 98, 0.05);">
+                    <div class="detail-section-common" style="border-left: 4px solid var(--c-main-turquoise);">
                         <span class="detail-label">FEEDBACK</span>
                         <p id="modalComment" class="small mb-0" style="white-space: pre-wrap; line-height:1.6;"></p>
                     </div>
 
-                    <div class="detail-card-in-modal" style="border: 2px solid var(--c-sub-deep-ocean); background: rgba(47, 93, 98, 0.05);">
+                    <div class="detail-section-common" style="border-left: 4px solid var(--c-main-turquoise);">
                         <span class="detail-label" style="color:var(--c-main-turquoise);">HOMEWORK</span>
                         <p id="modalHomework" class="small mb-0" style="white-space: pre-wrap; line-height:1.6;"></p>
                     </div>
@@ -624,12 +625,13 @@
                 return `${d.getMonth()+1}/${d.getDate()}`;
             });
             
-            // Mastery Seal Logic (Test: Always True)
-            const recent3 = chartHistory.slice(-3);
+            // FIX: マスタリーバッジ表示ロジック
+            // 全履歴を通じて、各項目が「5点」を3回以上取っているか判定
             const masteryMap = {};
-            // 【TEST MODE】 Always show for now
             for(let i=0; i<10; i++) {
-                masteryMap[i] = true;
+                // allHistoryData内で、scores[i] が 5 の回数をカウント
+                const count5 = allHistoryData.filter(h => Number(h.scores[i]) === 5).length;
+                masteryMap[i] = (count5 >= 3);
             }
 
             for (let i = 0; i < 10; i++) {
@@ -728,7 +730,7 @@
             for (let i = 0; i < 10; i++) { 
                 scoresContainer.insertAdjacentHTML('beforeend', `
                     <div class="modal-score-item">
-                        <span><span style="font-family:'Cinzel'; margin-right:5px; color:#ccc;">${i+1}</span> ${scoreLabels[i]}</span>
+                        <span><span style="font-family:'var(--font-serif-en)'; margin-right:5px; color:#ccc;">${i+1}</span> ${scoreLabels[i]}</span>
                         <span class="modal-score-val">${numScores[i]}</span>
                     </div>`); 
             }
