@@ -63,9 +63,12 @@
         body.loaded #loadingOverlay { opacity: 0; visibility: hidden; pointer-events: none; }
 
         /* Header */
-        .header-area { background: #fff; padding: 15px 20px 25px; border-bottom: 1px solid rgba(0,0,0,0.03); position: relative; text-align: center; }
+        .header-area { background: #fff; padding: 20px 20px 25px; border-bottom: 1px solid rgba(0,0,0,0.03); position: relative; text-align: center; }
+        
+        .header-logo { width: 70%; max-width: 300px; height: auto; margin: 0 auto 15px; display: block; filter: contrast(0.95); }
+
         .back-nav-btn { 
-            position: absolute; top: 20px; left: 20px; 
+            position: absolute; top: 25px; left: 20px; 
             color: var(--c-sub-deep-ocean); text-decoration: none; font-weight: 700; 
             font-family: var(--font-lato); font-size: 1rem; z-index: 10; opacity: 0.8;
             transition: opacity 0.3s var(--ease-luxury);
@@ -97,33 +100,38 @@
         .mastery-seal {
             width: 40px; height: 40px; border-radius: 50%; position: relative; overflow: hidden;
             display: flex; align-items: center; justify-content: center;
-            /* 背景層2: 溝(#bbb)とハイライト(#eee)のコントラストを強化して刻印感を出す */
+            /* 背景層2: 溝(#888)で濃く深く */
             background: 
-                repeating-radial-gradient(circle at 50% 50%, #bbb 0px, #bbb 0.5px, #eee 1px, #eee 1.5px),
+                repeating-radial-gradient(circle at 50% 50%, #888 0px, #888 0.5px, #f0f0f0 1px, #f0f0f0 1.5px),
                 linear-gradient(135deg, #ccc 0%, #fff 50%, #999 100%);
             box-shadow: 
-                inset 0 1px 2px rgba(255,255,255,0.9), /* 上部のハイライト */
-                inset 0 -1px 2px rgba(0,0,0,0.3), /* 下部の影 */
-                0 4px 8px rgba(0,0,0,0.15); /* ドロップシャドウ */
+                inset 0 1px 2px rgba(255,255,255,0.9),
+                inset 0 -1px 2px rgba(0,0,0,0.4), 
+                0 4px 8px rgba(0,0,0,0.15);
             border: 1px solid #aaa;
         }
-        /* 光沢アニメーション (個別計算用変数) */
-        .mastery-seal::before, .mastery-seal::after { content: ''; position: absolute; inset: -150%; pointer-events: none; z-index: 2; will-change: transform; }
+        /* 光沢層: 角度はJSで制御 (var使用) */
+        .mastery-seal::before, .mastery-seal::after { content: ''; position: absolute; inset: -150%; pointer-events: none; z-index: 2; will-change: transform; opacity: 0; transition: opacity 0.5s; }
+        
+        /* Active時のみ表示 */
+        .mastery-seal.active::before, .mastery-seal.active::after { opacity: 1; }
+
         /* 鋭い白光 */
         .mastery-seal::before { 
-            background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.9) 50%, transparent 60%); 
+            background: linear-gradient(var(--angleA, 115deg), transparent 40%, rgba(255,255,255,0.9) 50%, transparent 60%); 
             transform: translate(var(--posA, -150%), var(--posA, -150%)); 
         }
         /* 柔らかなシャンパン光 */
         .mastery-seal::after { 
-            background: linear-gradient(135deg, transparent 40%, rgba(255, 245, 230, 0.6) 50%, transparent 60%); 
+            background: linear-gradient(var(--angleB, 135deg), transparent 45%, rgba(255, 245, 230, 0.6) 50%, transparent 55%); 
             transform: translate(var(--posB, -150%), var(--posB, -150%)); 
         }
+        
         .seal-number {
             font-family: var(--font-serif-en); font-style: italic; font-weight: 700; font-size: 1.3rem;
-            position: relative; z-index: 3; color: #666; /* 文字色は少し濃く */
+            position: relative; z-index: 3; color: #555; 
             text-shadow: 0px 1px 0px rgba(255,255,255,1);
-            -webkit-text-stroke: 0.5px #888; /* 輪郭線で視認性確保 */
+            -webkit-text-stroke: 0.5px #777; /* 輪郭強化 */
         }
 
         /* Charts */
@@ -225,7 +233,7 @@
 </head>
 <body>
 
-    <div id="log-stamp">v2025.12.17-FIX-HISTORY-SEAL-TEST</div>
+    <div id="log-stamp">v2025.12.18-FIX-HISTORY-FINAL</div>
 
     <div id="loadingOverlay">
         <div class="spinner-border spinner-border-brand" role="status"></div>
@@ -242,8 +250,12 @@
 
     <div id="mainWrapper">
         <div class="header-area">
+            <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="header-logo" alt="K9 Harmony">
+            
             <a href="#" id="backLink" class="back-nav-btn">&lt; Back</a>
+            
             <div class="profile-img-wrapper" id="dogImgContainer"></div>
+            
             <h1 id="pageTitle" class="page-title">Lesson History</h1>
         </div>
 
@@ -368,7 +380,7 @@
             document.body.classList.add('loaded');
         }
 
-        // --- Mastery Seal Individual Calculation ---
+        // --- Mastery Seal Advanced Calculation ---
         window.addEventListener('scroll', () => {
             const seals = document.querySelectorAll('.mastery-seal');
             if (seals.length === 0) return;
@@ -376,14 +388,18 @@
             const vH = window.innerHeight;
             
             seals.forEach(seal => {
+                if (seal.dataset.active === 'false') return;
+
                 const rect = seal.getBoundingClientRect();
-                // 画面内での位置 (0.0:上端 〜 1.0:下端)
-                // 少し範囲を広げて(-0.2〜1.2)光が通り抜けるようにする
                 const relY = rect.top / vH;
                 
-                // 上から下へスクロールする時、光は左上から右下へ抜ける
-                const posA = (relY * 300) - 150; 
-                const posB = (relY * 250) - 130;
+                // Retrieve preset offsets from style
+                const offA = parseFloat(seal.style.getPropertyValue('--offA') || 0);
+                const offB = parseFloat(seal.style.getPropertyValue('--offB') || 0);
+                
+                // Move light reflection
+                const posA = (relY * 300) - 150 + offA; 
+                const posB = (relY * 250) - 130 + offB;
                 
                 seal.style.setProperty('--posA', `${posA}%`);
                 seal.style.setProperty('--posB', `${posB}%`);
@@ -602,7 +618,7 @@
             // Mastery Seal Logic (Test: Always True)
             const recent3 = chartHistory.slice(-3);
             const masteryMap = {};
-            // 【TEST MODE】 本来は if (recent3.length >= 3) だが、テストのため全表示
+            // 【TEST MODE】 Always show for now
             for(let i=0; i<10; i++) {
                 masteryMap[i] = true;
             }
@@ -623,9 +639,18 @@
                     else if (diff < 0) { comparisonText = 'DOWN'; comparisonClass = 'status-steady'; }
                 } else { comparisonText = 'Start'; }
                 
+                // Random Calculation for Seal
+                const isActive = Math.random() < 0.7; // 70% active
+                const angleA = Math.floor(Math.random() * 360) + 'deg';
+                const angleB = Math.floor(Math.random() * 360) + 'deg';
+                const offA = (Math.random() * 100) - 50; 
+                const offB = (Math.random() * 100) - 50;
+
                 const sealHtml = masteryMap[i] ? `
                     <div class="mastery-seal-container">
-                        <div class="mastery-seal">
+                        <div class="mastery-seal ${isActive ? 'active' : ''}" 
+                             data-active="${isActive}"
+                             style="--angleA:${angleA}; --angleB:${angleB}; --offA:${offA}%; --offB:${offB}%;">
                             <span class="seal-number">${i+1}</span>
                         </div>
                     </div>` : '';
