@@ -22,19 +22,20 @@
         
         body { font-family: var(--font-sans-jp); background-color: var(--c-base-washi); color: #333; padding-bottom: 80px; overflow-x: hidden; }
 
-        /* index.html完全同期ローディング */
+        /* index.html共通ローディング (中央) */
         #loadingOverlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background-color: var(--c-base-washi); z-index: 9999;
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
         }
+        .loading-content { text-align: center; }
         .spinner-border-brand { 
             border-color: var(--c-main-turquoise); border-right-color: transparent; 
             width: 3rem; height: 3rem; margin-bottom: 20px;
             animation: spinner-border .75s linear infinite, breathe 2.0s var(--ease-luxury) infinite;
         }
         @keyframes breathe { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.0); } }
-        #tipsText { font-family: var(--font-serif-jp); font-weight: 500; font-size: 0.95rem; letter-spacing: 0.05em; padding: 0 20px; height: 1.5em; text-align: center; color: var(--c-sub-deep-ocean); }
+        #tipsText { font-family: var(--font-serif-jp); font-weight: 500; font-size: 0.95rem; color: var(--c-sub-deep-ocean); height: 1.5em; }
         body.loaded #loadingOverlay { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.8s var(--ease-luxury), visibility 0.8s var(--ease-luxury); }
 
         /* Mastery Seal */
@@ -56,24 +57,23 @@
         .header-area { background: #fff; padding: 20px; border-bottom: 1px solid rgba(0,0,0,0.03); position: relative; }
         .back-link { color: var(--c-main-turquoise); font-weight: bold; text-decoration: none; font-size: 1.1rem; position: absolute; top: 25px; left: 20px; z-index: 10; font-family: var(--font-lato); }
         .dog-profile-large { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 3px solid var(--c-main-turquoise); padding: 3px; background: #fff; box-shadow: 0 10px 30px -10px rgba(87, 195, 194, 0.3); }
-        .page-title { text-align: center; font-family: var(--font-serif-jp); font-weight: 600; font-size: 1.25rem; color: var(--c-sub-deep-ocean); margin-top: 15px; letter-spacing: 0.1em; }
-
+        
         .chart-card { background: #fff; border-radius: 12px; margin: 25px 15px; padding: 20px; box-shadow: 0 10px 40px -10px rgba(47,93,98,0.08); }
-        .chart-header { display: flex; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
-        .chart-title { font-family: var(--font-serif-jp); font-size: 1.05rem; font-weight: 600; color: var(--c-sub-deep-ocean); margin: 0; }
+        .chart-header { display: flex; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
+        .chart-title { font-family: var(--font-serif-jp); font-size: 1rem; font-weight: 600; color: var(--c-sub-deep-ocean); margin: 0; }
         .chart-container { position: relative; height: 180px; width: 100%; }
 
-        .section-title { font-family: var(--font-serif-jp); font-size: 1.15rem; color: var(--c-sub-deep-ocean); margin: 50px 20px 20px; border-left: 3px solid var(--c-main-turquoise); padding-left: 12px; font-weight: 600; }
+        .section-title { font-family: var(--font-serif-jp); font-size: 1.15rem; color: var(--c-sub-deep-ocean); margin: 40px 20px 15px; border-left: 3px solid var(--c-main-turquoise); padding-left: 12px; font-weight: 600; }
         .photo-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 0 20px 20px; }
         .gallery-img { height: 130px; border-radius: 12px; border: 1px solid #ddd; object-fit: cover; cursor: pointer; }
 
-        .list-group-item { border: none; margin: 0 20px 12px; border-radius: 12px; background: var(--c-bg-mist); padding: 20px; cursor: pointer; transition: all 0.2s; }
-        .list-header { font-weight: 700; color: var(--c-sub-deep-ocean); font-family: var(--font-serif-jp); }
-        .list-date { font-family: var(--font-lato); color: var(--c-main-turquoise); font-weight: 700; font-size: 0.9rem; }
+        .list-group-item { border: none; margin: 0 20px 12px; border-radius: 12px; background: #fff; border: 1px solid #eee; padding: 20px; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .list-header { font-weight: 700; color: var(--c-main-turquoise); font-family: var(--font-serif-jp); }
+        .list-date { font-family: var(--font-lato); color: #888; font-weight: 400; font-size: 0.9rem; }
         
-        .modal-content { border-radius: 16px; border: none; }
-        .avg-item { flex: 1; background: var(--c-bg-mist); border-radius: 12px; padding: 15px; text-align: center; }
-        .avg-val { font-size: 1.8rem; color: var(--c-accent-copper); font-weight: 700; font-family: var(--font-serif-en); }
+        .modal-avg-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        .avg-item { flex: 1; background: var(--c-bg-mist); border-radius: 8px; padding: 10px; text-align: center; }
+        .avg-val { font-size: 1.5rem; color: var(--c-main-turquoise); font-weight: 700; font-family: var(--font-serif-en); }
     </style>
 </head>
 <body>
@@ -81,15 +81,15 @@
     <div id="loadingOverlay">
         <div class="loading-content">
             <div class="spinner-border-brand" role="status"></div>
-            <p id="tipsText">ただいま準備しております...</p>
+            <p id="tipsText">Loading Archives...</p>
         </div>
     </div>
 
     <div id="mainWrapper">
         <div class="header-area">
             <a href="index.html" id="backLinkBtn" class="back-link">&lt; Back</a>
-            <div class="profile-img-container" id="dogImgContainer" style="display:flex; justify-content:center;"></div>
-            <h1 id="pageTitle" class="page-title">Performance Records</h1>
+            <div id="dogImgContainer" style="display:flex; justify-content:center;"></div>
+            <h1 id="pageTitle" style="text-align:center; font-family:var(--font-serif-jp); font-weight:600; font-size:1.2rem; color:var(--c-sub-deep-ocean); margin-top:15px;">Archives</h1>
         </div>
 
         <div class="content-container">
@@ -103,18 +103,22 @@
 
     <div class="modal fade" id="historyDetailModal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-body p-4">
-            <h5 class="text-center mb-4" style="font-family:var(--font-serif-jp); color:var(--c-sub-deep-ocean);">Lesson Report</h5>
-            <div class="text-center mb-4"><span id="modalDate" style="font-family:var(--font-lato); font-weight:700;"></span></div>
-            <div id="modalAvgArea" class="d-flex gap-3 mb-4"></div>
-            <div id="modalScores" class="small mb-4"></div>
-            <h6 class="mt-4 mb-2 text-muted small fw-bold">FEEDBACK</h6>
-            <p id="modalComment" style="white-space: pre-wrap; background:var(--c-bg-mist); padding:15px; border-radius:8px; font-size:0.9rem;"></p>
-            <h6 class="mt-4 mb-2 text-muted small fw-bold">HOMEWORK</h6>
-            <p id="modalHomework" style="white-space: pre-wrap; background:#fff; border:1px solid var(--c-main-turquoise); padding:15px; border-radius:8px; font-size:0.9rem;"></p>
+        <div class="modal-content" style="border-radius:12px;">
+          <div class="modal-header">
+            <h5 class="modal-title fw-bold">Lesson Detail: <span id="modalDate"></span></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
-          <div class="modal-footer border-0 justify-content-center pb-4"><button type="button" class="btn btn-secondary rounded-pill px-5" data-bs-dismiss="modal">閉じる</button></div>
+          <div class="modal-body p-4">
+            <div id="modalAvgArea"></div>
+            <h6 class="mt-2 text-muted small fw-bold">SCORE DETAILS</h6>
+            <div id="modalScores"></div>
+            <h6 class="mt-4 text-muted small fw-bold">DOG FEEDBACK</h6>
+            <p id="modalComment" style="white-space: pre-wrap; background:#f7f7f7; padding:15px; border-radius:8px; font-size:0.9rem;"></p>
+            <h6 class="mt-4 text-muted small fw-bold">HOMEWORK</h6>
+            <p id="modalHomework" style="white-space: pre-wrap; background:#f7f7f7; padding:15px; border-radius:8px; font-size:0.9rem;"></p>
+            <div class="text-end mt-3"><a href="#" id="driveLink" style="display:none; color:var(--c-main-turquoise); text-decoration:none; font-weight:bold; font-size:0.85rem;">Google Drive &gt;</a></div>
+          </div>
+          <div class="modal-footer"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">閉じる</button></div>
         </div>
       </div>
     </div>
@@ -125,11 +129,12 @@
         const scoreLabels = [ '指示理解', '集中力', '報酬', 'ボディ', 'コンタクト', '指示出し', '対応力', 'リード', 'ボディ', 'コンタクト' ];
         const dogTips = ["犬の鼻紋は人間の指紋と同じです。", "犬は人間の約4倍の聴力を持っています。", "犬は汗を肉球からしかかけません。", "犬があくびをするのは落ち着こうとしている時もあります。"];
 
+        let allHistoryData = []; let customerData = {}; 
         let tipsTimer;
+
         function startTipsSlider() {
             const el = document.getElementById('tipsText');
-            let idx = 0;
-            el.innerText = dogTips[0];
+            let idx = 0; el.innerText = dogTips[0];
             tipsTimer = setInterval(() => { idx = (idx + 1) % dogTips.length; el.innerText = dogTips[idx]; }, 2500);
         }
 
@@ -141,45 +146,61 @@
             });
         });
 
-        function extractFileId(url) {
-            if (!url) return '';
-            const match = url.match(/id=([-\w]{25,})/) || url.match(/\/d\/([-\w]{25,})/);
-            return match ? match[1] : '';
-        }
-
         async function main() {
             startTipsSlider();
-            await liff.init({ liffId: LIFF_ID });
-            if (!liff.isLoggedIn()) { liff.login(); return; }
-            const profile = await liff.getProfile();
-            const dogId = new URLSearchParams(window.location.search).get('dogId');
-            fetchData(profile.userId, dogId);
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                if (!liff.isLoggedIn()) { liff.login(); return; }
+                const profile = await liff.getProfile();
+                const dogId = new URLSearchParams(window.location.search).get('dogId');
+                fetchTextData(profile.userId, dogId);
+            } catch (err) { console.error(err); }
         }
 
-        function fetchData(userId, dogId) {
+        function fetchTextData(userId, dogId) {
             fetch(`${GAS_URL}?userId=${userId}&dogId=${dogId || ''}`)
                 .then(res => res.json())
                 .then(data => {
+                    allHistoryData = data.score_history || [];
+                    customerData = data.customer || {};
                     const dog = data.dog || {};
-                    const history = data.score_history || [];
-                    
-                    // Profile Image
-                    const imgContainer = document.getElementById('dogImgContainer');
-                    const fileId = extractFileId(dog.img || dog.img_url);
-                    imgContainer.innerHTML = fileId ? `<img src="https://drive.google.com/thumbnail?id=${fileId}&sz=w300" class="dog-profile-large">` : 'No Image';
-                    
-                    renderPerformance(history);
-                    renderGallery(data.latest?.image_paths || []);
-                    renderLogs(history);
+
+                    // Image Display Restore (from index logic)
+                    fetchProfileImage(userId, dogId);
+                    fetchGalleryImages(userId, dogId);
+
+                    document.getElementById('pageTitle').innerText = `${dog.name_disp || 'Partner'}'s Records`;
+                    renderPerformance();
+                    renderLogs();
                     
                     clearInterval(tipsTimer);
                     document.body.classList.add('loaded');
                 });
         }
 
-        function renderPerformance(history) {
+        function fetchProfileImage(userId, dogId) {
+            fetch(`${GAS_URL}?userId=${userId}&type=img_profile&dogId=${dogId || ''}`)
+                .then(res => res.json()).then(data => {
+                    const cont = document.getElementById('dogImgContainer');
+                    cont.innerHTML = data.image ? `<img src="${data.image}" class="dog-profile-large">` : 'No Image';
+                });
+        }
+
+        function fetchGalleryImages(userId, dogId) {
+            fetch(`${GAS_URL}?userId=${userId}&type=img_latest&dogId=${dogId || ''}`)
+                .then(res => res.json()).then(data => {
+                    const gal = document.getElementById('mainGalleryContainer');
+                    gal.innerHTML = '';
+                    if (data.images && data.images.length > 0) {
+                        data.images.forEach(src => gal.insertAdjacentHTML('beforeend', `<div class="gallery-img-wrapper"><img src="${src}" class="gallery-img zoomable"></div>`));
+                        mediumZoom('.zoomable');
+                    } else { gal.innerHTML = '<p class="small text-muted ms-3">No Photos</p>'; }
+                });
+        }
+
+        function renderPerformance() {
             const area = document.getElementById('performanceArea');
-            const chartHistory = [...history].sort((a,b) => new Date(a.date) - new Date(b.date)).slice(-8);
+            const chartHistory = [...allHistoryData].sort((a,b) => new Date(a.date) - new Date(b.date)).slice(-8);
             for (let i = 0; i < 10; i++) {
                 const color = (i < 5) ? '#57C3C2' : '#2F5D62'; 
                 area.insertAdjacentHTML('beforeend', `
@@ -197,50 +218,47 @@
                         labels: chartHistory.map(h => h.date.split('/').slice(1).join('/')),
                         datasets: [{ data: chartHistory.map(h => h.scores[i]), borderColor: color, backgroundColor: color + '11', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3 }]
                     },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 5, ticks: { stepSize: 1, font: {family:'Lato'} } }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
                 });
             }
         }
 
-        function renderGallery(paths) {
-            const gal = document.getElementById('mainGalleryContainer');
-            if(!paths.length) { gal.innerHTML = '<p class="small text-muted ms-3">No Photos</p>'; return; }
-            paths.forEach(p => {
-                const fid = extractFileId(p);
-                if(fid) gal.insertAdjacentHTML('beforeend', `<img src="https://drive.google.com/thumbnail?id=${fid}&sz=w300" class="gallery-img zoomable">`);
-            });
-            mediumZoom('.zoomable');
-        }
-
-        function renderLogs(history) {
+        function renderLogs() {
             const list = document.getElementById('lessonList');
-            history.forEach(h => {
-                list.insertAdjacentHTML('beforeend', `
-                    <div class="list-group-item" onclick="showDetail('${h.id}', '${JSON.stringify(h).replace(/'/g, "\\'")}')">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="list-header">Lesson: <span class="list-date">${h.date}</span></span>
-                            <span class="fw-bold" style="color:var(--c-accent-copper); font-family:Lato;">Avg: ${(h.scores.reduce((a,b)=>Number(a)+Number(b),0)/10).toFixed(1)}</span>
-                        </div>
-                        <p class="small text-muted mb-0 text-truncate">${h.comment || ''}</p>
+            list.innerHTML = '';
+            allHistoryData.forEach(h => {
+                const avg = (h.scores.map(Number).reduce((a,b)=>a+b,0)/10).toFixed(1);
+                const item = document.createElement('div');
+                item.className = 'list-group-item';
+                item.onclick = () => showLessonDetail(h.id);
+                item.innerHTML = `
+                    <div class="d-flex w-100 justify-content-between align-items-center">
+                        <span class="list-header">Lesson: ${h.date}</span>
+                        <span class="fw-bold" style="color:var(--c-main-turquoise);">Avg: ${avg}</span>
                     </div>
-                `);
+                    <p class="small text-muted mb-0 text-truncate">${h.comment || ''}</p>
+                `;
+                list.appendChild(item);
             });
         }
 
-        function showDetail(id, hStr) {
-            const h = JSON.parse(hStr);
-            const s = h.scores.map(Number);
+        function showLessonDetail(id) {
+            const h = allHistoryData.find(x => x.id === id); if (!h) return;
             document.getElementById('modalDate').innerText = h.date;
             document.getElementById('modalComment').innerText = h.comment || 'なし';
             document.getElementById('modalHomework').innerText = h.homework || 'なし';
+            const s = h.scores.map(Number);
             document.getElementById('modalAvgArea').innerHTML = `
                 <div class="avg-item"><span class="small d-block text-muted">犬の評価</span><span class="avg-val">${(s.slice(0,5).reduce((a,b)=>a+b,0)/5).toFixed(1)}</span></div>
                 <div class="avg-item"><span class="small d-block text-muted">飼い主の評価</span><span class="avg-val">${(s.slice(5,10).reduce((a,b)=>a+b,0)/5).toFixed(1)}</span></div>`;
-            let html = '';
-            scoreLabels.forEach((l, i) => html += `<div class="d-flex justify-content-between py-1 border-bottom"><span>${l}</span><b>${s[i]}</b></div>`);
-            document.getElementById('modalScores').innerHTML = html;
+            let scoreHtml = '';
+            scoreLabels.forEach((l, i) => scoreHtml += `<div class="d-flex justify-content-between py-1 border-bottom border-light"><span>${l}</span><b style="color:var(--c-main-turquoise)">${s[i]}</b></div>`);
+            document.getElementById('modalScores').innerHTML = scoreHtml;
+            const driveLink = document.getElementById('driveLink');
+            if (customerData.shared_folder_url) { driveLink.href = customerData.shared_folder_url; driveLink.style.display = 'block'; }
             new bootstrap.Modal(document.getElementById('historyDetailModal')).show();
         }
+
         main();
     </script>
 </body>
