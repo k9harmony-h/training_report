@@ -121,10 +121,9 @@
             transform: translate(var(--posB, -150%), var(--posB, -150%)); 
         }
         
-        /* FIX: マスタリーバッジのみ Cinzel を使用 */
         .seal-number {
             font-family: var(--font-cinzel); 
-            font-style: normal; /* Cinzelはitalic不要な場合が多いですが、好みで調整 */
+            font-style: normal;
             font-weight: 700; font-size: 1.3rem;
             position: relative; z-index: 3; color: #555; 
             text-shadow: 0px 1px 0px rgba(255,255,255,1);
@@ -213,13 +212,10 @@
         .modal-avg-box { display: flex; gap: 15px; margin-bottom: 25px; }
         .avg-item { flex: 1; background: var(--c-bg-mist); border-radius: 12px; padding: 15px; text-align: center; border: 1px solid rgba(0,0,0,0.03); }
         .avg-label { font-size: 0.7rem; color: var(--c-text-gray); font-weight: 700; display: block; margin-bottom: 5px; letter-spacing: 0.05em; }
-        /* FIX: アベレージ数字は serif-en */
         .avg-val { font-size: 1.8rem; color: var(--c-main-turquoise); font-weight: 700; font-family: var(--font-serif-en); line-height: 1; }
         .modal-score-item { margin-bottom: 8px; font-size: 0.95rem; border-bottom: 1px dashed rgba(0,0,0,0.05); padding-bottom: 6px; display: flex; justify-content: space-between; }
-        /* FIX: 評価点数字は serif-en */
         .modal-score-val { font-family: var(--font-serif-en); font-weight: 700; color: var(--c-sub-deep-ocean); font-size: 1.1rem; }
         
-        /* FIX: モーダル内詳細セクションのスタイル定義変更 */
         .detail-section-common {
             background: transparent;
             border: none;
@@ -238,7 +234,7 @@
 </head>
 <body>
 
-    <div id="log-stamp">v2025.12.18-UI-FINAL-ADJUST</div>
+    <div id="log-stamp">v2025.12.18-FINAL-FIX-TOTAL-TIME</div>
 
     <div id="loadingOverlay">
         <div class="spinner-border spinner-border-brand" role="status"></div>
@@ -262,7 +258,7 @@
             <div class="profile-img-wrapper" id="dogImgContainer"></div>
             
             <h1 id="pageTitle" class="page-title">Lesson History</h1>
-        </div>
+            </div>
 
         <div class="content-container">
             <p class="text-muted small text-center mt-4 mb-2" style="font-family:var(--font-serif-jp);">スコア推移 (最新10回)</p>
@@ -470,20 +466,20 @@
                     
                     if (data.dog && data.dog.name_disp) {
                         document.getElementById('pageTitle').innerText = `${data.dog.name_disp}'s History`;
-                        // 総トレーニング時間の表示
-                        if (data.total_hours !== undefined) {
-                            // 既存の表示があれば削除（重複防止）
-                            const existEl = document.getElementById('totalHoursDisplay');
+
+                        // ▼▼▼ 追加: 総トレーニング時間表示 ▼▼▼
+                        if (data.total_training_time !== undefined) {
+                            const existEl = document.getElementById('totalTimeDisplay');
                             if(existEl) existEl.remove();
 
                             const timeEl = document.createElement('p');
-                            timeEl.id = 'totalHoursDisplay';
+                            timeEl.id = 'totalTimeDisplay';
                             timeEl.style.cssText = "text-align:center; font-family:var(--font-serif-en); color:var(--c-sub-deep-ocean); font-size:0.9rem; margin-top:-5px; margin-bottom:15px; font-weight:600; letter-spacing:0.05em;";
-                            timeEl.innerHTML = `&lt; Total Training Time : ${data.total_hours}h &gt;`;
-        
+                            timeEl.innerHTML = `&lt; Total Training Time : ${data.total_training_time}h &gt;`;
+                            
                             const titleEl = document.getElementById('pageTitle');
                             titleEl.parentNode.insertBefore(timeEl, titleEl.nextSibling);
-                            }
+                        }
                     }
 
                     fetchProfileImage(userId, currentDogId);
@@ -639,11 +635,9 @@
                 return `${d.getMonth()+1}/${d.getDate()}`;
             });
             
-            // FIX: マスタリーバッジ表示ロジック
-            // 全履歴を通じて、各項目が「5点」を3回以上取っているか判定
+            // Mastery Seal Logic (修正済み: 3回以上5点で表示)
             const masteryMap = {};
             for(let i=0; i<10; i++) {
-                // allHistoryData内で、scores[i] が 5 の回数をカウント
                 const count5 = allHistoryData.filter(h => Number(h.scores[i]) === 5).length;
                 masteryMap[i] = (count5 >= 3);
             }
