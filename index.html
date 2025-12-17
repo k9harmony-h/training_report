@@ -27,35 +27,27 @@
 
   <style>
     /* =========================================
-       1. Foundation: Color & Typography
+       1. Foundation
        ========================================= */
     :root { 
-        /* Main Identity */
         --c-main-turquoise: #57C3C2;
-        /* Authority & Trust */
         --c-sub-deep-ocean: #2F5D62;
-        /* Conversion Trigger */
         --c-accent-copper: #C87A56;
-        /* Luxury Foundation */
         --c-base-washi: #FAFAFA;
         --c-bg-mist: #F4F7F7;
-        /* Organic Touch */
         --c-sub-beige: #C7B299;
-        /* Typography */
         --c-text-sumi: #333333;
         --c-text-gray: #666666;
         
-        /* Fonts */
         --font-serif-en: 'Cormorant Garamond', serif;
         --font-serif-jp: 'Noto Serif JP', serif;
         --font-sans-jp: 'Noto Sans JP', sans-serif;
         --font-sans-en: 'Lato', sans-serif;
 
-        /* Motion */
         --ease-luxury: cubic-bezier(0.25, 0.1, 0.25, 1.0);
         
-        /* Texture (Grunge Noise for Paw Icons) */
-        --texture-grunge: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.6'/%3E%3C/svg%3E");
+        /* [修正] Overlay用テクスチャ (半透明ノイズ) */
+        --texture-grunge: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.4'/%3E%3C/svg%3E");
     }
 
     body { 
@@ -67,7 +59,7 @@
         overflow-x: hidden; 
     }
     
-    /* Loading Overlay - Fixed Animation Scope */
+    /* Loading */
     #loadingOverlay { 
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
         background-color: var(--c-base-washi); 
@@ -75,43 +67,27 @@
         z-index: 9999; color: var(--c-sub-deep-ocean); 
         transition: opacity 0.8s var(--ease-luxury), visibility 0.8s var(--ease-luxury);
     }
-    .loading-content { 
-        text-align: center; 
-        /* [修正] ここにあったアニメーションを削除し、テキストの明滅を解除 */
-    }
+    .loading-content { text-align: center; }
     @keyframes breathe { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.0); } }
-    
     .spinner-border-brand { 
         border-color: var(--c-main-turquoise); border-right-color: transparent; 
         width: 3rem; height: 3rem; margin-bottom: 20px;
-        /* [修正] アイコンのみに呼吸アニメーションを適用 */
         animation: spinner-border .75s linear infinite, breathe 2.0s var(--ease-luxury) infinite;
     }
     #tipsText { margin-top: 20px; font-weight: 500; font-size: 0.95rem; font-family: var(--font-serif-jp); letter-spacing: 0.05em; padding: 0 20px; height: 1.5em; }
-    
     body.loaded #loadingOverlay { opacity: 0; visibility: hidden; pointer-events: none; }
-    
-    /* Main Content Fade-in */
     #mainContent { opacity: 0; transform: translateY(10px); transition: opacity 0.8s var(--ease-luxury), transform 0.8s var(--ease-luxury); }
     body.loaded #mainContent { opacity: 1; transform: translateY(0); }
     
     /* =========================================
-       2. UI Component Styles
+       2. UI Components
        ========================================= */
     .header-area { padding: 20px 20px 10px; background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,0.03); }
-
     .logo-container { display: flex; justify-content: center; margin-bottom: 15px; margin-top: 5px; }
     .logo-img { width: 35%; height: auto; display: block; filter: contrast(0.95); }
-
-    .brand-title { 
-        color: var(--c-sub-deep-ocean); 
-        font-family: var(--font-serif-en);
-        font-weight: 700; letter-spacing: 0.08em; 
-        font-size: 1.4rem; text-align: center; 
-    }
+    .brand-title { color: var(--c-sub-deep-ocean); font-family: var(--font-serif-en); font-weight: 700; letter-spacing: 0.08em; font-size: 1.4rem; text-align: center; }
     
     .profile-card { margin-top: 30px; display: flex; align-items: center; }
-    
     #dogImgContainer {
         width: 140px; height: 140px; border-radius: 50%; 
         border: 3px solid var(--c-main-turquoise); background: #fff; 
@@ -126,15 +102,8 @@
     @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; transform: scale(1.02); } 100% { opacity: 0.8; } }
     
     .cust-name { font-size: 0.85rem; color: var(--c-text-gray); margin: 0; line-height: 1.4; letter-spacing: 0.05em; }
-    .dog-name { 
-        font-family: var(--font-serif-jp); 
-        font-size: 1.8rem; font-weight: 600; 
-        line-height: 1.2; margin: 5px 0; color: var(--c-text-sumi); 
-    }
-    .lesson-meta { 
-        font-size: 0.85rem; color: var(--c-main-turquoise); 
-        font-weight: 700; font-family: var(--font-sans-en); letter-spacing: 0.05em; 
-    }
+    .dog-name { font-family: var(--font-serif-jp); font-size: 1.8rem; font-weight: 600; line-height: 1.2; margin: 5px 0; color: var(--c-text-sumi); }
+    .lesson-meta { font-size: 0.85rem; color: var(--c-main-turquoise); font-weight: 700; font-family: var(--font-sans-en); letter-spacing: 0.05em; }
     .history-link { text-decoration: none; color: var(--c-sub-deep-ocean); font-weight: 500; font-size: 0.9rem; margin-left: auto; display: block; text-align: right; margin-top: 10px; opacity: 0.8; transition: opacity 0.3s; }
     
     .medical-btn-card { 
@@ -146,19 +115,13 @@
 
     .chart-section { margin-top: 30px; padding: 0 10px; display: flex; justify-content: space-between; }
     .chart-box { width: 48%; text-align: center; }
-    .chart-caption { 
-        font-size: 0.8rem; color: var(--c-sub-deep-ocean); margin-top: 10px; 
-        font-weight: 600; font-family: var(--font-serif-jp); letter-spacing: 0.05em; 
-    }
+    .chart-caption { font-size: 0.8rem; color: var(--c-sub-deep-ocean); margin-top: 10px; font-weight: 600; font-family: var(--font-serif-jp); letter-spacing: 0.05em; }
     
     .section-title { 
-        font-family: var(--font-serif-jp); 
-        font-size: 1.05rem; font-weight: 600; 
-        color: var(--c-sub-deep-ocean); 
-        margin: 40px 20px 15px; display: flex; align-items: center; gap: 10px; letter-spacing: 0.08em;
+        font-family: var(--font-serif-jp); font-size: 1.05rem; font-weight: 600; 
+        color: var(--c-sub-deep-ocean); margin: 40px 20px 15px; display: flex; align-items: center; gap: 10px; letter-spacing: 0.08em;
     }
     .section-title::before { content: ''; display: block; width: 3px; height: 18px; background: var(--c-main-turquoise); border-radius: 1px; }
-    
     .section-title.accent { color: var(--c-accent-copper); }
     .section-title.accent::before { background: var(--c-accent-copper); }
     
@@ -177,10 +140,7 @@
     
     .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 0 20px; }
     .detail-card { background: var(--c-bg-mist); border-radius: 12px; padding: 15px; }
-    .detail-head { 
-        font-size: 0.75rem; font-weight: 700; 
-        border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 8px; margin-bottom: 8px; text-align: center; color: var(--c-sub-deep-ocean); letter-spacing: 0.05em; 
-    }
+    .detail-head { font-size: 0.75rem; font-weight: 700; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 8px; margin-bottom: 8px; text-align: center; color: var(--c-sub-deep-ocean); letter-spacing: 0.05em; }
     .detail-body { font-size: 0.85rem; color: var(--c-text-sumi); white-space: pre-wrap; line-height: 1.6; }
     
     .photo-scroll { display: flex; gap: 15px; overflow-x: auto; padding: 0 20px; margin-top: 15px; padding-bottom: 20px; }
@@ -189,7 +149,6 @@
     
     .footer-action { margin: 50px 20px 20px; text-align: center; }
     
-    /* Buttons */
     .btn-pdf { 
         background: #fff; color: var(--c-sub-deep-ocean); border: 1px solid var(--c-sub-deep-ocean); 
         width: 100%; padding: 14px; border-radius: 50px; 
@@ -198,7 +157,6 @@
     }
     .btn-pdf:active { background: var(--c-bg-mist); transform: scale(0.98); }
 
-    /* The Sanctuary Button (Copper) */
     .btn-reserve { 
         background: var(--c-accent-copper); color: #fff; border: none; width: 100%; padding: 16px; border-radius: 50px; 
         font-weight: 700; font-size: 1.05rem; 
@@ -216,7 +174,6 @@
     #errorView { text-align: center; margin-top: 80px; display: none; padding: 20px; }
     .line-id-box { background: #eee; padding: 10px; border-radius: 5px; margin: 15px 0; font-family: var(--font-sans-en); font-weight: bold; word-break: break-all; }
     
-    /* Switch Dog Button */
     .dog-select-btn { 
         width: 100%; margin-bottom: 12px; padding: 16px; 
         font-weight: 700; font-size: 1.05rem; border-radius: 12px; background: #fff; 
@@ -229,18 +186,15 @@
        3. Milestone CSS
        ========================================= */
     .milestone-section { margin: 40px 20px 10px; }
-    
     .tier-container { 
         margin-bottom: 25px; position: relative; border-radius: 12px; background: #fff; 
         padding: 20px; box-shadow: 0 10px 40px -10px rgba(47, 93, 98, 0.08); 
         z-index: 1; overflow: hidden;
     }
-    
     .tier-header { 
         font-size: 0.95rem; font-weight: 600; 
         color: var(--c-text-gray); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; font-family: var(--font-serif-jp); letter-spacing: 0.05em; 
     }
-    
     .tier-badge-scroll { 
         display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 18px; 
         padding-bottom: 10px; scroll-snap-type: x mandatory; 
@@ -248,38 +202,22 @@
     }
     .tier-badge-scroll::-webkit-scrollbar { display: none; }
     
-    /* Badge Item */
     .ms-badge { flex: 0 0 auto; width: 75px; display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; text-decoration: none; scroll-snap-align: start; transition: transform 0.1s; }
     .ms-badge:active { transform: scale(0.95); }
-    
-    @keyframes shake-refuse {
-        0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-4px); } 50% { transform: translateX(4px); }
-    }
+    @keyframes shake-refuse { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-4px); } 50% { transform: translateX(4px); } }
     .anim-shake .ms-icon-box { animation: shake-refuse 0.4s ease-in-out; }
 
     .ms-badge.teaser { pointer-events: none; opacity: 0.7; }
     .ms-badge.teaser .ms-icon-box { clip-path: inset(0 0 50% 0); background: var(--c-sub-beige); box-shadow: none; opacity: 0.5; }
     .ms-badge.teaser .ms-label { display: none; }
 
-    /* Sealing Wax Style Icon Box (70px x 70px) */
     .ms-icon-box { 
-        width: 70px; height: 70px; 
-        display: flex; align-items: center; justify-content: center; 
+        width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; 
         margin-bottom: 10px; position: relative; overflow: hidden;
         box-shadow: inset 0 0 8px rgba(0,0,0,0.3), inset 2px 2px 4px rgba(255,255,255,0.4), 0 4px 6px rgba(0,0,0,0.3);
         border: none;
     }
-    
-    /* [修正] 肉球アイコンにグランジテクスチャ（ノイズ）を適用 */
-    .ms-icon-box i { 
-        font-size: 1.8rem; 
-        filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3)); color: #fff; 
-        z-index: 2; position: relative;
-        mask-image: var(--texture-grunge);
-        -webkit-mask-image: var(--texture-grunge); /* for Safari/iOS */
-        mask-size: cover; -webkit-mask-size: cover;
-        opacity: 0.95; /* 少し馴染ませる */
-    }
+    .ms-icon-box i { font-size: 1.8rem; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3)); color: #fff; z-index: 2; position: relative; }
     .ms-icon-box img { width: 55%; height: 55%; object-fit: contain; z-index: 2; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2)); position: relative; }
 
     .ms-icon-box::before {
@@ -287,10 +225,12 @@
         border-radius: 50%; border: 2px double rgba(0,0,0,0.15); box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1); 
         pointer-events: none; z-index: 1;
     }
+    /* [修正] テクスチャをmaskではなくOverlayで表現 */
     .ms-icon-box::after {
         content: ''; position: absolute; top: 12px; left: 12px; right: 12px; bottom: 12px;
         border-radius: 50%; border: 0.5px solid rgba(255,255,255,0.4); 
-        pointer-events: none; z-index: 1;
+        background-image: var(--texture-grunge); /* Overlay Texture */
+        pointer-events: none; z-index: 3; /* Top layer */
     }
     
     .ms-label { font-size: 0.7rem; font-weight: 500; color: var(--c-text-sumi); text-align: center; line-height: 1.3; width: 100%; height: 2.6em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
@@ -365,18 +305,29 @@
     /* Modals */
     .modal-content { border-radius: 12px; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
     .modal-header { border-bottom: none; padding-bottom: 0; }
+    
+    /* [修正] Modal Iconを一覧と同じ構造・テクスチャに */
     #msModalIconBox { 
         width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; 
         display: flex; align-items: center; justify-content: center; font-size: 3rem; color: white;
-        box-shadow: inset 0 0 10px rgba(0,0,0,0.3), 0 10px 20px rgba(0,0,0,0.1); position: relative;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.3), 0 10px 20px rgba(0,0,0,0.1); position: relative; overflow: hidden;
     }
     #msModalIconBox::before {
         content: ''; position: absolute; top: 12px; left: 12px; right: 12px; bottom: 12px;
         border-radius: 50%; border: 1px solid rgba(0,0,0,0.15); box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2); pointer-events: none; z-index: 1;
     }
+    #msModalIconBox::after {
+        content: ''; position: absolute; top: 16px; left: 16px; right: 16px; bottom: 16px;
+        border-radius: 50%; border: 1px solid rgba(255,255,255,0.4); 
+        background-image: var(--texture-grunge); /* Overlay */
+        pointer-events: none; z-index: 3;
+    }
+    #msModalIconBox i { position: relative; z-index: 2; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+    #msModalIconBox img { position: relative; z-index: 2; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+
     #msModalTipsBox { background-color: var(--c-bg-mist); border-radius: 12px; padding: 20px; margin-top: 20px; color: var(--c-sub-deep-ocean); font-size: 0.9rem; line-height: 1.8; }
     
-    /* [修正] 一覧画面のGapを40pxに拡大 */
+    /* [修正] Grid Gap 40px */
     .full-list-grid { 
         display: flex; flex-wrap: wrap; justify-content: center; 
         gap: 40px; 
@@ -448,7 +399,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.17-FINAL-VISUAL-TUNE</div>
+  <div id="log-stamp">v2025.12.17-LAYOUT-FIX</div>
 
   <div id="loadingOverlay">
     <div class="loading-content">
@@ -1035,11 +986,10 @@
     }
 
     function createBadgeHtml(badge, isTeaser = false) {
-        const isLocked = !badge.is_acquired && !isTeaser; // Normal unacquired
+        const isLocked = !badge.is_acquired && !isTeaser;
         const lockedClass = isLocked ? 'locked' : '';
         const teaserClass = isTeaser ? 'teaser' : '';
         
-        // Tier Color Class
         let colorClass = 'bg-trust';
         if (!isLocked && !isTeaser) {
             if (badge.color) {
@@ -1064,7 +1014,6 @@
              iconHtml = `<img src="${thumbUrl}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-paw\\'></i>'">`;
         }
 
-        // [修正] 未獲得時はクリックアクションを無効化（モーダル阻止）
         const clickAction = isLocked ? 'triggerShake(this)' : (isTeaser ? '' : `showMilestoneDetail('${badge.id}')`);
 
         return `
@@ -1077,13 +1026,12 @@
         `;
     }
     
-    // [追加] iPhone用アニメーション発火関数
     function triggerShake(el) {
-        if(el.classList.contains('anim-shake')) return; // 連打防止
+        if(el.classList.contains('anim-shake')) return; 
         el.classList.add('anim-shake');
         setTimeout(() => {
             el.classList.remove('anim-shake');
-        }, 400); // アニメーション時間(0.4s)に合わせる
+        }, 400); 
     }
 
     function getRandomWaxBorder() {
@@ -1129,44 +1077,61 @@
         });
     }
 
+    // [修正] 一覧画面の構成を「獲得済み」->「Tier 1,2,3」の順序で再構築
     function openAllMilestonesModal() {
         const modalBody = document.getElementById('allMilestonesBody');
         modalBody.innerHTML = '';
         
-        // Helper to generate full list
-        const renderSection = (tierKey, title) => {
-            const tierBadges = cachedMilestones.filter(b => b.tier === tierKey);
-            if (tierBadges.length === 0) return '';
-            
+        const allAcquired = cachedMilestones.filter(b => b.is_acquired);
+        if (allAcquired.length > 0) {
             let html = '';
-            tierBadges.forEach(b => html += createBadgeHtml(b).replace('ms-badge-new',''));
-            return `
+            allAcquired.forEach(b => html += createBadgeHtml(b).replace('ms-badge-new',''));
+            modalBody.insertAdjacentHTML('beforeend', `
                 <div class="full-list-section">
-                    <div class="full-list-title">${title}</div>
+                    <div class="full-list-title">獲得済みコレクション</div>
                     <div class="full-list-grid">${html}</div>
                 </div>
-            `;
-        };
+            `);
+        }
 
-        // Determine locks based on counts
         let counts = { '1_Beginner': 0, '2_Intermediate': 0, '3_Advanced': 0 };
         cachedMilestones.forEach(b => { if(b.is_acquired) counts[b.tier]++; });
 
-        // TRUST: Always Visible
-        modalBody.insertAdjacentHTML('beforeend', renderSection('1_Beginner', '🟢 初級: TRUST'));
+        const renderUnacquiredSection = (tierKey, title, isUnlocked, isTeaser) => {
+            // [修正] ロック時でもセクションとタイトルを必ず生成
+            let sectionHtml = `<div class="full-list-section"><div class="full-list-title">${title}</div>`;
+            
+            let tierBadges = cachedMilestones.filter(b => b.tier === tierKey && !b.is_acquired);
+            // 全部獲得済みならこのセクションは表示しない（コレクションに移動済み）
+            if (tierBadges.length === 0 && isUnlocked) return;
 
-        // BOND: Visible if TRUST complete (>=8)
-        if (counts['1_Beginner'] >= 8) {
-            modalBody.insertAdjacentHTML('beforeend', renderSection('2_Intermediate', '🔵 中級: BOND'));
-        } else {
-            modalBody.insertAdjacentHTML('beforeend', createLockHtml('Step Up: Next Challenge'));
-        }
+            if (isUnlocked) {
+                let html = '';
+                tierBadges.forEach(b => html += createBadgeHtml(b).replace('ms-badge-new',''));
+                sectionHtml += `<div class="full-list-grid">${html}</div>`;
+            } else if (isTeaser) {
+                let html = '';
+                tierBadges.slice(0, 4).forEach(b => html += createBadgeHtml(b, true).replace('ms-badge-new',''));
+                sectionHtml += `<div class="full-list-grid">${html}</div>`;
+            } else {
+                // [修正] ロック画像はGridの外に出す
+                sectionHtml += createLockHtml('Coming Soon');
+            }
+            
+            sectionHtml += `</div>`;
+            modalBody.insertAdjacentHTML('beforeend', sectionHtml);
+        };
 
-        // HARMONY: Visible if BOND complete (>=8)
-        if (counts['2_Intermediate'] >= 8) {
-            modalBody.insertAdjacentHTML('beforeend', renderSection('3_Advanced', '🔴 上級: HARMONY'));
-        } else if (counts['1_Beginner'] >= 8) { // Only show lock if previous tier is unlocked
-             modalBody.insertAdjacentHTML('beforeend', createLockHtml('Master Harmony: Coming Soon'));
+        renderUnacquiredSection('1_Beginner', '未獲得: TRUST', true, false);
+
+        const bondUnlocked = counts['1_Beginner'] >= 8;
+        const bondTeaser = counts['1_Beginner'] >= 6;
+        renderUnacquiredSection('2_Intermediate', '未獲得: BOND', bondUnlocked, bondTeaser);
+
+        const harmonyUnlocked = counts['2_Intermediate'] >= 8;
+        const harmonyTeaser = counts['2_Intermediate'] >= 6;
+        if (bondUnlocked || bondTeaser) {
+             renderUnacquiredSection('3_Advanced', '未獲得: HARMONY', harmonyUnlocked, harmonyTeaser);
         }
         
         allMilestonesModal.show();
@@ -1213,9 +1178,7 @@
         const iconBox = document.getElementById('msModalIconBox');
         const tierConfig = TIER_CONFIG[badge.tier];
         
-        // Remove old classes
         iconBox.className = '';
-        // Add new classes
         if (isLocked) {
             iconBox.classList.add('bg-secondary');
         } else {
@@ -1228,9 +1191,8 @@
             }
             iconBox.classList.add(colorClass);
         }
-        iconBox.style.borderRadius = getRandomWaxBorder(); // Dynamic shape for modal too
+        iconBox.style.borderRadius = getRandomWaxBorder();
         
-        // Remove glitter class logic from modal for simplicity, or keep if needed
         iconBox.innerHTML = badge.icon 
             ? `<img src="https://drive.google.com/thumbnail?id=${extractFileId(badge.icon)}&sz=w200" style="width:60%;height:60%;object-fit:contain;">`
             : `<i class="fa-solid fa-paw"></i>`;
@@ -1459,8 +1421,8 @@
         if (chartInstance2) chartInstance2.destroy();
 
         if (l.scores) {
-            chartInstance1 = renderChart('chart1', l.scores.slice(0, 5), ['指示理解','集中力','報酬','ボディ','コンタクト'], 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 1)');
-            chartInstance2 = renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト'], 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
+            chartInstance1 = renderChart('chart1', l.scores.slice(0, 5), ['指示理解','集中力','報酬','ボディ','コンタクト'], 'rgba(87, 195, 194, 0.2)', '#57C3C2'); 
+            chartInstance2 = renderChart('chart2', l.scores.slice(5, 10), ['指示出し','対応力','リード','ボディ','コンタクト'], 'rgba(47, 93, 98, 0.1)', '#2F5D62'); 
         }
       } else {
           document.getElementById('lessonDate').innerText = 'レッスン履歴なし';
@@ -1490,7 +1452,7 @@
           }]
         },
         options: {
-          scales: { r: { min: 0, max: 5, ticks: { display: false }, pointLabels: { font: { size: 11 } } } },
+          scales: { r: { min: 0, max: 5, ticks: { display: false }, pointLabels: { font: { size: 11, family: "'Noto Sans JP', sans-serif" } } } },
           plugins: { legend: { display: false } }
         }
       });
