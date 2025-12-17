@@ -2,432 +2,357 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>レッスン履歴</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>レッスン履歴 | K9 Harmony</title>
+    
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.0.8/dist/medium-zoom.min.js"></script>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600;1,700&family=Lato:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
     <style>
-        :root { --brand-color: #57C3C2; --text-main: #333333; --badge-gray: #E0E0E0; }
-        body { font-family: 'Montserrat', 'Noto Sans JP', sans-serif; background-color: #fafafa; color: var(--text-main); padding-bottom: 80px; }
-        .header-area { background: #fff; padding: 15px 20px 20px; border-bottom: 1px solid #eee; position: relative; }
-        .back-link { color: var(--brand-color); font-weight: bold; text-decoration: none; font-size: 0.9rem; position: absolute; top: 15px; left: 20px; z-index: 10; }
-        .profile-img-container { display: flex; justify-content: center; margin-top: 10px; }
-        .dog-profile-large { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid var(--brand-color); padding: 2px; background: #fff; }
-        .page-title { text-align: center; font-weight: 700; font-size: 1.2rem; color: var(--text-main); margin-top: 15px; margin-bottom: 0; }
-        .content-container { padding: 0 15px; }
-        .badge-section { background: #fff; margin-top: 20px; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; min-height: 80px;}
-        .badge-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
-        .badge-item { width: 50px; height: 75px; display: flex; flex-direction: column; align-items: center; }
-        .badge-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .badge-label { font-size: 0.6rem; color: #555; font-weight: bold; line-height: 1.1; }
-        .chart-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-top: 20px; padding: 15px; }
-        .chart-card canvas { height: 180px !important; }
-        .chart-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .chart-title { font-size: 1.1rem; font-weight: 700; color: var(--brand-color); margin-bottom: 5px; }
-        .chart-status { font-size: 0.9rem; font-weight: 600; }
-        .status-great { color: #FF6B6B; } .status-steady { color: #555555; } 
-        .gallery-section { margin-top: 30px; }
-        .section-title { font-size: 1.2rem; color: #555; margin-bottom: 10px; font-weight: 600; }
-        .photo-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; padding-right: 20px; }
-        .gallery-img-wrapper { flex: 0 0 28vw; width: 28vw; height: 28vw; border-radius: 8px; border: 1px solid #ddd; flex-shrink: 0; overflow: hidden; background: #f8f9fa; }
-        .gallery-img { width: 100%; height: 100%; object-fit: cover; }
-        .lesson-list { margin-top: 30px; }
-        .list-group-item { border: none; margin-bottom: 8px; border-radius: 8px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05); padding: 15px; cursor: pointer; }
-        .list-header { font-weight: 700; color: var(--brand-color); }
-        .list-date { font-size: 0.85rem; color: #888; }
-        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-color); display: flex; justify-content: center; align-items: center; z-index: 9999; color: white; flex-direction: column; }
-        body.loaded #loadingOverlay { display: none !important; }
-        .spinner-border-white { border-color: white; border-right-color: transparent; }
-        #tipsText { margin-top: 20px; font-weight: 500; font-size: 1rem; text-align: center; }
-        #errorContainer { display: none; padding: 20px; text-align: center; margin-top: 20px; }
-        .error-box { background: #fff; padding: 20px; border-radius: 12px; border: 2px solid #ffcccc; color: #d9534f; }
-        .modal-score-item { margin-bottom: 5px; font-size: 1rem; }
-        .modal-score-item strong { color: var(--brand-color); width: 80px; display: inline-block; }
-        .modal-avg-box { display: flex; gap: 10px; margin-bottom: 20px; }
-        .avg-item { flex: 1; background: #E0F7FA; border-radius: 8px; padding: 10px; text-align: center; }
-        .avg-label { font-size: 0.7rem; color: #666; font-weight: bold; display: block; }
-        .avg-val { font-size: 1.4rem; color: var(--brand-color); font-weight: 700; }
-        .btn-drive-link { display: inline-block; font-size: 0.9rem; color: var(--brand-color); text-decoration: none; font-weight: bold; margin-top: 5px; }
-        
-        .dog-select-btn { width: 100%; margin-bottom: 10px; padding: 15px; font-weight: bold; font-size: 1.1rem; border-radius: 12px; background: #f8f9fa; border: 2px solid var(--brand-color); color: var(--brand-color); transition: all 0.2s; }
-        .dog-select-btn:active { background: var(--brand-color); color: #fff; transform: scale(0.98); }
+        /* =========================================
+           1. Foundation
+           ========================================= */
+        :root { 
+            --c-main-turquoise: #57C3C2;
+            --c-sub-deep-ocean: #2F5D62;
+            --c-accent-copper: #C87A56;
+            --c-base-washi: #FAFAFA;
+            --c-bg-mist: #F4F7F7;
+            --c-text-sumi: #333333;
+            --c-text-gray: #666666;
+            
+            --font-serif-en: 'Cormorant Garamond', serif;
+            --font-serif-jp: 'Noto Serif JP', serif;
+            --font-sans-jp: 'Noto Sans JP', sans-serif;
+            --font-sans-en: 'Lato', sans-serif;
+
+            --ease-luxury: cubic-bezier(0.25, 0.1, 0.25, 1.0);
+        }
+
+        body { 
+            font-family: var(--font-sans-jp); 
+            background-color: var(--c-base-washi); 
+            color: var(--c-text-sumi); 
+            line-height: 1.8;
+            padding-bottom: 80px; 
+            overflow-x: hidden;
+        }
+
+        /* Loading */
+        #loadingOverlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background-color: var(--c-base-washi); 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            z-index: 9999; color: var(--c-sub-deep-ocean); 
+            transition: opacity 0.8s var(--ease-luxury), visibility 0.8s var(--ease-luxury);
+        }
+        .spinner-border-brand { 
+            border-color: var(--c-main-turquoise); border-right-color: transparent; 
+            width: 3rem; height: 3rem; margin-bottom: 20px;
+            animation: spinner-border .75s linear infinite, breathe 2.0s var(--ease-luxury) infinite;
+        }
+        @keyframes breathe { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.0); } }
+        #tipsText { font-family: var(--font-serif-jp); font-size: 0.95rem; }
+        body.loaded #loadingOverlay { opacity: 0; visibility: hidden; pointer-events: none; }
+
+        #mainWrapper { opacity: 0; transform: translateY(10px); transition: all 0.8s var(--ease-luxury); }
+        body.loaded #mainWrapper { opacity: 1; transform: translateY(0); }
+
+        /* =========================================
+           2. Mastery Seal (Chrono-Seal)
+           ========================================= */
+        .mastery-seal {
+            width: 38px; height: 38px; border-radius: 50%;
+            position: relative; overflow: hidden;
+            display: inline-flex; align-items: center; justify-content: center;
+            margin-right: 12px; flex-shrink: 0;
+            background-color: var(--c-bg-mist); /* 獲得前の空押し状態 */
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1), inset -1px -1px 2px rgba(255,255,255,0.8);
+            transition: all 0.5s var(--ease-luxury);
+        }
+
+        /* 獲得済みのシルバープレート */
+        .mastery-seal.acquired {
+            background: repeating-radial-gradient(circle, #d0d0d0 0, #d0d0d0 1px, #e0e0e0 1px, #e0e0e0 2px); /* ギョーシェ彫り */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 0 10px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .mastery-seal.acquired::before,
+        .mastery-seal.acquired::after {
+            content: ''; position: absolute; inset: -100%;
+            background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.8) 50%, transparent 60%);
+            pointer-events: none; z-index: 2;
+        }
+
+        /* 光源B (かすかなシャンパン) */
+        .mastery-seal.acquired::after {
+            background: linear-gradient(45deg, transparent 30%, rgba(250, 235, 215, 0.4) 50%, transparent 70%);
+            z-index: 1;
+        }
+
+        /* カリグラフィ数字 */
+        .seal-number {
+            font-family: var(--font-serif-en); font-style: italic; font-weight: 700;
+            font-size: 1.2rem; position: relative; z-index: 3; color: transparent;
+            -webkit-text-stroke: 0.5px #999; /* 袋文字 */
+            transition: color 0.5s;
+        }
+        .acquired .seal-number {
+            color: rgba(47, 93, 98, 0.8); /* 獲得後のインク色 */
+            -webkit-text-stroke: 0.5px rgba(255,255,255,0.4);
+        }
+
+        /* =========================================
+           3. Layout Components
+           ========================================= */
+        .header-area { 
+            background: #fff; padding: 20px; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.03); 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+        .back-link { 
+            color: var(--c-sub-deep-ocean); text-decoration: none; font-family: var(--font-sans-en); 
+            font-weight: 700; position: absolute; left: 20px; top: 24px; font-size: 0.9rem;
+        }
+        .dog-profile-large { 
+            width: 120px; height: 120px; border-radius: 50%; border: 3px solid var(--c-main-turquoise);
+            padding: 3px; box-shadow: 0 10px 30px -10px rgba(87, 195, 194, 0.3);
+        }
+        .page-title { 
+            font-family: var(--font-serif-jp); font-weight: 600; color: var(--c-sub-deep-ocean); 
+            margin-top: 15px; letter-spacing: 0.1em; font-size: 1.2rem;
+        }
+
+        .chart-card { 
+            background: #fff; border-radius: 12px; margin: 30px 20px; padding: 25px 20px;
+            box-shadow: 0 10px 40px -10px rgba(47, 93, 98, 0.08);
+        }
+        .chart-header { display: flex; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f0f0f0; padding-bottom: 12px; }
+        .chart-title { font-family: var(--font-serif-jp); font-weight: 600; color: var(--c-sub-deep-ocean); font-size: 1.05rem; margin: 0; flex-grow: 1; }
+
+        .list-group-item { 
+            border: none; margin: 0 20px 15px; border-radius: 12px; background: var(--c-bg-mist);
+            padding: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); transition: all 0.3s;
+        }
+        .list-group-item:active { transform: scale(0.98); background: #eef2f2; }
+        .section-title { 
+            font-family: var(--font-serif-jp); color: var(--c-sub-deep-ocean); margin: 50px 20px 20px; 
+            font-size: 1.15rem; border-left: 3px solid var(--c-main-turquoise); padding-left: 12px;
+        }
+
+        /* Modal Custom */
+        .modal-content { border-radius: 16px; border: none; }
+        .avg-val { font-family: var(--font-serif-en); font-size: 2rem; color: var(--c-accent-copper); font-weight: 700; }
+        .btn-secondary { background: var(--c-sub-deep-ocean); border: none; border-radius: 50px; padding: 10px 30px; }
     </style>
 </head>
 <body>
 
     <div id="loadingOverlay">
-        <div class="spinner-border spinner-border-white" role="status"></div>
-        <p id="tipsText">Loading...</p>
-    </div>
-
-    <div id="errorContainer">
-        <div class="error-box">
-            <h5 class="fw-bold">読み込みエラー</h5>
-            <p id="errorMsg" class="small text-dark"></p>
-            <button class="btn btn-secondary btn-sm mt-2" onclick="location.reload()">再読み込み</button>
+        <div class="loading-content">
+            <div class="spinner-border spinner-border-brand" role="status"></div>
+            <p id="tipsText">Archivesを構築しております...</p>
         </div>
     </div>
 
     <div id="mainWrapper">
         <div class="header-area">
-            <a href="index.html" id="backLinkBtn" class="back-link">&lt; 戻る</a>
-            <div class="profile-img-container">
-                <img id="dogProfileImg" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="dog-profile-large" alt="愛犬">
-            </div>
-            <h1 id="pageTitle" class="page-title">レッスン履歴</h1>
+            <a href="index.html" id="backLinkBtn" class="back-link">&lt; Back</a>
+            <div class="profile-img-container"><img id="dogProfileImg" src="" class="dog-profile-large" alt="愛犬"></div>
+            <h1 class="page-title">Performance Records</h1>
         </div>
 
-        <div class="content-container py-3">
-            
-            <div class="badge-section">
-                <h6 style="color:#888; font-size:0.8rem; font-weight:bold;">マスタリーバッジ (5点×3連続)</h6>
-                <div id="badgeContainer" class="badge-grid"></div>
-                <div id="noBadgeMsg" class="text-muted small mt-3" style="display:none;">まだ獲得したバッジはありません</div>
+        <div id="performanceArea">
             </div>
 
-            <p class="text-muted small text-center mt-3">過去のレッスン評価の推移です。</p>
-            <div id="chartArea"></div>
+        <h3 class="section-title">Gallery</h3>
+        <div id="mainGalleryContainer" class="d-flex overflow-auto gap-3 px-3 pb-3"></div>
 
-            <div class="gallery-section">
-                <h3 class="section-title">ギャラリー</h3>
-                <div id="mainGalleryContainer" class="photo-scroll">
-                    <div class="text-muted small ms-3">読み込み中...</div>
-                </div>
-            </div>
-
-            <div class="lesson-list">
-                <h3 class="section-title">過去のレッスン日一覧 (新しい順)</h3>
-                <div id="lessonList" class="list-group"></div>
-            </div>
-        </div>
+        <h3 class="section-title">Lesson Logs</h3>
+        <div id="lessonList"></div>
     </div>
 
-    <div class="modal fade" id="historyDetailModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal fade" id="historyDetailModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">レッスン詳細: <span id="modalDate"></span></h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            
-            <div id="modalAvgArea"></div>
-
-            <h6 class="mt-2 text-muted">評価スコア</h6>
-            <div id="modalScores"></div>
-            
-            <h6 class="mt-4 text-muted">コメント</h6>
-            <p id="modalComment" style="white-space: pre-wrap; background:#f7f7f7; padding:10px; border-radius:5px;"></p>
-            
-            <h6 class="mt-4 text-muted">宿題</h6>
-            <p id="modalHomework" style="white-space: pre-wrap; background:#f7f7f7; padding:10px; border-radius:5px;"></p>
-            
-            <div class="text-end mt-3">
-                <a href="#" id="driveLink" class="btn-drive-link" target="_blank" style="display:none;">元データフォルダへ &gt;</a>
+          <div class="modal-body p-4">
+            <h5 class="text-center fw-bold mb-4" style="font-family:var(--font-serif-jp);">Lesson Detail</h5>
+            <div id="modalAvgArea" class="d-flex gap-3 mb-4"></div>
+            <div id="modalScores" class="small mb-4"></div>
+            <h6 class="text-muted small mb-1">Feedback</h6>
+            <p id="modalComment" class="p-3 bg-light rounded small mb-3"></p>
+            <h6 class="text-muted small mb-1">Homework</h6>
+            <p id="modalHomework" class="p-3 border border-info rounded small"></p>
+            <div class="text-center mt-4">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
             </div>
-
           </div>
-          <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button></div>
         </div>
       </div>
     </div>
 
-    <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center">わんちゃんを選択</h5></div>
-                <div class="modal-body" id="dogSelectBody"></div>
-            </div>
-        </div>
-    </div>
-
     <script>
         const LIFF_ID = '2008546673-MJY7j3ox'; 
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec'; 
-        
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
         const scoreLabels = [ '指示理解', '集中力', '報酬', 'ボディ', 'コンタクト', '指示出し', '対応力', 'リード', 'ボディ', 'コンタクト' ];
-        const chartColors = [ 'rgba(255, 99, 132, 1)', 'rgba(255, 159, 64, 1)', 'rgba(255, 205, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(54, 162, 235, 1)', 'rgba(153, 102, 255, 1)', 'rgba(201, 203, 207, 1)', 'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)' ];
 
-        const dogTips = ["犬の鼻紋は...", "犬は人間の約4倍の...", "犬の嗅覚は...", "犬は汗を...", "犬があくびをするのは...", "犬のしっぽの...", "小型犬の方が...", "犬は夢を見ます...", "ダルメシアンは...", "犬が飼い主の..."];
+        let allHistoryData = [];
+        let masteredItems = []; // 3回連続5点の項目
 
-        let tipsTimer;
-        let allHistoryData = []; let customerData = {}; let currentUserId = ''; let currentDogId = null;
+        // スクロール連動の光源移動処理
+        window.addEventListener('scroll', () => {
+            const seals = document.querySelectorAll('.mastery-seal.acquired');
+            const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+            
+            seals.forEach((seal, idx) => {
+                const before = seal.style;
+                // 光源A: スクロールに対し1.2倍速
+                const posA = (scrollPercent * 200) - 100 + (idx * 10);
+                // 光源B: スクロールに対し0.8倍速
+                const posB = (scrollPercent * 150) - 75;
+                
+                seal.style.setProperty('--posA', `${posA}%`);
+                seal.style.setProperty('--posB', `${posB}%`);
+            });
+        });
 
-        function startTipsSlider() {
-          const tipsText = document.getElementById('tipsText');
-          if(!tipsText) return;
-          let currentTipIndex = Math.floor(Math.random() * dogTips.length);
-          tipsText.innerText = dogTips[currentTipIndex];
-          tipsTimer = setInterval(() => {
-            currentTipIndex = (currentTipIndex + 1) % dogTips.length;
-            tipsText.innerText = dogTips[currentTipIndex];
-          }, 2500); 
-        }
-
-        function finishLoading() {
-            clearInterval(tipsTimer);
-            const overlay = document.getElementById('loadingOverlay');
-            if (overlay) { overlay.style.visibility = ''; overlay.style.opacity = ''; }
-            document.body.classList.add('loaded');
-        }
-
-        window.onload = function() {
-            startTipsSlider(); 
-            if (typeof liff === 'undefined') { showError('LIFF SDK not loaded.'); return; } 
-            main(); 
-        };
+        // CSS変数を動的に更新するためのスタイル追加
+        const dynamicStyle = document.createElement('style');
+        dynamicStyle.innerHTML = `
+            .mastery-seal.acquired::before { transform: translate(var(--posA, -100%), var(--posA, -100%)); }
+            .mastery-seal.acquired::after { transform: translate(var(--posB, -100%), var(--posB, -100%)); }
+        `;
+        document.head.appendChild(dynamicStyle);
 
         async function main() {
             try {
                 await liff.init({ liffId: LIFF_ID });
                 if (!liff.isLoggedIn()) { liff.login(); return; }
                 const profile = await liff.getProfile();
-                currentUserId = profile.userId;
                 const urlParams = new URLSearchParams(window.location.search);
-                currentDogId = urlParams.get('dogId');
-                fetchTextData(profile.userId, currentDogId);
-            } catch (err) { showError('アプリ起動エラー: ' + err.message); }
+                const dogId = urlParams.get('dogId');
+                fetchData(profile.userId, dogId);
+            } catch (err) { console.error(err); }
         }
 
-        function fetchTextData(userId, dogId = null) {
-            let url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}&n=${Math.random()}`;
-            if (dogId) url += `&dogId=${dogId}`;
-
-            // ★修正: CORSエラー回避のため mode: 'cors' を削除
-            fetch(url)
-                .then(res => { if (!res.ok) throw new Error(res.statusText); return res.json(); })
+        function fetchData(userId, dogId) {
+            fetch(`${GAS_URL}?userId=${userId}&dogId=${dogId || ''}`)
+                .then(res => res.json())
                 .then(data => {
-                    if (data.multiple_dogs) {
-                        showDogSelectModal(data.multiple_dogs);
-                        return;
-                    }
-
-                    if (data.error) { showError('データ取得エラー: ' + data.error); return; }
-                    
-                    allHistoryData = data.score_history || []; 
-                    customerData = data.customer || {};
-                    if(data.dog) currentDogId = data.dog.id;
-                    updateBackLink(); 
-
-                    renderHistory(data);
-                    renderBadges(data.badges || []); 
-
-                    finishLoading(); 
-                    
-                    // 画像取得呼び出し
-                    if (allHistoryData.length > 0 || (data.latest && data.latest.has_photos)) {
-                        setTimeout(() => { 
-                            fetchGalleryImages(userId, currentDogId);
-                            fetchProfileImage(userId, currentDogId);  
-                        }, 100);
-                    } else { 
-                        document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>'; 
-                        fetchProfileImage(userId, currentDogId); // プロフ画像は常にとってくる
-                    }
-                })
-                .catch(err => { 
-                    showError('通信エラー: ' + err.message); 
-                    finishLoading();
+                    allHistoryData = data.score_history || [];
+                    document.getElementById('dogProfileImg').src = data.dog?.img || '';
+                    analyzeMastery();
+                    renderPerformance();
+                    renderGallery(data.latest?.images || []);
+                    renderLogs();
+                    document.body.classList.add('loaded');
                 });
         }
 
-        function updateBackLink() {
-            const link = document.getElementById('backLinkBtn');
-            if (currentDogId) {
-                link.href = `index.html?dogId=${currentDogId}`;
-            } else {
-                link.href = `index.html`;
+        function analyzeMastery() {
+            masteredItems = [];
+            if (allHistoryData.length < 3) return;
+            const sorted = [...allHistoryData].sort((a,b) => new Date(a.date) - new Date(b.date));
+            const recent3 = sorted.slice(-3);
+            for(let i=0; i<10; i++) {
+                if(recent3.every(h => Number(h.scores[i]) === 5)) masteredItems.push(i);
             }
         }
 
-        function showDogSelectModal(dogs) {
-            const body = document.getElementById('dogSelectBody');
-            body.innerHTML = '';
-            dogs.forEach(dog => {
-                const btn = document.createElement('button');
-                btn.className = 'dog-select-btn';
-                btn.innerText = dog.name_disp; 
-                btn.onclick = () => selectDog(dog.id);
-                body.appendChild(btn);
-            });
-            document.getElementById('loadingOverlay').style.opacity = 0;
-            setTimeout(() => { document.getElementById('loadingOverlay').style.visibility = 'hidden'; }, 500);
-            new bootstrap.Modal(document.getElementById('dogSelectModal')).show();
-        }
+        function renderPerformance() {
+            const area = document.getElementById('performanceArea');
+            const chartData = [...allHistoryData].sort((a,b) => new Date(a.date) - new Date(b.date)).slice(-8);
 
-        function selectDog(dogId) {
-            const modalEl = document.getElementById('dogSelectModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            modal.hide();
-            document.getElementById('loadingOverlay').style.visibility = 'visible';
-            document.getElementById('loadingOverlay').style.opacity = 1;
-            window.location.search = `?dogId=${dogId}`;
-        }
-
-        function showError(msg) {
-            finishLoading();
-            document.getElementById('mainWrapper').style.display = 'none';
-            document.getElementById('errorContainer').style.display = 'block';
-            document.getElementById('errorMsg').innerText = msg;
-        }
-
-        function fetchProfileImage(userId, dogId) {
-             let url = `${GAS_URL}?userId=${userId}&type=img_profile`;
-             if(dogId) url += `&dogId=${dogId}`;
-             fetch(url).then(res => res.json()).then(data => { if(data.image) document.getElementById('dogProfileImg').src = data.image; });
-        }
-        
-        function fetchGalleryImages(userId, dogId) {
-            let url = `${GAS_URL}?userId=${userId}&type=img_latest`;
-            if(dogId) url += `&dogId=${dogId}`;
-
-            fetch(url).then(res => res.json()).then(d => {
-                const gallery = document.getElementById('mainGalleryContainer'); gallery.innerHTML = ''; 
-                // ★修正: 配列チェック
-                if (d.images && Array.isArray(d.images) && d.images.length > 0) {
-                    const displayCount = d.images.length; 
-                    for(let i=0; i<displayCount; i++) {
-                        gallery.insertAdjacentHTML('beforeend', `<div class="gallery-img-wrapper"><img src="${d.images[i]}" class="gallery-img zoomable" alt="Photo"></div>`);
-                    }
-                    mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
-                } else { gallery.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>'; }
-            }).catch(e => {
-                console.error("Gallery Error:", e);
-                document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-muted small ms-3">読み込みエラー</div>'; 
-            });
-        }
-        
-        function renderBadges(badges) {
-            const container = document.getElementById('badgeContainer');
-            container.innerHTML = '';
-            
-            const earned = [];
-            if (allHistoryData.length >= 3) {
-                 const sorted = [...allHistoryData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-                 const recent3 = sorted.slice(-3);
-                 for(let i=0; i<10; i++) {
-                     if (recent3.every(h => Number(h.scores[i]) === 5)) {
-                         earned.push(i+1);
-                     }
-                 }
-            }
-
-            if (earned.length === 0) {
-                document.getElementById('noBadgeMsg').style.display = 'block';
-                return;
-            } else {
-                document.getElementById('noBadgeMsg').style.display = 'none';
-            }
-            
-            scoreLabels.forEach((label, idx) => {
-                const badgeNum = idx + 1; 
-                if (!earned.includes(badgeNum)) return;
-                const color = chartColors[idx]; 
-                const iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-star-fill" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>`;
-                const div = document.createElement('div');
-                div.className = 'badge-item';
-                div.innerHTML = `<div class="badge-icon" style="background:${color}; box-shadow: 0 2px 5px ${color.replace('1)','0.4)')};">${iconHtml}</div><div class="badge-label">${label}</div>`;
-                container.appendChild(div);
-            });
-        }
-
-        function renderHistory(data) {
-            const chartArea = document.getElementById('chartArea'); const lessonList = document.getElementById('lessonList');
-            chartArea.innerHTML = ''; lessonList.innerHTML = ''; 
-            const dogData = data.dog || {}; 
-            document.getElementById('pageTitle').innerText = `${dogData.name_disp || dogData.name || '愛犬'}のレッスン履歴`; 
-
-            if (!allHistoryData || allHistoryData.length < 1) { 
-                chartArea.innerHTML = `<div class="text-center text-muted small mt-4">まだレッスン履歴がありません。</div>`; 
-                lessonList.innerHTML = `<div class="text-center text-muted small mt-4">履歴がありません。</div>`; 
-                return; 
-            }
-
-            const listHistory = [...allHistoryData];
-            const chartHistory = [...allHistoryData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-            const recent10Chart = chartHistory.slice(-10);
-            
             for (let i = 0; i < 10; i++) {
-                const itemLabel = scoreLabels[i]; const color = chartColors[i];
-                const scores = recent10Chart.map(h => h.scores[i]); const dates = recent10Chart.map(h => h.date);
-                const latestScore = scores[scores.length - 1]; const previousScore = scores.length > 1 ? scores[scores.length - 2] : null;
-                let comparisonText = '', comparisonClass = 'status-steady', specialComment = '';
-                if (latestScore === 5) specialComment = '⭐️🐶⭐️';
-                if (previousScore !== null) { const diff = latestScore - previousScore; if (diff >= 1 && latestScore < 5) { comparisonText = '成長中！'; comparisonClass = 'status-great'; } } else { comparisonText = '初回'; }
-                
-                chartArea.insertAdjacentHTML('beforeend', `<div class="chart-card"><div class="chart-meta"><h4 class="chart-title">[${i + 1}] ${itemLabel}</h4><div class="text-end"><span class="chart-status ${comparisonClass}">${comparisonText}</span>${specialComment ? `<div style="font-size:1.2rem; line-height:1;">${specialComment}</div>` : ''}</div></div><canvas id="chart-${i}"></canvas></div>`);
-                
-                new Chart(document.getElementById(`chart-${i}`), { 
-                    type: 'line', 
-                    data: { 
-                        labels: dates, 
+                const isAcquired = masteredItems.includes(i);
+                const color = i < 5 ? '#57C3C2' : '#2F5D62';
+                const bgColor = i < 5 ? 'rgba(87, 195, 194, 0.15)' : 'rgba(47, 93, 98, 0.15)';
+
+                area.insertAdjacentHTML('beforeend', `
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="mastery-seal ${isAcquired ? 'acquired' : ''}">
+                                <span class="seal-number">${i+1}</span>
+                            </div>
+                            <h4 class="chart-title">${scoreLabels[i]}</h4>
+                            <span class="small ${isAcquired?'status-great':''}" style="font-family:var(--font-sans-en)">${isAcquired?'Mastered':''}</span>
+                        </div>
+                        <canvas id="chart-${i}" style="height:180px;"></canvas>
+                    </div>
+                `);
+
+                new Chart(document.getElementById(`chart-${i}`), {
+                    type: 'line',
+                    data: {
+                        labels: chartData.map(h => h.date.split('/')[1]+'/'+h.date.split('/')[2]),
                         datasets: [{ 
-                            label: itemLabel, 
-                            data: scores, 
-                            borderColor: color, 
-                            backgroundColor: color.replace('1)', '0.1)'), 
-                            borderWidth: 2, 
-                            pointRadius: 5, 
-                            fill: true, 
-                            tension: 0.2 
-                        }] 
-                    }, 
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false, 
-                        scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } } }, 
-                        plugins: { legend: { display: false } } 
-                    } 
+                            data: chartData.map(h => h.scores[i]),
+                            borderColor: color, backgroundColor: bgColor, fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } }, x: { grid: { display: false } } },
+                        plugins: { legend: { display: false } }
+                    }
                 });
             }
-            
-            listHistory.forEach(h => {
-                const comment = (h.comment && String(h.comment).trim()) ? h.comment : 'コメントなし';
-                const numScores = h.scores.map(Number);
-                const avg = (numScores.reduce((a,b)=>a+b,0) / numScores.length).toFixed(1);
-                
-                lessonList.insertAdjacentHTML('beforeend', `
-                    <div class="list-group-item" onclick="showLessonDetail('${h.id}', '${h.date}')">
-                        <div class="d-flex w-100 justify-content-between list-header">
-                            レッスン日: ${h.date}
-                            <span class="list-date">詳細 &gt;</span>
+        }
+
+        function renderGallery(images) {
+            const cont = document.getElementById('mainGalleryContainer');
+            if(!images.length) { cont.innerHTML = '<p class="small text-muted ms-3">No Photos</p>'; return; }
+            images.forEach(src => {
+                cont.insertAdjacentHTML('beforeend', `<img src="${src}" class="zoomable rounded shadow-sm" style="height:120px; flex-shrink:0;">`);
+            });
+            mediumZoom('.zoomable', { background: 'rgba(0,0,0,0.9)', margin: 20 });
+        }
+
+        function renderLogs() {
+            const list = document.getElementById('lessonList');
+            allHistoryData.forEach(h => {
+                const avg = (h.scores.map(Number).reduce((a,b)=>a+b,0)/10).toFixed(1);
+                list.insertAdjacentHTML('beforeend', `
+                    <div class="list-group-item" onclick="showDetail('${h.id}')">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span style="font-family:var(--font-sans-en); font-weight:700;">${h.date}</span>
+                            <span class="small fw-bold" style="color:var(--c-accent-copper)">Score: ${avg}</span>
                         </div>
-                        <div class="mt-2 p-2" style="background:#f7f7f7; border-radius:5px;">
-                            <div class="mb-1 fw-bold" style="color:var(--brand-color);">Avg: ${avg}点</div>
-                            <p class="mb-1 small" style="white-space: pre-wrap; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><strong>コメント:</strong> ${comment}</p>
-                        </div>
-                    </div>`);
+                        <p class="small text-muted mb-0 text-truncate">${h.comment || 'No comment recorded.'}</p>
+                    </div>
+                `);
             });
         }
-        
-        function showLessonDetail(id, date) {
-            const detail = allHistoryData.find(h => h.id === id) || allHistoryData.find(h => h.date === date); if (!detail) return;
-            document.getElementById('modalDate').innerText = date;
-            document.getElementById('modalComment').innerText = (detail.comment && String(detail.comment).trim()) ? detail.comment : 'コメントなし';
-            document.getElementById('modalHomework').innerText = (detail.homework && String(detail.homework).trim()) ? detail.homework : '宿題なし';
-            
-            const numScores = detail.scores.map(Number);
-            const s1 = numScores.slice(0,5).reduce((a,b)=>a+b,0)/5;
-            const s2 = numScores.slice(5,10).reduce((a,b)=>a+b,0)/5;
-            document.getElementById('modalAvgArea').innerHTML = `
-                <div class="modal-avg-box">
-                    <div class="avg-item"><span class="avg-label">基礎・集中 (1-5)</span><span class="avg-val">${s1.toFixed(1)}</span></div>
-                    <div class="avg-item"><span class="avg-label">応用・対応 (6-10)</span><span class="avg-val">${s2.toFixed(1)}</span></div>
-                </div>`;
 
-            const scoresContainer = document.getElementById('modalScores'); scoresContainer.innerHTML = '';
-            for (let i = 0; i < 10; i++) { scoresContainer.insertAdjacentHTML('beforeend', `<div class="modal-score-item"><strong>[${i + 1}] ${scoreLabels[i]}：</strong> ${numScores[i]} 点</div>`); }
+        function showDetail(id) {
+            const h = allHistoryData.find(x => x.id === id);
+            const s = h.scores.map(Number);
+            document.getElementById('modalAvgArea').innerHTML = `
+                <div class="avg-item text-center flex-fill p-3 bg-light rounded-3">
+                    <span class="d-block small text-muted">基礎領域</span><span class="avg-val">${(s.slice(0,5).reduce((a,b)=>a+b,0)/5).toFixed(1)}</span>
+                </div>
+                <div class="avg-item text-center flex-fill p-3 bg-light rounded-3">
+                    <span class="d-block small text-muted">応用領域</span><span class="avg-val">${(s.slice(5,10).reduce((a,b)=>a+b,0)/5).toFixed(1)}</span>
+                </div>`;
             
-            const driveLinkBtn = document.getElementById('driveLink');
-            if (customerData.shared_folder_url) { driveLinkBtn.href = customerData.shared_folder_url; driveLinkBtn.style.display = 'block'; } else { driveLinkBtn.style.display = 'none'; }
-            
+            let scoreHtml = '';
+            scoreLabels.forEach((l, i) => scoreHtml += `<div class="d-flex justify-content-between py-1 border-bottom border-light"><span>${l}</span><span class="fw-bold">${s[i]}</span></div>`);
+            document.getElementById('modalScores').innerHTML = scoreHtml;
+            document.getElementById('modalComment').innerText = h.comment || '---';
+            document.getElementById('modalHomework').innerText = h.homework || '---';
             new bootstrap.Modal(document.getElementById('historyDetailModal')).show();
         }
+
+        main();
     </script>
 </body>
 </html>
