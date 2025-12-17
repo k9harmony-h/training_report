@@ -470,6 +470,20 @@
                     
                     if (data.dog && data.dog.name_disp) {
                         document.getElementById('pageTitle').innerText = `${data.dog.name_disp}'s History`;
+                        // 総トレーニング時間の表示
+                        if (data.total_hours !== undefined) {
+                            // 既存の表示があれば削除（重複防止）
+                            const existEl = document.getElementById('totalHoursDisplay');
+                            if(existEl) existEl.remove();
+
+                            const timeEl = document.createElement('p');
+                            timeEl.id = 'totalHoursDisplay';
+                            timeEl.style.cssText = "text-align:center; font-family:var(--font-serif-en); color:var(--c-sub-deep-ocean); font-size:0.9rem; margin-top:-5px; margin-bottom:15px; font-weight:600; letter-spacing:0.05em;";
+                            timeEl.innerHTML = `&lt; Total Training Time : ${data.total_hours}h &gt;`;
+        
+                            const titleEl = document.getElementById('pageTitle');
+                            titleEl.parentNode.insertBefore(timeEl, titleEl.nextSibling);
+                            }
                     }
 
                     fetchProfileImage(userId, currentDogId);
