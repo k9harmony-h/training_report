@@ -20,18 +20,18 @@
         :root {
             /* Roles */
             --c-healing-sage: #88b08b;  /* Background decor, borders */
-            --c-deep-sage:    #557A58;  /* Labels, Headings (Legibility) */
-            --c-value-black:  #1a1a1a;  /* Data values (Facts) */
+            --c-deep-sage:    #557A58;  /* Labels, Headings */
+            --c-value-black:  #1a1a1a;  /* Data values */
             --c-warm-alert:   #e07a5f;  /* Warning/Alert */
             --c-pale-mist:    #e8f5e9;  /* Background */
             --c-white:        #ffffff;
             
             /* Typography Rules */
-            --font-label: 'Noto Serif JP', serif;       /* Trust & Authority */
-            --font-data:  'Lato', 'Noto Sans JP', sans-serif; /* Absolute Legibility */
+            --font-label: 'Noto Serif JP', serif;
+            --font-data:  'Lato', 'Noto Sans JP', sans-serif;
             
             /* Motion */
-            --speed-emergency: 0.15s; /* Fast response */
+            --speed-emergency: 0.15s;
             --ease-soft: ease-in-out;
         }
 
@@ -39,7 +39,7 @@
             font-family: var(--font-data);
             background-color: var(--c-pale-mist);
             color: var(--c-value-black);
-            padding-bottom: 100px; /* Footer space */
+            padding-bottom: 100px;
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
         }
@@ -53,9 +53,9 @@
         .header-area { text-align: center; margin-bottom: 25px; }
         .logo-container { margin-bottom: 15px; display: flex; justify-content: center; }
         .logo-img { 
-            width: 40%; /* [Requested Change] */
+            width: 40%; 
             height: auto; 
-            filter: contrast(0.95);
+            /* Filter removed to respect original brand color */
         }
         .page-title {
             font-family: var(--font-label);
@@ -89,14 +89,14 @@
         /* Card Layout */
         .card-section {
             background: var(--c-white);
-            border: 1px solid var(--c-deep-sage); /* Clarity */
+            border: 1px solid var(--c-deep-sage);
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 20px;
             box-shadow: 0 4px 6px rgba(85, 122, 88, 0.05);
         }
 
-        /* Alert Card Style (Diagonal Stripes) */
+        /* Alert Card Style */
         .card-section.alert-mode {
             border: 2px solid var(--c-warm-alert);
             background: repeating-linear-gradient(
@@ -146,7 +146,7 @@
             font-size: 1.05rem;
             font-weight: 500;
             word-break: break-all;
-            font-variant-numeric: lining-nums; /* Align numbers */
+            font-variant-numeric: lining-nums;
         }
         .info-value.alert-text { color: var(--c-warm-alert); font-weight: 700; }
 
@@ -154,7 +154,7 @@
         #d_photo_container {
             width: 160px; height: 160px;
             background: #f0f0f0;
-            border-radius: 12px; /* [Rule] Rounded Rect, No Circle */
+            border-radius: 12px;
             border: 2px solid var(--c-deep-sage);
             margin: 0 auto 20px;
             overflow: hidden;
@@ -163,8 +163,8 @@
         }
         .dog-profile-img {
             width: 100%; height: 100%; object-fit: cover;
-            opacity: 0; /* Initial hidden */
-            transition: opacity 0.8s var(--ease-soft); /* Soft fade-in */
+            opacity: 0;
+            transition: opacity 0.8s var(--ease-soft);
         }
         .dog-profile-img.visible { opacity: 1; }
 
@@ -190,33 +190,38 @@
             background: var(--c-deep-sage); color: #fff;
         }
 
-        /* Footer */
+        /* Footer - Corrected */
         .site-footer {
             text-align: center; padding: 40px 20px; color: #666; font-size: 0.8rem;
             background: #fdfdfd; border-top: 1px solid #ddd; margin-top: 40px;
         }
-        .footer-logo-img { width: 30%; opacity: 0.6; margin-bottom: 10px; filter: grayscale(100%); }
+        .footer-logo-img { 
+            width: 30%; 
+            margin-bottom: 10px; 
+            /* No filters applied - Original colors maintained */
+        }
 
-        /* Loading */
         #loading { margin-top: 50px; }
-        
-        /* Debug Console */
         #debug-console { display: none; }
         #log-stamp { background: #333; color: #666; text-align: center; font-size: 0.7rem; padding: 2px; }
 
-        /* PDF Section */
+        /* PDF Section - New Coloring */
         #controls { border-top: 2px solid var(--c-healing-sage); padding-top: 20px; }
         .btn-pdf {
-            width: 100%; padding: 12px; margin-bottom: 10px;
+            width: 100%; padding: 14px; margin-bottom: 12px;
             font-family: var(--font-label); font-weight: 700;
-            border-radius: 8px; border: 1px solid;
+            border-radius: 8px; border: none;
             display: flex; align-items: center; justify-content: center; gap: 10px;
-            transition: transform var(--speed-emergency);
+            transition: transform var(--speed-emergency), box-shadow 0.2s;
+            color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .btn-pdf:active { transform: scale(0.98); }
-        .btn-handbook { border-color: var(--c-deep-sage); color: var(--c-deep-sage); background: #fff; }
-        .btn-crate { border-color: #4A90E2; color: #4A90E2; background: #fff; }
-        .btn-poster { border-color: var(--c-warm-alert); color: var(--c-warm-alert); background: #fff; }
+        .btn-pdf:active { transform: scale(0.98); box-shadow: none; }
+        
+        /* [Updated Colors] */
+        .btn-handbook { background-color: var(--c-deep-sage); } /* Green/Trust */
+        .btn-crate { background-color: #5D99C6; } /* Blue/Info */
+        .btn-poster { background-color: var(--c-warm-alert); } /* Red/Alert */
 
         /* Preview Area */
         #preview-area { display: none; background: #fff; border: 2px solid var(--c-deep-sage); border-radius: 12px; padding: 15px; margin-top: 20px; }
@@ -232,7 +237,7 @@
     </style>
 </head>
 <body>
-    <div id="log-stamp">v2025.12.18-Emergency-Design-Fix</div>
+    <div id="log-stamp">v2025.12.18-Fix-Colors-Masking</div>
 
     <div class="container">
         <div class="header-area no-print-area">
@@ -317,7 +322,11 @@
                 <div class="info-row">
                     <span class="info-label">緊急連絡先 (家族・親族)</span>
                     <div id="c_em_name" class="info-value">-</div>
-                    <div id="c_em_phone" class="info-value">-</div>
+                    <div class="masked-wrapper">
+                        <span id="c_em_phone_masked" class="masked-text">***</span>
+                        <span id="c_em_phone_real" class="real-text">-</span>
+                        <button class="btn-toggle-mask no-print-area" onclick="toggleMask('c_em_phone')">表示</button>
+                    </div>
                 </div>
                 <div class="info-row">
                     <span class="info-label">代理人 (シッター等)</span>
@@ -500,7 +509,9 @@
             setText('d_chip', d.microchip);
             
             setText('c_em_name', c.em_name);
-            setText('c_em_phone', c.em_phone);
+            // Updated: Mask Emergency Contact Phone
+            setMaskedText('c_em_phone', c.em_phone, maskPhone(c.em_phone));
+            
             setText('c_proxy_name', c.proxy_name);
             setText('c_proxy_phone', c.proxy_phone);
             setText('c_evac', c.evac_site);
@@ -520,7 +531,6 @@
                 .then(data => {
                     const el = document.getElementById('d_photo_container');
                     if(data.image) {
-                        // Soft fade-in animation
                         el.innerHTML = `<img src="${data.image}" class="dog-profile-img" onload="this.classList.add('visible')">`;
                         el.style.border = 'none';
                     } else {
@@ -530,7 +540,6 @@
                 .catch(e => console.log('Img Err'));
         }
 
-        /* --- PDF Generation Logic --- */
         function generatePdf(type) {
             if(!currentUserId || !currentDogId) return;
             const btn = document.getElementById(`btn-${type}`);
@@ -549,7 +558,6 @@
                     } else if(data.url) {
                         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                         if (!isMobile) {
-                            // PC: Direct Download
                             try {
                                 const match = data.url.match(/\/d\/(.*?)\//);
                                 const fileId = (match && match[1]) ? match[1] : null;
@@ -563,7 +571,6 @@
                                 printModal.show();
                             } catch(e) { window.open(data.url, '_blank'); }
                         } else {
-                            // Mobile: Preview for Save
                             let fileId = '';
                             const match = data.url.match(/\/d\/(.*?)\//) || data.url.match(/id=(.*?)$/);
                             if (match && match[1]) fileId = match[1];
@@ -597,8 +604,17 @@
         }
 
         /* --- Helper Functions --- */
-        function maskAddress(addr) { if(!addr) return; const m = addr.match(/(.*?[都道府県].*?[市区町村])/); return m ? m[0]+' ***' : addr.substring(0,5)+' ***'; }
-        function maskPhone(tel) { if(!tel) return; return tel.substring(0,3)+'-****-****'; }
+        function maskAddress(addr) { 
+            if(!addr) return; 
+            // Matches until prefecture + city/ward
+            const m = addr.match(/(.*?[都道府県].*?[市区町村])/); 
+            return m ? m[0]+' ***' : addr.substring(0,5)+' ***'; 
+        }
+        function maskPhone(tel) { 
+            if(!tel) return; 
+            // Matches 070/080/090 etc (first 3-4 digits)
+            return tel.substring(0,3)+'-****-****'; 
+        }
         function setText(id, txt) { const el = document.getElementById(id); if(el) el.textContent = txt || '-'; }
         
         function setMaskedText(baseId, realVal, maskedVal) { 
@@ -607,7 +623,7 @@
             const btn = rEl ? rEl.parentElement.querySelector('.btn-toggle-mask') : null; 
             if(!rEl || !mEl) return; 
             
-            // Reset to default state
+            // Reset to masked state
             rEl.style.display = 'none';
             mEl.style.display = 'inline';
             if(btn) btn.style.display = 'inline-block';
@@ -644,7 +660,7 @@
                     // Unmask All
                     rEl.style.display = 'inline';
                     mEl.style.display = 'none';
-                    if(btn) btn.style.display = 'none'; // Hide buttons in emergency to reduce noise
+                    if(btn) btn.style.display = 'none'; 
                 } else {
                     // Re-mask
                     rEl.style.display = 'none';
@@ -653,10 +669,9 @@
                 }
             });
             
-            // Optional: Change header style
             const header = document.querySelector('.header-area');
             if(isEmergency) {
-                document.body.style.backgroundColor = '#fff0f0'; // Slight red tint
+                document.body.style.backgroundColor = '#fff0f0';
             } else {
                 document.body.style.backgroundColor = 'var(--c-pale-mist)';
             }
