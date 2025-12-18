@@ -54,7 +54,7 @@
         /* Motion */
         --ease-luxury: cubic-bezier(0.25, 0.1, 0.25, 1.0);
         
-        /* [修正] Texture: 最初のマスク方式用 (Opacityを0.2に下げて微細に) */
+        /* Texture */
         --texture-grunge: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.75'/%3E%3C/svg%3E");
     }
 
@@ -63,7 +63,7 @@
         background-color: var(--c-base-washi);
         color: var(--c-text-sumi);
         line-height: 1.8; 
-        padding-bottom: 0; /* Footer追加に伴い調整 */
+        padding-bottom: 0; 
         overflow-x: hidden; 
     }
     
@@ -76,7 +76,11 @@
         transition: opacity 0.8s var(--ease-luxury), visibility 0.8s var(--ease-luxury);
     }
     .loading-content { text-align: center; }
+    
+    /* [修正] Spinner Animation Definition */
+    @keyframes spinner-border { to { transform: rotate(360deg); } }
     @keyframes breathe { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.0); } }
+    
     .spinner-border-brand { 
         border-color: var(--c-main-turquoise); border-right-color: transparent; 
         width: 3rem; height: 3rem; margin-bottom: 20px;
@@ -133,7 +137,6 @@
     }
     .history-link { text-decoration: none; color: var(--c-sub-deep-ocean); font-weight: 500; font-size: 0.9rem; margin-left: auto; display: block; text-align: right; margin-top: 10px; opacity: 0.8; transition: opacity 0.3s; }
     
-    /* PDF Button Style (Updated for Top Position) */
     .btn-pdf { 
         background: #fff; color: var(--c-sub-deep-ocean); border: 1px solid var(--c-sub-deep-ocean); 
         width: 100%; padding: 14px; border-radius: 50px; 
@@ -188,9 +191,10 @@
     .footer-action { margin: 50px 20px 20px; text-align: center; }
     
     /* Buttons */
+    /* [修正] text-align: center 追加 */
     .btn-reserve { 
         background: var(--c-accent-copper); color: #fff; border: none; width: 100%; padding: 16px; border-radius: 50px; 
-        font-weight: 700; font-size: 1.05rem; 
+        font-weight: 700; font-size: 1.05rem; text-align: center;
         box-shadow: 0 4px 12px rgba(200, 122, 86, 0.4); margin-top: 30px;
         display: block; text-decoration: none; letter-spacing: 0.05em;
         transition: all 0.3s var(--ease-luxury);
@@ -219,6 +223,8 @@
         text-align: center; padding: 40px 20px; color: #999; font-size: 0.8rem;
         background: #f9f9f9; border-top: 1px solid #eee; margin-top: 40px;
     }
+    .footer-logo-container { margin-bottom: 20px; }
+    .footer-logo-img { width: 40%; height: auto; display: inline-block; filter: contrast(0.95); opacity: 0.7; }
     .footer-info p { margin-bottom: 5px; }
 
     /* =========================================
@@ -258,13 +264,12 @@
         border: none;
     }
     
-    /* [修正] 最初のマスク方式 (mask-image) を復活 */
     .ms-icon-box i { 
         font-size: 1.8rem; 
         filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3)); color: #fff; 
         z-index: 2; position: relative;
         mask-image: var(--texture-grunge);
-        -webkit-mask-image: var(--texture-grunge); /* for Safari */
+        -webkit-mask-image: var(--texture-grunge); 
         mask-size: cover; -webkit-mask-size: cover;
     }
     .ms-icon-box img { width: 55%; height: 55%; object-fit: contain; z-index: 2; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2)); position: relative; }
@@ -274,11 +279,9 @@
         border-radius: 50%; border: 2px double rgba(0,0,0,0.15); box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1); 
         pointer-events: none; z-index: 1;
     }
-    /* [修正] Overlayテクスチャ削除 */
     .ms-icon-box::after {
         content: ''; position: absolute; top: 12px; left: 12px; right: 12px; bottom: 12px;
         border-radius: 50%; border: 0.5px solid rgba(255,255,255,0.4); 
-        /* background-image: none; */ 
         pointer-events: none; z-index: 3;
     }
     
@@ -355,7 +358,6 @@
     .modal-content { border-radius: 12px; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
     .modal-header { border-bottom: none; padding-bottom: 0; }
     
-    /* [修正] Modal Icon: Mask方式に合わせる */
     #msModalIconBox { 
         width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; 
         display: flex; align-items: center; justify-content: center; font-size: 3rem; color: white;
@@ -370,7 +372,6 @@
         border-radius: 50%; border: 1px solid rgba(255,255,255,0.4); 
         pointer-events: none; z-index: 3;
     }
-    /* [修正] Modal Icon mask適用 */
     #msModalIconBox i { 
         position: relative; z-index: 2; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); 
         mask-image: var(--texture-grunge); -webkit-mask-image: var(--texture-grunge); mask-size: cover;
@@ -551,6 +552,9 @@
     </div>
 
     <footer class="site-footer">
+        <div class="footer-logo-container">
+            <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony">
+        </div>
         <div class="footer-info">
             <p><strong>K9 Harmony</strong></p>
             <p>東京都板橋区 (Dummy Address)</p>
@@ -1001,19 +1005,17 @@
         const acquiredAll = badges.filter(b => b.is_acquired);
         const unacquiredCurrent = badges.filter(b => !b.is_acquired && b.tier === currentTierKey);
         
-        let teaserBadges = [];
-        const nextTierKey = getNextTier(currentTierKey);
-        
-        if (counts[currentTierKey] >= 6 && nextTierKey) {
-            teaserBadges = badges.filter(b => !b.is_acquired && b.tier === nextTierKey).slice(0, 4);
-        }
+        // [修正] メインページではチラ見せロジックを廃止
+        // let teaserBadges = [];
+        // const nextTierKey = getNextTier(currentTierKey);
+        // if (counts[currentTierKey] >= 6 && nextTierKey) { ... } 削除
 
-        let displayList = [...acquiredAll, ...unacquiredCurrent, ...teaserBadges];
+        let displayList = [...acquiredAll, ...unacquiredCurrent];
         
         let hasNewBadge = false;
         displayList.forEach(badge => {
-            const isTeaser = teaserBadges.includes(badge);
-            const html = createBadgeHtml(badge, isTeaser);
+            // isTeaserフラグはfalse固定
+            const html = createBadgeHtml(badge, false);
             container.insertAdjacentHTML('beforeend', html);
             if (badge.is_new) hasNewBadge = true;
         });
@@ -1150,10 +1152,14 @@
                 sectionHtml += `<div class="full-list-grid">${html}</div>`;
             } else if (isTeaser) {
                 let html = '';
-                tierBadges.slice(0, 4).forEach(b => html += createBadgeHtml(b, true).replace('ms-badge-new',''));
+                // [修正] 最初の3つだけ表示
+                tierBadges.slice(0, 3).forEach(b => html += createBadgeHtml(b, true).replace('ms-badge-new',''));
                 sectionHtml += `<div class="full-list-grid">${html}</div>`;
+                
+                // [修正] それ以降はロックパネル1つで表現
+                sectionHtml += createLockHtml('Coming Soon');
             } else {
-                // ロック画像はGridの外に出す
+                // ロック画像
                 sectionHtml += createLockHtml('Coming Soon');
             }
             
