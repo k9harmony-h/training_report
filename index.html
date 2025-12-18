@@ -77,13 +77,13 @@
     }
     .loading-content { text-align: center; }
     
-    /* [FIX] Use Bootstrap standard animation keyframes */
+    @keyframes spinner-border { to { transform: rotate(360deg); } }
+    @keyframes breathe { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.0); } }
+    
     .spinner-border-brand { 
         border-color: var(--c-main-turquoise); border-right-color: transparent; 
         width: 3rem; height: 3rem; margin-bottom: 20px;
-        /* Ensure standard rotation is applied */
-        animation: spinner-border .75s linear infinite;
-        display: inline-block;
+        animation: spinner-border .75s linear infinite, breathe 2.0s var(--ease-luxury) infinite;
     }
     #tipsText { margin-top: 20px; font-weight: 500; font-size: 0.95rem; font-family: var(--font-serif-jp); letter-spacing: 0.05em; padding: 0 20px; height: 1.5em; }
     
@@ -136,13 +136,7 @@
     }
     .history-link { text-decoration: none; color: var(--c-sub-deep-ocean); font-weight: 500; font-size: 0.9rem; margin-left: auto; display: block; text-align: right; margin-top: 10px; opacity: 0.8; transition: opacity 0.3s; }
     
-    .btn-pdf { 
-        background: #fff; color: var(--c-sub-deep-ocean); border: 1px solid var(--c-sub-deep-ocean); 
-        width: 100%; padding: 14px; border-radius: 50px; 
-        font-weight: 700; font-size: 1rem; margin-top: 25px; display: block; text-decoration: none; 
-        transition: all 0.3s var(--ease-luxury); cursor: pointer; letter-spacing: 0.05em;
-    }
-    .btn-pdf:active { background: var(--c-bg-mist); transform: scale(0.98); }
+    /* (Old PDF Button style removed) */
 
     .chart-section { margin-top: 30px; padding: 0 10px; display: flex; justify-content: space-between; }
     .chart-box { width: 48%; text-align: center; }
@@ -434,14 +428,7 @@
     
     #milestoneModal { z-index: 2000; }
     
-    /* PDF Preview Modal CSS */
-    #pdfPreviewModal .modal-body { padding: 0; background: #333; position: relative; }
-    .preview-img-modal { width: 100%; height: auto; display: block; }
-    .preview-msg { 
-        position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); 
-        background: rgba(0,0,0,0.7); color: #fff; padding: 8px 16px; border-radius: 20px;
-        font-size: 0.85rem; font-weight: bold; pointer-events: none;
-    }
+    /* (PDF Preview Modal styles removed) */
   </style>
 </head>
 <body>
@@ -465,7 +452,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.18-FETCH-IMPLEMENTED</div>
+  <div id="log-stamp">v2025.12.18-REVERT-PDF-FEATURE</div>
 
   <div id="loadingOverlay">
     <div class="loading-content">
@@ -504,10 +491,7 @@
         </div>
       </div>
 
-      <button onclick="handleDownloadPdf()" class="btn-pdf" id="pdfBtn">
-          📄 レポートをPDFで保存
-      </button>
-    </div>
+      </div>
 
     <div class="chart-section">
       <div class="chart-box"><canvas id="chart1"></canvas><div class="chart-caption">基礎・集中</div></div>
@@ -627,18 +611,6 @@
     </div>
   </div>
 
-  <div class="modal fade" id="pdfPreviewModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="background:transparent; box-shadow:none; border:none;">
-            <div class="modal-body">
-                <img id="pdfPreviewImg" src="" class="preview-img-modal" alt="PDF Preview">
-                <div class="preview-msg">画像を長押しして保存</div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="position:absolute; top:-30px; right:0; opacity:1;"></button>
-            </div>
-        </div>
-    </div>
-  </div>
-
   <script>
     const LIFF_ID = '2008546673-MJY7j3ox'; 
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
@@ -665,7 +637,7 @@
     let currentLessonData = null;
     let milestoneModal = null;
     let allMilestonesModal = null;
-    let pdfPreviewModal = null; 
+    /* let pdfPreviewModal = null; (Removed) */
     let cachedMilestones = [];
     let cachedMeta = {};
     let globalDogList = []; 
@@ -894,7 +866,7 @@
         
         milestoneModal = new bootstrap.Modal(document.getElementById('milestoneModal'));
         allMilestonesModal = new bootstrap.Modal(document.getElementById('allMilestonesModal'));
-        pdfPreviewModal = new bootstrap.Modal(document.getElementById('pdfPreviewModal')); 
+        /* pdfPreviewModal = new bootstrap.Modal(document.getElementById('pdfPreviewModal')); (Removed) */
 
         const urlParams = new URLSearchParams(window.location.search);
         const urlDogId = urlParams.get('dogId');
@@ -1050,10 +1022,11 @@
     }
 
     function createBadgeHtml(badge, isTeaser = false) {
-        const isLocked = !badge.is_acquired && !isTeaser; 
+        const isLocked = !badge.is_acquired && !isTeaser; // Normal unacquired
         const lockedClass = isLocked ? 'locked' : '';
         const teaserClass = isTeaser ? 'teaser' : '';
         
+        // Tier Color Class
         let colorClass = 'bg-trust';
         if (!isLocked && !isTeaser) {
             if (badge.color) {
@@ -1091,11 +1064,11 @@
     }
     
     function triggerShake(el) {
-        if(el.classList.contains('anim-shake')) return; 
+        if(el.classList.contains('anim-shake')) return; // 連打防止
         el.classList.add('anim-shake');
         setTimeout(() => {
             el.classList.remove('anim-shake');
-        }, 400); 
+        }, 400); // アニメーション時間(0.4s)に合わせる
     }
 
     function getRandomWaxBorder() {
@@ -1316,100 +1289,15 @@
         }
     }
 
-    function handleDownloadPdf() {
-        if (!currentLessonData || !currentLessonData.latest) {
-            alert("データが読み込まれていません。");
-            return;
+    function openMedicalPage() {
+        let url = 'medical.html';
+        if (currentDogId) {
+            url += `?dogId=${currentDogId}`;
         }
-
-        const btn = document.getElementById('pdfBtn');
-        const originalText = btn.innerText;
-        btn.innerText = "作成中...";
-        btn.disabled = true;
-
-        const formData = {
-            action: 'create_pdf', // ★修正: POST用のアクション指定
-            training_unique_key: currentLessonData.latest.id || '', 
-            dog_name: currentLessonData.dog.name,
-            training_date: currentLessonData.latest.date,
-            // ★修正: キーをidからunique_keyへ変更 (Error: Customer Code not found対策)
-            customer_unique_key: currentLessonData.customer.unique_key,
-            dog_unique_key: currentLessonData.dog.id,
-            
-            goal: currentLessonData.latest.goal,
-            done: currentLessonData.latest.done,
-            unable: currentLessonData.latest.unable,
-            next_homework: currentLessonData.latest.homework, 
-            next_goal: currentLessonData.latest.next_goal,
-            comment_trainer: currentLessonData.latest.comment,
-            training_remarks: '', 
-
-            score_1: currentLessonData.latest.scores[0], score_detail_1: currentLessonData.latest.details[0],
-            score_2: currentLessonData.latest.scores[1], score_detail_2: currentLessonData.latest.details[1],
-            score_3: currentLessonData.latest.scores[2], score_detail_3: currentLessonData.latest.details[2],
-            score_4: currentLessonData.latest.scores[3], score_detail_4: currentLessonData.latest.details[3],
-            score_5: currentLessonData.latest.scores[4], score_detail_5: currentLessonData.latest.details[4],
-            score_6: currentLessonData.latest.scores[5], score_detail_6: currentLessonData.latest.details[5],
-            score_7: currentLessonData.latest.scores[6], score_detail_7: currentLessonData.latest.details[6],
-            score_8: currentLessonData.latest.scores[7], score_detail_8: currentLessonData.latest.details[7],
-            score_9: currentLessonData.latest.scores[8], score_detail_9: currentLessonData.latest.details[8],
-            score_10: currentLessonData.latest.scores[9], score_detail_10: currentLessonData.latest.details[9],
-            
-            training_photo_1: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[0] : '',
-            training_photo_2: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[1] : '',
-            training_photo_3: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[2] : '',
-            training_photo_4: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[3] : '',
-            training_photo_5: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[4] : ''
-        };
-
-        // ★修正: google.script.runを廃止し、medical.html同様にfetchを使用
-        fetch(GAS_URL, {
-            method: 'POST',
-            body: JSON.stringify(formData)
-        })
-        .then(res => {
-            if (!res.ok) throw new Error(`Server Error: ${res.status}`);
-            return res.json();
-        })
-        .then(response => {
-             btn.innerText = originalText;
-             btn.disabled = false;
-
-             if (response.status === 'success') {
-                 // Mobile check logic
-                 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                 if (isMobile) {
-                     // スマホ: プレビューを表示して長押し保存
-                     const fileId = response.url.match(/id=([-\w]{25,})/) || response.url.match(/\/d\/([-\w]{25,})/);
-                     const cleanId = fileId ? fileId[1] : '';
-                     
-                     if(cleanId) {
-                         const thumbUrl = `https://drive.google.com/thumbnail?id=${cleanId}&sz=w1000`;
-                         document.getElementById('pdfPreviewImg').src = thumbUrl;
-                         pdfPreviewModal.show();
-                     } else {
-                         // ID取れない場合は直接開く
-                         window.open(response.url, '_blank');
-                     }
-                 } else {
-                     // PC: 即時ダウンロード
-                     const a = document.createElement('a');
-                     a.href = response.downloadUrl; // downloadUrlを使用
-                     a.download = `LessonReport_${formData.training_date}.pdf`; 
-                     document.body.appendChild(a);
-                     a.click();
-                     document.body.removeChild(a);
-                 }
-             } else {
-                 alert('エラー: ' + response.message);
-             }
-        })
-        .catch(e => {
-             btn.innerText = originalText;
-             btn.disabled = false;
-             alert('通信エラー: ' + e.message);
-        });
+        window.location.href = url;
     }
+
+    /* (handleDownloadPdf function removed) */
 
     function fetchProfileImage(userId, dogId) {
       let url = `${GAS_URL}?userId=${userId}&type=img_profile`;
