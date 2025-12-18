@@ -77,12 +77,10 @@
     }
     .loading-content { text-align: center; }
     
-    /* [FIX 1] Removed custom animation 'spin-rotate' and 'breathe' to avoid conflict */
-    /* Bootstrap's .spinner-border class handles rotation automatically */
+    /* Bootstrap's .spinner-border handles rotation. Removed custom animation to fix rotation issue. */
     .spinner-border-brand { 
         border-color: var(--c-main-turquoise); border-right-color: transparent; 
         width: 3rem; height: 3rem; margin-bottom: 20px;
-        /* Only use standard rotation */
         animation: spinner-border .75s linear infinite; 
     }
     #tipsText { margin-top: 20px; font-weight: 500; font-size: 0.95rem; font-family: var(--font-serif-jp); letter-spacing: 0.05em; padding: 0 20px; height: 1.5em; }
@@ -136,8 +134,6 @@
     }
     .history-link { text-decoration: none; color: var(--c-sub-deep-ocean); font-weight: 500; font-size: 0.9rem; margin-left: auto; display: block; text-align: right; margin-top: 10px; opacity: 0.8; transition: opacity 0.3s; }
     
-    /* PDF Button Removed */
-
     .chart-section { margin-top: 30px; padding: 0 10px; display: flex; justify-content: space-between; }
     .chart-box { width: 48%; text-align: center; }
     .chart-caption { 
@@ -251,15 +247,6 @@
     @keyframes shake-refuse { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-4px); } 50% { transform: translateX(4px); } }
     .anim-shake .ms-icon-box { animation: shake-refuse 0.4s ease-in-out; }
 
-    /* [FIX 3] Teaser Styling - Tight Integration */
-    .ms-badge.teaser { pointer-events: none; opacity: 0.7; }
-    .ms-badge.teaser .ms-icon-box { 
-        /* Show only top half of icon */
-        clip-path: inset(0 0 50% 0); 
-        background: var(--c-sub-beige); box-shadow: none; opacity: 0.5; 
-    }
-    .ms-badge.teaser .ms-label { display: none; }
-
     /* Sealing Wax Style Icon Box */
     .ms-icon-box { 
         width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; 
@@ -333,15 +320,6 @@
         position: relative; height: 150px; border-radius: 12px; background: var(--c-bg-mist); 
         display:flex; align-items:center; justify-content:center; overflow: hidden;
     }
-    
-    /* [FIX 3] Connected Lock Panel Style */
-    .tier-locked.connected {
-        margin-top: -5px; /* Slight overlap */
-        border-top-left-radius: 0;
-        border-top-right-radius: 0;
-        box-shadow: 0 -5px 10px rgba(0,0,0,0.05);
-    }
-
     .tier-lock-overlay {
         position: absolute; inset: 0; background-color: rgba(0, 0, 0, 0.85); 
         background-image: 
@@ -404,25 +382,10 @@
         margin-bottom: 20px; color: var(--c-sub-deep-ocean); border-left: 3px solid var(--c-main-turquoise); padding-left: 12px; letter-spacing: 0.05em; 
     }
     
-    /* [FIX 3] Teaser Grid Layout */
-    .full-list-grid.teaser-mode {
-        gap: 10px; 
-        margin-bottom: 0;
-        padding-bottom: 0;
-    }
-    .full-list-grid.teaser-mode .ms-badge {
-        height: 40px; /* Collapse height to only show top half */
-        width: 75px;
-        overflow: hidden; 
-    }
-    .full-list-grid.teaser-mode .ms-icon-box {
-        margin-bottom: 0;
-    }
-    
     #log-stamp { background: #333; color: #666; text-align: center; font-size: 0.7rem; padding: 2px; }
     #debug-console { display: none; }
 
-    /* [Moment of Joy Styles] (Omitting for brevity as they are unchanged) */
+    /* [Moment of Joy Styles] */
     #celebrationOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; display: none; pointer-events: auto; }
     #celebNightSky { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center bottom, #00143c 0%, #000 90%); opacity: 0; transition: opacity 0.5s ease-out; z-index: 10001; }
     #celebrationOverlay.active #celebNightSky { opacity: 1; }
@@ -479,7 +442,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.18-UI-POLISH</div>
+  <div id="log-stamp">v2025.12.18-FINAL-FIX</div>
 
   <div id="loadingOverlay">
     <div class="loading-content">
@@ -1156,51 +1119,59 @@
         let counts = { '1_Beginner': 0, '2_Intermediate': 0, '3_Advanced': 0 };
         cachedMilestones.forEach(b => { if(b.is_acquired) counts[b.tier]++; });
 
-        const renderUnacquiredSection = (tierKey, title, isUnlocked, isTeaser) => {
-            let sectionHtml = `<div class="full-list-section"><div class="full-list-title">${title}</div>`;
-            
+        // [FIX 3] Logic Update: Single Lock Panel for future stages
+        const renderTierBadges = (tierKey, title) => {
             let tierBadges = cachedMilestones.filter(b => b.tier === tierKey && !b.is_acquired);
-            if (tierBadges.length === 0 && isUnlocked) return;
+            if (tierBadges.length === 0) return; 
 
-            if (isUnlocked) {
-                let html = '';
-                tierBadges.forEach(b => html += createBadgeHtml(b).replace('ms-badge-new',''));
-                sectionHtml += `<div class="full-list-grid">${html}</div>`;
-            } else if (isTeaser) {
-                let html = '';
-                // [FIX 3] Teaser Grid Class
-                tierBadges.slice(0, 3).forEach(b => html += createBadgeHtml(b, true).replace('ms-badge-new',''));
-                sectionHtml += `<div class="full-list-grid teaser-mode">${html}</div>`;
-                
-                // [FIX 3] Connected Lock Panel
-                sectionHtml += createLockHtml('Coming Soon', true);
-            } else {
-                sectionHtml += createLockHtml('Coming Soon');
-            }
+            let html = '';
+            tierBadges.forEach(b => html += createBadgeHtml(b).replace('ms-badge-new',''));
             
-            sectionHtml += `</div>`;
-            modalBody.insertAdjacentHTML('beforeend', sectionHtml);
+            modalBody.insertAdjacentHTML('beforeend', `
+                <div class="full-list-section">
+                    <div class="full-list-title">${title}</div>
+                    <div class="full-list-grid">${html}</div>
+                </div>
+            `);
         };
 
-        renderUnacquiredSection('1_Beginner', '未獲得: TRUST', true, false);
+        const renderLockPanel = (text) => {
+            modalBody.insertAdjacentHTML('beforeend', `
+                <div class="full-list-section">
+                    <div class="full-list-title">Next Stage</div>
+                    ${createLockHtml(text)}
+                </div>
+            `);
+        };
 
-        const bondUnlocked = counts['1_Beginner'] >= 8;
-        const bondTeaser = counts['1_Beginner'] >= 6;
-        renderUnacquiredSection('2_Intermediate', '未獲得: BOND', bondUnlocked, bondTeaser);
+        // Logic Implementation
+        // 1. Always show Tier 1 unacquired
+        renderTierBadges('1_Beginner', '未獲得: TRUST');
 
-        const harmonyUnlocked = counts['2_Intermediate'] >= 8;
-        const harmonyTeaser = counts['2_Intermediate'] >= 6;
-        if (bondUnlocked || bondTeaser) {
-             renderUnacquiredSection('3_Advanced', '未獲得: HARMONY', harmonyUnlocked, harmonyTeaser);
+        // 2. Check Tier 2 unlock
+        if (counts['1_Beginner'] >= TIER_CONFIG['1_Beginner'].count) {
+            // Tier 1 complete -> Show Tier 2
+            renderTierBadges('2_Intermediate', '未獲得: BOND');
+
+            // 3. Check Tier 3 unlock
+            if (counts['2_Intermediate'] >= TIER_CONFIG['2_Intermediate'].count) {
+                // Tier 2 complete -> Show Tier 3
+                renderTierBadges('3_Advanced', '未獲得: HARMONY');
+            } else {
+                // Tier 2 incomplete -> Lock everything after
+                renderLockPanel('Coming Soon');
+            }
+        } else {
+            // Tier 1 incomplete -> Lock everything after
+            renderLockPanel('Coming Soon');
         }
         
         allMilestonesModal.show();
     }
     
-    function createLockHtml(text, isConnected) {
-        const connectedClass = isConnected ? 'connected' : '';
+    function createLockHtml(text) {
         return `
-            <div class="tier-locked ${connectedClass}" onclick="shakeLockIcon(this)">
+            <div class="tier-locked" onclick="shakeLockIcon(this)">
                 <div class="tier-lock-overlay">
                     <div class="tier-lock-icon"><i class="fa-solid fa-lock"></i></div>
                     <div class="tier-lock-text">${text}</div>
