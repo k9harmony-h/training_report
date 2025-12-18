@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K9 Harmony - カウンセリング診断</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #57C3C2; /* 指定のブランドカラー */
+            --primary-dark: #46a6a5;  /* ホバー時などの少し濃い色 */
+            --bg-color: #f7fcfc;      /* ブランドカラーに合わせた薄い背景 */
+            --text-color: #333;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--white);
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(87, 195, 194, 0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 15px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            color: var(--primary-color);
+            margin: 0;
+            letter-spacing: 0.05em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: var(--text-color);
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0f2f2;
+            border-radius: 12px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-color);
+        }
+
+        button {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+            box-shadow: 0 4px 12px rgba(87, 195, 194, 0.3);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: var(--primary-dark);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>K9 Harmony</h1>
+        <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">うちの子カウンセリング診断</p>
+    </header>
+
+    <form id="diagnosisForm">
+        <div class="form-group">
+            <label for="dogName">ワンちゃんのお名前</label>
+            <input type="text" id="dogName" name="dogName" placeholder="例：ポチ" required>
+        </div>
+
+        <div class="form-group">
+            <label for="issue">一番のお悩み</label>
+            <select id="issue" name="issue" required>
+                <option value="">選択してください</option>
+                <option value="吠え癖">吠え癖</option>
+                <option value="噛み癖">噛み癖</option>
+                <option value="散歩の引っ張り">散歩の引っ張り</option>
+                <option value="トイレトレーニング">トイレトレーニング</option>
+                <option value="その他">その他</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="details">詳しい状況</label>
+            <textarea id="details" name="details" rows="4" placeholder="どんな時に困りますか？"></textarea>
+        </div>
+
+        <button type="submit" id="submitBtn">送信して診断を受ける</button>
+        <div id="loading">✨ データを送信中です...</div>
+    </form>
+</div>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec";
+    const MY_LIFF_ID = "2008546673-MJY7j3ox"; 
+
+    async function initializeLiff() {
+        try {
+            await liff.init({ liffId: MY_LIFF_ID });
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            }
+        } catch (error) {
+            console.error("LIFFの初期化に失敗しました", error);
+        }
+    }
+
+    document.getElementById('diagnosisForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        
+        submitBtn.disabled = true;
+        loading.style.display = 'block';
+
+        let userId = "unknown";
+        try {
+            const profile = await liff.getProfile();
+            userId = profile.userId;
+        } catch (err) {
+            console.log("プロフィール取得失敗", err);
+        }
+
+        const formData = {
+            dogName: document.getElementById('dogName').value,
+            issue: document.getElementById('issue').value,
+            details: document.getElementById('details').value,
+            userId: userId
+        };
+
+        try {
+            await fetch(GAS_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData)
+            });
+
+            alert("診断の申し込みありがとうございます！\nLINE画面に戻ります。");
+            liff.closeWindow();
+            
+        } catch (error) {
+            console.error("エラーが発生しました", error);
+            alert("送信に失敗しました。時間をおいて再度お試しください。");
+        } finally {
+            submitBtn.disabled = false;
+            loading.style.display = 'none';
+        }
+    });
+
+    initializeLiff();
+</script>
+
+</body>
+</html>
