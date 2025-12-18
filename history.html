@@ -38,7 +38,7 @@
             font-family: var(--font-sans-jp); 
             background-color: var(--c-base-washi); 
             color: var(--c-text-sumi); 
-            padding-bottom: 50px;
+            padding-bottom: 0; /* Footer追加に伴い調整 */
             overflow-x: hidden; 
             line-height: 1.8;
         }
@@ -51,7 +51,6 @@
             transition: opacity 0.8s var(--ease-luxury), visibility 0.8s var(--ease-luxury);
         }
         
-        /* [修正] Spinner Animation Definition */
         @keyframes spinner-border { to { transform: rotate(360deg); } }
 
         .spinner-border-brand { 
@@ -86,7 +85,6 @@
             display: flex; align-items: center; justify-content: center;
             overflow: hidden; box-shadow: 0 10px 30px -10px rgba(87, 195, 194, 0.25);
         }
-        /* [修正] Fade-in consistency */
         .dog-profile-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.0s var(--ease-luxury); }
         .dog-profile-img.loaded { opacity: 1; }
         
@@ -162,7 +160,6 @@
             border: 1px solid rgba(0,0,0,0.05); overflow: hidden; background: var(--c-bg-mist); 
             box-shadow: 0 4px 10px rgba(0,0,0,0.03);
         }
-        /* [修正] Fade-in consistency */
         .gallery-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.0s var(--ease-luxury); }
         .gallery-img.loaded { opacity: 1; }
         
@@ -213,6 +210,15 @@
         }
         .btn-back-home:active { transform: scale(0.98); box-shadow: 0 2px 6px rgba(47, 93, 98, 0.2); }
 
+        /* [追加] Footer Style */
+        .site-footer {
+            text-align: center; padding: 40px 20px; color: #999; font-size: 0.8rem;
+            background: #f9f9f9; border-top: 1px solid #eee; margin-top: 40px;
+        }
+        .footer-logo-container { margin-bottom: 20px; }
+        .footer-logo-img { width: 40%; height: auto; display: inline-block; filter: contrast(0.95); opacity: 0.7; }
+        .footer-info p { margin-bottom: 5px; }
+
         /* Modal */
         .modal-content { border-radius: 12px; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.15); }
         .modal-header { border-bottom: none; padding-bottom: 0; }
@@ -241,7 +247,7 @@
 </head>
 <body>
 
-    <div id="log-stamp">v2025.12.18-HISTORY-ANIM-FIX</div>
+    <div id="log-stamp">v2025.12.18-HISTORY-FOOTER-ADD</div>
 
     <div id="loadingOverlay">
         <div class="spinner-border spinner-border-brand" role="status"></div>
@@ -286,6 +292,18 @@
             </button>
             <a href="#" id="footerBackLink" class="btn-back-home">Return to Home</a>
         </div>
+
+        <footer class="site-footer">
+            <div class="footer-logo-container">
+                <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony">
+            </div>
+            <div class="footer-info">
+                <p><strong>K9 Harmony</strong></p>
+                <p>東京都板橋区 (Dummy Address)</p>
+                <p>03-0000-0000 (Dummy Phone)</p>
+            </div>
+            <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
+        </footer>
     </div>
 
     <div class="modal fade" id="historyDetailModal" tabindex="-1">
