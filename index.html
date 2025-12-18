@@ -77,13 +77,16 @@
     }
     .loading-content { text-align: center; }
     
-    @keyframes spinner-border { to { transform: rotate(360deg); } }
+    /* [FIX] Renamed animation to avoid conflict with Bootstrap */
+    @keyframes spin-rotate { to { transform: rotate(360deg); } }
     @keyframes breathe { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.0); } }
     
     .spinner-border-brand { 
         border-color: var(--c-main-turquoise); border-right-color: transparent; 
         width: 3rem; height: 3rem; margin-bottom: 20px;
-        animation: spinner-border .75s linear infinite, breathe 2.0s var(--ease-luxury) infinite;
+        /* [FIX] Changed animation name to spin-rotate */
+        animation: spin-rotate .75s linear infinite, breathe 2.0s var(--ease-luxury) infinite;
+        display: inline-block; /* Ensure block display for transform */
     }
     #tipsText { margin-top: 20px; font-weight: 500; font-size: 0.95rem; font-family: var(--font-serif-jp); letter-spacing: 0.05em; padding: 0 20px; height: 1.5em; }
     
@@ -465,7 +468,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.18-FIX-LINK-AND-SYNC</div>
+  <div id="log-stamp">v2025.12.18-FETCH-IMPLEMENTED</div>
 
   <div id="loadingOverlay">
     <div class="loading-content">
@@ -665,7 +668,7 @@
     let currentLessonData = null;
     let milestoneModal = null;
     let allMilestonesModal = null;
-    let pdfPreviewModal = null; // [追加]
+    let pdfPreviewModal = null; 
     let cachedMilestones = [];
     let cachedMeta = {};
     let globalDogList = []; 
@@ -894,7 +897,7 @@
         
         milestoneModal = new bootstrap.Modal(document.getElementById('milestoneModal'));
         allMilestonesModal = new bootstrap.Modal(document.getElementById('allMilestonesModal'));
-        pdfPreviewModal = new bootstrap.Modal(document.getElementById('pdfPreviewModal')); // [追加]
+        pdfPreviewModal = new bootstrap.Modal(document.getElementById('pdfPreviewModal')); 
 
         const urlParams = new URLSearchParams(window.location.search);
         const urlDogId = urlParams.get('dogId');
@@ -1033,16 +1036,10 @@
         const acquiredAll = badges.filter(b => b.is_acquired);
         const unacquiredCurrent = badges.filter(b => !b.is_acquired && b.tier === currentTierKey);
         
-        // [修正] メインページではチラ見せロジックを廃止
-        // let teaserBadges = [];
-        // const nextTierKey = getNextTier(currentTierKey);
-        // if (counts[currentTierKey] >= 6 && nextTierKey) { ... } 削除
-
         let displayList = [...acquiredAll, ...unacquiredCurrent];
         
         let hasNewBadge = false;
         displayList.forEach(badge => {
-            // isTeaserフラグはfalse固定
             const html = createBadgeHtml(badge, false);
             container.insertAdjacentHTML('beforeend', html);
             if (badge.is_new) hasNewBadge = true;
@@ -1056,11 +1053,10 @@
     }
 
     function createBadgeHtml(badge, isTeaser = false) {
-        const isLocked = !badge.is_acquired && !isTeaser; // Normal unacquired
+        const isLocked = !badge.is_acquired && !isTeaser; 
         const lockedClass = isLocked ? 'locked' : '';
         const teaserClass = isTeaser ? 'teaser' : '';
         
-        // Tier Color Class
         let colorClass = 'bg-trust';
         if (!isLocked && !isTeaser) {
             if (badge.color) {
@@ -1098,11 +1094,11 @@
     }
     
     function triggerShake(el) {
-        if(el.classList.contains('anim-shake')) return; // 連打防止
+        if(el.classList.contains('anim-shake')) return; 
         el.classList.add('anim-shake');
         setTimeout(() => {
             el.classList.remove('anim-shake');
-        }, 400); // アニメーション時間(0.4s)に合わせる
+        }, 400); 
     }
 
     function getRandomWaxBorder() {
@@ -1168,7 +1164,6 @@
         cachedMilestones.forEach(b => { if(b.is_acquired) counts[b.tier]++; });
 
         const renderUnacquiredSection = (tierKey, title, isUnlocked, isTeaser) => {
-            // [修正] ロック時でもセクションとタイトルを必ず生成
             let sectionHtml = `<div class="full-list-section"><div class="full-list-title">${title}</div>`;
             
             let tierBadges = cachedMilestones.filter(b => b.tier === tierKey && !b.is_acquired);
@@ -1180,14 +1175,10 @@
                 sectionHtml += `<div class="full-list-grid">${html}</div>`;
             } else if (isTeaser) {
                 let html = '';
-                // [修正] 最初の3つだけ表示
                 tierBadges.slice(0, 3).forEach(b => html += createBadgeHtml(b, true).replace('ms-badge-new',''));
                 sectionHtml += `<div class="full-list-grid">${html}</div>`;
-                
-                // [修正] それ以降はロックパネル1つで表現
                 sectionHtml += createLockHtml('Coming Soon');
             } else {
-                // ロック画像
                 sectionHtml += createLockHtml('Coming Soon');
             }
             
@@ -1328,14 +1319,6 @@
         }
     }
 
-    function openMedicalPage() {
-        let url = 'medical.html';
-        if (currentDogId) {
-            url += `?dogId=${currentDogId}`;
-        }
-        window.location.href = url;
-    }
-
     function handleDownloadPdf() {
         if (!currentLessonData || !currentLessonData.latest) {
             alert("データが読み込まれていません。");
@@ -1348,6 +1331,7 @@
         btn.disabled = true;
 
         const formData = {
+            action: 'create_pdf', // ★修正: POST用のアクション指定
             training_unique_key: currentLessonData.latest.id || '', 
             dog_name: currentLessonData.dog.name,
             training_date: currentLessonData.latest.date,
@@ -1380,53 +1364,53 @@
             training_photo_5: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[4] : ''
         };
 
-        if (typeof google === 'undefined' || !google.script) {
-            alert('この機能はGASウェブアプリ上でのみ動作します。');
-            btn.innerText = originalText;
-            btn.disabled = false;
-            return;
-        }
+        // ★修正: google.script.runを廃止し、medical.html同様にfetchを使用 (ただしPOSTで)
+        fetch(GAS_URL, {
+            method: 'POST',
+            body: JSON.stringify(formData)
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`Server Error: ${res.status}`);
+            return res.json();
+        })
+        .then(response => {
+             btn.innerText = originalText;
+             btn.disabled = false;
 
-        google.script.run
-            .withSuccessHandler(function(response) {
-                btn.innerText = originalText;
-                btn.disabled = false;
-
-                if (response.status === 'success') {
-                    // [修正] Mobile check logic
-                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                    if (isMobile) {
-                        // スマホ: プレビューを表示して長押し保存
-                        const fileId = response.url.match(/id=([-\w]{25,})/) || response.url.match(/\/d\/([-\w]{25,})/);
-                        const cleanId = fileId ? fileId[1] : '';
-                        
-                        if(cleanId) {
-                            const thumbUrl = `https://drive.google.com/thumbnail?id=${cleanId}&sz=w1000`;
-                            document.getElementById('pdfPreviewImg').src = thumbUrl;
-                            pdfPreviewModal.show();
-                        } else {
-                            // ID取れない場合は直接開く
-                            window.open(response.url, '_blank');
-                        }
-                    } else {
-                        // PC: 即時ダウンロード
-                        const a = document.createElement('a');
-                        a.href = response.downloadUrl; // downloadUrlを使用
-                        a.download = `LessonReport_${formData.training_date}.pdf`; 
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                    }
-                } else {
-                    alert('エラー: ' + response.message);
-                }
-            })
-            .withFailureHandler(function(e) {
-                btn.innerText = originalText;
-                btn.disabled = false;
-                alert('サーバーエラー: ' + e);
-            })
-            .createPdfFromSlide(formData);
+             if (response.status === 'success') {
+                 // Mobile check logic
+                 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                 if (isMobile) {
+                     // スマホ: プレビューを表示して長押し保存
+                     const fileId = response.url.match(/id=([-\w]{25,})/) || response.url.match(/\/d\/([-\w]{25,})/);
+                     const cleanId = fileId ? fileId[1] : '';
+                     
+                     if(cleanId) {
+                         const thumbUrl = `https://drive.google.com/thumbnail?id=${cleanId}&sz=w1000`;
+                         document.getElementById('pdfPreviewImg').src = thumbUrl;
+                         pdfPreviewModal.show();
+                     } else {
+                         // ID取れない場合は直接開く
+                         window.open(response.url, '_blank');
+                     }
+                 } else {
+                     // PC: 即時ダウンロード
+                     const a = document.createElement('a');
+                     a.href = response.downloadUrl; // downloadUrlを使用
+                     a.download = `LessonReport_${formData.training_date}.pdf`; 
+                     document.body.appendChild(a);
+                     a.click();
+                     document.body.removeChild(a);
+                 }
+             } else {
+                 alert('エラー: ' + response.message);
+             }
+        })
+        .catch(e => {
+             btn.innerText = originalText;
+             btn.disabled = false;
+             alert('通信エラー: ' + e.message);
+        });
     }
 
     function fetchProfileImage(userId, dogId) {
