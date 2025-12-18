@@ -96,7 +96,7 @@
     .header-area { padding: 20px 20px 10px; background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,0.03); }
 
     .logo-container { display: flex; justify-content: center; margin-bottom: 15px; margin-top: 5px; }
-    .logo-img { width: 35%; height: auto; display: block; filter: contrast(0.95); }
+    .logo-img { width: 40%; height: auto; display: block; filter: contrast(0.95); }
 
     .brand-title { 
         color: var(--c-sub-deep-ocean); 
@@ -114,7 +114,8 @@
         overflow: hidden; font-size: 0.8rem; color: #aaa; text-align: center;
         box-shadow: 0 10px 30px -10px rgba(87, 195, 194, 0.3);
     }
-    .dog-img { width: 100%; height: 100%; object-fit: cover; }
+    .dog-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.0s var(--ease-luxury); }
+    .dog-img.loaded { opacity: 1; }
     
     .profile-info { margin-left: 25px; flex-grow: 1; }
     .birthday-msg { color: var(--c-accent-copper); font-family: var(--font-serif-en); font-weight: 700; font-size: 0.85rem; display: none; animation: pulse 2s infinite var(--ease-luxury); }
@@ -473,8 +474,6 @@
       <div class="logo-container">
           <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="logo-img" alt="K9 Harmony Logo" onerror="this.style.display='none'">
       </div>
-      
-      <h1 class="brand-title">K9 Harmony</h1>
       
       <div class="profile-card">
         <div id="dogImgContainer"></div>
@@ -1402,7 +1401,7 @@
         .then(data => {
            const container = document.getElementById('dogImgContainer');
            if(data.image) {
-               container.innerHTML = `<img src="${data.image}" class="dog-img" alt="Dog Photo">`;
+               container.innerHTML = `<img src="${data.image}" class="dog-img" onload="this.classList.add('loaded')" alt="Dog Photo">`;
            } else {
                container.innerHTML = 'No Image';
            }
@@ -1529,4 +1528,4 @@
     }
   </script>
 </body>
-</html>
+</html>```
