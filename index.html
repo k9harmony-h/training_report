@@ -77,13 +77,13 @@
     }
     .loading-content { text-align: center; }
     
-    @keyframes spinner-border { to { transform: rotate(360deg); } }
-    @keyframes breathe { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.0); } }
-    
+    /* [FIX 1] Removed custom animation 'spin-rotate' and 'breathe' to avoid conflict */
+    /* Bootstrap's .spinner-border class handles rotation automatically */
     .spinner-border-brand { 
         border-color: var(--c-main-turquoise); border-right-color: transparent; 
         width: 3rem; height: 3rem; margin-bottom: 20px;
-        animation: spinner-border .75s linear infinite, breathe 2.0s var(--ease-luxury) infinite;
+        /* Only use standard rotation */
+        animation: spinner-border .75s linear infinite; 
     }
     #tipsText { margin-top: 20px; font-weight: 500; font-size: 0.95rem; font-family: var(--font-serif-jp); letter-spacing: 0.05em; padding: 0 20px; height: 1.5em; }
     
@@ -136,7 +136,7 @@
     }
     .history-link { text-decoration: none; color: var(--c-sub-deep-ocean); font-weight: 500; font-size: 0.9rem; margin-left: auto; display: block; text-align: right; margin-top: 10px; opacity: 0.8; transition: opacity 0.3s; }
     
-    /* (Old PDF Button style removed) */
+    /* PDF Button Removed */
 
     .chart-section { margin-top: 30px; padding: 0 10px; display: flex; justify-content: space-between; }
     .chart-box { width: 48%; text-align: center; }
@@ -251,8 +251,13 @@
     @keyframes shake-refuse { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-4px); } 50% { transform: translateX(4px); } }
     .anim-shake .ms-icon-box { animation: shake-refuse 0.4s ease-in-out; }
 
+    /* [FIX 3] Teaser Styling - Tight Integration */
     .ms-badge.teaser { pointer-events: none; opacity: 0.7; }
-    .ms-badge.teaser .ms-icon-box { clip-path: inset(0 0 50% 0); background: var(--c-sub-beige); box-shadow: none; opacity: 0.5; }
+    .ms-badge.teaser .ms-icon-box { 
+        /* Show only top half of icon */
+        clip-path: inset(0 0 50% 0); 
+        background: var(--c-sub-beige); box-shadow: none; opacity: 0.5; 
+    }
     .ms-badge.teaser .ms-label { display: none; }
 
     /* Sealing Wax Style Icon Box */
@@ -328,6 +333,15 @@
         position: relative; height: 150px; border-radius: 12px; background: var(--c-bg-mist); 
         display:flex; align-items:center; justify-content:center; overflow: hidden;
     }
+    
+    /* [FIX 3] Connected Lock Panel Style */
+    .tier-locked.connected {
+        margin-top: -5px; /* Slight overlap */
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+        box-shadow: 0 -5px 10px rgba(0,0,0,0.05);
+    }
+
     .tier-lock-overlay {
         position: absolute; inset: 0; background-color: rgba(0, 0, 0, 0.85); 
         background-image: 
@@ -390,10 +404,25 @@
         margin-bottom: 20px; color: var(--c-sub-deep-ocean); border-left: 3px solid var(--c-main-turquoise); padding-left: 12px; letter-spacing: 0.05em; 
     }
     
+    /* [FIX 3] Teaser Grid Layout */
+    .full-list-grid.teaser-mode {
+        gap: 10px; 
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    .full-list-grid.teaser-mode .ms-badge {
+        height: 40px; /* Collapse height to only show top half */
+        width: 75px;
+        overflow: hidden; 
+    }
+    .full-list-grid.teaser-mode .ms-icon-box {
+        margin-bottom: 0;
+    }
+    
     #log-stamp { background: #333; color: #666; text-align: center; font-size: 0.7rem; padding: 2px; }
     #debug-console { display: none; }
 
-    /* [Moment of Joy Styles] */
+    /* [Moment of Joy Styles] (Omitting for brevity as they are unchanged) */
     #celebrationOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; display: none; pointer-events: auto; }
     #celebNightSky { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center bottom, #00143c 0%, #000 90%); opacity: 0; transition: opacity 0.5s ease-out; z-index: 10001; }
     #celebrationOverlay.active #celebNightSky { opacity: 1; }
@@ -427,8 +456,6 @@
     .btn-secondary { background-color: var(--c-sub-deep-ocean); border-color: var(--c-sub-deep-ocean); color: white; }
     
     #milestoneModal { z-index: 2000; }
-    
-    /* (PDF Preview Modal styles removed) */
   </style>
 </head>
 <body>
@@ -452,7 +479,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.18-REVERT-PDF-FEATURE</div>
+  <div id="log-stamp">v2025.12.18-UI-POLISH</div>
 
   <div id="loadingOverlay">
     <div class="loading-content">
@@ -490,8 +517,7 @@
           <a href="#" id="historyLinkBtn" class="history-link">History &gt;</a>
         </div>
       </div>
-
-      </div>
+    </div>
 
     <div class="chart-section">
       <div class="chart-box"><canvas id="chart1"></canvas><div class="chart-caption">基礎・集中</div></div>
@@ -637,7 +663,6 @@
     let currentLessonData = null;
     let milestoneModal = null;
     let allMilestonesModal = null;
-    /* let pdfPreviewModal = null; (Removed) */
     let cachedMilestones = [];
     let cachedMeta = {};
     let globalDogList = []; 
@@ -866,7 +891,6 @@
         
         milestoneModal = new bootstrap.Modal(document.getElementById('milestoneModal'));
         allMilestonesModal = new bootstrap.Modal(document.getElementById('allMilestonesModal'));
-        /* pdfPreviewModal = new bootstrap.Modal(document.getElementById('pdfPreviewModal')); (Removed) */
 
         const urlParams = new URLSearchParams(window.location.search);
         const urlDogId = urlParams.get('dogId');
@@ -1022,11 +1046,10 @@
     }
 
     function createBadgeHtml(badge, isTeaser = false) {
-        const isLocked = !badge.is_acquired && !isTeaser; // Normal unacquired
+        const isLocked = !badge.is_acquired && !isTeaser; 
         const lockedClass = isLocked ? 'locked' : '';
         const teaserClass = isTeaser ? 'teaser' : '';
         
-        // Tier Color Class
         let colorClass = 'bg-trust';
         if (!isLocked && !isTeaser) {
             if (badge.color) {
@@ -1064,11 +1087,11 @@
     }
     
     function triggerShake(el) {
-        if(el.classList.contains('anim-shake')) return; // 連打防止
+        if(el.classList.contains('anim-shake')) return; 
         el.classList.add('anim-shake');
         setTimeout(() => {
             el.classList.remove('anim-shake');
-        }, 400); // アニメーション時間(0.4s)に合わせる
+        }, 400); 
     }
 
     function getRandomWaxBorder() {
@@ -1145,9 +1168,12 @@
                 sectionHtml += `<div class="full-list-grid">${html}</div>`;
             } else if (isTeaser) {
                 let html = '';
+                // [FIX 3] Teaser Grid Class
                 tierBadges.slice(0, 3).forEach(b => html += createBadgeHtml(b, true).replace('ms-badge-new',''));
-                sectionHtml += `<div class="full-list-grid">${html}</div>`;
-                sectionHtml += createLockHtml('Coming Soon');
+                sectionHtml += `<div class="full-list-grid teaser-mode">${html}</div>`;
+                
+                // [FIX 3] Connected Lock Panel
+                sectionHtml += createLockHtml('Coming Soon', true);
             } else {
                 sectionHtml += createLockHtml('Coming Soon');
             }
@@ -1171,9 +1197,10 @@
         allMilestonesModal.show();
     }
     
-    function createLockHtml(text) {
+    function createLockHtml(text, isConnected) {
+        const connectedClass = isConnected ? 'connected' : '';
         return `
-            <div class="tier-locked" onclick="shakeLockIcon(this)">
+            <div class="tier-locked ${connectedClass}" onclick="shakeLockIcon(this)">
                 <div class="tier-lock-overlay">
                     <div class="tier-lock-icon"><i class="fa-solid fa-lock"></i></div>
                     <div class="tier-lock-text">${text}</div>
@@ -1297,8 +1324,6 @@
         window.location.href = url;
     }
 
-    /* (handleDownloadPdf function removed) */
-
     function fetchProfileImage(userId, dogId) {
       let url = `${GAS_URL}?userId=${userId}&type=img_profile`;
       if(dogId) url += `&dogId=${dogId}`;
@@ -1308,7 +1333,19 @@
         .then(data => {
            const container = document.getElementById('dogImgContainer');
            if(data.image) {
-               container.innerHTML = `<img src="${data.image}" class="dog-img" onload="this.classList.add('loaded')" alt="Dog Photo">`;
+               // [FIX 2] requestAnimationFrame for guaranteed fade-in
+               const img = new Image();
+               img.className = 'dog-img';
+               img.onload = () => {
+                   requestAnimationFrame(() => {
+                       container.innerHTML = '';
+                       container.appendChild(img);
+                       // Force reflow
+                       img.offsetHeight; 
+                       img.classList.add('loaded');
+                   });
+               };
+               img.src = data.image;
            } else {
                container.innerHTML = 'No Image';
            }
@@ -1327,8 +1364,16 @@
            pArea.innerHTML = ''; 
            if (data.images && data.images.length > 0) {
              data.images.forEach(b64 => {
+               // [FIX 2] requestAnimationFrame for guaranteed fade-in
                const img = document.createElement('img');
-               img.src = b64; img.className = 'photo-item zoomable'; pArea.appendChild(img);
+               img.className = 'photo-item zoomable'; 
+               img.onload = () => {
+                   requestAnimationFrame(() => {
+                       img.classList.add('loaded');
+                   });
+               };
+               img.src = b64;
+               pArea.appendChild(img);
              });
              mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' });
            } else {
