@@ -77,16 +77,13 @@
     }
     .loading-content { text-align: center; }
     
-    /* [FIX] Renamed animation to avoid conflict with Bootstrap */
-    @keyframes spin-rotate { to { transform: rotate(360deg); } }
-    @keyframes breathe { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.0); } }
-    
+    /* [FIX] Use Bootstrap standard animation keyframes */
     .spinner-border-brand { 
         border-color: var(--c-main-turquoise); border-right-color: transparent; 
         width: 3rem; height: 3rem; margin-bottom: 20px;
-        /* [FIX] Changed animation name to spin-rotate */
-        animation: spin-rotate .75s linear infinite, breathe 2.0s var(--ease-luxury) infinite;
-        display: inline-block; /* Ensure block display for transform */
+        /* Ensure standard rotation is applied */
+        animation: spinner-border .75s linear infinite;
+        display: inline-block;
     }
     #tipsText { margin-top: 20px; font-weight: 500; font-size: 0.95rem; font-family: var(--font-serif-jp); letter-spacing: 0.05em; padding: 0 20px; height: 1.5em; }
     
@@ -1335,7 +1332,8 @@
             training_unique_key: currentLessonData.latest.id || '', 
             dog_name: currentLessonData.dog.name,
             training_date: currentLessonData.latest.date,
-            customer_unique_key: currentLessonData.customer.id,
+            // ★修正: キーをidからunique_keyへ変更 (Error: Customer Code not found対策)
+            customer_unique_key: currentLessonData.customer.unique_key,
             dog_unique_key: currentLessonData.dog.id,
             
             goal: currentLessonData.latest.goal,
@@ -1364,7 +1362,7 @@
             training_photo_5: currentLessonData.latest.image_paths ? currentLessonData.latest.image_paths[4] : ''
         };
 
-        // ★修正: google.script.runを廃止し、medical.html同様にfetchを使用 (ただしPOSTで)
+        // ★修正: google.script.runを廃止し、medical.html同様にfetchを使用
         fetch(GAS_URL, {
             method: 'POST',
             body: JSON.stringify(formData)
