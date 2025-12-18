@@ -2,185 +2,398 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>うちの子医療・防災手帳</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@600;700&display=swap" rel="stylesheet">
+    
     <style>
-        :root { --primary-color: #88b08b; --accent-color: #e8f5e9; --alert-color: #e07a5f; --text-color: #333; --mask-color: #f0f0f0; }
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f9fbf9; color: var(--text-color); padding-bottom: 150px; }
-        
-        .no-print-area { margin: 0 0 30px; text-align: center; }
-        
-        .card-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; border: 1px solid #eee; }
-        .section-title { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 15px; }
-        .info-row { margin-bottom: 8px; border-bottom:1px dashed #eee; padding-bottom:4px; }
-        .info-label { font-weight: bold; color: #666; font-size: 0.8rem; display: block; margin-bottom: 1px; }
-        .info-value { font-size: 1rem; font-weight: 500; word-break: break-all; }
-        #d_photo_container { width: 150px; height: 150px; background: #fff; border-radius: 12px; border: 4px solid var(--accent-color); overflow: hidden; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; }
-        .dog-profile-img { width: 100%; height: 100%; object-fit: cover; }
-        .masked-wrapper { display: flex; align-items: center; gap: 10px; }
-        .masked-text { display: inline-block; letter-spacing: 2px; color: #aaa; background: var(--mask-color); padding: 2px 8px; border-radius: 4px; }
-        .real-text { display: none; font-weight: bold; color: #333; }
-        .btn-toggle-mask { font-size: 0.7rem; padding: 2px 10px; border: 1px solid var(--alert-color); color: var(--alert-color); background: white; border-radius: 20px; }
-        
-        /* ロゴ用スタイル */
-        .logo-container { 
-            display: flex; 
-            justify-content: center; 
-            margin-bottom: 15px; 
-            margin-top: 0;
-            padding-top: 20px; 
+        /* =========================================
+           1. Sanctuary Palette (Emergency Mode)
+           ========================================= */
+        :root {
+            /* Roles */
+            --c-healing-sage: #88b08b;  /* Background decor, borders */
+            --c-deep-sage:    #557A58;  /* Labels, Headings (Legibility) */
+            --c-value-black:  #1a1a1a;  /* Data values (Facts) */
+            --c-warm-alert:   #e07a5f;  /* Warning/Alert */
+            --c-pale-mist:    #e8f5e9;  /* Background */
+            --c-white:        #ffffff;
+            
+            /* Typography Rules */
+            --font-label: 'Noto Serif JP', serif;       /* Trust & Authority */
+            --font-data:  'Lato', 'Noto Sans JP', sans-serif; /* Absolute Legibility */
+            
+            /* Motion */
+            --speed-emergency: 0.15s; /* Fast response */
+            --ease-soft: ease-in-out;
         }
+
+        body {
+            font-family: var(--font-data);
+            background-color: var(--c-pale-mist);
+            color: var(--c-value-black);
+            padding-bottom: 100px; /* Footer space */
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* =========================================
+           2. UI Structure & Components
+           ========================================= */
+        .container { max-width: 600px; padding: 20px; }
+
+        /* Header Area */
+        .header-area { text-align: center; margin-bottom: 25px; }
+        .logo-container { margin-bottom: 15px; display: flex; justify-content: center; }
         .logo-img { 
-            width: 35%; 
+            width: 40%; /* [Requested Change] */
             height: auto; 
-            display: block; 
+            filter: contrast(0.95);
+        }
+        .page-title {
+            font-family: var(--font-label);
+            color: var(--c-deep-sage);
+            font-weight: 700;
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            letter-spacing: 0.05em;
         }
 
-        #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 8px; height: 150px; overflow-y: scroll; margin-top:20px; display:none; }
+        /* Emergency Toggle Switch */
+        .emergency-toggle-wrapper {
+            display: flex; align-items: center; justify-content: center;
+            background: #fff; border: 2px solid var(--c-warm-alert);
+            border-radius: 50px; padding: 10px 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 10px rgba(224, 122, 95, 0.2);
+        }
+        .emergency-label {
+            color: var(--c-warm-alert); font-family: var(--font-label);
+            font-weight: 700; margin-right: 15px; display: flex; align-items: center; gap: 5px;
+        }
+        .form-switch .form-check-input {
+            width: 3em; height: 1.5em; cursor: pointer;
+            background-color: #ddd; border-color: #ccc;
+        }
+        .form-switch .form-check-input:checked {
+            background-color: var(--c-warm-alert); border-color: var(--c-warm-alert);
+        }
+
+        /* Card Layout */
+        .card-section {
+            background: var(--c-white);
+            border: 1px solid var(--c-deep-sage); /* Clarity */
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(85, 122, 88, 0.05);
+        }
+
+        /* Alert Card Style (Diagonal Stripes) */
+        .card-section.alert-mode {
+            border: 2px solid var(--c-warm-alert);
+            background: repeating-linear-gradient(
+                135deg,
+                #fff,
+                #fff 10px,
+                #fff5f0 10px,
+                #fff5f0 20px
+            );
+        }
+        .alert-mode .section-title {
+            color: var(--c-warm-alert);
+            border-bottom-color: var(--c-warm-alert);
+        }
+
+        .section-title {
+            font-family: var(--font-label);
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--c-deep-sage);
+            border-bottom: 2px solid var(--c-healing-sage);
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            letter-spacing: 0.05em;
+        }
+
+        /* Data Rows */
+        .info-row {
+            margin-bottom: 12px;
+            border-bottom: 1px dashed rgba(85, 122, 88, 0.2);
+            padding-bottom: 6px;
+        }
+        .info-row:last-child { border-bottom: none; margin-bottom: 0; }
+
+        .info-label {
+            display: block;
+            font-family: var(--font-label);
+            color: var(--c-deep-sage);
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
         
-        #log-stamp { background: #d32f2f; color: white; text-align: center; font-weight: bold; padding: 5px; font-size: 0.8rem; }
+        .info-value {
+            font-family: var(--font-data);
+            color: var(--c-value-black);
+            font-size: 1.05rem;
+            font-weight: 500;
+            word-break: break-all;
+            font-variant-numeric: lining-nums; /* Align numbers */
+        }
+        .info-value.alert-text { color: var(--c-warm-alert); font-weight: 700; }
 
-        .print-step { margin-bottom: 15px; border-left: 3px solid var(--primary-color); padding-left: 10px; }
-        .print-step-title { font-weight: bold; display: block; margin-bottom: 5px; }
-        .app-link-btn { display: inline-block; margin: 5px; padding: 8px 15px; background: #eee; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.85rem; }
+        /* Photo Area */
+        #d_photo_container {
+            width: 160px; height: 160px;
+            background: #f0f0f0;
+            border-radius: 12px; /* [Rule] Rounded Rect, No Circle */
+            border: 2px solid var(--c-deep-sage);
+            margin: 0 auto 20px;
+            overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .dog-profile-img {
+            width: 100%; height: 100%; object-fit: cover;
+            opacity: 0; /* Initial hidden */
+            transition: opacity 0.8s var(--ease-soft); /* Soft fade-in */
+        }
+        .dog-profile-img.visible { opacity: 1; }
 
-        #preview-area { display: none; background: #fff; border: 2px solid var(--primary-color); border-radius: 12px; padding: 15px; margin-top: 20px; }
-        #preview-img { width: 100%; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; }
-        .preview-caption { font-size: 0.8rem; text-align: center; color: #666; margin-bottom: 15px; }
-        .print-info-inline { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-top: 10px; }
+        /* Masking System */
+        .masked-wrapper { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .masked-text { 
+            letter-spacing: 2px; color: #999; background: #eee; 
+            padding: 2px 8px; border-radius: 4px; font-size: 0.9rem;
+        }
+        .real-text { display: none; font-weight: 700; color: var(--c-value-black); }
+        
+        .btn-toggle-mask {
+            font-size: 0.75rem; padding: 4px 12px;
+            border: 1px solid var(--c-deep-sage);
+            color: var(--c-deep-sage);
+            background: #fff;
+            border-radius: 20px;
+            font-family: var(--font-label);
+            cursor: pointer;
+            transition: all var(--speed-emergency);
+        }
+        .btn-toggle-mask:active {
+            background: var(--c-deep-sage); color: #fff;
+        }
 
-        /* モーダル用ボタン */
-        .dog-select-btn { width: 100%; margin-bottom: 10px; padding: 15px; font-weight: bold; font-size: 1.1rem; border-radius: 12px; background: #f8f9fa; border: 2px solid var(--primary-color); color: var(--primary-color); transition: all 0.2s; }
-        .dog-select-btn:active { background: var(--primary-color); color: #fff; transform: scale(0.98); }
+        /* Footer */
+        .site-footer {
+            text-align: center; padding: 40px 20px; color: #666; font-size: 0.8rem;
+            background: #fdfdfd; border-top: 1px solid #ddd; margin-top: 40px;
+        }
+        .footer-logo-img { width: 30%; opacity: 0.6; margin-bottom: 10px; filter: grayscale(100%); }
+
+        /* Loading */
+        #loading { margin-top: 50px; }
+        
+        /* Debug Console */
+        #debug-console { display: none; }
+        #log-stamp { background: #333; color: #666; text-align: center; font-size: 0.7rem; padding: 2px; }
+
+        /* PDF Section */
+        #controls { border-top: 2px solid var(--c-healing-sage); padding-top: 20px; }
+        .btn-pdf {
+            width: 100%; padding: 12px; margin-bottom: 10px;
+            font-family: var(--font-label); font-weight: 700;
+            border-radius: 8px; border: 1px solid;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: transform var(--speed-emergency);
+        }
+        .btn-pdf:active { transform: scale(0.98); }
+        .btn-handbook { border-color: var(--c-deep-sage); color: var(--c-deep-sage); background: #fff; }
+        .btn-crate { border-color: #4A90E2; color: #4A90E2; background: #fff; }
+        .btn-poster { border-color: var(--c-warm-alert); color: var(--c-warm-alert); background: #fff; }
+
+        /* Preview Area */
+        #preview-area { display: none; background: #fff; border: 2px solid var(--c-deep-sage); border-radius: 12px; padding: 15px; margin-top: 20px; }
+        #preview-img { width: 100%; border: 1px solid #ddd; border-radius: 8px; }
+        
+        /* Modal Button */
+        .dog-select-btn {
+            width: 100%; padding: 15px; margin-bottom: 10px;
+            font-family: var(--font-label); font-weight: 700;
+            border: 2px solid var(--c-deep-sage); color: var(--c-deep-sage);
+            background: #fff; border-radius: 12px;
+        }
     </style>
 </head>
 <body>
-    <div id="log-stamp">v2025.12.13-Final</div>
+    <div id="log-stamp">v2025.12.18-Emergency-Design-Fix</div>
 
-    <div class="container pt-0 pb-3">
-        <div class="no-print-area">
+    <div class="container">
+        <div class="header-area no-print-area">
             <div class="logo-container">
-                <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="logo-img" alt="K9 Harmony Logo" onerror="this.style.display='none'">
+                <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="logo-img" alt="K9 Harmony Logo">
             </div>
-            <h4 class="fw-bold mb-3" style="color: var(--primary-color);">うちの子医療・防災手帳</h4>
-            <div id="loading" class="text-center py-5"><div class="spinner-border text-success"></div><p>Loading...</p></div>
+            <h1 class="page-title">うちの子医療・防災手帳</h1>
+            
+            <div class="emergency-toggle-wrapper">
+                <div class="emergency-label"><i class="fa-solid fa-triangle-exclamation"></i> 緊急時全開示</div>
+                <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" id="emergencyToggle" onchange="toggleEmergencyMode(this.checked)">
+                </div>
+            </div>
         </div>
+
+        <div id="loading" class="text-center"><div class="spinner-border text-secondary"></div><p class="mt-2 small text-muted">Loading Data...</p></div>
 
         <div id="main-display" style="display:none;">
             <div class="card-section">
                 <div class="section-title">基本情報</div>
-                <div id="d_photo_container"><div class="spinner-border spinner-border-sm text-secondary"></div></div>
-                <div class="text-center mb-3"><h2 id="d_name" class="fw-bold mb-0">-</h2></div>
+                <div id="d_photo_container">
+                    </div>
+                <div class="text-center mb-3">
+                    <h2 id="d_name" class="fw-bold mb-0" style="font-family: var(--font-label); font-size:1.8rem;">-</h2>
+                </div>
+                
                 <div class="row text-center mb-2">
-                    <div class="col-6 border-end"><span class="info-label">犬種</span><div id="d_breed">-</div></div>
-                    <div class="col-6"><span class="info-label">毛色</span><div id="d_color">-</div></div>
+                    <div class="col-6 border-end"><span class="info-label">犬種</span><div id="d_breed" class="info-value">-</div></div>
+                    <div class="col-6"><span class="info-label">毛色</span><div id="d_color" class="info-value">-</div></div>
                 </div>
                 <div class="row text-center mb-3">
-                    <div class="col-4 border-end"><span class="info-label">年齢</span><div id="d_age">-</div></div>
-                    <div class="col-4 border-end"><span class="info-label">性別</span><div id="d_gender">-</div></div>
-                    <div class="col-4"><span class="info-label">去勢</span><div id="d_neutered">-</div></div>
+                    <div class="col-4 border-end"><span class="info-label">年齢</span><div id="d_age" class="info-value">-</div></div>
+                    <div class="col-4 border-end"><span class="info-label">性別</span><div id="d_gender" class="info-value">-</div></div>
+                    <div class="col-4"><span class="info-label">去勢</span><div id="d_neutered" class="info-value">-</div></div>
                 </div>
-                <div class="info-row"><span class="info-label">飼い主名</span><div id="c_name" class="fw-bold">-</div></div>
-                <div class="info-row"><span class="info-label">住所</span><div class="masked-wrapper"><span id="c_address_masked" class="masked-text">***</span><span id="c_address_real" class="real-text">-</span><button class="btn-toggle-mask" onclick="toggleMask('c_address')">表示</button></div></div>
-                <div class="info-row"><span class="info-label">電話番号</span><div class="masked-wrapper"><span id="c_phone_masked" class="masked-text">***</span><span id="c_phone_real" class="real-text">-</span><button class="btn-toggle-mask" onclick="toggleMask('c_phone')">表示</button></div></div>
+
+                <div class="info-row">
+                    <span class="info-label">飼い主名</span>
+                    <div id="c_name" class="info-value fw-bold">-</div>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">住所</span>
+                    <div class="masked-wrapper">
+                        <span id="c_address_masked" class="masked-text">***</span>
+                        <span id="c_address_real" class="real-text">-</span>
+                        <button class="btn-toggle-mask no-print-area" onclick="toggleMask('c_address')">表示</button>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">電話番号</span>
+                    <div class="masked-wrapper">
+                        <span id="c_phone_masked" class="masked-text">***</span>
+                        <span id="c_phone_real" class="real-text">-</span>
+                        <button class="btn-toggle-mask no-print-area" onclick="toggleMask('c_phone')">表示</button>
+                    </div>
+                </div>
             </div>
 
             <div class="card-section">
-                <div class="section-title">医療情報</div>
-                <div class="mb-3 p-2 bg-light rounded border">
-                    <h6 class="fw-bold small text-muted"><i class="fa-solid fa-hospital"></i> かかりつけ医</h6>
-                    <div class="info-row"><span class="info-label">病院名</span><div id="d_vet_name" class="fw-bold">-</div></div>
-                    <div class="info-row"><span class="info-label">電話</span><div id="d_vet_phone">-</div></div>
-                    <div class="info-row"><span class="info-label">住所</span><div id="d_vet_address" class="small">-</div></div>
+                <div class="section-title"><i class="fa-solid fa-notes-medical"></i> 医療情報</div>
+                
+                <div class="mb-3 p-3 bg-light rounded border" style="border-color: #ddd;">
+                    <h6 class="fw-bold small text-muted mb-2"><i class="fa-solid fa-hospital"></i> かかりつけ医</h6>
+                    <div class="info-row"><span class="info-label">病院名</span><div id="d_vet_name" class="info-value fw-bold">-</div></div>
+                    <div class="info-row"><span class="info-label">電話</span><div id="d_vet_phone" class="info-value">-</div></div>
+                    <div class="info-row"><span class="info-label">住所</span><div id="d_vet_address" class="info-value small">-</div></div>
                 </div>
-                <div class="info-row"><span class="info-label">既往歴</span><div id="d_history">-</div></div>
-                <div class="info-row"><span class="info-label">常用薬</span><div id="d_medicine" class="text-danger">-</div></div>
-                <div class="info-row"><span class="info-label">アレルギー</span><div id="d_allergy" class="text-danger fw-bold">-</div></div>
-                <div class="row mt-2">
-                    <div class="col-6"><span class="info-label">鑑札番号</span><div id="d_license" class="small">-</div></div>
-                    <div class="col-6"><span class="info-label">チップ</span><div id="d_chip" class="small">-</div></div>
+
+                <div class="info-row"><span class="info-label">既往歴</span><div id="d_history" class="info-value">-</div></div>
+                <div class="info-row"><span class="info-label">常用薬</span><div id="d_medicine" class="info-value alert-text">-</div></div>
+                <div class="info-row"><span class="info-label">アレルギー</span><div id="d_allergy" class="info-value alert-text">-</div></div>
+                
+                <div class="row mt-3">
+                    <div class="col-6"><span class="info-label">鑑札番号</span><div id="d_license" class="info-value small">-</div></div>
+                    <div class="col-6"><span class="info-label">マイクロチップ</span><div id="d_chip" class="info-value small">-</div></div>
                 </div>
             </div>
 
-            <div class="card-section">
-                <div class="section-title" style="color:var(--alert-color); border-color:#f8d7da;">緊急時情報</div>
-                <div class="info-row"><span class="info-label">緊急連絡先</span><div id="c_em_name">-</div><div id="c_em_phone">-</div></div>
-                <div class="info-row"><span class="info-label">代理人</span><div id="c_proxy_name">-</div><div id="c_proxy_phone">-</div></div>
-                <div class="info-row"><span class="info-label">指定避難所</span><div id="c_evac" class="fw-bold">-</div></div>
+            <div class="card-section alert-mode">
+                <div class="section-title"><i class="fa-solid fa-triangle-exclamation"></i> 緊急時情報</div>
+                <div class="info-row">
+                    <span class="info-label">緊急連絡先 (家族・親族)</span>
+                    <div id="c_em_name" class="info-value">-</div>
+                    <div id="c_em_phone" class="info-value">-</div>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">代理人 (シッター等)</span>
+                    <div id="c_proxy_name" class="info-value">-</div>
+                    <div id="c_proxy_phone" class="info-value">-</div>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">指定避難所</span>
+                    <div id="c_evac" class="info-value fw-bold">-</div>
+                </div>
             </div>
 
             <div class="card-section">
                 <div class="section-title">ケア・生活情報</div>
-                <div class="info-row"><span class="info-label">フード</span><div id="d_food">-</div></div>
-                <div class="info-row"><span class="info-label text-danger">注意</span><div id="d_caution" class="text-danger fw-bold">-</div></div>
+                <div class="info-row"><span class="info-label">フード</span><div id="d_food" class="info-value">-</div></div>
+                <div class="info-row"><span class="info-label">特記事項・注意</span><div id="d_caution" class="info-value alert-text">-</div></div>
             </div>
         </div>
 
         <div id="controls" class="no-print-area mt-4" style="display:none;">
-            <p class="text-muted small mb-2 fw-bold">▼ 防災書類をPDFで作成・ダウンロード</p>
-            <button id="btn-handbook" onclick="generatePdf('handbook')" class="btn btn-outline-success w-100 mb-2 fw-bold shadow-sm"><i class="fa-solid fa-book"></i> 防災手帳を作成 (A4横)</button>
-            <button id="btn-crate" onclick="generatePdf('crate')" class="btn btn-outline-primary w-100 mb-2 fw-bold shadow-sm"><i class="fa-solid fa-tag"></i> クレートタグを作成 (A4縦)</button>
-            <button id="btn-poster" onclick="generatePdf('poster')" class="btn btn-outline-danger w-100 mb-2 fw-bold shadow-sm"><i class="fa-solid fa-bullhorn"></i> 迷子ポスターを作成 (A4縦)</button>
+            <p class="text-muted small mb-2 fw-bold" style="font-family:var(--font-label);">▼ 防災書類をPDFで作成・保存</p>
+            <button id="btn-handbook" onclick="generatePdf('handbook')" class="btn-pdf btn-handbook shadow-sm"><i class="fa-solid fa-book"></i> 防災手帳 (A4横)</button>
+            <button id="btn-crate" onclick="generatePdf('crate')" class="btn-pdf btn-crate shadow-sm"><i class="fa-solid fa-tag"></i> クレートタグ (A4縦)</button>
+            <button id="btn-poster" onclick="generatePdf('poster')" class="btn-pdf btn-poster shadow-sm"><i class="fa-solid fa-bullhorn"></i> 迷子ポスター (A4縦)</button>
         </div>
         
         <div id="preview-area" class="no-print-area">
-            <h5 class="fw-bold text-center mb-3">作成完了！</h5>
+            <h5 class="fw-bold text-center mb-3" style="color:var(--c-deep-sage); font-family:var(--font-label);">作成完了</h5>
             <div class="text-center">
-                <p class="preview-caption">画像を長押しで保存できます。<br>タップするとPDF本体が開きます。</p>
+                <p class="small text-muted mb-2">画像を長押しで保存できます</p>
                 <img id="preview-img" src="" alt="PDF Preview">
             </div>
-            
-            <div class="print-info-inline">
-                <h6 class="fw-bold mb-3"><i class="fa-solid fa-print"></i> 印刷のご案内</h6>
-                
-                <div class="print-step">
-                    <span class="print-step-title">1. 保存する</span>
-                    <p class="small mb-1">画像を長押しして「写真」に保存してください。</p>
-                </div>
-
-                <div class="print-step">
-                    <span class="print-step-title">2. コンビニで印刷</span>
-                    <p class="small mb-2">保存した画像を以下のアプリ等で登録してください。</p>
-                    <div class="d-grid gap-2">
-                        <a href="https://www.printing.ne.jp/" target="_blank" class="app-link-btn text-center"><i class="fa-solid fa-store"></i> セブンイレブン (netprint)</a>
-                        <a href="https://networkprint.ne.jp/" target="_blank" class="app-link-btn text-center"><i class="fa-solid fa-store"></i> ファミマ/ローソン</a>
-                    </div>
-                </div>
-                <div class="text-center mt-3">
-                    <button class="btn btn-secondary btn-sm" onclick="closePreview()">閉じる / 再作成</button>
-                </div>
+            <div class="text-center mt-3">
+                <button class="btn btn-secondary btn-sm rounded-pill px-4" onclick="closePreview()">閉じる</button>
             </div>
         </div>
 
-        <div id="debug-console">Initializing...</div>
-    </div>
-
-    <div class="modal fade" id="printModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-print"></i> 印刷のご案内</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="small text-muted mb-3">作成されたPDFは、ご自宅のプリンターまたはコンビニエンスストアで印刷可能です。</p>
-                    <div class="print-step"><span class="print-step-title">1. 保存する</span><p class="small mb-1">表示されたPDFを保存してください。</p></div>
-                    <div class="print-step"><span class="print-step-title">2. コンビニで印刷</span><p class="small mb-2">以下のアプリ等をご利用ください。</p><div class="d-grid gap-2 mb-2"><a href="https://www.printing.ne.jp/" target="_blank" class="app-link-btn text-center">セブンイレブン</a><a href="https://networkprint.ne.jp/" target="_blank" class="app-link-btn text-center">ファミマ/ローソン</a></div></div>
-                </div>
-                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button></div>
+        <footer class="site-footer no-print-area">
+            <div class="footer-logo-container">
+                <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony">
             </div>
-        </div>
+            <div class="footer-info">
+                <p><strong>K9 Harmony</strong></p>
+                <p>東京都板橋区 (Dummy Address)</p>
+                <p>03-0000-0000 (Dummy Phone)</p>
+            </div>
+            <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
+        </footer>
+
+        <div id="debug-console"></div>
     </div>
 
     <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center">わんちゃんを選択</h5></div>
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold w-100 text-center" style="font-family:var(--font-label); color:var(--c-deep-sage);">わんちゃんを選択</h5>
+                </div>
                 <div class="modal-body" id="dogSelectBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="printModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" style="font-family:var(--font-label);">保存完了</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>PDFがダウンロードされました。<br>ファイルアプリをご確認ください。</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                </div>
             </div>
         </div>
     </div>
@@ -201,13 +414,9 @@
         }
 
         window.onload = async function() {
-            // LIFF SDK ロードチェック
             if (typeof liff === 'undefined') {
-                log('Error: LIFF SDK not loaded.');
-                alert('LIFF SDKの読み込みに失敗しました。リロードしてください。');
-                return;
+                alert('LIFF SDK Load Error'); return;
             }
-
             try {
                 await liff.init({ liffId: LIFF_ID });
                 if (!liff.isLoggedIn()) { liff.login(); return; }
@@ -215,42 +424,33 @@
                 currentUserId = profile.userId;
                 const urlParams = new URLSearchParams(window.location.search);
                 currentDogId = urlParams.get('dogId');
-                log(`User: ${currentUserId}, DogID: ${currentDogId}`);
                 
                 printModal = new bootstrap.Modal(document.getElementById('printModal'));
                 fetchData(currentUserId, currentDogId);
-            } catch (err) { log('Init Error: ' + err.message); }
+            } catch (err) { console.error(err); }
         };
 
         function fetchData(userId, dogId) {
             let url = `${API_URL}?userId=${userId}`;
             if(dogId) url += `&dogId=${dogId}`;
             
-            // ★修正: シンプルなfetch + 堅牢なエラーハンドリング
             fetch(url)
-                .then(res => {
-                    if (!res.ok) throw new Error(`Server Error: ${res.status}`);
-                    return res.json();
-                })
+                .then(res => res.json())
                 .then(data => {
-                    // 複数頭選択ロジック
                     if (data.multiple_dogs) {
                         showDogSelectModal(data.multiple_dogs);
                         return;
                     }
-
                     if(data.error) { alert('Error: ' + data.error); return; }
                     if(data.dog && data.dog.id) currentDogId = data.dog.id;
                     renderData(data);
                     if(currentDogId) fetchImage(userId, currentDogId);
                 })
                 .catch(e => {
-                    log('Connection Error: ' + e.message);
-                    alert('データ取得に失敗しました。通信環境を確認してください。');
+                    alert('Data Fetch Error');
                 });
         }
 
-        // モーダル表示関数
         function showDogSelectModal(dogs) {
             const body = document.getElementById('dogSelectBody');
             body.innerHTML = '';
@@ -261,13 +461,10 @@
                 btn.onclick = () => selectDog(dog.id);
                 body.appendChild(btn);
             });
-            // ローディングを隠す
             document.getElementById('loading').style.display = 'none';
-            // モーダル表示
             new bootstrap.Modal(document.getElementById('dogSelectModal')).show();
         }
 
-        // 犬選択時の処理
         function selectDog(dogId) {
             const modalEl = document.getElementById('dogSelectModal');
             const modal = bootstrap.Modal.getInstance(modalEl);
@@ -278,9 +475,64 @@
             fetchData(currentUserId, dogId);
         }
 
-        function generatePdf(type) {
-            if(!currentUserId || !currentDogId) { alert('データ読み込み中です'); return; }
+        function renderData(data) {
+            const c = data.customer || {};
+            const d = data.dog || {};
             
+            setText('d_name', d.name_disp);
+            setText('d_breed', d.breed);
+            setText('d_color', d.color);
+            setText('d_age', d.age);
+            setText('d_gender', d.gender);
+            setText('d_neutered', d.neutered);
+            
+            setText('c_name', c.name);
+            setMaskedText('c_address', c.address, maskAddress(c.address));
+            setMaskedText('c_phone', c.phone, maskPhone(c.phone));
+            
+            setText('d_vet_name', d.vet_name);
+            setText('d_vet_address', d.vet_address);
+            setText('d_vet_phone', d.vet_phone);
+            setText('d_history', d.history);
+            setText('d_medicine', d.medicine);
+            setText('d_allergy', d.allergy);
+            setText('d_license', d.license_no);
+            setText('d_chip', d.microchip);
+            
+            setText('c_em_name', c.em_name);
+            setText('c_em_phone', c.em_phone);
+            setText('c_proxy_name', c.proxy_name);
+            setText('c_proxy_phone', c.proxy_phone);
+            setText('c_evac', c.evac_site);
+            
+            setText('d_food', d.food);
+            setText('d_caution', d.caution);
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('controls').style.display = 'block';
+            document.getElementById('main-display').style.display = 'block';
+        }
+
+        function fetchImage(userId, dogId) {
+            let url = `${API_URL}?userId=${userId}&type=img_profile&dogId=${dogId}`;
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    const el = document.getElementById('d_photo_container');
+                    if(data.image) {
+                        // Soft fade-in animation
+                        el.innerHTML = `<img src="${data.image}" class="dog-profile-img" onload="this.classList.add('visible')">`;
+                        el.style.border = 'none';
+                    } else {
+                        el.innerHTML = '<span class="small text-muted" style="font-family:var(--font-data)">No Photo</span>';
+                    }
+                })
+                .catch(e => console.log('Img Err'));
+        }
+
+        /* --- PDF Generation Logic --- */
+        function generatePdf(type) {
+            if(!currentUserId || !currentDogId) return;
             const btn = document.getElementById(`btn-${type}`);
             const originalHtml = btn.innerHTML;
             const allBtns = document.querySelectorAll('#controls button');
@@ -290,36 +542,28 @@
             const url = `${API_URL}?userId=${currentUserId}&dogId=${currentDogId}&type=pdf_${type}`;
             
             fetch(url)
-                .then(res => {
-                    if (!res.ok) throw new Error(`Server Error: ${res.status}`);
-                    return res.json();
-                })
+                .then(res => res.json())
                 .then(data => {
                     if(data.error) {
-                        alert('作成失敗: ' + data.error);
+                        alert('Error: ' + data.error);
                     } else if(data.url) {
                         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
                         if (!isMobile) {
+                            // PC: Direct Download
                             try {
                                 const match = data.url.match(/\/d\/(.*?)\//);
-                                if (match && match[1]) {
-                                    const fileId = match[1];
-                                    const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-                                    const a = document.createElement('a');
-                                    a.href = downloadUrl;
-                                    a.download = 'medical_document.pdf'; 
-                                    document.body.appendChild(a);
-                                    a.click();
-                                    document.body.removeChild(a);
-                                    printModal.show();
-                                } else {
-                                    window.open(data.url, '_blank');
-                                    printModal.show();
-                                }
+                                const fileId = (match && match[1]) ? match[1] : null;
+                                const dlUrl = fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : data.url;
+                                const a = document.createElement('a');
+                                a.href = dlUrl;
+                                a.download = 'medical_doc.pdf'; 
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                printModal.show();
                             } catch(e) { window.open(data.url, '_blank'); }
-
                         } else {
+                            // Mobile: Preview for Save
                             let fileId = '';
                             const match = data.url.match(/\/d\/(.*?)\//) || data.url.match(/id=(.*?)$/);
                             if (match && match[1]) fileId = match[1];
@@ -327,26 +571,19 @@
                             if (fileId) {
                                 const previewArea = document.getElementById('preview-area');
                                 const img = document.getElementById('preview-img');
+                                img.src = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+                                img.onclick = () => liff.openWindow({ url: data.url, external: true });
                                 
-                                const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
-                                img.src = thumbUrl;
-                                
-                                img.onclick = function() {
-                                    liff.openWindow({ url: data.url, external: true });
-                                };
-
                                 document.getElementById('controls').style.display = 'none'; 
                                 previewArea.style.display = 'block'; 
-                                
                                 previewArea.scrollIntoView({ behavior: 'smooth' });
-
                             } else {
                                 liff.openWindow({ url: data.url, external: true });
                             }
                         }
                     }
                 })
-                .catch(e => alert('通信エラー: ' + e.message))
+                .catch(e => alert('Error: ' + e.message))
                 .finally(() => {
                     allBtns.forEach(b => b.disabled = false);
                     btn.innerHTML = originalHtml;
@@ -359,81 +596,70 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function fetchImage(userId, dogId) {
-            let url = `${API_URL}?userId=${userId}&type=img_profile&dogId=${dogId}`;
-            fetch(url)
-                .then(res => res.json())
-                .then(data => {
-                    if(data.image) {
-                        const el = document.getElementById('d_photo_container');
-                        if(el) {
-                            el.innerHTML = `<img src="${data.image}" class="dog-profile-img">`;
-                            el.style.border = 'none';
-                        }
-                    } else {
-                        document.getElementById('d_photo_container').innerHTML = '<span class="small text-muted">No Photo</span>';
-                    }
-                })
-                .catch(e => log('Image Fetch Error: ' + e));
-        }
-
-        function renderData(data) {
-            const c = data.customer || {};
-            const d = data.dog || {};
-            setText('d_name', d.name_disp);
-            setText('d_breed', d.breed);
-            setText('d_color', d.color);
-            setText('d_age', d.age);
-            setText('d_gender', d.gender);
-            setText('d_neutered', d.neutered);
-            setText('c_name', c.name);
-            setMaskedText('c_address', c.address, maskAddress(c.address));
-            setMaskedText('c_phone', c.phone, maskPhone(c.phone));
-            setText('d_vet_name', d.vet_name);
-            setText('d_vet_address', d.vet_address);
-            setText('d_vet_phone', d.vet_phone);
-            setText('d_history', d.history);
-            setText('d_medicine', d.medicine);
-            setText('d_allergy', d.allergy);
-            setText('d_license', d.license_no);
-            setText('d_chip', d.microchip);
-            setText('c_em_name', c.em_name);
-            setText('c_em_phone', c.em_phone);
-            setText('c_proxy_name', c.proxy_name);
-            setText('c_proxy_phone', c.proxy_phone);
-            setText('c_evac', c.evac_site);
-            setText('d_food', d.food);
-            setText('d_caution', d.caution);
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('controls').style.display = 'block';
-            document.getElementById('main-display').style.display = 'block';
-        }
-
+        /* --- Helper Functions --- */
         function maskAddress(addr) { if(!addr) return; const m = addr.match(/(.*?[都道府県].*?[市区町村])/); return m ? m[0]+' ***' : addr.substring(0,5)+' ***'; }
         function maskPhone(tel) { if(!tel) return; return tel.substring(0,3)+'-****-****'; }
         function setText(id, txt) { const el = document.getElementById(id); if(el) el.textContent = txt || '-'; }
+        
         function setMaskedText(baseId, realVal, maskedVal) { 
             const rEl = document.getElementById(baseId + '_real'); 
             const mEl = document.getElementById(baseId + '_masked'); 
             const btn = rEl ? rEl.parentElement.querySelector('.btn-toggle-mask') : null; 
             if(!rEl || !mEl) return; 
+            
+            // Reset to default state
+            rEl.style.display = 'none';
+            mEl.style.display = 'inline';
+            if(btn) btn.style.display = 'inline-block';
+            
             if(!realVal || realVal === '記載なし') { 
                 rEl.textContent = '記載なし'; mEl.style.display='none'; rEl.style.display='inline'; 
                 if(btn) btn.style.display='none'; 
             } else { 
                 rEl.textContent = realVal; mEl.textContent = maskedVal; 
-                mEl.style.display='inline'; rEl.style.display='none'; 
-                if(btn) btn.style.display='inline-block'; 
             } 
         }
+        
         function toggleMask(baseId) { 
             const rEl = document.getElementById(baseId + '_real'); 
             const mEl = document.getElementById(baseId + '_masked'); 
             if(rEl.style.display === 'none') { 
-                if(confirm('表示しますか？')) { rEl.style.display='inline'; mEl.style.display='none'; } 
+                rEl.style.display='inline'; mEl.style.display='none'; 
             } else { 
                 rEl.style.display='none'; mEl.style.display='inline'; 
             } 
+        }
+
+        /* --- Emergency Full Disclosure Logic --- */
+        function toggleEmergencyMode(isEmergency) {
+            const wrappers = document.querySelectorAll('.masked-wrapper');
+            wrappers.forEach(wrap => {
+                const rEl = wrap.querySelector('.real-text');
+                const mEl = wrap.querySelector('.masked-text');
+                const btn = wrap.querySelector('.btn-toggle-mask');
+                
+                if(!rEl || rEl.textContent === '記載なし') return;
+
+                if (isEmergency) {
+                    // Unmask All
+                    rEl.style.display = 'inline';
+                    mEl.style.display = 'none';
+                    if(btn) btn.style.display = 'none'; // Hide buttons in emergency to reduce noise
+                } else {
+                    // Re-mask
+                    rEl.style.display = 'none';
+                    mEl.style.display = 'inline';
+                    if(btn) btn.style.display = 'inline-block';
+                }
+            });
+            
+            // Optional: Change header style
+            const header = document.querySelector('.header-area');
+            if(isEmergency) {
+                document.body.style.backgroundColor = '#fff0f0'; // Slight red tint
+            } else {
+                document.body.style.backgroundColor = 'var(--c-pale-mist)';
+            }
         }
     </script>
 </body>
