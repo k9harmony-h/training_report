@@ -77,7 +77,6 @@
     }
     .loading-content { text-align: center; }
     
-    /* [修正] Spinner Animation Definition */
     @keyframes spinner-border { to { transform: rotate(360deg); } }
     @keyframes breathe { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.0); } }
     
@@ -185,13 +184,20 @@
     .detail-body { font-size: 0.85rem; color: var(--c-text-sumi); white-space: pre-wrap; line-height: 1.6; }
     
     .photo-scroll { display: flex; gap: 15px; overflow-x: auto; padding: 0 20px; margin-top: 15px; padding-bottom: 20px; }
-    .photo-item { height: 130px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.05); cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: transform 0.3s; }
+    
+    /* [修正] Photo Item Animation */
+    .photo-item { 
+        height: 130px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.05); 
+        cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+        opacity: 0; 
+        transition: opacity 1.0s var(--ease-luxury), transform 0.3s; 
+    }
+    .photo-item.loaded { opacity: 1; }
     .photo-item:active { transform: scale(0.98); }
     
     .footer-action { margin: 50px 20px 20px; text-align: center; }
     
     /* Buttons */
-    /* [修正] text-align: center 追加 */
     .btn-reserve { 
         background: var(--c-accent-copper); color: #fff; border: none; width: 100%; padding: 16px; border-radius: 50px; 
         font-weight: 700; font-size: 1.05rem; text-align: center;
@@ -376,7 +382,7 @@
         position: relative; z-index: 2; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); 
         mask-image: var(--texture-grunge); -webkit-mask-image: var(--texture-grunge); mask-size: cover;
     }
-    #msModalIconBox img { position: relative; z-index: 2; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+    #msModalIconBox img { position: relative; z-index: 2; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); position: relative; }
 
     #msModalTipsBox { background-color: var(--c-bg-mist); border-radius: 12px; padding: 20px; margin-top: 20px; color: var(--c-sub-deep-ocean); font-size: 0.9rem; line-height: 1.8; }
     
