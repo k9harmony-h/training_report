@@ -63,7 +63,7 @@
         background-color: var(--c-base-washi);
         color: var(--c-text-sumi);
         line-height: 1.8; 
-        padding-bottom: 150px; 
+        padding-bottom: 0; /* Footer追加に伴い調整 */
         overflow-x: hidden; 
     }
     
@@ -93,7 +93,7 @@
     /* =========================================
        2. UI Component Styles
        ========================================= */
-    .header-area { padding: 20px 20px 10px; background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,0.03); }
+    .header-area { padding: 20px 20px 20px; background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,0.03); }
 
     .logo-container { display: flex; justify-content: center; margin-bottom: 15px; margin-top: 5px; }
     .logo-img { width: 40%; height: auto; display: block; filter: contrast(0.95); }
@@ -133,12 +133,14 @@
     }
     .history-link { text-decoration: none; color: var(--c-sub-deep-ocean); font-weight: 500; font-size: 0.9rem; margin-left: auto; display: block; text-align: right; margin-top: 10px; opacity: 0.8; transition: opacity 0.3s; }
     
-    .medical-btn-card { 
-        cursor: pointer; border-radius: 12px; border: 1px solid rgba(0,0,0,0.03); background: #fff;
-        box-shadow: 0 10px 40px -10px rgba(47, 93, 98, 0.08); 
-        transition: transform 0.3s var(--ease-luxury), box-shadow 0.3s var(--ease-luxury); 
+    /* PDF Button Style (Updated for Top Position) */
+    .btn-pdf { 
+        background: #fff; color: var(--c-sub-deep-ocean); border: 1px solid var(--c-sub-deep-ocean); 
+        width: 100%; padding: 14px; border-radius: 50px; 
+        font-weight: 700; font-size: 1rem; margin-top: 25px; display: block; text-decoration: none; 
+        transition: all 0.3s var(--ease-luxury); cursor: pointer; letter-spacing: 0.05em;
     }
-    .medical-btn-card:active { transform: scale(0.98); box-shadow: 0 2px 10px -5px rgba(47, 93, 98, 0.1); }
+    .btn-pdf:active { background: var(--c-bg-mist); transform: scale(0.98); }
 
     .chart-section { margin-top: 30px; padding: 0 10px; display: flex; justify-content: space-between; }
     .chart-box { width: 48%; text-align: center; }
@@ -186,18 +188,10 @@
     .footer-action { margin: 50px 20px 20px; text-align: center; }
     
     /* Buttons */
-    .btn-pdf { 
-        background: #fff; color: var(--c-sub-deep-ocean); border: 1px solid var(--c-sub-deep-ocean); 
-        width: 100%; padding: 14px; border-radius: 50px; 
-        font-weight: 700; font-size: 1rem; margin-bottom: 15px; display: block; text-decoration: none; 
-        transition: all 0.3s var(--ease-luxury); cursor: pointer; letter-spacing: 0.05em;
-    }
-    .btn-pdf:active { background: var(--c-bg-mist); transform: scale(0.98); }
-
     .btn-reserve { 
         background: var(--c-accent-copper); color: #fff; border: none; width: 100%; padding: 16px; border-radius: 50px; 
         font-weight: 700; font-size: 1.05rem; 
-        box-shadow: 0 4px 12px rgba(200, 122, 86, 0.4); 
+        box-shadow: 0 4px 12px rgba(200, 122, 86, 0.4); margin-top: 30px;
         display: block; text-decoration: none; letter-spacing: 0.05em;
         transition: all 0.3s var(--ease-luxury);
     }
@@ -205,7 +199,7 @@
     
     .reminder-box { 
         background: #fff8f4; border: 1px solid #f2e0d5; color: var(--c-accent-copper); padding: 12px; border-radius: 12px; margin-top: 20px; font-size: 0.9rem; 
-        font-weight: 700; letter-spacing: 0.05em; 
+        font-weight: 700; letter-spacing: 0.05em; text-align: center;
     }
 
     #errorView { text-align: center; margin-top: 80px; display: none; padding: 20px; }
@@ -213,12 +207,19 @@
     
     /* Switch Dog Button */
     .dog-select-btn { 
-        width: 100%; margin-bottom: 12px; padding: 16px; 
+        width: 100%; margin-top: 15px; padding: 16px; 
         font-weight: 700; font-size: 1.05rem; border-radius: 12px; background: #fff; 
         border: 1px solid var(--c-main-turquoise); color: var(--c-main-turquoise); 
         transition: all 0.3s var(--ease-luxury); box-shadow: 0 4px 10px rgba(87, 195, 194, 0.1);
     }
     .dog-select-btn:active { background: var(--c-bg-mist); transform: scale(0.98); }
+
+    /* Footer */
+    .site-footer {
+        text-align: center; padding: 40px 20px; color: #999; font-size: 0.8rem;
+        background: #f9f9f9; border-top: 1px solid #eee; margin-top: 40px;
+    }
+    .footer-info p { margin-bottom: 5px; }
 
     /* =========================================
        3. Milestone CSS
@@ -449,7 +450,7 @@
   
   <canvas id="fairyDustCanvas"></canvas>
 
-  <div id="log-stamp">v2025.12.17-TEXTURE-REVERT-FIX</div>
+  <div id="log-stamp">v2025.12.18-UI-RESTRUCTURE</div>
 
   <div id="loadingOverlay">
     <div class="loading-content">
@@ -488,26 +489,10 @@
         </div>
       </div>
 
-      <div class="mt-4">
-        <div onclick="openMedicalPage()" class="card shadow-sm medical-btn-card">
-            <div class="card-body py-3 d-flex align-items-center">
-                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" 
-                     style="width: 48px; height: 48px; min-width: 48px; background-color: var(--c-bg-mist); color: var(--c-main-turquoise);">
-                    <span style="font-size: 1.5rem;">⛑️</span>
-                </div>
-                
-                <div class="flex-grow-1">
-                    <h6 class="fw-bold mb-0" style="font-size: 1rem; color: var(--c-text-sumi); font-family: var(--font-serif-jp);">医療・防災手帳</h6>
-                    <small class="text-muted" style="font-size: 0.75rem; letter-spacing: 0.05em;">緊急時・災害時の身分証カルテ</small>
-                </div>
-                
-                <div style="color: var(--c-main-turquoise); font-size: 1.2rem;">
-                    &gt;
-                </div>
-            </div>
-        </div>
-      </div>
-      </div>
+      <button onclick="handleDownloadPdf()" class="btn-pdf" id="pdfBtn">
+          📄 レポートをPDFで保存
+      </button>
+    </div>
 
     <div class="chart-section">
       <div class="chart-box"><canvas id="chart1"></canvas><div class="chart-caption">基礎・集中</div></div>
@@ -552,21 +537,27 @@
         </div>
 
         <a class="ms-list-link" onclick="openAllMilestonesModal()">獲得マイルストーン一覧を見る &gt;</a>
+
+        <a href="#" class="btn-reserve">予約する / Reserve</a>
+        <div id="reminderArea" class="reminder-box" style="display:none;">次回予約目安: <span id="reminderDate">--/-- 〜 --/--</span></div>
     </div>
 
     <div class="footer-action">
-      <button onclick="handleDownloadPdf()" class="btn-pdf" id="pdfBtn">
-          📄 レポートをPDFで保存
-      </button>
-
+      <div class="text-muted small mt-2" style="font-family:var(--font-sans-en);">Ticket Balance: <span id="ticketCount" class="fw-bold" style="font-size:1.2rem; color:var(--c-main-turquoise);">-</span></div>
+      
       <button id="btnSwitchDog" class="dog-select-btn" style="display:none;" onclick="showDogSelectModal(globalDogList)">
           愛犬情報の切替
       </button>
-
-      <a href="#" class="btn-reserve">予約する / Reserve</a>
-      <div id="reminderArea" class="reminder-box" style="display:none;">次回予約目安: <span id="reminderDate">--/-- 〜 --/--</span></div>
-      <div class="text-muted small mt-2" style="font-family:var(--font-sans-en);">Ticket Balance: <span id="ticketCount" class="fw-bold" style="font-size:1.2rem; color:var(--c-main-turquoise);">-</span></div>
     </div>
+
+    <footer class="site-footer">
+        <div class="footer-info">
+            <p><strong>K9 Harmony</strong></p>
+            <p>東京都板橋区 (Dummy Address)</p>
+            <p>03-0000-0000 (Dummy Phone)</p>
+        </div>
+        <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
+    </footer>
   </div>
 
   <div class="modal fade" id="milestoneModal" tabindex="-1" role="dialog" aria-modal="true">
@@ -1528,4 +1519,4 @@
     }
   </script>
 </body>
-</html>```
+</html>
