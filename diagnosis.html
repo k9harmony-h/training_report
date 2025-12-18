@@ -8,10 +8,11 @@
     
     <style>
         :root {
-            --primary-color: #6d4c41; /* 茶系：安心感 */
-            --accent-color: #ffb74d;  /* オレンジ：元気 */
-            --bg-color: #fdfaf5;
+            --primary-color: #57C3C2; /* 指定のブランドカラー */
+            --primary-dark: #46a6a5;  /* ホバー時などの少し濃い色 */
+            --bg-color: #f7fcfc;      /* ブランドカラーに合わせた薄い背景 */
             --text-color: #333;
+            --white: #ffffff;
         }
 
         body {
@@ -27,21 +28,24 @@
         .container {
             width: 100%;
             max-width: 500px;
-            background: #fff;
+            background: var(--white);
             padding: 24px;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(87, 195, 194, 0.1);
         }
 
         header {
             text-align: center;
             margin-bottom: 24px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 15px;
         }
 
         h1 {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             color: var(--primary-color);
             margin: 0;
+            letter-spacing: 0.05em;
         }
 
         .form-group {
@@ -52,18 +56,25 @@
             display: block;
             font-weight: bold;
             margin-bottom: 8px;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            color: var(--text-color);
         }
 
         input[type="text"],
         select,
         textarea {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            padding: 14px;
+            border: 2px solid #e0f2f2;
+            border-radius: 12px;
             box-sizing: border-box;
             font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-color);
         }
 
         button {
@@ -71,25 +82,36 @@
             background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: 16px;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 1.1rem;
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+            box-shadow: 0 4px 12px rgba(87, 195, 194, 0.3);
         }
 
         button:active {
-            background-color: #5d4037;
             transform: translateY(1px);
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
         }
 
         #loading {
             display: none;
             text-align: center;
-            margin-top: 10px;
-            font-size: 0.8rem;
-            color: #666;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: var(--primary-dark);
+            font-weight: bold;
         }
     </style>
 </head>
@@ -98,7 +120,7 @@
 <div class="container">
     <header>
         <h1>K9 Harmony</h1>
-        <p style="font-size: 0.8rem; color: #888;">うちの子カウンセリング診断</p>
+        <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">うちの子カウンセリング診断</p>
     </header>
 
     <form id="diagnosisForm">
@@ -124,17 +146,14 @@
             <textarea id="details" name="details" rows="4" placeholder="どんな時に困りますか？"></textarea>
         </div>
 
-        <button type="submit" id="submitBtn">送信する</button>
-        <div id="loading">送信中...</div>
+        <button type="submit" id="submitBtn">送信して診断を受ける</button>
+        <div id="loading">✨ データを送信中です...</div>
     </form>
 </div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
-    // 先ほど教えていただいたGASのURL
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec";
-    
-    // LIFF ID (ご自身のLIFF IDに書き換えてください)
     const MY_LIFF_ID = "2008546673-MJY7j3ox"; 
 
     async function initializeLiff() {
@@ -157,27 +176,31 @@
         submitBtn.disabled = true;
         loading.style.display = 'block';
 
-        // フォームデータの取得
+        let userId = "unknown";
+        try {
+            const profile = await liff.getProfile();
+            userId = profile.userId;
+        } catch (err) {
+            console.log("プロフィール取得失敗", err);
+        }
+
         const formData = {
             dogName: document.getElementById('dogName').value,
             issue: document.getElementById('issue').value,
             details: document.getElementById('details').value,
-            userId: liff.isLoggedIn() ? (await liff.getProfile()).userId : "unknown"
+            userId: userId
         };
 
         try {
-            // GASへデータを送信
-            const response = await fetch(GAS_URL, {
+            await fetch(GAS_URL, {
                 method: "POST",
-                mode: "no-cors", // GASのWebアプリ仕様に合わせる
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData)
             });
 
-            alert("送信が完了しました！");
-            liff.closeWindow(); // 送信後にLINEの画面を閉じる
+            alert("診断の申し込みありがとうございます！\nLINE画面に戻ります。");
+            liff.closeWindow();
             
         } catch (error) {
             console.error("エラーが発生しました", error);
@@ -188,7 +211,6 @@
         }
     });
 
-    // 初期化実行
     initializeLiff();
 </script>
 
