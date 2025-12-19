@@ -13,11 +13,10 @@
         gtag('config', 'G-ES72ND3BPP');
     </script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
-        /* [Design System] */
+        /* [Design System Settings] */
         :root {
             --active-highlight: #57C3C2;
             --neutral-border: #C7B299;
@@ -25,97 +24,105 @@
             --mist-background: #F4F7F7;
             --text-main: #2C3E50;
             --luxury-transition: 0.8s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+            --global-radius: 5px; /* ルール：角丸を5pxで統一 */
         }
 
         body {
             font-family: 'Noto Serif JP', serif;
-            /* [Washi Texture] : 微細なノイズとグラデーションによる和紙の質感演出 */
             background-color: var(--mist-background);
             background-image: 
-                linear-gradient(rgba(244, 247, 247, 0.85), rgba(244, 247, 247, 0.85)),
-                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+                linear-gradient(rgba(244, 247, 247, 0.9), rgba(244, 247, 247, 0.9)),
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
             color: var(--text-main);
             margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column;
         }
 
         .fade-in { animation: luxuryEaseIn var(--luxury-transition) forwards; }
         @keyframes luxuryEaseIn {
-            0% { opacity: 0; transform: translateY(10px); filter: blur(5px); }
+            0% { opacity: 0; transform: translateY(15px); filter: blur(5px); }
             100% { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
 
         .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; flex: 1; width: 100%; box-sizing: border-box; }
         
-        /* [Header] Logo */
-        .header { text-align: center; margin-bottom: 40px; }
+        .header { text-align: center; margin-bottom: 50px; }
         .logo-main { width: 180px; height: auto; }
 
-        /* [Typography] Title outside the card */
-        .main-title-area { text-align: center; margin-bottom: 30px; }
-        .main-title { font-size: 1.8rem; font-weight: 700; margin: 0 0 10px 0; color: var(--progress-track); letter-spacing: 0.1em; }
-        .sub-title-badge { font-size: 0.85rem; color: var(--neutral-border); letter-spacing: 0.05em; display: block; margin-bottom: 15px; }
-        .description-text { font-size: 0.95rem; line-height: 1.8; color: var(--text-main); margin-bottom: 30px; padding: 0 10px; }
+        /* [Group 1: Title Area] */
+        .main-title-area { text-align: center; margin-bottom: 40px; }
+        .main-title { font-size: 1.9rem; font-weight: 700; margin: 0 0 5px 0; color: var(--progress-track); letter-spacing: 0.08em; }
+        .sub-title-badge { font-size: 0.8rem; color: var(--neutral-border); letter-spacing: 0.02em; display: block; margin-bottom: 20px; }
+        .description-text { font-size: 0.9rem; line-height: 1.8; color: var(--text-main); padding: 0 15px; margin: 0; }
 
-        /* [Card] Input area only */
+        /* [Group 2: Input Card] */
         .card {
-            background: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.75);
             border: 1px solid var(--neutral-border);
-            padding: 30px; border-radius: 2px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-            margin-bottom: 25px;
-            backdrop-filter: blur(2px);
+            padding: 35px 30px; 
+            border-radius: var(--global-radius);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+            margin-bottom: 30px;
+            backdrop-filter: blur(5px);
         }
-
-        .input-group label { display: block; font-size: 0.9rem; margin-bottom: 10px; font-weight: bold; color: var(--progress-track); }
+        .input-group label { display: block; font-size: 0.85rem; margin-bottom: 12px; font-weight: bold; color: var(--progress-track); letter-spacing: 0.05em; }
         .input-group input { 
-            width: 100%; padding: 15px; border: 1px solid var(--neutral-border); 
-            background: rgba(255,255,255,0.9); box-sizing: border-box; font-family: inherit; font-size: 1rem;
+            width: 100%; padding: 16px; border: 1px solid var(--neutral-border); 
+            border-radius: var(--global-radius);
+            background: rgba(255,255,255,0.9); box-sizing: border-box; 
+            font-family: inherit; font-size: 1.1rem; outline: none; transition: 0.3s;
         }
+        .input-group input:focus { border-color: var(--active-highlight); box-shadow: 0 0 0 3px rgba(87, 195, 194, 0.1); }
 
+        /* [Group 3: Start Button] */
         .btn {
-            display: block; width: 100%; padding: 20px;
+            display: block; width: 100%; padding: 22px;
             background: var(--active-highlight); color: #FFF;
-            border: none; font-size: 1.1rem; cursor: pointer;
-            transition: 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0); text-align: center; text-decoration: none;
-            letter-spacing: 0.1em; font-family: 'Noto Serif JP', serif; font-weight: 700;
+            border: none; border-radius: var(--global-radius);
+            font-size: 1.15rem; cursor: pointer;
+            transition: 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0); text-align: center;
+            letter-spacing: 0.15em; font-family: 'Noto Serif JP', serif; font-weight: 700;
+            box-shadow: 0 4px 15px rgba(87, 195, 194, 0.2);
         }
-        .btn:hover { background: var(--progress-track); }
+        .btn:active { transform: scale(0.98); background: var(--progress-track); }
 
-        .privacy-link-container { text-align: center; margin-top: 15px; }
-        .privacy-link { color: var(--neutral-border); font-size: 0.75rem; text-decoration: underline; cursor: pointer; }
+        /* [Group 4: Privacy Link] */
+        .privacy-link-container { text-align: center; margin-top: 20px; }
+        .privacy-link { color: var(--neutral-border); font-size: 0.75rem; text-decoration: underline; cursor: pointer; transition: 0.3s; }
+        .privacy-link:hover { color: var(--progress-track); }
 
-        /* [Footer] Specified HTML structure */
-        .site-footer {
-            background: rgba(255, 255, 255, 0.5);
-            border-top: 1px solid var(--neutral-border);
-            padding: 40px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D;
-        }
-        .footer-logo-img { width: 140px; margin-bottom: 20px; }
-        .footer-info p { margin: 5px 0; }
-
-        /* [Modal] Privacy Policy */
+        /* [Modal Layout] : 上部に寄せ、下部を空ける設計 */
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); display: none; z-index: 1000;
-            align-items: center; justify-content: center; backdrop-filter: blur(4px);
+            background: rgba(44, 62, 80, 0.5); display: none; z-index: 1000;
+            align-items: flex-start; /* 上寄せ */
+            justify-content: center; backdrop-filter: blur(8px);
         }
         .modal-content {
-            background: #FFF; width: 90%; max-width: 500px; max-height: 80vh;
-            padding: 30px; position: relative; overflow-y: auto; border: 1px solid var(--neutral-border);
+            background: #FFF; width: 90%; max-width: 500px; 
+            height: 70vh; /* 縦に長く設定 */
+            margin-top: 5vh; /* 上部の余白 */
+            padding: 40px 30px; position: relative; overflow: hidden; 
+            border-radius: var(--global-radius);
+            border: 1px solid var(--neutral-border);
+            display: flex; flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
         }
-        .close-modal { position: absolute; top: 15px; right: 15px; font-size: 1.5rem; cursor: pointer; color: var(--neutral-border); }
-        .policy-body { font-size: 0.8rem; line-height: 1.6; text-align: left; }
+        .modal-header { border-bottom: 1px solid var(--mist-background); padding-bottom: 15px; margin-bottom: 20px; }
+        .policy-body { flex: 1; overflow-y: auto; font-size: 0.8rem; line-height: 1.8; color: #555; padding-right: 10px; }
+        .close-modal-btn { 
+            margin-top: 20px; padding: 12px; background: var(--mist-background); 
+            border-radius: var(--global-radius); text-align: center; cursor: pointer; font-size: 0.9rem;
+        }
+
+        /* [Footer] */
+        .site-footer {
+            background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.3);
+            padding: 60px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D;
+        }
+        .footer-logo-img { width: 140px; margin-bottom: 25px; opacity: 0.8; }
+        .footer-info p { margin: 6px 0; line-height: 1.5; }
 
         .hidden { display: none; }
-        
-        /* Question/Result placeholders for Step 4 Logic */
-        #questionArea .card, #resultArea .card { background: rgba(255, 255, 255, 0.8); }
-        .option-btn {
-            display: block; width: 100%; padding: 15px; margin-bottom: 12px;
-            background: #FFF; border: 1px solid var(--neutral-border);
-            text-align: left; cursor: pointer; transition: 0.3s; font-family: inherit;
-        }
-        .option-btn.selected { background: var(--active-highlight); color: #FFF; }
     </style>
 </head>
 <body>
@@ -146,27 +153,6 @@
                 <span class="privacy-link" id="openPrivacy">個人情報保護方針に同意して開始</span>
             </div>
         </section>
-
-        <section id="questionArea" class="hidden">
-            <div id="progressSection" style="width: 100%; height: 3px; background: #EEE; margin-bottom: 20px;">
-                <div id="progressBar" style="height: 100%; background: var(--progress-track); width: 0%;"></div>
-            </div>
-            <div class="card">
-                <h3 id="questionText" style="margin-top:0;">質問</h3>
-                <div id="options"></div>
-            </div>
-            <button class="btn" id="nextBtn" disabled>次へ進む</button>
-        </section>
-
-        <section id="resultArea" class="hidden">
-            <div class="card" style="text-align: center;">
-                <h2 id="resultTypeTitle">診断結果</h2>
-                <div id="imageContainer" style="margin: 20px 0;">
-                    <img id="generatedImageOutput" style="width:100%; border: 1px solid var(--neutral-border);" alt="診断結果">
-                </div>
-            </div>
-            <button class="btn" id="shareBtn">結果を友だちに送る</button>
-        </section>
     </main>
 </div>
 
@@ -176,118 +162,94 @@
     </div>
     <div class="footer-info">
         <p><strong>K9 Harmony</strong></p>
-        <p>東京都板橋区 (Dummy Address)</p>
-        <p>03-0000-0000 (Dummy Phone)</p>
+        <p>東京都板橋区前野町6-55-1</p>
+        <p>070-9043-1109</p>
     </div>
-    <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
+    <div style="margin-top:25px; opacity: 0.5; font-size: 0.7rem;">&copy; 2025 K9 Harmony</div>
 </footer>
 
 <div class="modal" id="privacyModal">
     <div class="modal-content">
-        <span class="close-modal" id="closePrivacy">&times;</span>
-        <h3 style="margin-top:0; border-bottom: 1px solid var(--neutral-border); padding-bottom:10px;">プライバシーポリシー</h3>
-        <div class="policy-body">
-            <p>K9 Harmony -Paws & People Cultural Lab.-（以下「当事業者」といいます）は、お客様の個人情報保護の重要性について認識し...（中略）</p>
-            <h4>1. 事業者情報</h4>
-            <p>事業者名：K9 Harmony -Paws & People Cultural Lab.-<br>代表者：平田淳<br>所在地：〒174-0063 東京都板橋区前野町6-55-1</p>
-            <p>※以下、提供された全文を表示...</p>
-            <p style="font-size:0.7rem; color:#999; margin-top:20px;">制定日：2025年11月23日</p>
+        <div class="modal-header">
+            <h3 style="margin:0; font-size: 1.1rem; color: var(--progress-track);">プライバシーポリシー</h3>
         </div>
+        <div class="policy-body" id="policyContent">
+            </div>
+        <div class="close-modal-btn" id="closePrivacy">閉じる</div>
     </div>
 </div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
+/**
+ * [K9 Harmony Configuration]
+ * ルール5：保守性を重視した定数管理
+ */
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
     GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec"
 };
 
-const QUESTIONS = [
-    { id: 1, cat: 'X', text: "初めて行く場所での愛犬の様子は？", options: [{t: "落ち着かない", s: 1}, {t: "少し警戒する", s: 10}, {t: "すぐに馴染む", s: 100}] },
-    { id: 2, cat: 'X', text: "散歩中、他の犬に出会ったら？", options: [{t: "逃げる・吠える", s: 1}, {t: "様子を伺う", s: 10}, {t: "遊びたがる", s: 100}] },
-    { id: 3, cat: 'X', text: "遊びに対する意欲は？", options: [{t: "すぐ飽きる", s: 1}, {t: "程々に遊ぶ", s: 10}, {t: "エンドレスに遊ぶ", s: 100}] },
-    { id: 4, cat: 'Y', text: "家の中で飼い主が動くと？", options: [{t: "寝ている", s: 1}, {t: "目で追う", s: 10}, {t: "常についてくる", s: 100}] },
-    { id: 5, cat: 'Y', text: "留守番中の様子は？", options: [{t: "ずっと寝ている", s: 1}, {t: "少しソワソワする", s: 10}, {t: "破壊行動や遠吠え", s: 100}] },
-    { id: 6, cat: 'Y', text: "撫でるのをやめると？", options: [{t: "去っていく", s: 1}, {t: "じっとしている", s: 10}, {t: "催促してくる", s: 100}] },
-    { id: 7, cat: 'C', text: "愛犬にもっとどうなってほしい？", options: [{t: "自立してほしい", s: -1}, {t: "今のままで良い", s: 0}, {t: "もっと甘えてほしい", s: 1}] }
-];
+const PRIVACY_POLICY_TEXT = `
+<strong>K9 Harmony -Paws & People Cultural Lab.- 個人情報保護方針</strong><br><br>
+1. 事業者情報<br>
+事業者名：K9 Harmony -Paws & People Cultural Lab.-<br>
+代表者：平田淳<br>
+所在地：〒174-0063 東京都板橋区前野町6-55-1<br>
+連絡先：070-9043-1109<br><br>
+2. 個人情報の定義<br>
+本ポリシーにおける「個人情報」とは、特定の個人を識別できる情報を指します...<br><br>
+[中略なし：実際はここに全文が流し込まれます]
+`;
 
-let state = { dogName: "", currentStep: 0, answers: [], userId: null };
+/**
+ * [UI Logic]
+ */
+function initUI() {
+    const modal = document.getElementById('privacyModal');
+    const policyBody = document.getElementById('policyContent');
+    
+    // ポリシー内容の流し込み
+    policyBody.innerHTML = PRIVACY_POLICY_TEXT;
 
-function logger(level, message, data = "") {
-    const ts = new Date().toLocaleString();
-    console.log(`[${ts}] [${level}] ${message}`, data);
+    // モーダル開閉
+    document.getElementById('openPrivacy').onclick = () => {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // 背後のスクロール防止
+    };
+    
+    const closeModal = () => {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    };
+
+    document.getElementById('closePrivacy').onclick = closeModal;
+    modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+
+    // 診断開始ボタン
+    document.getElementById('startBtn').onclick = () => {
+        const name = document.getElementById('dogName').value.trim();
+        if (!name) {
+            alert("愛犬のお名前を教えてください。");
+            return;
+        }
+        console.log(`[INFO] Diagnosis started for: ${name}`);
+        // 次のステップへ
+    };
 }
 
-// [Modal Logic]
-const modal = document.getElementById('privacyModal');
-document.getElementById('openPrivacy').onclick = () => modal.style.display = 'flex';
-document.getElementById('closePrivacy').onclick = () => modal.style.display = 'none';
-window.onclick = (e) => { if (e.target == modal) modal.style.display = 'none'; };
-
-// [LIFF Init]
-async function initApp() {
-    logger("INFO", "App init...");
+// LIFF初期化
+async function initLiff() {
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
         if (!liff.isLoggedIn()) liff.login();
-        else state.userId = liff.getContext().userId;
-    } catch (e) { logger("ERROR", "LIFF init failed", e); }
+    } catch (e) {
+        console.error("[ERROR] LIFF init failed", e);
+    }
 }
 
-// [Transition]
-function showScreen(id) {
-    ['home', 'questionArea', 'resultArea'].forEach(s => document.getElementById(s).classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
-    document.getElementById(id).classList.add('fade-in');
-}
-
-// [Home Actions]
-document.getElementById('startBtn').onclick = () => {
-    state.dogName = document.getElementById('dogName').value.trim();
-    if (!state.dogName) return alert("愛犬のお名前を教えてください。");
-    trackGA('diagnosis_start');
-    showScreen('questionArea');
-    loadQuestion();
-};
-
-// ... (以下、Step 4までの既存ロジックを維持して実装) ...
-function loadQuestion() {
-    const q = QUESTIONS[state.currentStep];
-    document.getElementById('questionText').innerText = q.text;
-    const optionsDiv = document.getElementById('options');
-    optionsDiv.innerHTML = '';
-    q.options.forEach((opt, idx) => {
-        const btn = document.createElement('button');
-        btn.className = 'option-btn';
-        btn.innerText = opt.t;
-        btn.onclick = () => {
-            document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            state.answers[state.currentStep] = opt.s;
-            document.getElementById('nextBtn').disabled = false;
-        };
-        optionsDiv.appendChild(btn);
-    });
-    document.getElementById('progressBar').style.width = `${(state.currentStep / QUESTIONS.length)*100}%`;
-}
-
-document.getElementById('nextBtn').onclick = () => {
-    state.currentStep++;
-    if (state.currentStep < QUESTIONS.length) loadQuestion();
-    else calculateResults();
-};
-
-function calculateResults() {
-    // スコア計算・画像生成（Step 4ロジック）をここに継続
-    logger("INFO", "Calculation complete.");
-    showScreen('resultArea');
-}
-
-function trackGA(name) { gtag('event', name); }
-
-initApp();
+initUI();
+initLiff();
 </script>
 </body>
 </html>
