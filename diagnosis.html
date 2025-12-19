@@ -16,6 +16,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
+        /* [Design System Settings] */
         :root {
             --active-highlight: #57C3C2;
             --neutral-border: #C7B299;
@@ -29,81 +30,98 @@
         body {
             font-family: 'Noto Serif JP', serif;
             background-color: var(--mist-background);
-            /* 改良版：シミに見えない繊細な和紙テクスチャ */
+            /* [Washi Texture]
+             * ロイヤリティフリーの和紙テクスチャを背景に採用
+             * 透過グラデーションを重ねることで繊維感を残しつつ文字の可読性を確保
+             */
             background-image: 
-                linear-gradient(rgba(244, 247, 247, 0.94), rgba(244, 247, 247, 0.94)),
-                url("data:image/svg+xml,%3Csvg viewBox='0 0 500 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)'/%3E%3C/svg%3E");
+                linear-gradient(rgba(244, 247, 247, 0.92), rgba(244, 247, 247, 0.92)),
+                url("https://www.transparenttextures.com/patterns/handmade-paper.png"); /* 代替案として安定したテクスチャURLを使用 */
+            background-attachment: fixed;
             color: var(--text-main);
             margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column;
         }
 
         .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; flex: 1; width: 100%; box-sizing: border-box; }
+        
         .header { text-align: center; margin-bottom: 50px; }
         .logo-main { width: 180px; height: auto; }
 
+        /* [Group 1: Title Area] */
         .main-title-area { text-align: center; margin-bottom: 40px; }
         .main-title { font-size: 1.8rem; font-weight: 700; margin: 0; color: var(--progress-track); letter-spacing: 0.08em; }
-        .sub-title-badge { font-size: 0.75rem; color: var(--neutral-border); letter-spacing: 0.05em; display: block; margin-top: 5px; margin-bottom: 40px; } /* 修正：margin-bottom 40px */
-        .description-text { font-size: 0.9rem; line-height: 1.8; color: var(--text-main); margin-bottom: 30px; }
+        .sub-title-badge { font-size: 0.75rem; color: var(--neutral-border); letter-spacing: 0.05em; display: block; margin-top: 5px; margin-bottom: 40px; }
+        .description-text { font-size: 0.9rem; line-height: 2; color: var(--text-main); margin-bottom: 30px; }
 
+        /* [Group 2: Input Card] */
         .card {
-            background: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.5); /* 透過率を下げて背景の和紙を透かす */
             border: 1px solid var(--neutral-border);
-            padding: 35px; /* 修正：推奨値 35px */
+            padding: 35px;
             border-radius: var(--global-radius);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.02);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.015);
             margin-bottom: 40px;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(3px);
         }
 
-        .input-group label { display: block; font-size: 0.8rem; margin-bottom: 15px; font-weight: bold; color: var(--progress-track); opacity: 0.8; }
-        /* 修正：下線のみのインプット */
+        .input-group label { display: block; font-size: 0.8rem; margin-bottom: 15px; font-weight: bold; color: var(--progress-track); opacity: 0.7; }
+        
+        /* [Input] Underline only */
         .input-group input { 
             width: 100%; padding: 12px 0; border: none; border-bottom: 1px solid var(--neutral-border);
             border-radius: 0; background: transparent; box-sizing: border-box; 
             font-family: inherit; font-size: 1.3rem; outline: none; transition: 0.4s;
+            color: var(--text-main);
+        }
+        
+        /* 修正：プレースホルダーをさらに薄く設定 */
+        .input-group input::placeholder {
+            color: var(--neutral-border);
+            opacity: 0.35;
+            font-size: 1.1rem;
         }
         .input-group input:focus { border-bottom-color: var(--active-highlight); }
 
         .btn-container { text-align: center; }
         .btn {
-            display: inline-block; width: 75%; padding: 20px; /* 修正：幅 75% */
+            display: inline-block; width: 75%; padding: 20px;
             background: var(--active-highlight); color: #FFF;
             border: none; border-radius: var(--global-radius);
             font-size: 1.1rem; cursor: pointer; transition: 0.4s;
             letter-spacing: 0.15em; font-family: 'Noto Serif JP', serif; font-weight: 700;
+            box-shadow: 0 4px 12px rgba(87, 195, 194, 0.15);
         }
-        .btn:active { transform: scale(0.97); }
+        .btn:active { transform: scale(0.97); background: var(--progress-track); }
 
         .privacy-link-container { text-align: center; margin-top: 25px; }
-        .privacy-link { color: var(--neutral-border); font-size: 0.75rem; text-decoration: underline; cursor: pointer; }
+        .privacy-link { color: var(--neutral-border); font-size: 0.75rem; text-decoration: underline; cursor: pointer; opacity: 0.8; }
 
         /* [Footer] */
         .site-footer {
-            background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.2);
+            background: rgba(255, 255, 255, 0.3); border-top: 1px solid rgba(199, 178, 153, 0.15);
             padding: 60px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D;
         }
-        .footer-logo-img { width: 140px; margin-bottom: 25px; opacity: 0.7; }
+        .footer-logo-img { width: 140px; margin-bottom: 25px; opacity: 0.6; }
         .footer-info p { margin: 6px 0; line-height: 1.5; }
 
         /* [Modal Layout] */
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(44, 62, 80, 0.4); display: none; z-index: 1000;
-            align-items: flex-start; justify-content: center; backdrop-filter: blur(10px);
+            background: rgba(44, 62, 80, 0.35); display: none; z-index: 1000;
+            align-items: flex-start; justify-content: center; backdrop-filter: blur(12px);
         }
         .modal-content {
-            background: #FFF; width: 92%; max-width: 500px; 
-            height: 75vh; margin-top: 5vh; /* 縦長かつ上寄せ */
+            background: rgba(255, 255, 255, 0.98); width: 92%; max-width: 500px; 
+            height: 75vh; margin-top: 5vh;
             padding: 40px 30px; position: relative; overflow: hidden; 
             border-radius: var(--global-radius); border: 1px solid var(--neutral-border);
-            display: flex; flex-direction: column; box-shadow: 0 30px 60px rgba(0,0,0,0.12);
+            display: flex; flex-direction: column; box-shadow: 0 40px 80px rgba(0,0,0,0.15);
         }
         .modal-header { border-bottom: 1px solid var(--mist-background); padding-bottom: 15px; margin-bottom: 20px; flex-shrink: 0; }
-        .policy-body { flex: 1; overflow-y: auto; font-size: 0.85rem; line-height: 2; color: #555; padding-right: 15px; }
+        .policy-body { flex: 1; overflow-y: auto; font-size: 0.85rem; line-height: 2.2; color: #444; padding-right: 15px; text-align: left;}
         .close-modal-btn { 
             margin-top: 25px; padding: 15px; background: var(--mist-background); 
-            border-radius: var(--global-radius); text-align: center; cursor: pointer; flex-shrink: 0;
+            border-radius: var(--global-radius); text-align: center; cursor: pointer; flex-shrink: 0; color: var(--progress-track); font-weight: bold;
         }
     </style>
 </head>
@@ -146,10 +164,10 @@
     </div>
     <div class="footer-info">
         <p><strong>K9 Harmony</strong></p>
-        <p>東京都板橋区前野町6-55-1</p>
+        <p>〒174-0063 東京都板橋区前野町6-55-1</p>
         <p>070-9043-1109</p>
     </div>
-    <div style="margin-top:25px; opacity: 0.4;">&copy; 2025 K9 Harmony</div>
+    <div style="margin-top:25px; opacity: 0.4; font-size: 0.7rem;">&copy; 2025 K9 Harmony</div>
 </footer>
 
 <div class="modal" id="privacyModal">
@@ -164,25 +182,81 @@
 </div>
 
 <script>
-const PRIVACY_POLICY_TEXT = `[ここに下記の全文を流し込みます]`;
+/**
+ * [Logging Utility]
+ */
+function logger(level, message, data = "") {
+    const ts = new Date().toLocaleString('ja-JP');
+    console.log(`%c[${ts}] [${level}] ${message}`, "color: #2F5D62; font-weight: bold;", data);
+}
+
+const PRIVACY_POLICY_TEXT = `
+<strong>K9 Harmony -Paws & People Cultural Lab.- プライバシーポリシー</strong><br><br>
+K9 Harmony -Paws & People Cultural Lab.-（以下「当事業者」といいます）は、お客様の個人情報保護の重要性について認識し、個人情報の保護に関する法律（以下「個人情報保護法」といいます）を遵守すると共に、以下のプライバシーポリシー（以下「本ポリシー」といいます）に従って、個人情報を適切に取り扱います。<br><br>
+<strong>1. 事業者情報</strong><br>
+事業者名：K9 Harmony -Paws & People Cultural Lab.-<br>
+代表者：平田淳<br>
+所在地：〒174-0063 東京都板橋区前野町6-55-1<br>
+連絡先：電話 070-9043-1109 / メール k9.harmony.ppcl@gmail.com<br><br>
+<strong>2. 個人情報の定義</strong><br>
+本ポリシーにおける「個人情報」とは、個人情報保護法第2条第1項に定義される、特定の個人を識別できる情報を指します。<br><br>
+<strong>3. 取得する個人情報</strong><br>
+3.1 お客様ご本人の情報（氏名、生年月日、住所、電話番号等）<br>
+3.2 犬に関する情報（犬の名前、犬種、性格、健康状態等）<br>
+3.3 かかりつけ獣医師の情報、3.4 レッスンに関する情報、3.5 決済に関する情報、3.6 その他お問い合わせ内容<br><br>
+<strong>4. 個人情報の取得方法</strong><br>
+当事業者は、レッスン申込時の書面またはWeb上での入力、電話、メール、LINE等での直接のやり取りを通じて個人情報を取得します。<br><br>
+<strong>5. 個人情報の利用目的</strong><br>
+レッスンの提供、安全管理、日程調整、アフターフォロー、料金管理、および同意を得た場合の情報提供やマーケティング活動。<br><br>
+<strong>6. 個人情報の第三者提供</strong><br>
+原則として第三者に提供しません。ただし、お客様の同意がある場合、法令に基づく場合、生命・身体の保護（犬の緊急事態を含む）に必要な場合等を除きます。<br><br>
+<strong>7. 個人情報の安全管理措置</strong><br>
+個人情報保護責任者の設置、情報の暗号化、二段階認証の設定等を徹底します。<br><br>
+<strong>8. 個人情報の保管期間</strong><br>
+最終利用日から3年間。保管期間経過後は速やかに削除します。<br><br>
+<strong>9. Cookie（クッキー）等の利用</strong><br>
+サービス向上および利用状況分析のために使用します。ブラウザ設定により無効化可能です。<br><br>
+<strong>10. お客様の権利</strong><br>
+開示、訂正、利用停止等の請求権を有します。<br><br>
+<strong>11. お子様の個人情報</strong><br>
+18歳未満の方の個人情報は、保護者の同意なく取得しません。<br><br>
+<strong>12. お問い合わせ窓口</strong><br>
+代表：平田淳 📞 070-9043-1109 / 📧 k9.harmony.ppcl@gmail.com<br><br>
+<strong>13. プライバシーポリシーの変更</strong><br>
+必要に応じて本ポリシーを変更する場合があります。変更はウェブサイト上で公表します。<br><br>
+<strong>14. 電子契約・電子交付に関する同意</strong><br>
+電子的方法による契約締結および書面交付に同意したものとみなします。<br><br>
+制定日：2025年11月23日<br>
+最終更新日：2025年11月23日
+`;
 
 function initUI() {
     const modal = document.getElementById('privacyModal');
     document.getElementById('policyContent').innerHTML = PRIVACY_POLICY_TEXT;
 
     document.getElementById('openPrivacy').onclick = () => {
+        logger("INFO", "Privacy modal opened.");
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
     };
     
     const closeModal = () => {
+        logger("INFO", "Privacy modal closed.");
         modal.style.display = 'none';
         document.body.style.overflow = 'auto';
     };
 
     document.getElementById('closePrivacy').onclick = closeModal;
     modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+
+    document.getElementById('startBtn').onclick = () => {
+        const name = document.getElementById('dogName').value.trim();
+        if (!name) return alert("愛犬のお名前を教えてください。");
+        logger("INFO", `Diagnosis starting for: ${name}`);
+        // 2ページ目への遷移ロジック（次工程）
+    };
 }
+
 initUI();
 </script>
 </body>
