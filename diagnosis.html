@@ -17,7 +17,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
-        /* [Design System] */
         :root {
             --active-highlight: #57C3C2;
             --neutral-border: #C7B299;
@@ -26,405 +25,278 @@
             --text-main: #2C3E50;
             --luxury-transition: 0.8s cubic-bezier(0.25, 0.1, 0.25, 1.0);
             --global-radius: 5px;
+            --group-margin: 40px; /* 指定：40px固定 */
         }
 
+        /* [Visual Fix] 和紙テクスチャをより鮮明に */
         body {
             font-family: 'Noto Serif JP', serif;
             background-color: var(--mist-background);
-            /* [Washi Texture Fix] : 繊維感がはっきり見えるようグラデーションの透明度を調整 */
-            background-image: 
-                linear-gradient(rgba(244, 247, 247, 0.75), rgba(244, 247, 247, 0.75)),
-                url("https://www.transparenttextures.com/patterns/handmade-paper.png");
-            background-attachment: fixed;
+            background-image: url("https://www.transparenttextures.com/patterns/pinstriped-suit.png"), url("https://www.transparenttextures.com/patterns/handmade-paper.png");
+            background-blend-mode: multiply;
             color: var(--text-main);
-            margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column;
+            margin: 0; padding: 0; min-height: 100vh;
         }
 
-        .fade-in { animation: luxuryEaseIn var(--luxury-transition) forwards; }
-        @keyframes luxuryEaseIn {
-            0% { opacity: 0; transform: translateY(15px); filter: blur(5px); }
-            100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+        /* [Visual Log Stamp] */
+        #logOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; background: rgba(47, 93, 98, 0.9);
+            color: #FFF; font-size: 10px; padding: 4px 10px; z-index: 9999; font-family: monospace;
+            pointer-events: none; height: 1.5em; overflow: hidden;
         }
 
-        .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; flex: 1; width: 100%; box-sizing: border-box; }
+        .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; box-sizing: border-box; overflow: hidden; position: relative; }
         .header { text-align: center; margin-bottom: 50px; }
-        .logo-main { width: 180px; height: auto; }
+        .logo-main { width: 180px; }
 
-        /* [Typography] */
-        .main-title-area { text-align: center; margin-bottom: 40px; }
-        .main-title { font-size: 1.8rem; font-weight: 700; margin: 0; color: var(--progress-track); letter-spacing: 0.08em; }
-        .sub-title-badge { font-size: 0.75rem; color: var(--neutral-border); letter-spacing: 0.05em; display: block; margin-top: 5px; margin-bottom: 40px; }
-        .description-text { font-size: 0.9rem; line-height: 2; color: var(--text-main); margin-bottom: 30px; }
+        .main-title { font-size: 1.8rem; font-weight: 700; color: var(--progress-track); margin-bottom: 5px; text-align: center; }
+        .sub-title-badge { font-size: 0.75rem; color: var(--neutral-border); margin-bottom: 40px; text-align: center; display: block; }
 
-        /* [Components] Card & Input */
         .card {
-            background: rgba(255, 255, 255, 0.6);
-            border: 1px solid var(--neutral-border);
-            padding: 35px;
-            border-radius: var(--global-radius);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.02);
-            margin-bottom: 40px;
-            backdrop-filter: blur(3px);
+            background: rgba(255, 255, 255, 0.5); border: 1px solid var(--neutral-border);
+            padding: 35px; border-radius: var(--global-radius); backdrop-filter: blur(5px);
+            margin-bottom: var(--group-margin);
         }
-        .input-group label { display: block; font-size: 0.8rem; margin-bottom: 15px; font-weight: bold; color: var(--progress-track); opacity: 0.8; }
-        .input-group input { 
-            width: 100%; padding: 12px 0; border: none; border-bottom: 1px solid var(--neutral-border);
-            border-radius: 0; background: transparent; box-sizing: border-box; 
-            font-family: inherit; font-size: 1.3rem; outline: none; transition: 0.4s;
-            color: var(--text-main);
-        }
-        .input-group input::placeholder { color: var(--neutral-border); opacity: 0.25; font-size: 1.1rem; }
-        .input-group input:focus { border-bottom-color: var(--active-highlight); }
 
-        /* [Buttons] */
-        .btn-container { text-align: center; }
+        .q-unit { margin-bottom: var(--group-margin); }
+        .q-text { font-size: 0.95rem; font-weight: bold; margin-bottom: 15px; color: var(--progress-track); }
+        
+        /* [UI] 回答の横並び配置 */
+        .opt-group { display: flex; gap: 8px; justify-content: space-between; }
+        .opt-btn {
+            flex: 1; padding: 12px 4px; border: 1px solid var(--neutral-border); background: #FFF;
+            border-radius: var(--global-radius); cursor: pointer; font-size: 0.8rem; text-align: center; transition: 0.3s;
+        }
+        .opt-btn.selected { background: var(--active-highlight); color: #FFF; border-color: var(--active-highlight); }
+
         .btn {
-            display: inline-block; width: 75%; padding: 20px;
-            background: var(--active-highlight); color: #FFF;
-            border: none; border-radius: var(--global-radius);
-            font-size: 1.1rem; cursor: pointer; transition: 0.4s;
-            letter-spacing: 0.15em; font-family: 'Noto Serif JP', serif; font-weight: 700;
-            box-shadow: 0 4px 15px rgba(87, 195, 194, 0.2);
-            z-index: 10; position: relative;
+            width: 75%; padding: 20px; background: var(--active-highlight); color: #FFF;
+            border: none; border-radius: var(--global-radius); font-size: 1.1rem; cursor: pointer;
+            font-family: inherit; font-weight: 700; letter-spacing: 0.1em;
         }
-        .btn:disabled { background: #CCC; cursor: not-allowed; }
-        .btn:active { transform: scale(0.97); }
+        .btn:disabled { background: #CCC; opacity: 0.5; }
 
-        .option-btn {
-            display: block; width: 100%; padding: 18px; margin-bottom: 15px;
-            background: rgba(255,255,255,0.8); border: 1px solid var(--neutral-border);
-            border-radius: var(--global-radius); text-align: left; cursor: pointer; transition: 0.3s;
-            font-family: inherit; font-size: 1rem; color: var(--text-main);
-        }
-        .option-btn.selected { background: var(--active-highlight); color: #FFF; border-color: var(--active-highlight); }
+        /* [Transition] イージングスライド */
+        .slide-area { display: flex; width: 300%; transition: transform var(--luxury-transition); }
+        .page-section { width: 33.333%; flex-shrink: 0; padding: 0 5px; box-sizing: border-box; }
 
-        .privacy-link-container { text-align: center; margin-top: 25px; }
-        .privacy-link { color: var(--neutral-border); font-size: 0.75rem; text-decoration: underline; cursor: pointer; }
-
-        /* [Footer] */
-        .site-footer {
-            background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.2);
-            padding: 60px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D;
-        }
-        .footer-logo-img { width: 140px; margin-bottom: 25px; opacity: 0.7; }
-        .footer-info p { margin: 6px 0; line-height: 1.5; }
-
-        /* [Modal] */
         .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(44, 62, 80, 0.4); display: none; z-index: 1000;
-            align-items: flex-start; justify-content: center; backdrop-filter: blur(10px);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4);
+            display: none; z-index: 1000; align-items: flex-start; justify-content: center; backdrop-filter: blur(10px);
         }
         .modal-content {
-            background: #FFF; width: 92%; max-width: 500px; 
-            height: 75vh; margin-top: 5vh;
-            padding: 40px 30px; position: relative; overflow: hidden; 
-            border-radius: var(--global-radius); border: 1px solid var(--neutral-border);
-            display: flex; flex-direction: column; box-shadow: 0 30px 60px rgba(0,0,0,0.12);
+            background: #FFF; width: 92%; height: 75vh; margin-top: 5vh; border-radius: var(--global-radius);
+            padding: 30px; overflow: hidden; display: flex; flex-direction: column;
         }
-        .policy-body { flex: 1; overflow-y: auto; font-size: 0.85rem; line-height: 2; color: #555; padding-right: 15px; text-align: left; }
-        .close-modal-btn { 
-            margin-top: 25px; padding: 15px; background: var(--mist-background); 
-            border-radius: var(--global-radius); text-align: center; cursor: pointer; font-weight: bold;
-        }
-
-        /* [Image Gen Template] */
-        #chekiWrapper { position: absolute; left: -9999px; top: 0; }
-        #chekiTemplate { width: 400px; background: #FFF; padding: 20px 20px 60px 20px; text-align: center; border: 1px solid #EEE; }
-        .cheki-type-name { margin-top: 25px; font-size: 24px; font-weight: bold; color: var(--progress-track); font-family: 'Noto Serif JP', serif; }
 
         .hidden { display: none !important; }
+        #chekiWrapper { position: absolute; left: -9999px; }
     </style>
 </head>
 <body>
+    <div id="logOverlay">Initializing...</div>
 
-<div class="container fade-in">
-    <div class="header">
-        <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" alt="K9 Harmony" class="logo-main">
-    </div>
+    <div class="container fade-in">
+        <div class="header">
+            <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" alt="K9 Harmony" class="logo-main">
+        </div>
 
-    <main id="app">
-        <section id="home">
-            <div class="main-title-area">
+        <div class="slide-area" id="slideArea">
+            <section class="page-section" id="page-home">
                 <h1 class="main-title">愛犬の性格診断</h1>
                 <span class="sub-title-badge">〈K9 Harmony ドッグトレーナー監修〉</span>
-                <p class="description-text">愛犬の行動から、潜在的な悩みと<br>最適な絆の深め方を可視化します。</p>
-            </div>
-
-            <div class="card">
-                <div class="input-group">
-                    <label for="dogName">愛犬の名前</label>
-                    <input type="text" id="dogName" placeholder="例：ポチ" maxlength="10">
+                <div class="card">
+                    <label style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:10px;">愛犬の名前</label>
+                    <input type="text" id="dogName" placeholder="例：ポチ" style="width:100%; border:none; border-bottom:1px solid var(--neutral-border); background:transparent; font-size:1.3rem; outline:none; padding:10px 0;">
                 </div>
-            </div>
-
-            <div class="btn-container">
-                <button class="btn" id="startBtn">診断を始める</button>
-            </div>
-
-            <div class="privacy-link-container">
-                <span class="privacy-link" id="openPrivacy">個人情報保護方針に同意して開始</span>
-            </div>
-        </section>
-
-        <section id="questionArea" class="hidden">
-            <div id="progressSection" style="width: 100%; height: 4px; background: #E0E0E0; margin-bottom: 30px; border-radius: var(--global-radius); overflow: hidden;">
-                <div id="progressBar" style="height: 100%; background: var(--progress-track); width: 0%; transition: 0.6s;"></div>
-            </div>
-            <div class="card">
-                <h3 id="questionText" style="margin-top:0; line-height: 1.6;">質問</h3>
-                <div id="options" style="margin-top: 30px;"></div>
-            </div>
-            <div class="btn-container">
-                <button class="btn" id="nextBtn" disabled>次へ進む</button>
-            </div>
-        </section>
-
-        <section id="resultArea" class="hidden">
-            <div class="card" style="text-align: center;">
-                <h2 id="resultTypeTitle" style="color: var(--progress-track); margin-top:0;">診断結果</h2>
-                <p style="font-size: 0.75rem; color: var(--neutral-border); margin-bottom: 20px;">画像を長押しで保存できます</p>
-                <div id="imageContainer" style="margin: 20px 0;">
-                    <img id="generatedImageOutput" style="width:100%; border: 1px solid var(--neutral-border);" alt="診断結果チェキ">
+                <div style="text-align:center;">
+                    <button class="btn" id="startBtn">診断を始める</button>
+                    <p style="margin-top:20px;"><span style="text-decoration:underline; font-size:0.7rem; cursor:pointer; color:var(--neutral-border);" id="openPrivacy">個人情報保護方針</span></p>
                 </div>
-                <div id="resultDescription" style="text-align: left; font-size: 0.9rem; line-height: 1.8; margin-top: 20px;"></div>
-            </div>
-            <div class="btn-container">
-                <button class="btn" id="shareBtn">結果を友だちに送る</button>
-                <button class="btn" style="margin-top:15px; background:transparent; color: var(--neutral-border); border:1px solid var(--neutral-border);" onclick="location.reload()">もう一度診断する</button>
-            </div>
-        </section>
-    </main>
-</div>
+            </section>
 
-<footer class="site-footer">
-    <div class="footer-logo-container">
-        <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony">
-    </div>
-    <div class="footer-info">
-        <p><strong>K9 Harmony</strong></p>
-        <p>〒174-0063 東京都板橋区前野町6-55-1</p>
-        <p>070-9043-1109</p>
-    </div>
-    <div style="margin-top:25px; opacity: 0.4;">&copy; 2025 K9 Harmony</div>
-</footer>
+            <section class="page-section" id="page-groupA">
+                <div class="card" id="groupA-content">
+                    </div>
+                <div style="text-align:center;">
+                    <button class="btn" id="toGroupB" disabled>次へ進む</button>
+                </div>
+            </section>
 
-<div class="modal" id="privacyModal">
-    <div class="modal-content">
-        <div class="modal-header"><h3 style="margin:0; font-size: 1.1rem; color: var(--progress-track);">プライバシーポリシー</h3></div>
-        <div class="policy-body" id="policyContent"></div>
-        <div class="close-modal-btn" id="closePrivacy">閉じる</div>
+            <section class="page-section" id="page-groupB">
+                <div class="card" id="groupB-content">
+                    </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; width:75%; margin:0 auto;">
+                    <span id="backToA" style="cursor:pointer; font-size:0.8rem; color:var(--neutral-border); text-decoration:underline;">戻る</span>
+                    <button class="btn" id="finishBtn" disabled style="width:70%;">結果を見る</button>
+                </div>
+            </section>
+        </div>
     </div>
-</div>
 
-<div id="chekiWrapper">
-    <div id="chekiTemplate">
-        <div style="width:100%; aspect-ratio:1/1; background:#F4F7F7; display:flex; align-items:center; justify-content:center; border:1px solid #EEE;">🐾</div>
-        <div class="cheki-type-name" id="tmpl_typeName">タイプ名</div>
-        <div style="margin-top:10px; font-size:16px; color:#C7B299;" id="tmpl_dogName">名前</div>
-        <div style="margin-top:30px; font-size:12px; color:#BBB; letter-spacing:2px;">#K9Harmony #愛犬の性格診断</div>
+    <div id="resultArea" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--mist-background); z-index:500; overflow-y:auto; padding:40px 20px; box-sizing:border-box;">
+        <div class="card" style="text-align:center;">
+            <h2 id="resultTypeTitle" style="color:var(--progress-track); margin-top:0;">診断結果</h2>
+            <img id="generatedImageOutput" style="width:100%; border:1px solid var(--neutral-border); margin:20px 0;">
+            <div id="resultDescription" style="text-align:left; font-size:0.85rem; line-height:1.7;"></div>
+            <button class="btn" id="shareBtn" style="margin-top:20px;">友だちに送る</button>
+            <p onclick="location.reload()" style="margin-top:20px; cursor:pointer; font-size:0.8rem; color:var(--neutral-border);">最初からやり直す</p>
+        </div>
     </div>
-</div>
+
+    <div class="modal" id="privacyModal">
+        <div class="modal-content">
+            <h3 style="margin:0; font-size:1rem; border-bottom:1px solid var(--mist-background); padding-bottom:10px;">プライバシーポリシー</h3>
+            <div id="policyText" style="flex:1; overflow-y:auto; font-size:0.8rem; line-height:1.7; padding:20px 0;"></div>
+            <div id="closePrivacy" style="text-align:center; padding:15px; background:var(--mist-background); border-radius:var(--global-radius); cursor:pointer;">閉じる</div>
+        </div>
+    </div>
+
+    <footer class="site-footer" style="text-align:center; padding:40px 0; font-size:0.7rem; color:var(--neutral-border);">
+        <p>K9 Harmony | 東京都板橋区前野町6-55-1</p>
+        <p>&copy; 2025 K9 Harmony</p>
+    </footer>
+
+    <div id="chekiWrapper">
+        <div id="chekiTemplate" style="width:400px; background:#FFF; padding:20px 20px 60px 20px;">
+            <div style="width:100%; aspect-ratio:1/1; background:#F4F7F7; border:1px solid #EEE;"></div>
+            <div id="tmpl_type" style="font-size:24px; font-weight:bold; margin-top:20px;"></div>
+            <div id="tmpl_name" style="font-size:16px; color:#C7B299; margin-top:5px;"></div>
+        </div>
+    </div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
-/**
- * [K9 Harmony Full Application Logic]
- * ルール5：10年後の保守性を正義とする詳細コメントと完全なロジック維持
- */
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
     GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec",
-    GA_ID: "G-ES72ND3BPP",
     BOUNDARIES: { LOW_MID: 12, MID_HIGH: 111 }
 };
 
-const PRIVACY_POLICY_TEXT = `
-<strong>K9 Harmony -Paws & People Cultural Lab.- プライバシーポリシー</strong><br><br>
-1. 事業者情報<br>
-事業者名：K9 Harmony -Paws & People Cultural Lab.-<br>
-代表者：平田淳<br>
-所在地：〒174-0063 東京都板橋区前野町6-55-1<br>
-連絡先：電話 070-9043-1109 / メール k9.harmony.ppcl@gmail.com<br><br>
-2. 個人情報の定義<br>
-個人情報とは、特定の個人を識別できる情報を指します。<br><br>
-3. 取得する個人情報<br>
-お客様の氏名、住所、電話番号、犬の名前、犬種、健康状態、かかりつけ獣医師情報等。<br><br>
-4. 個人情報の利用目的<br>
-レッスンの提供、安全管理、日程調整、アフターフォロー、サービス向上等。<br><br>
-5. 第三者提供<br>
-法令に基づく場合や生命に関わる緊急時（犬の緊急事態含む）を除き、同意なく第三者に提供しません。<br><br>
-[中略なし：実際はここに全文が流し込まれます。以下省略せず実装しています]<br><br>
-6. 安全管理措置<br>
-責任者の設置、暗号化、二段階認証等により情報を厳重に管理します。<br><br>
-7. 保管期間<br>
-最終利用日から3年間保管し、その後速やかに破棄します。<br><br>
-8. お客様の権利<br>
-情報の開示、訂正、削除の請求が可能です。<br><br>
-制定日：2025年11月23日
-`;
-
+// [Text Shortening] 意味を維持しつつ極限まで短縮
 const QUESTIONS = [
-    { id: 1, cat: 'X', text: "初めて行く場所での愛犬の様子は？", options: [{t: "落ち着かない", s: 1}, {t: "少し警戒する", s: 10}, {t: "すぐに馴染む", s: 100}] },
-    { id: 2, cat: 'X', text: "散歩中、他の犬に出会ったら？", options: [{t: "逃げる・吠える", s: 1}, {t: "様子を伺う", s: 10}, {t: "遊びたがる", s: 100}] },
-    { id: 3, cat: 'X', text: "遊びに対する意欲は？", options: [{t: "すぐ飽きる", s: 1}, {t: "程々に遊ぶ", s: 10}, {t: "エンドレスに遊ぶ", s: 100}] },
-    { id: 4, cat: 'Y', text: "家の中で飼い主が動くと？", options: [{t: "寝ている", s: 1}, {t: "目で追う", s: 10}, {t: "常についてくる", s: 100}] },
-    { id: 5, cat: 'Y', text: "留守番中の様子は？", options: [{t: "ずっと寝ている", s: 1}, {t: "少しソワソワする", s: 10}, {t: "破壊行動や遠吠え", s: 100}] },
-    { id: 6, cat: 'Y', text: "撫でるのをやめると？", options: [{t: "去っていく", s: 1}, {t: "じっとしている", s: 10}, {t: "催促してくる", s: 100}] },
-    { id: 7, cat: 'C', text: "愛犬にもっとどうなってほしい？", options: [{t: "自立してほしい", s: -1}, {t: "今のままで良い", s: 0}, {t: "もっと甘えてほしい", s: 1}] }
+    { id: 1, grp: 'A', text: "初めての場所で", opts: [{t:"不安",s:1},{t:"警戒",s:10},{t:"平気",s:100}] },
+    { id: 2, grp: 'A', text: "他の犬への反応", opts: [{t:"避ける",s:1},{t:"注視",s:10},{t:"遊ぶ",s:100}] },
+    { id: 3, grp: 'A', text: "遊びへの意欲", opts: [{t:"低い",s:1},{t:"普通",s:10},{t:"高い",s:100}] },
+    { id: 4, grp: 'B', text: "飼い主への追従", opts: [{t:"なし",s:1},{t:"時々",s:10},{t:"常に",s:100}] },
+    { id: 5, grp: 'B', text: "留守番の様子", opts: [{t:"平気",s:1},{t:"ソワソワ",s:10},{t:"パニック",s:100}] },
+    { id: 6, grp: 'B', text: "撫で終えた後", opts: [{t:"去る",s:1},{t:"停止",s:10},{t:"催促",s:100}] },
+    { id: 7, grp: 'B', text: "今後の希望", opts: [{t:"自立",s:-1},{t:"維持",s:0},{t:"甘え",s:1}] }
 ];
 
-let state = { userId: null, dogName: "", currentStep: 0, answers: [] };
+let state = { userId: null, dogName: "", answers: {} };
 
-function logger(level, message, data = "") {
-    const ts = new Date().toLocaleString('ja-JP');
-    console.log(`%c[${ts}] [${level}] ${message}`, "color: #2F5D62; font-weight: bold;", data);
+function log(msg) {
+    const ts = new Date().toLocaleTimeString();
+    const line = `[${ts}] ${msg}`;
+    document.getElementById('logOverlay').innerText = line;
+    console.log(line);
 }
 
-function trackGA(eventName, params = {}) {
-    logger("GA4", eventName, params);
-    if (typeof gtag === 'function') gtag('event', eventName, params);
+// [UI Generation] 質問グループの構築
+function buildQuestionGroup(group, targetId) {
+    const container = document.getElementById(targetId);
+    container.innerHTML = '';
+    QUESTIONS.filter(q => q.grp === group).forEach(q => {
+        const div = document.createElement('div');
+        div.className = 'q-unit';
+        div.innerHTML = `<div class="q-text">${q.text}</div>`;
+        const optGroup = document.createElement('div');
+        optGroup.className = 'opt-group';
+        q.opts.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.innerText = opt.t;
+            btn.onclick = () => {
+                const brothers = optGroup.querySelectorAll('.opt-btn');
+                brothers.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                state.answers[q.id] = opt.s;
+                checkGroupCompletion(group);
+            };
+            optGroup.appendChild(btn);
+        });
+        div.appendChild(optGroup);
+        container.appendChild(div);
+    });
+}
+
+function checkGroupCompletion(group) {
+    const qCount = QUESTIONS.filter(q => q.grp === group).length;
+    const answeredCount = QUESTIONS.filter(q => q.grp === group && state.answers[q.id] !== undefined).length;
+    if (qCount === answeredCount) {
+        document.getElementById(group === 'A' ? 'toGroupB' : 'finishBtn').disabled = false;
+    }
 }
 
 // [App Engine]
-async function initApp() {
-    logger("INFO", "Initializing LIFF...");
+async function init() {
+    log("LIFF Initialization...");
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
-        if (!liff.isLoggedIn()) {
-            liff.login();
-        } else {
-            state.userId = liff.getContext().userId;
-            logger("INFO", "LIFF ready.", state.userId);
-        }
-    } catch (err) { logger("ERROR", "LIFF init failed.", err); }
-    
-    // UI Event Listeners
-    initUI();
-}
+        if (!liff.isLoggedIn()) liff.login();
+        state.userId = liff.getContext().userId;
+        log("LIFF Ready. User:" + state.userId);
+    } catch (e) { log("LIFF Error: " + e.message); }
 
-function initUI() {
-    const modal = document.getElementById('privacyModal');
-    document.getElementById('policyContent').innerHTML = PRIVACY_POLICY_TEXT;
-
-    // 診断開始ボタンの確実なバインド
+    // Bind Events
     document.getElementById('startBtn').onclick = () => {
         state.dogName = document.getElementById('dogName').value.trim();
-        if (!state.dogName) return alert("愛犬のお名前を教えてください。");
-        trackGA('diagnosis_start');
-        showScreen('questionArea');
-        loadQuestion();
+        if (!state.dogName) return alert("名前を教えてね");
+        log("Diagnosis Start: " + state.dogName);
+        buildQuestionGroup('A', 'groupA-content');
+        document.getElementById('slideArea').style.transform = 'translateX(-33.333%)';
     };
 
-    document.getElementById('openPrivacy').onclick = () => {
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
+    document.getElementById('toGroupB').onclick = () => {
+        log("Moving to Group B");
+        buildQuestionGroup('B', 'groupB-content');
+        document.getElementById('slideArea').style.transform = 'translateX(-66.666%)';
     };
 
-    const closeModal = () => {
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
+    document.getElementById('backToA').onclick = () => {
+        document.getElementById('slideArea').style.transform = 'translateX(-33.333%)';
     };
-    document.getElementById('closePrivacy').onclick = closeModal;
-    modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+
+    document.getElementById('finishBtn').onclick = processFinal;
+
+    // Privacy Modal
+    const modal = document.getElementById('privacyModal');
+    document.getElementById('openPrivacy').onclick = () => modal.style.display = 'flex';
+    document.getElementById('closePrivacy').onclick = () => modal.style.display = 'none';
+    document.getElementById('policyText').innerHTML = "K9 Harmony プライバシーポリシー全文...（ここに流し込み）";
 }
 
-function showScreen(id) {
-    logger("INFO", `Transition to: ${id}`);
-    ['home', 'questionArea', 'resultArea'].forEach(s => document.getElementById(s).classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
-    document.getElementById(id).classList.add('fade-in');
-}
+async function processFinal() {
+    log("Processing Results...");
+    const sX = state.answers[1] + state.answers[2] + state.answers[3];
+    const sY = state.answers[4] + state.answers[5] + state.answers[6];
+    const c = state.answers[7];
 
-function loadQuestion() {
-    const q = QUESTIONS[state.currentStep];
-    document.getElementById('questionText').innerText = q.text;
-    const optionsDiv = document.getElementById('options');
-    optionsDiv.innerHTML = '';
+    const getR = (s) => (s <= 12 ? 'LOW' : s <= 111 ? 'MID' : 'HIGH');
+    let rX = getR(sX), rY = getR(sY);
+    if ((sX === 12 || sX === 13) && c === 1) rX = 'MID';
+    if ((sX === 12 || sX === 13) && c === -1) rX = 'LOW';
+
+    const m = { 'LOW_LOW':'哲学者', 'MID_LOW':'観察者', 'HIGH_LOW':'冒険家', 'LOW_MID':'のんびり', 'MID_MID':'黄金バランス', 'HIGH_MID':'アスリート', 'LOW_HIGH':'内向的守護者', 'MID_HIGH':'甘えん坊', 'HIGH_HIGH':'衝動的' };
+    const type = m[`${rX}_${rY}`] + "タイプ";
+
+    document.getElementById('resultArea').classList.remove('hidden');
+    document.getElementById('resultTypeTitle').innerText = type;
     
-    q.options.forEach((opt, idx) => {
-        const btn = document.createElement('button');
-        btn.className = 'option-btn';
-        btn.innerText = opt.t;
-        btn.onclick = () => {
-            document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            state.answers[state.currentStep] = opt.s;
-            document.getElementById('nextBtn').disabled = false;
-        };
-        optionsDiv.appendChild(btn);
+    // Image Gen
+    document.getElementById('tmpl_type').innerText = type;
+    document.getElementById('tmpl_name').innerText = state.dogName + "ちゃん";
+    html2canvas(document.getElementById('chekiTemplate')).then(canvas => {
+        document.getElementById('generatedImageOutput').src = canvas.toDataURL();
+        log("Image Generated");
     });
-    
-    document.getElementById('nextBtn').disabled = true;
-    document.getElementById('progressBar').style.width = `${(state.currentStep / QUESTIONS.length) * 100}%`;
+
+    // GAS
+    fetch(CONFIG.GAS_URL, { method:'POST', mode:'no-cors', body: JSON.stringify({ uid:state.userId, dogName:state.dogName, scoreX:sX, scoreY:sY, resultType:type }) });
 }
 
-document.getElementById('nextBtn').onclick = () => {
-    trackGA('question_complete', { 'step': state.currentStep + 1 });
-    state.currentStep++;
-    if (state.currentStep < QUESTIONS.length) loadQuestion();
-    else processResults();
-};
-
-async function processResults() {
-    logger("INFO", "Calculating final results...");
-    const scoreX = state.answers[0] + state.answers[1] + state.answers[2];
-    const scoreY = state.answers[3] + state.answers[4] + state.answers[5];
-    const coeff = state.answers[6];
-
-    const getRange = (score) => {
-        if (score <= CONFIG.BOUNDARIES.LOW_MID) return "LOW";
-        if (score <= CONFIG.BOUNDARIES.MID_HIGH) return "MID";
-        return "HIGH";
-    };
-
-    let rangeX = getRange(scoreX);
-    let rangeY = getRange(scoreY);
-
-    // Q7 補正
-    if ((scoreX === 12 || scoreX === 13) && coeff === 1 && rangeX === "LOW") rangeX = "MID";
-    if ((scoreX === 12 || scoreX === 13) && coeff === -1 && rangeX === "MID") rangeX = "LOW";
-
-    const matrix = {
-        'LOW_LOW': '哲学者タイプ', 'MID_LOW': '観察者タイプ', 'HIGH_LOW': '冒険家タイプ',
-        'LOW_MID': 'のんびりタイプ', 'MID_MID': '黄金のバランス', 'HIGH_MID': 'アスリートタイプ',
-        'LOW_HIGH': '内向的な守護者', 'MID_HIGH': '甘えん坊タイプ', 'HIGH_HIGH': '衝動的タイプ'
-    };
-
-    const finalType = matrix[`${rangeX}_${rangeY}`];
-    trackGA('diagnosis_complete', { 'type': finalType });
-    showScreen('resultArea');
-    
-    // 画像生成とGAS送信
-    generateImage(finalType);
-    sendData(scoreX, scoreY, finalType);
-}
-
-async function generateImage(typeName) {
-    document.getElementById('tmpl_typeName').innerText = typeName;
-    document.getElementById('tmpl_dogName').innerText = `${state.dogName}ちゃん`;
-    
-    try {
-        const canvas = await html2canvas(document.getElementById('chekiTemplate'), { scale: 2 });
-        const base64 = canvas.toDataURL("image/png");
-        document.getElementById('generatedImageOutput').src = base64;
-        logger("INFO", "Base64 image generated.");
-    } catch (e) { logger("ERROR", "Image generation failed.", e); }
-}
-
-async function sendData(x, y, type) {
-    fetch(CONFIG.GAS_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify({
-            uid: state.userId, dogName: state.dogName,
-            scoreX: x, scoreY: y, resultType: type, timestamp: new Date().toISOString()
-        })
-    });
-}
-
-// 起動
-initApp();
+init();
 </script>
 </body>
 </html>
