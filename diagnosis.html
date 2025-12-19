@@ -16,8 +16,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
-        /* * [Brand Design System]
-         * 仕様書に基づいたカラーパレットと高級感のあるタイポグラフィの定義 
+        /* * [Brand Design System] 
+         * ルール5：保守性のための定数定義
          */
         :root {
             --active-highlight: #57C3C2;
@@ -37,9 +37,8 @@
             overflow-x: hidden;
         }
 
-        /* [Animation] : 霧が晴れるようなフェード & スライド効果 */
         .fade-in {
-            animation: luxuryEase In var(--luxury-transition) forwards;
+            animation: luxuryEaseIn var(--luxury-transition) forwards;
         }
 
         @keyframes luxuryEaseIn {
@@ -58,9 +57,9 @@
         }
 
         .header { text-align: center; margin-bottom: 40px; }
+        /* ルール：相対パス修正 */
         .logo { width: 120px; margin-bottom: 20px; }
 
-        /* [UI Components] : 和紙の質感を意識した境界線とボタン */
         .card {
             background: rgba(255, 255, 255, 0.8);
             border: 1px solid var(--neutral-border);
@@ -135,7 +134,7 @@
 
 <div class="container fade-in">
     <div class="header">
-        <img src="https://path-to-your-logo.com/logo.png" alt="K9 Harmony" class="logo">
+        <img src="./logo.png" alt="K9 Harmony" class="logo">
     </div>
 
     <div id="progressSection" class="progress-container hidden">
@@ -157,42 +156,39 @@
 
         <section id="questionArea" class="hidden">
             <div class="card">
-                <h3 id="questionText">質問文がここに入ります</h3>
-                <div id="options">
-                    </div>
+                <h3 id="questionText">質問</h3>
+                <div id="options"></div>
             </div>
             <button class="btn" id="nextBtn" disabled>次へ進む</button>
         </section>
 
         <section id="resultArea" class="hidden">
-            <div class="card" id="resultCard">
-                <h2 id="resultType">診断中...</h2>
+            <div class="card">
+                <h2 id="resultType">判定中...</h2>
                 <div id="resultDescription"></div>
             </div>
         </section>
     </main>
 
-    <div class="footer-note">
-        K9 Harmony ドッグトレーナー監修
-    </div>
+    <div class="footer-note">K9 Harmony ドッグトレーナー監修</div>
 </div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
 /**
  * [K9 Harmony Configuration]
- * 保守性を高めるための定数管理
+ * ルール5：10年後の保守性を支える定義体
  */
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
     GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec",
-    GA_ID: "G-ES72ND3BPP"
+    GA_ID: "G-ES72ND3BPP",
+    BOUNDARIES: {
+        LOW_MID: 12,
+        MID_HIGH: 111
+    }
 };
 
-/**
- * [Diagnosis Logic Data]
- * 3+3+1形式の質問定義
- */
 const QUESTIONS = [
     { id: 1, cat: 'X', text: "初めて行く場所での愛犬の様子は？", options: [{t: "落ち着かない", s: 1}, {t: "少し警戒する", s: 10}, {t: "すぐに馴染む", s: 100}] },
     { id: 2, cat: 'X', text: "散歩中、他の犬に出会ったら？", options: [{t: "逃げる・吠える", s: 1}, {t: "様子を伺う", s: 10}, {t: "遊びたがる", s: 100}] },
@@ -203,33 +199,22 @@ const QUESTIONS = [
     { id: 7, cat: 'C', text: "愛犬にもっとどうなってほしい？", options: [{t: "自立してほしい", s: -1}, {t: "今のままで良い", s: 0}, {t: "もっと甘えてほしい", s: 1}] }
 ];
 
-/**
- * [State Management]
- * 診断の状態を管理するオブジェクト
- */
 let state = {
     userId: null,
     dogName: "",
     currentStep: 0,
-    answers: [],
-    scoreX: 0,
-    scoreY: 0,
-    coeff: 0
+    answers: []
 };
 
 /**
  * [Logging Utility]
- * ルール6：開発段階の永続的なログ出力
+ * ルール6：永続的なログスタンプ
  */
 function logger(level, message, data = "") {
-    const ts = new Date().toLocaleString();
-    console.log(`[${ts}] [${level}] ${message}`, data);
+    const ts = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+    console.log(`%c[${ts}] [${level}] ${message}`, "color: #2F5D62; font-weight: bold;", data);
 }
 
-/**
- * [GA4 Tracker]
- * 仕様書に基づいたイベント計測
- */
 function trackGA(eventName, params = {}) {
     logger("GA4", eventName, params);
     if (typeof gtag === 'function') {
@@ -238,55 +223,73 @@ function trackGA(eventName, params = {}) {
 }
 
 /**
- * [App Initialization]
+ * [Diagnosis Logic Engine]
+ * Step 3：MECEな判定と境界値シフトの実装
  */
+const DIAGNOSIS_ENGINE = {
+    
+    // スコアからレンジ（LOW/MID/HIGH）を判定する
+    getRange: (score, coeff) => {
+        let range = "";
+        if (score <= CONFIG.BOUNDARIES.LOW_MID) range = "LOW";
+        else if (score <= CONFIG.BOUNDARIES.MID_HIGH) range = "MID";
+        else range = "HIGH";
+
+        // Q7係数による境界値の心理的シフト（境界値の±1の範囲で発動）
+        const isNearLowMid = (score >= CONFIG.BOUNDARIES.LOW_MID && score <= CONFIG.BOUNDARIES.LOW_MID + 1);
+        const isNearMidHigh = (score >= CONFIG.BOUNDARIES.MID_HIGH && score <= CONFIG.BOUNDARIES.MID_HIGH + 1);
+
+        if (isNearLowMid && coeff === 1 && range === "LOW") {
+            logger("DEBUG", "Q7 Shift Applied: LOW -> MID");
+            range = "MID";
+        } else if (isNearLowMid && coeff === -1 && range === "MID") {
+            logger("DEBUG", "Q7 Shift Applied: MID -> LOW");
+            range = "LOW";
+        }
+        
+        return range;
+    },
+
+    // 9タイプマトリクス
+    matrix: {
+        'LOW_LOW': '哲学者タイプ', 'MID_LOW': '観察者タイプ', 'HIGH_LOW': '冒険家タイプ',
+        'LOW_MID': 'のんびりタイプ', 'MID_MID': '黄金のバランス', 'HIGH_MID': 'アスリートタイプ',
+        'LOW_HIGH': '内向的な守護者', 'MID_HIGH': '甘えん坊タイプ', 'HIGH_HIGH': '衝動的タイプ'
+    }
+};
+
 async function initApp() {
-    logger("INFO", "App initialization started.");
+    logger("INFO", "Initializing application...");
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
         if (!liff.isLoggedIn()) {
             liff.login();
         } else {
             state.userId = liff.getContext().userId;
-            logger("INFO", "LIFF initialized, UserID obtained.", state.userId);
+            logger("INFO", "LIFF initialized successfully.", { userId: state.userId });
         }
     } catch (err) {
         logger("ERROR", "LIFF initialization failed.", err);
     }
 }
 
-/**
- * [Navigation Logic]
- */
 function showScreen(screenId) {
-    const screens = ['home', 'questionArea', 'resultArea'];
-    screens.forEach(id => {
-        document.getElementById(id).classList.add('hidden');
-    });
-    document.getElementById(screenId).classList.remove('hidden');
-    document.getElementById(screenId).classList.add('fade-in');
+    ['home', 'questionArea', 'resultArea'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    const target = document.getElementById(screenId);
+    target.classList.remove('hidden');
+    target.classList.add('fade-in');
 }
 
-/**
- * [Diagnosis Start]
- */
 document.getElementById('startBtn').addEventListener('click', () => {
     state.dogName = document.getElementById('dogName').value.trim();
-    if (!state.dogName) {
-        alert("愛犬のお名前を入力してください。");
-        return;
-    }
+    if (!state.dogName) return alert("愛犬のお名前を教えてください。");
     
     trackGA('diagnosis_start');
     document.getElementById('progressSection').classList.remove('hidden');
     showScreen('questionArea');
     loadQuestion();
-    logger("INFO", "Diagnosis started for:", state.dogName);
 });
 
-/**
- * [Question Logic]
- */
 function loadQuestion() {
     const q = QUESTIONS[state.currentStep];
     document.getElementById('questionText').innerText = q.text;
@@ -297,110 +300,82 @@ function loadQuestion() {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         btn.innerText = opt.t;
-        btn.onclick = () => selectOption(idx, opt.s);
+        btn.onclick = () => {
+            document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            state.answers[state.currentStep] = opt.s;
+            document.getElementById('nextBtn').disabled = false;
+        };
         optionsDiv.appendChild(btn);
     });
     
     document.getElementById('nextBtn').disabled = true;
-    updateProgressBar();
-}
-
-function selectOption(idx, score) {
-    const btns = document.querySelectorAll('.option-btn');
-    btns.forEach(b => b.classList.remove('selected'));
-    btns[idx].classList.add('selected');
-    
-    state.answers[state.currentStep] = score;
-    document.getElementById('nextBtn').disabled = false;
+    const progress = (state.currentStep / QUESTIONS.length) * 100;
+    document.getElementById('progressBar').style.width = `${progress}%`;
 }
 
 document.getElementById('nextBtn').addEventListener('click', () => {
     trackGA('question_complete', { 'step': state.currentStep + 1 });
     state.currentStep++;
-    
     if (state.currentStep < QUESTIONS.length) {
         loadQuestion();
     } else {
-        processResults();
+        calculateAndFinish();
     }
 });
 
-function updateProgressBar() {
-    const progress = ((state.currentStep) / QUESTIONS.length) * 100;
-    document.getElementById('progressBar').style.width = `${progress}%`;
-}
-
 /**
- * [Scoring & Matrix Logic]
- * 仕様書 3.1 & 3.2 準拠
+ * [Result Calculation]
+ * ロジックの実行とログ出力
  */
-async function processResults() {
-    logger("INFO", "Processing results...");
+async function calculateAndFinish() {
+    logger("INFO", "Starting score calculation...");
     
-    // スコア集計
-    state.scoreX = state.answers[0] + state.answers[1] + state.answers[2];
-    state.scoreY = state.answers[3] + state.answers[4] + state.answers[5];
-    state.coeff = state.answers[6];
+    const scoreX = state.answers[0] + state.answers[1] + state.answers[2];
+    const scoreY = state.answers[3] + state.answers[4] + state.answers[5];
+    const coeff = state.answers[6];
 
-    // マトリクス判定
-    const getRange = (val) => {
-        if (val <= 12) return 'LOW';
-        if (val <= 111) return 'MID';
-        return 'HIGH';
-    };
+    logger("DEBUG", "Raw Scores", { scoreX, scoreY, coeff });
 
-    let rangeX = getRange(state.scoreX);
-    let rangeY = getRange(state.scoreY);
+    const rangeX = DIAGNOSIS_ENGINE.getRange(scoreX, coeff);
+    const rangeY = DIAGNOSIS_ENGINE.getRange(scoreY, coeff);
+    
+    const resultKey = `${rangeX}_${rangeY}`;
+    const finalType = DIAGNOSIS_ENGINE.matrix[resultKey];
 
-    // Q7補正 (閾値付近の場合にシフト)
-    // ここでは保守的にロジックを分離。10%程度の閾値マージンでQ7を適用。
-    if (state.scoreX === 12 || state.scoreX === 13 || state.scoreX === 111 || state.scoreX === 112) {
-        if (state.coeff === 1 && rangeX === 'LOW') rangeX = 'MID';
-        if (state.coeff === -1 && rangeX === 'MID') rangeX = 'LOW';
-    }
+    logger("INFO", "Diagnosis Result Determined", { key: resultKey, type: finalType });
 
-    const matrix = {
-        'LOW_LOW': '哲学者タイプ', 'MID_LOW': '観察者タイプ', 'HIGH_LOW': '冒険家タイプ',
-        'LOW_MID': 'のんびりタイプ', 'MID_MID': '黄金のバランス', 'HIGH_MID': 'アスリートタイプ',
-        'LOW_HIGH': '内向的な守護者', 'MID_HIGH': '甘えん坊タイプ', 'HIGH_HIGH': '衝動的タイプ'
-    };
-
-    const finalType = matrix[`${rangeX}_${rangeY}`];
     trackGA('diagnosis_complete', { 'type': finalType });
-    
     showScreen('resultArea');
     document.getElementById('resultType').innerText = `診断結果：${finalType}`;
     
-    // GASへデータ送信 (Step 1 連携)
-    sendDataToGAS(finalType);
+    // バックエンドへ送信
+    sendDataToGAS(scoreX, scoreY, finalType);
 }
 
-async function sendDataToGAS(finalType) {
+async function sendDataToGAS(x, y, type) {
     const payload = {
         uid: state.userId,
         dogName: state.dogName,
-        scoreX: state.scoreX,
-        scoreY: state.scoreY,
-        resultType: finalType,
+        scoreX: x,
+        scoreY: y,
+        resultType: type,
         timestamp: new Date().toISOString()
     };
-
-    logger("INFO", "Sending data to GAS...", payload);
     
     try {
         await fetch(CONFIG.GAS_URL, {
             method: 'POST',
-            mode: 'no-cors', // GAS doPostへの簡易送信
+            mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        logger("INFO", "Data sent to GAS successfully.");
+        logger("INFO", "Data successfully sent to GAS.");
     } catch (err) {
-        logger("ERROR", "GAS submission failed.", err);
+        logger("ERROR", "GAS Communication failed.", err);
     }
 }
 
-// 起動
 initApp();
 </script>
 </body>
