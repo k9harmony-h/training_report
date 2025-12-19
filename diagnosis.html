@@ -16,7 +16,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
-        /* [Design System Settings] */
         :root {
             --active-highlight: #57C3C2;
             --neutral-border: #C7B299;
@@ -24,105 +23,88 @@
             --mist-background: #F4F7F7;
             --text-main: #2C3E50;
             --luxury-transition: 0.8s cubic-bezier(0.25, 0.1, 0.25, 1.0);
-            --global-radius: 5px; /* ルール：角丸を5pxで統一 */
+            --global-radius: 5px;
         }
 
         body {
             font-family: 'Noto Serif JP', serif;
             background-color: var(--mist-background);
+            /* 改良版：シミに見えない繊細な和紙テクスチャ */
             background-image: 
-                linear-gradient(rgba(244, 247, 247, 0.9), rgba(244, 247, 247, 0.9)),
-                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+                linear-gradient(rgba(244, 247, 247, 0.94), rgba(244, 247, 247, 0.94)),
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 500 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)'/%3E%3C/svg%3E");
             color: var(--text-main);
             margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column;
         }
 
-        .fade-in { animation: luxuryEaseIn var(--luxury-transition) forwards; }
-        @keyframes luxuryEaseIn {
-            0% { opacity: 0; transform: translateY(15px); filter: blur(5px); }
-            100% { opacity: 1; transform: translateY(0); filter: blur(0); }
-        }
-
         .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; flex: 1; width: 100%; box-sizing: border-box; }
-        
         .header { text-align: center; margin-bottom: 50px; }
         .logo-main { width: 180px; height: auto; }
 
-        /* [Group 1: Title Area] */
         .main-title-area { text-align: center; margin-bottom: 40px; }
-        .main-title { font-size: 1.9rem; font-weight: 700; margin: 0 0 5px 0; color: var(--progress-track); letter-spacing: 0.08em; }
-        .sub-title-badge { font-size: 0.8rem; color: var(--neutral-border); letter-spacing: 0.02em; display: block; margin-bottom: 20px; }
-        .description-text { font-size: 0.9rem; line-height: 1.8; color: var(--text-main); padding: 0 15px; margin: 0; }
+        .main-title { font-size: 1.8rem; font-weight: 700; margin: 0; color: var(--progress-track); letter-spacing: 0.08em; }
+        .sub-title-badge { font-size: 0.75rem; color: var(--neutral-border); letter-spacing: 0.05em; display: block; margin-top: 5px; margin-bottom: 40px; } /* 修正：margin-bottom 40px */
+        .description-text { font-size: 0.9rem; line-height: 1.8; color: var(--text-main); margin-bottom: 30px; }
 
-        /* [Group 2: Input Card] */
         .card {
-            background: rgba(255, 255, 255, 0.75);
+            background: rgba(255, 255, 255, 0.6);
             border: 1px solid var(--neutral-border);
-            padding: 35px 30px; 
+            padding: 35px; /* 修正：推奨値 35px */
             border-radius: var(--global-radius);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.02);
+            margin-bottom: 40px;
             backdrop-filter: blur(5px);
         }
-        .input-group label { display: block; font-size: 0.85rem; margin-bottom: 12px; font-weight: bold; color: var(--progress-track); letter-spacing: 0.05em; }
-        .input-group input { 
-            width: 100%; padding: 16px; border: 1px solid var(--neutral-border); 
-            border-radius: var(--global-radius);
-            background: rgba(255,255,255,0.9); box-sizing: border-box; 
-            font-family: inherit; font-size: 1.1rem; outline: none; transition: 0.3s;
-        }
-        .input-group input:focus { border-color: var(--active-highlight); box-shadow: 0 0 0 3px rgba(87, 195, 194, 0.1); }
 
-        /* [Group 3: Start Button] */
+        .input-group label { display: block; font-size: 0.8rem; margin-bottom: 15px; font-weight: bold; color: var(--progress-track); opacity: 0.8; }
+        /* 修正：下線のみのインプット */
+        .input-group input { 
+            width: 100%; padding: 12px 0; border: none; border-bottom: 1px solid var(--neutral-border);
+            border-radius: 0; background: transparent; box-sizing: border-box; 
+            font-family: inherit; font-size: 1.3rem; outline: none; transition: 0.4s;
+        }
+        .input-group input:focus { border-bottom-color: var(--active-highlight); }
+
+        .btn-container { text-align: center; }
         .btn {
-            display: block; width: 100%; padding: 22px;
+            display: inline-block; width: 75%; padding: 20px; /* 修正：幅 75% */
             background: var(--active-highlight); color: #FFF;
             border: none; border-radius: var(--global-radius);
-            font-size: 1.15rem; cursor: pointer;
-            transition: 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0); text-align: center;
+            font-size: 1.1rem; cursor: pointer; transition: 0.4s;
             letter-spacing: 0.15em; font-family: 'Noto Serif JP', serif; font-weight: 700;
-            box-shadow: 0 4px 15px rgba(87, 195, 194, 0.2);
         }
-        .btn:active { transform: scale(0.98); background: var(--progress-track); }
+        .btn:active { transform: scale(0.97); }
 
-        /* [Group 4: Privacy Link] */
-        .privacy-link-container { text-align: center; margin-top: 20px; }
-        .privacy-link { color: var(--neutral-border); font-size: 0.75rem; text-decoration: underline; cursor: pointer; transition: 0.3s; }
-        .privacy-link:hover { color: var(--progress-track); }
-
-        /* [Modal Layout] : 上部に寄せ、下部を空ける設計 */
-        .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(44, 62, 80, 0.5); display: none; z-index: 1000;
-            align-items: flex-start; /* 上寄せ */
-            justify-content: center; backdrop-filter: blur(8px);
-        }
-        .modal-content {
-            background: #FFF; width: 90%; max-width: 500px; 
-            height: 70vh; /* 縦に長く設定 */
-            margin-top: 5vh; /* 上部の余白 */
-            padding: 40px 30px; position: relative; overflow: hidden; 
-            border-radius: var(--global-radius);
-            border: 1px solid var(--neutral-border);
-            display: flex; flex-direction: column;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
-        }
-        .modal-header { border-bottom: 1px solid var(--mist-background); padding-bottom: 15px; margin-bottom: 20px; }
-        .policy-body { flex: 1; overflow-y: auto; font-size: 0.8rem; line-height: 1.8; color: #555; padding-right: 10px; }
-        .close-modal-btn { 
-            margin-top: 20px; padding: 12px; background: var(--mist-background); 
-            border-radius: var(--global-radius); text-align: center; cursor: pointer; font-size: 0.9rem;
-        }
+        .privacy-link-container { text-align: center; margin-top: 25px; }
+        .privacy-link { color: var(--neutral-border); font-size: 0.75rem; text-decoration: underline; cursor: pointer; }
 
         /* [Footer] */
         .site-footer {
-            background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.3);
+            background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.2);
             padding: 60px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D;
         }
-        .footer-logo-img { width: 140px; margin-bottom: 25px; opacity: 0.8; }
+        .footer-logo-img { width: 140px; margin-bottom: 25px; opacity: 0.7; }
         .footer-info p { margin: 6px 0; line-height: 1.5; }
 
-        .hidden { display: none; }
+        /* [Modal Layout] */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(44, 62, 80, 0.4); display: none; z-index: 1000;
+            align-items: flex-start; justify-content: center; backdrop-filter: blur(10px);
+        }
+        .modal-content {
+            background: #FFF; width: 92%; max-width: 500px; 
+            height: 75vh; margin-top: 5vh; /* 縦長かつ上寄せ */
+            padding: 40px 30px; position: relative; overflow: hidden; 
+            border-radius: var(--global-radius); border: 1px solid var(--neutral-border);
+            display: flex; flex-direction: column; box-shadow: 0 30px 60px rgba(0,0,0,0.12);
+        }
+        .modal-header { border-bottom: 1px solid var(--mist-background); padding-bottom: 15px; margin-bottom: 20px; flex-shrink: 0; }
+        .policy-body { flex: 1; overflow-y: auto; font-size: 0.85rem; line-height: 2; color: #555; padding-right: 15px; }
+        .close-modal-btn { 
+            margin-top: 25px; padding: 15px; background: var(--mist-background); 
+            border-radius: var(--global-radius); text-align: center; cursor: pointer; flex-shrink: 0;
+        }
     </style>
 </head>
 <body>
@@ -147,7 +129,9 @@
                 </div>
             </div>
 
-            <button class="btn" id="startBtn">診断を始める</button>
+            <div class="btn-container">
+                <button class="btn" id="startBtn">診断を始める</button>
+            </div>
 
             <div class="privacy-link-container">
                 <span class="privacy-link" id="openPrivacy">個人情報保護方針に同意して開始</span>
@@ -165,7 +149,7 @@
         <p>東京都板橋区前野町6-55-1</p>
         <p>070-9043-1109</p>
     </div>
-    <div style="margin-top:25px; opacity: 0.5; font-size: 0.7rem;">&copy; 2025 K9 Harmony</div>
+    <div style="margin-top:25px; opacity: 0.4;">&copy; 2025 K9 Harmony</div>
 </footer>
 
 <div class="modal" id="privacyModal">
@@ -179,43 +163,16 @@
     </div>
 </div>
 
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
-/**
- * [K9 Harmony Configuration]
- * ルール5：保守性を重視した定数管理
- */
-const CONFIG = {
-    LIFF_ID: "2008546673-MJY7j3ox",
-    GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec"
-};
+const PRIVACY_POLICY_TEXT = `[ここに下記の全文を流し込みます]`;
 
-const PRIVACY_POLICY_TEXT = `
-<strong>K9 Harmony -Paws & People Cultural Lab.- 個人情報保護方針</strong><br><br>
-1. 事業者情報<br>
-事業者名：K9 Harmony -Paws & People Cultural Lab.-<br>
-代表者：平田淳<br>
-所在地：〒174-0063 東京都板橋区前野町6-55-1<br>
-連絡先：070-9043-1109<br><br>
-2. 個人情報の定義<br>
-本ポリシーにおける「個人情報」とは、特定の個人を識別できる情報を指します...<br><br>
-[中略なし：実際はここに全文が流し込まれます]
-`;
-
-/**
- * [UI Logic]
- */
 function initUI() {
     const modal = document.getElementById('privacyModal');
-    const policyBody = document.getElementById('policyContent');
-    
-    // ポリシー内容の流し込み
-    policyBody.innerHTML = PRIVACY_POLICY_TEXT;
+    document.getElementById('policyContent').innerHTML = PRIVACY_POLICY_TEXT;
 
-    // モーダル開閉
     document.getElementById('openPrivacy').onclick = () => {
         modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden'; // 背後のスクロール防止
+        document.body.style.overflow = 'hidden';
     };
     
     const closeModal = () => {
@@ -225,31 +182,8 @@ function initUI() {
 
     document.getElementById('closePrivacy').onclick = closeModal;
     modal.onclick = (e) => { if (e.target === modal) closeModal(); };
-
-    // 診断開始ボタン
-    document.getElementById('startBtn').onclick = () => {
-        const name = document.getElementById('dogName').value.trim();
-        if (!name) {
-            alert("愛犬のお名前を教えてください。");
-            return;
-        }
-        console.log(`[INFO] Diagnosis started for: ${name}`);
-        // 次のステップへ
-    };
 }
-
-// LIFF初期化
-async function initLiff() {
-    try {
-        await liff.init({ liffId: CONFIG.LIFF_ID });
-        if (!liff.isLoggedIn()) liff.login();
-    } catch (e) {
-        console.error("[ERROR] LIFF init failed", e);
-    }
-}
-
 initUI();
-initLiff();
 </script>
 </body>
 </html>
