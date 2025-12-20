@@ -17,7 +17,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Yusei+Magic&family=Zen+Kurenaido&display=swap" rel="stylesheet">
 
     <style>
-        /* [Design System Settings] 10年後の保守性を正義とする変数定義 */
         :root {
             --active-highlight: #57C3C2;
             --neutral-border: #C7B299;
@@ -30,39 +29,39 @@
             --group-margin: 40px;
         }
 
-        /* [Layout Base] */
+        /* [Layout Base] Sticky Footer対応 */
+        html, body { height: 100%; margin: 0; padding: 0; }
         body {
             font-family: 'Noto Serif JP', serif;
             background-color: #fafafa;
             color: var(--text-main);
-            margin: 0; padding: 0; min-height: 100vh;
-            overflow-x: hidden; position: relative;
             display: flex; flex-direction: column;
+            min-height: 100vh; overflow-x: hidden; position: relative;
         }
 
-        /* [Visual Log Stamp] ルール6：動作状況を永続的に視覚化 */
+        /* [Visual Log] */
         #logOverlay {
             position: fixed; top: 0; left: 0; width: 100%; background: rgba(47, 93, 98, 0.85);
             color: #FFF; font-size: 10px; padding: 4px 10px; z-index: 9999; pointer-events: none;
             font-family: monospace; line-height: 1.5;
         }
 
-        /* [Background Fix] 抜本的解決：SVGインライン生成による和紙テクスチャ 
-           外部通信を行わず、CORSの影響も受けないため100%確実に表示・画像生成される。 */
+        /* [Background] 視認性を調整したSVG和紙テクスチャ */
         #washiBg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--mist-background);
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+            /* ノイズ密度を高め、不透明度を0.08に設定して視認性を確保 */
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
             opacity: 0; z-index: -1;
             transition: opacity 1.2s ease;
         }
 
         .container { 
-            max-width: 600px; margin: 0 auto; padding: 40px 20px; 
+            width: 100%; max-width: 600px; margin: 0 auto; padding: 40px 20px; 
             box-sizing: border-box; position: relative; flex: 1 0 auto;
         }
 
-        /* [Opening Animation] 書道道具を整えるシーケンス */
+        /* [Opening] */
         .reveal-item { opacity: 0; transform: translateY(15px); }
         .reveal-active { animation: revealEffect 0.8s forwards cubic-bezier(0.25, 0.1, 0.25, 1.0); }
         @keyframes revealEffect { to { opacity: 1; transform: translateY(0); } }
@@ -70,19 +69,18 @@
         .header { text-align: center; margin-bottom: 50px; }
         .logo-main { width: 180px; }
 
-        /* [指示反映] 導入タイトル：手書き文字を廃止し、Noto Serif JPへ復元 */
         .main-title-area { text-align: center; margin-bottom: var(--group-margin); }
         .main-title { 
             font-size: 1.8rem; font-weight: 700; margin: 0; 
             color: var(--progress-track); letter-spacing: 0.08em; 
-            font-family: 'Noto Serif JP', serif;
+            font-family: 'Noto Serif JP', serif; /* 復元 */
         }
         .sub-title-badge { font-size: 0.75rem; color: var(--neutral-border); display: block; margin-top: 5px; margin-bottom: 40px; }
         .description-text { font-size: 0.9rem; line-height: 2; color: var(--text-main); margin-bottom: 30px; }
 
-        /* [指示反映] 質問枠の幅：適切な広さに復元 */
+        /* [Cards] */
         .home-card, .q-unit {
-            background: rgba(255, 255, 255, 0.5); border: 1px solid var(--neutral-border);
+            background: rgba(255, 255, 255, 0.6); border: 1px solid var(--neutral-border);
             padding: 35px; border-radius: var(--global-radius); margin-bottom: var(--group-margin);
             backdrop-filter: blur(2px); width: 100%; box-sizing: border-box;
         }
@@ -95,14 +93,13 @@
         }
         .input-group input::placeholder { color: var(--neutral-border); opacity: 0.1; }
 
-        /* [指示反映] 回答演出：吸着を廃止し、墨跡滲（0.8s / blur / トリミング）のみを採用 */
+        /* [Interactive] 墨跡滲演出（0.8s / blur / トリミング） */
         .opt-group { display: flex; gap: 8px; justify-content: space-between; }
         .opt-btn {
             flex: 1; padding: 12px 2px; border: 1px solid var(--neutral-border); background: transparent;
             border-radius: var(--global-radius); cursor: pointer; font-size: 0.8rem; text-align: center; 
             transition: color 0.5s ease, border-color 0.5s ease; position: relative; overflow: hidden; z-index: 1;
         }
-        /* 中央一点から0.8sかけて広がる水気の多い墨 */
         .opt-btn::before {
             content: ''; position: absolute; top: 50%; left: 50%; width: 4px; height: 4px;
             background: radial-gradient(circle, var(--active-highlight) 0%, rgba(87,195,194,0.4) 60%, transparent 100%);
@@ -117,7 +114,20 @@
             opacity: 1; border-radius: 0; filter: blur(2px);
         }
 
-        /* [Luxury Float] ナビゲーション演出 */
+        /* [Buttons] 強制中央配置の修正 */
+        .btn-container { text-align: center; margin-top: 20px; width: 100%; }
+        .btn {
+            display: block; /* ブロック要素化 */
+            margin: 0 auto; /* 左右マージン自動で中央寄せ */
+            width: 75%; padding: 20px; background: rgba(199, 178, 153, 0.2); color: var(--neutral-border);
+            border: 1px solid var(--neutral-border); border-radius: var(--global-radius); font-size: 1rem; 
+            cursor: pointer; transition: all 0.6s ease; font-family: inherit; font-weight: 700; letter-spacing: 0.1em;
+        }
+        .btn.btn-ready { background: var(--active-highlight); color: #FFF; border: none; box-shadow: 0 4px 15px rgba(87, 195, 194, 0.2); }
+        /* ロード中は薄くする */
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* [Navigation] */
         .page-section { position: absolute; top: 0; left: 0; width: 100%; opacity: 0; pointer-events: none; transition: var(--luxury-transition); }
         .page-section.active { opacity: 1; pointer-events: auto; position: relative; }
         .exit-left { transform: translateX(-50px); opacity: 0; }
@@ -125,23 +135,19 @@
         .enter-down { animation: enterDown var(--luxury-transition) forwards; }
         @keyframes enterDown { 0% { transform: translateY(-30px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
 
-        /* [指示反映] 結果画面：タイトル改行、ボタン横並び */
+        /* [Result Area] */
         #resultArea { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--mist-background); z-index: 500; overflow-y: auto; padding: 40px 20px; box-sizing: border-box; }
         .result-title-main { font-size: 1.5rem; color: var(--progress-track); margin-top: 0; line-height: 1.4; }
         .save-guide { font-size: 12px; color: var(--neutral-border); margin: 10px 0; font-family: 'Noto Serif JP'; }
         
-        /* ボタンを横並びに配置 */
         .share-group { display: flex; flex-direction: row; gap: 10px; margin-top: 30px; width: 100%; justify-content: center; }
-        .btn { padding: 20px; border-radius: var(--global-radius); border: 1px solid var(--neutral-border); font-weight: 700; cursor: pointer; transition: 0.6s; background: rgba(199, 178, 153, 0.2); color: var(--neutral-border); font-family: inherit; }
-        .btn-side { flex: 1; font-size: 0.9rem; }
-        .btn.btn-ready { background: var(--active-highlight); color: #FFF; border: none; }
+        .btn-side { flex: 1; font-size: 0.9rem; margin: 0; /* 横並び時はマージンリセット */ }
 
-        /* [Output: Cheki Template] 精密レイアウト */
+        /* [Cheki Template] */
         #chekiWrapper { position: absolute; left: -9999px; }
         #chekiTemplate { width: 500px; background: #FFF; padding: 40px 40px 140px 40px; border: 1px solid #EEE; text-align: center; position: relative; overflow: visible; }
         .cheki-photo-area { width: 100%; aspect-ratio: 1/1; background: #F8F8F8; position: relative; overflow: visible; border: 1px solid #EAEAEA; }
         
-        /* 指示反映：マスキングテープバッジ (50px降下 / 角度-9°) */
         .cheki-result-badge { 
             position: absolute; top: 60px; left: -40px; 
             background: rgba(87, 195, 194, 0.9); color: #FFF; padding: 12px 45px; font-size: 32px; font-weight: bold; 
@@ -149,29 +155,26 @@
             clip-path: polygon(0% 12%, 2% 0%, 98% 3%, 100% 15%, 97% 92%, 94% 100%, 5% 98%, 0% 85%);
             box-shadow: 2px 3px 6px rgba(0,0,0,0.15); white-space: nowrap; max-width: 65%;
         }
-        /* [指示反映] ハッシュタグ：太字禁止 */
         .cheki-hashtag { position: absolute; bottom: 15px; right: 20px; font-size: 18px; color: var(--neutral-border); font-family: sans-serif; font-weight: normal; }
-        
-        /* 指示反映：名前 (敬称なし / Yusei Magic / 特大) */
         .cheki-name-area { margin-top: 60px; font-family: 'Yusei Magic', sans-serif; font-size: 64px; color: var(--text-black); line-height: 1; }
-        
-        /* 指示反映：Description (余白20px縮小) */
         .cheki-description-area { margin: 20px auto 0; margin-bottom: 20px; width: 80%; font-family: 'Noto Serif JP', serif; font-size: 20px; line-height: 1.8; color: var(--text-main); text-align: left; }
 
-        /* [指示反映] フッター復元：確実な配置 */
+        /* [Footer] 最下部固定 */
         .site-footer { 
+            flex-shrink: 0; margin-top: auto; 
             background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.2); 
-            padding: 60px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D; margin-top: auto; 
+            padding: 60px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D; 
         }
         .footer-logo-img { width: 120px; margin-bottom: 25px; opacity: 0.7; }
-
+        
         .hidden { display: none !important; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.4); display: none; z-index: 3000; align-items: flex-start; justify-content: center; backdrop-filter: blur(10px); }
         .modal-content { background: #FFF; width: 92%; height: 75vh; margin-top: 5vh; border-radius: var(--global-radius); padding: 40px 30px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--neutral-border); }
+        .policy-body { flex: 1; overflow-y: auto; font-size: 0.85rem; line-height: 2; color: #555; text-align: left; }
     </style>
 </head>
 <body>
-    <div id="logOverlay">Initializing K9 Harmony Engine...</div>
+    <div id="logOverlay">Connecting...</div>
     <div id="washiBg"></div>
 
     <div class="container">
@@ -190,12 +193,12 @@
                     <div class="input-group"><label>愛犬の名前</label><input type="text" id="dogName" placeholder="例：ポチ" maxlength="10"></div>
                 </div>
                 <div class="btn-container reveal-item" id="reveal-4">
-                    <button class="btn btn-ready" id="startBtn" style="width:75%;">診断を始める</button>
+                    <button class="btn btn-ready" id="startBtn" disabled>準備中...</button>
                     <p style="margin-top:25px;"><span id="openPrivacy" style="text-decoration:underline; font-size:0.75rem; cursor:pointer; color:var(--neutral-border);">個人情報保護方針</span></p>
                 </div>
             </section>
             
-            <section class="page-section" id="page-groupA"><div id="groupA-list"></div><div class="btn-container"><button class="btn" id="toGroupB" disabled style="width:75%;">次へ進む</button></div></section>
+            <section class="page-section" id="page-groupA"><div id="groupA-list"></div><div class="btn-container"><button class="btn" id="toGroupB" disabled>次へ進む</button></div></section>
             <section class="page-section" id="page-groupB"><div id="groupB-list"></div><div style="display:flex; justify-content:space-between; align-items:center; width:85%; margin:40px auto 0;"><span id="backToA" style="cursor:pointer; font-size:0.8rem; color:var(--neutral-border); text-decoration:underline;">戻る</span><button class="btn" id="toGroupC" disabled style="width:75%;">次へ進む</button></div></section>
             <section class="page-section" id="page-groupC"><div id="groupC-list"></div><div style="display:flex; justify-content:space-between; align-items:center; width:85%; margin:40px auto 0;"><span id="backToB" style="cursor:pointer; font-size:0.8rem; color:var(--neutral-border); text-decoration:underline;">戻る</span><button class="btn" id="finishBtn" disabled style="width:75%;">結果を見る</button></div></section>
         </main>
@@ -218,11 +221,7 @@
 
     <footer class="site-footer reveal-item" id="reveal-5">
         <div class="footer-logo-container"><img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony"></div>
-        <div class="footer-info">
-            <p><strong>K9 Harmony</strong></p>
-            <p>〒174-0063 東京都板橋区前野町6-55-1</p>
-            <p>070-9043-1109</p>
-        </div>
+        <div class="footer-info"><p><strong>K9 Harmony</strong></p><p>〒174-0063 東京都板橋区前野町6-55-1</p><p>070-9043-1109</p></div>
         <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
     </footer>
 
@@ -242,12 +241,6 @@
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
-/**
- * [K9 Harmony Controller]
- * 1. 起動時にデータの並行ロードと演出を実行。
- * 2. 墨跡滲による回答演出。
- * 3. チェキ画像の精密生成とLIFF送信・シェア。
- */
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
     GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec"
@@ -257,29 +250,34 @@ let MASTER_QUESTIONS = [];
 let MASTER_RESULTS = [];
 let state = { userId: null, dogName: "", answers: {}, typeName: "" };
 
-/** [Logger] 進捗とエラーをログOverlayへ永続出力 */
 function log(msg) {
     const ts = new Date().toLocaleTimeString();
     const overlay = document.getElementById('logOverlay');
     if(overlay) overlay.innerText = `[${ts}] ${msg}`;
-    console.log(`[STAMP] ${ts}: ${msg}`);
+    console.log(`[LOG] ${ts}: ${msg}`);
 }
 
-/** [Data Fetch] 演出と並行してGASよりマスターデータを取得 */
+/** [Data Load] データが届くまでボタンを有効化しない */
 async function fetchMasterData() {
-    log("Fetching database...");
+    log("Loading data...");
     try {
         const res = await fetch(`${CONFIG.GAS_URL}?action=fetchMaster`);
         const data = await res.json();
         MASTER_QUESTIONS = data.questions;
         MASTER_RESULTS = data.results;
-        log("Database sync completed.");
-    } catch (e) { log("Data load failed."); }
+        log("Data ready.");
+        
+        // データ取得完了でボタンを有効化
+        const btn = document.getElementById('startBtn');
+        if(btn) {
+            btn.disabled = false;
+            btn.innerText = "診断を始める";
+        }
+    } catch (e) { log("Connection failed."); }
 }
 
-/** [Opening] 1.2sのシーケンシャル演出 */
 async function startOpeningSequence() {
-    log("Initializing Washi environment...");
+    log("Opening UI...");
     document.getElementById('washiBg').style.opacity = 1;
     const timeline = [1,2,3,4,5].map(n => new Promise(r => {
         setTimeout(() => {
@@ -289,24 +287,25 @@ async function startOpeningSequence() {
         }, 200 * n);
     }));
     await Promise.all([...timeline, initLiff()]);
-    log("System online.");
 }
 
-/** [LIFF] 初期化とID取得 */
 async function initLiff() {
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
         if (!liff.isLoggedIn()) liff.login();
         state.userId = liff.getDecodedIDToken().sub;
-        log("LIFF context linked.");
-    } catch (e) { log("LIFF Init Error."); }
+        log("LIFF OK.");
+    } catch (e) { log("LIFF Error."); }
 }
 
-/** [UI Builder] 質問カードの生成 */
 function buildSection(group, targetId) {
     const container = document.getElementById(targetId);
     if(!container) return;
     container.innerHTML = '';
+    
+    // データがない場合は処理しない（安全装置）
+    if(MASTER_QUESTIONS.length === 0) return alert("通信エラー：再読み込みしてください");
+
     MASTER_QUESTIONS.filter(q => q.Section === group).forEach(q => {
         const div = document.createElement('div');
         div.className = 'q-unit';
@@ -330,7 +329,6 @@ function buildSection(group, targetId) {
     });
 }
 
-/** [Logic] 進行ボタンのバリデーション */
 function checkReady(group) {
     const qCount = MASTER_QUESTIONS.filter(q => q.Section === group).length;
     const answered = MASTER_QUESTIONS.filter(q => q.Section === group && state.answers[q.QuestionID] !== undefined).length;
@@ -341,7 +339,6 @@ function checkReady(group) {
     }
 }
 
-/** [Navigator] セクション間遷移 */
 function navigate(fromId, toId, direction) {
     const fromEl = document.getElementById(fromId);
     const toEl = document.getElementById(toId);
@@ -354,9 +351,8 @@ function navigate(fromId, toId, direction) {
     }, 400);
 }
 
-/** [Analysis] 判定ロジックと画像合成 */
 async function processFinal() {
-    log("Calculating results...");
+    log("Processing...");
     const sX = (state.answers[1]||0) + (state.answers[2]||0) + (state.answers[3]||0);
     const sY = (state.answers[4]||0) + (state.answers[5]||0) + (state.answers[6]||0);
     const c = state.answers[7]||0;
@@ -379,19 +375,21 @@ async function processFinal() {
     await document.fonts.ready;
     html2canvas(document.getElementById('chekiTemplate'), { scale: 2, useCORS: true }).then(canvas => {
         document.getElementById('generatedImageOutput').src = canvas.toDataURL();
-        log("Image rendered.");
+        log("Done.");
     });
 
     gtag('event', 'diagnosis_complete', { 'type': state.typeName });
     fetch(CONFIG.GAS_URL, { method:'POST', mode:'no-cors', body: JSON.stringify({ uid:state.userId, dogName:state.dogName, scoreX:sX, scoreY:sY, resultType:state.typeName }) });
 }
 
-/** [Start] */
 function init() {
+    // データ取得開始（ボタンはDisabledで待機）
     fetchMasterData();
     startOpeningSequence();
 
     document.getElementById('startBtn').onclick = () => {
+        // データガード
+        if(MASTER_QUESTIONS.length === 0) return;
         state.dogName = document.getElementById('dogName').value.trim();
         if (!state.dogName) return alert("お名前を教えてください");
         buildSection('A', 'groupA-list'); navigate('page-home', 'page-groupA', 'next');
@@ -404,7 +402,7 @@ function init() {
     document.getElementById('backToReload').onclick = () => location.reload();
 
     document.getElementById('sendLiffBtn').onclick = () => {
-        liff.sendMessages([{ type: 'text', text: `${state.dogName}の性格診断結果は「${state.typeName}タイプ」でした🐾` }])
+        liff.sendMessages([{ type: 'text', text: `${state.dogName}の性格診断結果は「${state.typeName}タイプ」でした！🐾` }])
             .then(() => liff.closeWindow());
     };
     document.getElementById('shareTargetBtn').onclick = () => {
