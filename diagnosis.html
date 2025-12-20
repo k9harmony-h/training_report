@@ -29,7 +29,6 @@
             --group-margin: 40px;
         }
 
-        /* [Layout Base] Sticky Footer対応 */
         html, body { height: 100%; margin: 0; padding: 0; }
         body {
             font-family: 'Noto Serif JP', serif;
@@ -45,7 +44,7 @@
             font-family: monospace; line-height: 1.5;
         }
 
-        /* [Background] 視認性を強化した和紙テクスチャ */
+        /* [Background] */
         #washiBg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--mist-background);
@@ -90,7 +89,6 @@
         }
         .input-group input::placeholder { color: var(--neutral-border); opacity: 0.1; }
 
-        /* [Interactive] 20px円拡散 + ブランドカラー */
         .opt-group { display: flex; gap: 8px; justify-content: space-between; }
         .opt-btn {
             flex: 1; padding: 12px 2px; border: 1px solid var(--neutral-border); background: transparent;
@@ -140,7 +138,6 @@
         .result-title-main { font-size: 1.5rem; color: var(--progress-track); margin-top: 0; line-height: 1.4; }
         .save-guide { font-size: 12px; color: var(--neutral-border); margin: 10px 0; font-family: 'Noto Serif JP'; }
         
-        /* ボタン横並び */
         .share-group { display: flex; flex-direction: row; gap: 10px; margin-top: 30px; width: 100%; justify-content: center; }
         .btn-side { flex: 1; font-size: 0.9rem; margin: 0; padding: 15px; }
 
@@ -148,8 +145,7 @@
         #chekiWrapper { position: absolute; left: -9999px; }
         #chekiTemplate { 
             width: 500px; background: #FFF; 
-            /* [指示反映] 写真枠までのスペース40px (下部パディング) */
-            padding: 40px 40px 40px 40px; 
+            padding: 40px 40px 40px 40px; /* 余白40px */
             border: 1px solid #EEE; text-align: center; position: relative; overflow: visible;
         }
         .cheki-photo-area { width: 100%; aspect-ratio: 1/1; background: #F8F8F8; position: relative; overflow: visible; border: 1px solid #EAEAEA; }
@@ -169,7 +165,7 @@
         }
         .cheki-hashtag { position: absolute; bottom: 15px; right: 20px; font-size: 18px; color: var(--neutral-border); font-family: sans-serif; font-weight: normal; }
         
-        /* [指示反映] 名前: 手書き感重視 Zen Kurenaido */
+        /* 名前: Zen Kurenaido */
         .cheki-name-area { 
             margin-top: 60px; 
             font-family: 'Zen Kurenaido', sans-serif; 
@@ -310,7 +306,7 @@ async function startOpeningSequence() {
 async function initLiff() {
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
-        // [指示反映] URLリダイレクト防止：認証後もこのページに戻る
+        // Redirect fix: 認証後、現在のページに戻る設定
         if (!liff.isLoggedIn()) {
             liff.login({ redirectUri: window.location.href });
         }
@@ -373,6 +369,7 @@ function navigate(fromId, toId, direction) {
         void toEl.offsetWidth; 
         toEl.classList.add('active','enter-down');
         
+        // 結果画面に遷移した場合、ヘッダーを隠す
         if (toId === 'page-result') {
             document.querySelector('.header').style.display = 'none';
         }
@@ -427,28 +424,26 @@ function init() {
     document.getElementById('finishBtn').onclick = processFinal;
     document.getElementById('backToReload').onclick = () => location.reload();
 
-    // [指示反映] LINE送信：トークルーム判定のみ
+    // [LINE送信] 修正：余計な判定なしで直接送信
     document.getElementById('sendLiffBtn').onclick = () => {
-        const msg = [{ type: 'text', text: `${state.dogName}の性格診断結果は「${state.typeName}タイプ」でした！🐾 #K9Harmony` }];
-        
-        // トークルーム内チェック
-        const context = liff.getContext();
-        if (liff.isInClient() && context && context.type !== 'none') {
-            liff.sendMessages(msg)
-                .then(() => alert("トークルームに送信しました！"))
-                .catch((err) => alert("送信できませんでした: " + err));
-        } else {
-            // 自動シェア遷移を廃止し、アラートのみ
-            alert("この機能はトークルーム内でのみ有効です。\nSNS等へは「シェア」ボタンをご利用ください。");
-        }
+        // テキストは編集可能
+        const messageText = `${state.dogName}の性格診断結果は「${state.typeName}」でした！🐾 #K9Harmony`;
+
+        liff.sendMessages([{ type: 'text', text: messageText }])
+            .then(() => {
+                alert("トークルームに送信しました！");
+                liff.closeWindow(); // 送信成功後に閉じる
+            })
+            .catch((err) => {
+                alert("送信に失敗しました: " + err);
+            });
     };
 
-    // [指示反映] シェア：Web Share API -> URL Scheme Fallback
+    // [シェア] 変更なし (navigator.share)
     document.getElementById('shareTargetBtn').onclick = () => {
         const text = `${state.dogName}の診断結果は${state.typeName}！ #K9Harmony #愛犬の性格診断`;
         const url = "https://liff.line.me/" + CONFIG.LIFF_ID; 
 
-        // Web Share API (iOS/Android Native)
         if (navigator.share) {
             navigator.share({
                 title: 'K9 Harmony 愛犬の性格診断',
@@ -456,7 +451,7 @@ function init() {
                 url: url
             }).catch((err) => { console.log('Share canceled', err); });
         } else {
-            // Fallback: LINE Share URL
+            // Fallback
             window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text + "\n" + url)}`);
         }
     };
