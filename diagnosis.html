@@ -14,7 +14,7 @@
     </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Yusei+Magic&family=Zen+Kurenaido&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Zen+Kurenaido&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -29,7 +29,6 @@
             --group-margin: 40px;
         }
 
-        /* [Base Layout] Sticky Footer対応 */
         html, body { height: 100%; margin: 0; padding: 0; }
         body {
             font-family: 'Noto Serif JP', serif;
@@ -39,19 +38,18 @@
             min-height: 100vh; overflow-x: hidden; position: relative;
         }
 
-        /* [Visual Log] */
         #logOverlay {
             position: fixed; top: 0; left: 0; width: 100%; background: rgba(47, 93, 98, 0.85);
             color: #FFF; font-size: 10px; padding: 4px 10px; z-index: 9999; pointer-events: none;
             font-family: monospace; line-height: 1.5;
         }
 
-        /* [Background] 視認性を強化した雲龍紙テクスチャ (SVG Data URI) */
+        /* [Background] 視認性をさらに強化した和紙テクスチャ */
         #washiBg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--mist-background);
-            /* ノイズを少し濃くし、繊維のようなムラを表現 */
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.12'/%3E%3C/svg%3E");
+            /* ノイズを濃く調整 */
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.2'/%3E%3C/svg%3E");
             opacity: 0; z-index: -1;
             transition: opacity 1.2s ease;
         }
@@ -61,16 +59,14 @@
             box-sizing: border-box; position: relative; flex: 1 0 auto;
         }
 
-        /* [Opening Animation] */
+        /* [Opening] */
         .reveal-item { opacity: 0; transform: translateY(15px); }
         .reveal-active { animation: revealEffect 0.8s forwards cubic-bezier(0.25, 0.1, 0.25, 1.0); }
         @keyframes revealEffect { to { opacity: 1; transform: translateY(0); } }
 
-        /* [Header] */
         .header { text-align: center; margin-bottom: 50px; }
         .logo-main { width: 180px; }
 
-        /* [Title Area] */
         .main-title-area { text-align: center; margin-bottom: var(--group-margin); }
         .main-title { 
             font-size: 1.8rem; font-weight: 700; margin: 0; 
@@ -80,7 +76,6 @@
         .sub-title-badge { font-size: 0.75rem; color: var(--neutral-border); display: block; margin-top: 5px; margin-bottom: 40px; }
         .description-text { font-size: 0.9rem; line-height: 2; color: var(--text-main); margin-bottom: 30px; }
 
-        /* [Card UI] */
         .home-card, .q-unit {
             background: rgba(255, 255, 255, 0.6); border: 1px solid var(--neutral-border);
             padding: 35px; border-radius: var(--global-radius); margin-bottom: var(--group-margin);
@@ -88,7 +83,6 @@
         }
         .q-text { font-size: 0.9rem; font-weight: bold; margin-bottom: 15px; color: var(--progress-track); }
 
-        /* [Input] */
         .input-group label { display: block; font-size: 0.8rem; font-weight: bold; color: var(--progress-track); margin-bottom: 15px; }
         .input-group input { 
             width: 100%; padding: 12px 0; border: none; border-bottom: 1px solid var(--neutral-border); 
@@ -96,7 +90,6 @@
         }
         .input-group input::placeholder { color: var(--neutral-border); opacity: 0.1; }
 
-        /* [Interactive Button] 20px円拡散 + ブランドカラー */
         .opt-group { display: flex; gap: 8px; justify-content: space-between; }
         .opt-btn {
             flex: 1; padding: 12px 2px; border: 1px solid var(--neutral-border); background: transparent;
@@ -120,7 +113,6 @@
             opacity: 1; filter: blur(0px);
         }
 
-        /* [Action Buttons] */
         .btn-container { text-align: center; margin-top: 20px; width: 100%; }
         .btn {
             display: block; margin: 0 auto; width: 75%; padding: 20px; 
@@ -132,10 +124,7 @@
         .btn.btn-ready { background: var(--active-highlight); color: #FFF; border: none; box-shadow: 0 4px 15px rgba(87, 195, 194, 0.2); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* [Navigation System] */
         .page-section { 
-            /* AbsoluteではなくFlexアイテムとして扱い、非表示時はdisplay:noneにする方式へ変更も可能だが、
-               トランジション維持のためAbsolute配置を維持しつつ、Resultのみ特別扱いする */
             position: absolute; top: 0; left: 0; width: 100%; 
             opacity: 0; pointer-events: none; transition: var(--luxury-transition); 
         }
@@ -145,54 +134,56 @@
         .enter-down { animation: enterDown var(--luxury-transition) forwards; }
         @keyframes enterDown { 0% { transform: translateY(-30px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
 
-        /* [Result Page Styles] */
-        /* ロゴ画像 (w40%) */
+        /* [Result Page] */
         .result-logo { width: 40%; margin: 0 auto 20px; display: block; }
-        
         .result-title-main { font-size: 1.5rem; color: var(--progress-track); margin-top: 0; line-height: 1.4; }
         .save-guide { font-size: 12px; color: var(--neutral-border); margin: 10px 0; font-family: 'Noto Serif JP'; }
         
-        /* ボタン横並び */
         .share-group { display: flex; flex-direction: row; gap: 10px; margin-top: 30px; width: 100%; justify-content: center; }
         .btn-side { flex: 1; font-size: 0.9rem; margin: 0; padding: 15px; }
 
-        /* [Cheki Template Settings] */
+        /* [Cheki Template] */
         #chekiWrapper { position: absolute; left: -9999px; }
         #chekiTemplate { 
             width: 500px; background: #FFF; 
-            /* Description下の余白を20pxに厳密設定 */
-            padding: 40px 40px 20px 40px; 
+            /* [指示反映] 写真枠までのスペース40px (下部パディング) */
+            padding: 40px 40px 40px 40px; 
             border: 1px solid #EEE; text-align: center; position: relative; overflow: visible;
         }
         .cheki-photo-area { width: 100%; aspect-ratio: 1/1; background: #F8F8F8; position: relative; overflow: visible; border: 1px solid #EAEAEA; }
         
-        /* バッジ：マスキングテープ感（drop-shadowで影、不規則なpolygon） */
         .cheki-result-badge { 
             position: absolute; top: 60px; left: -40px; 
             background: rgba(87, 195, 194, 0.95);
             color: #FFF; padding: 15px 45px; font-size: 36px; font-weight: bold; 
             transform: rotate(-9deg); transform-origin: top left; z-index: 2000;
-            /* ギザギザを強調したクリップパス */
             clip-path: polygon(
                 2% 0%, 5% 5%, 8% 0%, 92% 2%, 95% 7%, 100% 0%, 
                 98% 95%, 95% 100%, 92% 95%, 8% 98%, 5% 90%, 2% 98%, 0% 10%
             );
-            /* clip-pathに沿った影を落とすため filter: drop-shadow を使用 */
             filter: drop-shadow(4px 4px 6px rgba(0,0,0,0.3));
             white-space: nowrap; max-width: 70%;
             text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
         }
         .cheki-hashtag { position: absolute; bottom: 15px; right: 20px; font-size: 18px; color: var(--neutral-border); font-family: sans-serif; font-weight: normal; }
-        .cheki-name-area { margin-top: 60px; font-family: 'Yusei Magic', sans-serif; font-size: 64px; color: var(--text-black); line-height: 1; }
         
-        /* Description：下部余白20px (親paddingと合わせて調整) */
+        /* [指示反映] 名前: 手書き感重視で Zen Kurenaido に変更 */
+        .cheki-name-area { 
+            margin-top: 60px; 
+            font-family: 'Zen Kurenaido', sans-serif; 
+            font-size: 68px; /* 細身になる分サイズアップ */
+            color: var(--text-black); line-height: 1; 
+            font-weight: 700;
+        }
+        
+        /* Description */
         .cheki-description-area { 
-            margin: 20px auto 0; /* 下マージンは親のpadding-bottom(20px)に任せる */
+            margin: 20px auto 0;
             width: 80%; font-family: 'Noto Serif JP', serif; 
             font-size: 20px; line-height: 1.8; color: var(--text-main); text-align: left; 
         }
 
-        /* [Footer] 最下部固定 */
+        /* [Footer] */
         .site-footer { 
             flex-shrink: 0; margin-top: auto; 
             background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.2); 
@@ -207,7 +198,7 @@
     </style>
 </head>
 <body>
-    <div id="logOverlay">Loading System...</div>
+    <div id="logOverlay">Initializing System...</div>
     <div id="washiBg"></div>
 
     <div class="container">
@@ -237,7 +228,6 @@
 
             <section class="page-section hidden" id="page-result">
                 <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" alt="K9 Harmony" class="result-logo">
-                
                 <div class="q-unit" style="text-align:center; opacity:1;">
                     <h2 class="result-title-main">診断結果<br><span id="resultTypeTitle">---</span></h2>
                     <div id="imgOutWrap" style="position:relative; margin:20px 0;">
@@ -292,7 +282,7 @@ function log(msg) {
 }
 
 async function fetchMasterData() {
-    log("Loading Data...");
+    log("Data Sync...");
     try {
         const res = await fetch(`${CONFIG.GAS_URL}?action=fetchMaster`);
         const data = await res.json();
@@ -301,11 +291,10 @@ async function fetchMasterData() {
         log("Ready.");
         const btn = document.getElementById('startBtn');
         if(btn) { btn.disabled = false; btn.innerText = "診断を始める"; }
-    } catch (e) { log("Data Error."); }
+    } catch (e) { log("Fetch Fail."); }
 }
 
 async function startOpeningSequence() {
-    log("Opening...");
     document.getElementById('washiBg').style.opacity = 1;
     const timeline = [1,2,3,4,5].map(n => new Promise(r => {
         setTimeout(() => {
@@ -320,9 +309,13 @@ async function startOpeningSequence() {
 async function initLiff() {
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
-        if (!liff.isLoggedIn()) liff.login();
+        // [指示反映] URLリダイレクト防止：現在のページにリダイレクトさせる設定
+        if (!liff.isLoggedIn()) {
+            liff.login({ redirectUri: window.location.href });
+        }
         state.userId = liff.getDecodedIDToken().sub;
-    } catch (e) { log("LIFF Error."); }
+        log("LIFF Linked.");
+    } catch (e) { log("LIFF Init Error."); }
 }
 
 function buildSection(group, targetId) {
@@ -330,7 +323,7 @@ function buildSection(group, targetId) {
     if(!container) return;
     container.innerHTML = '';
     
-    if(MASTER_QUESTIONS.length === 0) return alert("データを再読み込みしてください");
+    if(MASTER_QUESTIONS.length === 0) return alert("データ通信エラー");
 
     MASTER_QUESTIONS.filter(q => q.Section === group).forEach(q => {
         const div = document.createElement('div');
@@ -372,11 +365,6 @@ function navigate(fromId, toId, direction) {
     fromEl.classList.remove('active');
     fromEl.classList.add(direction==='next'?'exit-left':'exit-right');
     
-    // Headerは診断中も表示したままにするか？ 
-    // 要件では「導入画面以外は非表示」等の指定はないが、
-    // Result画面では専用ロゴを出すため、グローバルヘッダーは隠すべきかもしれない。
-    // 現状維持でヘッダーは残るが、Result画面になったら中身を書き換えるアプローチをとる。
-    
     setTimeout(() => {
         fromEl.classList.add('hidden'); 
         fromEl.classList.remove('exit-left','exit-right');
@@ -384,7 +372,7 @@ function navigate(fromId, toId, direction) {
         void toEl.offsetWidth; 
         toEl.classList.add('active','enter-down');
         
-        // 結果画面に遷移した場合、グローバルヘッダーを隠す（Result内にロゴがあるため）
+        // 結果画面に遷移した場合、グローバルのヘッダーを隠す
         if (toId === 'page-result') {
             document.querySelector('.header').style.display = 'none';
         }
@@ -392,7 +380,7 @@ function navigate(fromId, toId, direction) {
 }
 
 async function processFinal() {
-    log("Analyzing...");
+    log("Results...");
     const sX = (state.answers[1]||0) + (state.answers[2]||0) + (state.answers[3]||0);
     const sY = (state.answers[4]||0) + (state.answers[5]||0) + (state.answers[6]||0);
     const c = state.answers[7]||0;
@@ -405,10 +393,8 @@ async function processFinal() {
     const resObj = MASTER_RESULTS.find(r => r.TypeKey === `${rX}_${rY}`);
     state.typeName = resObj ? resObj.TypeName : "Unknown";
 
-    // ページ遷移：GroupC -> Result
     navigate('page-groupC', 'page-result', 'next');
 
-    // データ流し込み
     document.getElementById('resultTypeTitle').innerText = state.typeName + "タイプ";
     document.getElementById('tmpl_type').innerText = state.typeName + "タイプ";
     document.getElementById('tmpl_name').innerText = state.dogName;
@@ -417,7 +403,7 @@ async function processFinal() {
     await document.fonts.ready;
     html2canvas(document.getElementById('chekiTemplate'), { scale: 2, useCORS: true }).then(canvas => {
         document.getElementById('generatedImageOutput').src = canvas.toDataURL();
-        log("Completed.");
+        log("Rendered.");
     });
 
     gtag('event', 'diagnosis_complete', { 'type': state.typeName });
@@ -441,18 +427,23 @@ function init() {
     document.getElementById('finishBtn').onclick = processFinal;
     document.getElementById('backToReload').onclick = () => location.reload();
 
-    // LINEに送信 (環境チェック強化)
+    // [指示反映] LINE送信：トークルーム判定とフォールバック
     document.getElementById('sendLiffBtn').onclick = () => {
-        if (!liff.isInClient()) return alert("この機能はLINEアプリ内でのみ動作します。");
-        if (liff.getContext().type === 'none') return alert("トークルーム内から開いてください。");
-        
-        liff.sendMessages([{ type: 'text', text: `${state.dogName}の性格診断結果は「${state.typeName}タイプ」でした！🐾` }])
-            .then(() => liff.closeWindow())
-            .catch((e) => alert("送信失敗: " + e));
+        const message = [{ type: 'text', text: `${state.dogName}の性格診断結果は「${state.typeName}タイプ」でした！🐾` }];
+
+        // トークルーム内かどうかをチェック
+        if (liff.isInClient() && liff.getContext() && liff.getContext().type !== 'none') {
+            liff.sendMessages(message)
+                .then(() => alert("トークルームに送信しました"))
+                .catch(() => triggerShare()); // 失敗したらシェアに流す
+        } else {
+            // トークルーム外なら自動でシェア機能へ
+            triggerShare();
+        }
     };
 
-    // シェア (Fallback実装)
-    document.getElementById('shareTargetBtn').onclick = () => {
+    // [指示反映] シェア：Picker -> URL Scheme フォールバック
+    const triggerShare = () => {
         const text = `${state.dogName}の診断結果は${state.typeName}！ #K9Harmony #愛犬の性格診断`;
         if (liff.isInClient() && liff.isApiAvailable('shareTargetPicker')) {
             liff.shareTargetPicker([{ type: 'text', text: text }]).catch(() => {
@@ -462,6 +453,8 @@ function init() {
             window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text)}`);
         }
     };
+
+    document.getElementById('shareTargetBtn').onclick = triggerShare;
     
     document.getElementById('openPrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'flex'; };
     document.getElementById('closePrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'none'; };
