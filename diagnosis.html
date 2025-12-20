@@ -29,7 +29,7 @@
             --group-margin: 40px;
         }
 
-        /* [Layout Base] Sticky Footer対応 */
+        /* [Base Layout] Sticky Footer対応 */
         html, body { height: 100%; margin: 0; padding: 0; }
         body {
             font-family: 'Noto Serif JP', serif;
@@ -46,34 +46,31 @@
             font-family: monospace; line-height: 1.5;
         }
 
-        /* [Background] 抜本的修正: 確実に描画されるBase64ノイズテクスチャ */
+        /* [Background] 視認性を強化した雲龍紙テクスチャ (SVG Data URI) */
         #washiBg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--mist-background);
-            /* ノイズテクスチャをBase64化して埋め込み（通信・生成エラーなし） */
-            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAAAAAABAQECAgIDAwMEBAQFBQUGBgYh41cYAAAACHRSTlMAM8MzMzMzMzOus8ADAAAAJUlEQVQ4y2NgGAWjYBSMglEwCkbBSMEYiEGMYwAxDqK4YRSMAgAHCwAB+j8F1AAAAABJRU5ErkJggg==");
-            background-size: 100px 100px;
-            opacity: 0.05; /* テクスチャの濃さ調整 */
-            z-index: -1;
-            /* 起動時にopacityを操作するクラス */
+            /* ノイズを少し濃くし、繊維のようなムラを表現 */
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.12'/%3E%3C/svg%3E");
+            opacity: 0; z-index: -1;
             transition: opacity 1.2s ease;
         }
-        /* JSで付与するクラス */
-        #washiBg.visible { opacity: 0.05; }
 
         .container { 
             width: 100%; max-width: 600px; margin: 0 auto; padding: 40px 20px; 
             box-sizing: border-box; position: relative; flex: 1 0 auto;
         }
 
-        /* [Opening] */
+        /* [Opening Animation] */
         .reveal-item { opacity: 0; transform: translateY(15px); }
         .reveal-active { animation: revealEffect 0.8s forwards cubic-bezier(0.25, 0.1, 0.25, 1.0); }
         @keyframes revealEffect { to { opacity: 1; transform: translateY(0); } }
 
+        /* [Header] */
         .header { text-align: center; margin-bottom: 50px; }
         .logo-main { width: 180px; }
 
+        /* [Title Area] */
         .main-title-area { text-align: center; margin-bottom: var(--group-margin); }
         .main-title { 
             font-size: 1.8rem; font-weight: 700; margin: 0; 
@@ -83,7 +80,7 @@
         .sub-title-badge { font-size: 0.75rem; color: var(--neutral-border); display: block; margin-top: 5px; margin-bottom: 40px; }
         .description-text { font-size: 0.9rem; line-height: 2; color: var(--text-main); margin-bottom: 30px; }
 
-        /* [Cards] */
+        /* [Card UI] */
         .home-card, .q-unit {
             background: rgba(255, 255, 255, 0.6); border: 1px solid var(--neutral-border);
             padding: 35px; border-radius: var(--global-radius); margin-bottom: var(--group-margin);
@@ -91,6 +88,7 @@
         }
         .q-text { font-size: 0.9rem; font-weight: bold; margin-bottom: 15px; color: var(--progress-track); }
 
+        /* [Input] */
         .input-group label { display: block; font-size: 0.8rem; font-weight: bold; color: var(--progress-track); margin-bottom: 15px; }
         .input-group input { 
             width: 100%; padding: 12px 0; border: none; border-bottom: 1px solid var(--neutral-border); 
@@ -98,7 +96,7 @@
         }
         .input-group input::placeholder { color: var(--neutral-border); opacity: 0.1; }
 
-        /* [Interactive] 選択肢ボタン演出（ブランドカラー適用） */
+        /* [Interactive Button] 20px円拡散 + ブランドカラー */
         .opt-group { display: flex; gap: 8px; justify-content: space-between; }
         .opt-btn {
             flex: 1; padding: 12px 2px; border: 1px solid var(--neutral-border); background: transparent;
@@ -106,11 +104,10 @@
             transition: color 0.4s ease, border-color 0.4s ease; 
             position: relative; overflow: hidden; z-index: 1;
         }
-        /* 20pxの円からブランドカラーで広がる */
         .opt-btn::before {
             content: ''; position: absolute; 
             top: 50%; left: 50%; width: 20px; height: 20px;
-            background: var(--active-highlight); /* ブランドカラー */
+            background: var(--active-highlight);
             border-radius: 50%; 
             transform: translate(-50%, -50%) scale(1);
             opacity: 0; z-index: -1; filter: blur(8px);
@@ -119,11 +116,11 @@
         }
         .opt-btn.selected { color: #FFF; border-color: var(--active-highlight); }
         .opt-btn.selected::before {
-            transform: translate(-50%, -50%) scale(25); /* 枠外まで拡大 */
+            transform: translate(-50%, -50%) scale(25);
             opacity: 1; filter: blur(0px);
         }
 
-        /* [Buttons] */
+        /* [Action Buttons] */
         .btn-container { text-align: center; margin-top: 20px; width: 100%; }
         .btn {
             display: block; margin: 0 auto; width: 75%; padding: 20px; 
@@ -135,54 +132,62 @@
         .btn.btn-ready { background: var(--active-highlight); color: #FFF; border: none; box-shadow: 0 4px 15px rgba(87, 195, 194, 0.2); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* [Navigation] */
-        .page-section { position: absolute; top: 0; left: 0; width: 100%; opacity: 0; pointer-events: none; transition: var(--luxury-transition); }
+        /* [Navigation System] */
+        .page-section { 
+            /* AbsoluteではなくFlexアイテムとして扱い、非表示時はdisplay:noneにする方式へ変更も可能だが、
+               トランジション維持のためAbsolute配置を維持しつつ、Resultのみ特別扱いする */
+            position: absolute; top: 0; left: 0; width: 100%; 
+            opacity: 0; pointer-events: none; transition: var(--luxury-transition); 
+        }
         .page-section.active { opacity: 1; pointer-events: auto; position: relative; }
         .exit-left { transform: translateX(-50px); opacity: 0; }
         .exit-right { transform: translateX(50px); opacity: 0; }
         .enter-down { animation: enterDown var(--luxury-transition) forwards; }
         @keyframes enterDown { 0% { transform: translateY(-30px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
 
-        /* [Result Area] */
-        #resultArea { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--mist-background); z-index: 500; overflow-y: auto; padding: 40px 20px; box-sizing: border-box; }
-        /* タイトル改行 */
+        /* [Result Page Styles] */
+        /* ロゴ画像 (w40%) */
+        .result-logo { width: 40%; margin: 0 auto 20px; display: block; }
+        
         .result-title-main { font-size: 1.5rem; color: var(--progress-track); margin-top: 0; line-height: 1.4; }
         .save-guide { font-size: 12px; color: var(--neutral-border); margin: 10px 0; font-family: 'Noto Serif JP'; }
         
         /* ボタン横並び */
         .share-group { display: flex; flex-direction: row; gap: 10px; margin-top: 30px; width: 100%; justify-content: center; }
-        .btn-side { flex: 1; font-size: 0.9rem; margin: 0; }
+        .btn-side { flex: 1; font-size: 0.9rem; margin: 0; padding: 15px; }
 
-        /* [Cheki Template] */
+        /* [Cheki Template Settings] */
         #chekiWrapper { position: absolute; left: -9999px; }
         #chekiTemplate { 
-            width: 500px; background: #FFF; padding: 40px 40px 140px 40px; 
+            width: 500px; background: #FFF; 
+            /* Description下の余白を20pxに厳密設定 */
+            padding: 40px 40px 20px 40px; 
             border: 1px solid #EEE; text-align: center; position: relative; overflow: visible;
         }
         .cheki-photo-area { width: 100%; aspect-ratio: 1/1; background: #F8F8F8; position: relative; overflow: visible; border: 1px solid #EAEAEA; }
         
-        /* バッジ：マスキングテープ感（ギザギザ多め）、主張強め */
+        /* バッジ：マスキングテープ感（drop-shadowで影、不規則なpolygon） */
         .cheki-result-badge { 
-            position: absolute; top: 50px; left: -40px; 
-            background: rgba(87, 195, 194, 1); /* 透過なしで主張 */
+            position: absolute; top: 60px; left: -40px; 
+            background: rgba(87, 195, 194, 0.95);
             color: #FFF; padding: 15px 45px; font-size: 36px; font-weight: bold; 
             transform: rotate(-9deg); transform-origin: top left; z-index: 2000;
+            /* ギザギザを強調したクリップパス */
             clip-path: polygon(
-                0% 5%, 3% 0%, 7% 4%, 10% 0%, 15% 5%, 90% 2%, 95% 6%, 100% 0%, 
-                98% 90%, 95% 100%, 92% 95%, 88% 100%, 85% 96%, 
-                5% 98%, 0% 90%
+                2% 0%, 5% 5%, 8% 0%, 92% 2%, 95% 7%, 100% 0%, 
+                98% 95%, 95% 100%, 92% 95%, 8% 98%, 5% 90%, 2% 98%, 0% 10%
             );
-            box-shadow: 4px 6px 12px rgba(0,0,0,0.3); /* 影を強化 */
+            /* clip-pathに沿った影を落とすため filter: drop-shadow を使用 */
+            filter: drop-shadow(4px 4px 6px rgba(0,0,0,0.3));
             white-space: nowrap; max-width: 70%;
-            text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
         }
-        /* ハッシュタグ：太字禁止 */
         .cheki-hashtag { position: absolute; bottom: 15px; right: 20px; font-size: 18px; color: var(--neutral-border); font-family: sans-serif; font-weight: normal; }
         .cheki-name-area { margin-top: 60px; font-family: 'Yusei Magic', sans-serif; font-size: 64px; color: var(--text-black); line-height: 1; }
         
-        /* Description：下部余白20px */
+        /* Description：下部余白20px (親paddingと合わせて調整) */
         .cheki-description-area { 
-            margin: 20px auto 20px; 
+            margin: 20px auto 0; /* 下マージンは親のpadding-bottom(20px)に任せる */
             width: 80%; font-family: 'Noto Serif JP', serif; 
             font-size: 20px; line-height: 1.8; color: var(--text-main); text-align: left; 
         }
@@ -202,7 +207,7 @@
     </style>
 </head>
 <body>
-    <div id="logOverlay">Initializing...</div>
+    <div id="logOverlay">Loading System...</div>
     <div id="washiBg"></div>
 
     <div class="container">
@@ -226,25 +231,27 @@
                 </div>
             </section>
             
-            <section class="page-section" id="page-groupA"><div id="groupA-list"></div><div class="btn-container"><button class="btn" id="toGroupB" disabled>次へ進む</button></div></section>
+            <section class="page-section" id="page-groupA"><div id="groupA-list"></div><div class="btn-container"><button class="btn" id="toGroupB" disabled style="width:75%;">次へ進む</button></div></section>
             <section class="page-section" id="page-groupB"><div id="groupB-list"></div><div style="display:flex; justify-content:space-between; align-items:center; width:85%; margin:40px auto 0;"><span id="backToA" style="cursor:pointer; font-size:0.8rem; color:var(--neutral-border); text-decoration:underline;">戻る</span><button class="btn" id="toGroupC" disabled style="width:75%;">次へ進む</button></div></section>
             <section class="page-section" id="page-groupC"><div id="groupC-list"></div><div style="display:flex; justify-content:space-between; align-items:center; width:85%; margin:40px auto 0;"><span id="backToB" style="cursor:pointer; font-size:0.8rem; color:var(--neutral-border); text-decoration:underline;">戻る</span><button class="btn" id="finishBtn" disabled style="width:75%;">結果を見る</button></div></section>
-        </main>
-    </div>
 
-    <div id="resultArea" class="hidden">
-        <div class="q-unit" style="text-align:center; opacity:1;">
-            <h2 class="result-title-main">診断結果<br><span id="resultTypeTitle">---</span></h2>
-            <div id="imgOutWrap" style="position:relative; margin:20px 0;">
-                <img id="generatedImageOutput" style="width:100%; border:1px solid var(--neutral-border);" alt="結果画像">
-                <div class="save-guide">※画像長押しで保存</div>
-            </div>
-            <div class="share-group">
-                <button class="btn btn-ready btn-side" id="sendLiffBtn">LINEに送信</button>
-                <button class="btn btn-side" id="shareTargetBtn" style="background:#FFF; color:var(--progress-track);">シェア</button>
-            </div>
-            <p id="backToReload" style="margin-top:20px; cursor:pointer; font-size:0.85rem; color:var(--neutral-border); text-decoration:underline;">最初からやり直す</p>
-        </div>
+            <section class="page-section hidden" id="page-result">
+                <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" alt="K9 Harmony" class="result-logo">
+                
+                <div class="q-unit" style="text-align:center; opacity:1;">
+                    <h2 class="result-title-main">診断結果<br><span id="resultTypeTitle">---</span></h2>
+                    <div id="imgOutWrap" style="position:relative; margin:20px 0;">
+                        <img id="generatedImageOutput" style="width:100%; border:1px solid var(--neutral-border);" alt="結果画像">
+                        <div class="save-guide">※画像長押しで保存</div>
+                    </div>
+                    <div class="share-group">
+                        <button class="btn btn-ready btn-side" id="sendLiffBtn">LINEに送信</button>
+                        <button class="btn btn-side" id="shareTargetBtn" style="background:#FFF; color:var(--progress-track);">シェア</button>
+                    </div>
+                    <p id="backToReload" style="margin-top:20px; cursor:pointer; font-size:0.85rem; color:var(--neutral-border); text-decoration:underline;">最初からやり直す</p>
+                </div>
+            </section>
+        </main>
     </div>
 
     <footer class="site-footer reveal-item" id="reveal-5">
@@ -285,26 +292,21 @@ function log(msg) {
 }
 
 async function fetchMasterData() {
-    log("Loading data...");
+    log("Loading Data...");
     try {
         const res = await fetch(`${CONFIG.GAS_URL}?action=fetchMaster`);
         const data = await res.json();
         MASTER_QUESTIONS = data.questions;
         MASTER_RESULTS = data.results;
-        log("Data ready.");
+        log("Ready.");
         const btn = document.getElementById('startBtn');
-        if(btn) {
-            btn.disabled = false;
-            btn.innerText = "診断を始める";
-        }
-    } catch (e) { log("Connection failed."); }
+        if(btn) { btn.disabled = false; btn.innerText = "診断を始める"; }
+    } catch (e) { log("Data Error."); }
 }
 
 async function startOpeningSequence() {
-    log("Opening UI...");
-    // 起動時に背景を可視化
-    document.getElementById('washiBg').style.opacity = 1; 
-    
+    log("Opening...");
+    document.getElementById('washiBg').style.opacity = 1;
     const timeline = [1,2,3,4,5].map(n => new Promise(r => {
         setTimeout(() => {
             const el = document.getElementById(`reveal-${n}`);
@@ -320,7 +322,6 @@ async function initLiff() {
         await liff.init({ liffId: CONFIG.LIFF_ID });
         if (!liff.isLoggedIn()) liff.login();
         state.userId = liff.getDecodedIDToken().sub;
-        log("LIFF OK.");
     } catch (e) { log("LIFF Error."); }
 }
 
@@ -329,7 +330,7 @@ function buildSection(group, targetId) {
     if(!container) return;
     container.innerHTML = '';
     
-    if(MASTER_QUESTIONS.length === 0) return alert("通信エラー：再読み込みしてください");
+    if(MASTER_QUESTIONS.length === 0) return alert("データを再読み込みしてください");
 
     MASTER_QUESTIONS.filter(q => q.Section === group).forEach(q => {
         const div = document.createElement('div');
@@ -370,14 +371,28 @@ function navigate(fromId, toId, direction) {
     if(!fromEl || !toEl) return;
     fromEl.classList.remove('active');
     fromEl.classList.add(direction==='next'?'exit-left':'exit-right');
+    
+    // Headerは診断中も表示したままにするか？ 
+    // 要件では「導入画面以外は非表示」等の指定はないが、
+    // Result画面では専用ロゴを出すため、グローバルヘッダーは隠すべきかもしれない。
+    // 現状維持でヘッダーは残るが、Result画面になったら中身を書き換えるアプローチをとる。
+    
     setTimeout(() => {
-        fromEl.classList.add('hidden'); fromEl.classList.remove('exit-left','exit-right');
-        toEl.classList.remove('hidden'); void toEl.offsetWidth; toEl.classList.add('active','enter-down');
+        fromEl.classList.add('hidden'); 
+        fromEl.classList.remove('exit-left','exit-right');
+        toEl.classList.remove('hidden'); 
+        void toEl.offsetWidth; 
+        toEl.classList.add('active','enter-down');
+        
+        // 結果画面に遷移した場合、グローバルヘッダーを隠す（Result内にロゴがあるため）
+        if (toId === 'page-result') {
+            document.querySelector('.header').style.display = 'none';
+        }
     }, 400);
 }
 
 async function processFinal() {
-    log("Processing...");
+    log("Analyzing...");
     const sX = (state.answers[1]||0) + (state.answers[2]||0) + (state.answers[3]||0);
     const sY = (state.answers[4]||0) + (state.answers[5]||0) + (state.answers[6]||0);
     const c = state.answers[7]||0;
@@ -390,10 +405,11 @@ async function processFinal() {
     const resObj = MASTER_RESULTS.find(r => r.TypeKey === `${rX}_${rY}`);
     state.typeName = resObj ? resObj.TypeName : "Unknown";
 
-    document.getElementById('resultArea').classList.remove('hidden');
-    // タイトル改行適用
+    // ページ遷移：GroupC -> Result
+    navigate('page-groupC', 'page-result', 'next');
+
+    // データ流し込み
     document.getElementById('resultTypeTitle').innerText = state.typeName + "タイプ";
-    
     document.getElementById('tmpl_type').innerText = state.typeName + "タイプ";
     document.getElementById('tmpl_name').innerText = state.dogName;
     document.getElementById('tmpl_desc').innerText = resObj ? resObj.Description : "";
@@ -401,7 +417,7 @@ async function processFinal() {
     await document.fonts.ready;
     html2canvas(document.getElementById('chekiTemplate'), { scale: 2, useCORS: true }).then(canvas => {
         document.getElementById('generatedImageOutput').src = canvas.toDataURL();
-        log("Done.");
+        log("Completed.");
     });
 
     gtag('event', 'diagnosis_complete', { 'type': state.typeName });
@@ -425,34 +441,25 @@ function init() {
     document.getElementById('finishBtn').onclick = processFinal;
     document.getElementById('backToReload').onclick = () => location.reload();
 
-    // LINEに送信 (context check)
+    // LINEに送信 (環境チェック強化)
     document.getElementById('sendLiffBtn').onclick = () => {
-        if (!liff.isInClient()) {
-            return alert("この機能はLINEアプリ内でのみ動作します。");
-        }
-        // Context判定
-        const context = liff.getContext();
-        if (context && context.type !== 'none') {
-            liff.sendMessages([{ type: 'text', text: `${state.dogName}の性格診断結果は「${state.typeName}タイプ」でした！🐾` }])
-                .then(() => alert("トークルームに送信しました！"))
-                .catch((e) => alert("送信に失敗しました。\n(詳細: " + e + ")"));
-        } else {
-            alert("トークルームが開かれていません。\n「シェア」ボタンをご利用ください。");
-        }
+        if (!liff.isInClient()) return alert("この機能はLINEアプリ内でのみ動作します。");
+        if (liff.getContext().type === 'none') return alert("トークルーム内から開いてください。");
+        
+        liff.sendMessages([{ type: 'text', text: `${state.dogName}の性格診断結果は「${state.typeName}タイプ」でした！🐾` }])
+            .then(() => liff.closeWindow())
+            .catch((e) => alert("送信失敗: " + e));
     };
 
-    // シェア (fallback check)
+    // シェア (Fallback実装)
     document.getElementById('shareTargetBtn').onclick = () => {
-        const shareText = `${state.dogName}の診断結果は${state.typeName}！ #K9Harmony #愛犬の性格診断`;
+        const text = `${state.dogName}の診断結果は${state.typeName}！ #K9Harmony #愛犬の性格診断`;
         if (liff.isInClient() && liff.isApiAvailable('shareTargetPicker')) {
-            liff.shareTargetPicker([{ type: 'text', text: shareText }])
-                .catch(() => {
-                    // 失敗時フォールバック
-                    window.open(`https://line.me/R/msg/text/?${encodeURIComponent(shareText)}`);
-                });
+            liff.shareTargetPicker([{ type: 'text', text: text }]).catch(() => {
+                window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text)}`);
+            });
         } else {
-            // API利用不可時の確実なフォールバック
-            window.open(`https://line.me/R/msg/text/?${encodeURIComponent(shareText)}`);
+            window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text)}`);
         }
     };
     
