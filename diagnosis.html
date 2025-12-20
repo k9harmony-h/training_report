@@ -14,10 +14,10 @@
     </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Zen+Kurenaido&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Yusei+Magic&display=swap" rel="stylesheet">
 
     <style>
-        /* [Design System Settings] */
+        /* [Design System Settings] 10年後も変わらないブランド基調 */
         :root {
             --active-highlight: #57C3C2;
             --neutral-border: #C7B299;
@@ -33,24 +33,24 @@
         /* [Base Styles] */
         body {
             font-family: 'Noto Serif JP', serif;
-            background-color: #fafafa; /* 起動時のベース色 */
+            background-color: #fafafa; /* 演出開始時の地の色 */
             color: var(--text-main);
             margin: 0; padding: 0; min-height: 100vh;
             overflow-x: hidden;
+            position: relative;
         }
 
-        /* [Background Texture] 温かみのある雲龍紙（ロイヤリティフリー素材） */
+        /* [Visual Fix] 背景：雲龍紙テクスチャレイヤー（透過ブロック対策） */
         #washiBg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            /* 繊維感が強く温かみのある雲龍紙パターンを採用 */
-            background-image: linear-gradient(rgba(253, 251, 248, 0.7), rgba(253, 251, 248, 0.7)),
+            background-image: linear-gradient(rgba(253, 251, 248, 0.75), rgba(253, 251, 248, 0.75)),
                               url("https://www.transparenttextures.com/patterns/japanese-paper.png");
             background-attachment: fixed;
             opacity: 0; z-index: -1;
             transition: opacity 1.2s ease;
         }
 
-        /* [Visual Log Stamp] */
+        /* [Visual Log Stamp] 開発段階の状況を永続出力 */
         #logOverlay {
             position: fixed; top: 0; left: 0; width: 100%; background: rgba(47, 93, 98, 0.85);
             color: #FFF; font-size: 10px; padding: 4px 10px; z-index: 9999; pointer-events: none;
@@ -59,7 +59,7 @@
 
         .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; box-sizing: border-box; position: relative; }
         
-        /* [Opening Animation Targets] */
+        /* [Opening Animation] 書道道具の配置を模した順次イーズイン */
         .reveal-item { opacity: 0; transform: translateY(15px); }
         .reveal-active { animation: revealEffect 0.8s forwards cubic-bezier(0.25, 0.1, 0.25, 1.0); }
 
@@ -67,7 +67,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* [Layout & Components] */
+        /* [Component Styles] */
         .header { text-align: center; margin-bottom: 50px; }
         .logo-main { width: 180px; }
 
@@ -90,9 +90,8 @@
             background: transparent; font-size: 1.4rem; outline: none; transition: 0.4s; font-family: inherit;
         }
         .input-group input::placeholder { color: var(--neutral-border); opacity: 0.1; }
-        .input-group input:focus { border-bottom-color: var(--active-highlight); }
 
-        /* [Option Buttons] 吸着アニメーション実装 */
+        /* [Interactive] 回答ボタン：15px下からの吸着演出 */
         .opt-group { display: flex; gap: 8px; justify-content: space-between; }
         .opt-btn {
             flex: 1; padding: 12px 2px; border: 1px solid var(--neutral-border); background: transparent;
@@ -100,20 +99,21 @@
             transition: color 0.5s ease, border-color 0.5s ease; font-family: inherit;
             position: relative; overflow: hidden; z-index: 1;
         }
-        /* 擬似要素による吸着背景 */
+        /* 吸着する四角形の背景演出 */
         .opt-btn::before {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--active-highlight); z-index: -1; opacity: 0;
             /* 15px下から湧き上がる初期位置 */
-            transform: translateY(100%) translateY(15px);
-            transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s ease;
-            will-change: transform, opacity; /* 対策②: パフォーマンス最適化 */
+            transform: translateY(15px);
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease;
+            will-change: transform, opacity;
         }
         .opt-btn.selected { color: #FFF; border-color: var(--active-highlight); }
         .opt-btn.selected::before {
-            opacity: 1; transform: translateY(0); /* 吸着完了位置 */
+            opacity: 1; transform: translateY(0); /* 定位置へ吸着 */
         }
 
+        /* [Buttons] */
         .btn-container { text-align: center; margin-top: 20px; }
         .btn {
             width: 75%; padding: 20px; background: rgba(199, 178, 153, 0.2); color: var(--neutral-border);
@@ -122,7 +122,7 @@
         }
         .btn.btn-ready { background: var(--active-highlight); color: #FFF; border: none; box-shadow: 0 4px 15px rgba(87, 195, 194, 0.2); }
 
-        /* [Transitions] */
+        /* [Luxury Float Transitions] 上下左右のページ遷移 */
         .page-section { position: absolute; top: 0; left: 0; width: 100%; opacity: 0; pointer-events: none; transition: var(--luxury-transition); }
         .page-section.active { opacity: 1; pointer-events: auto; position: relative; }
         .exit-left { transform: translateX(-50px); opacity: 0; }
@@ -133,50 +133,71 @@
             100% { transform: translateY(0); opacity: 1; }
         }
 
-        /* [Modals & Footer] */
-        .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.4);
-            display: none; z-index: 1000; align-items: flex-start; justify-content: center; backdrop-filter: blur(10px);
+        /* [Result Area Specifics] */
+        #resultArea { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--mist-background); z-index: 500; overflow-y: auto; padding: 40px 20px; box-sizing: border-box; }
+        
+        /* [Output: Cheki Template] SNSインパクトと視覚的正確性の追求 */
+        #chekiWrapper { position: absolute; left: -9999px; }
+        #chekiTemplate { 
+            width: 480px; background: #FFF; padding: 30px 30px 140px 30px; 
+            border: 1px solid #EEE; text-align: center; position: relative;
+            overflow: visible; /* バッジのはみ出しを許容 */
         }
-        .modal-content {
-            background: #FFF; width: 92%; height: 75vh; margin-top: 5vh; border-radius: var(--global-radius);
-            padding: 40px 30px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--neutral-border);
+        .cheki-photo-area { 
+            width: 100%; aspect-ratio: 1/1; background: #f0f0f0; 
+            position: relative; overflow: visible; border: 1px solid #E0E0E0; 
         }
-        .policy-body { flex: 1; overflow-y: auto; font-size: 0.85rem; line-height: 2; color: #555; padding-right: 10px; }
+        
+        /* バッジ：−9°の傾斜、最上層、見切れ防止設計 */
+        .cheki-result-badge { 
+            position: absolute; top: -15px; left: -20px; 
+            background: var(--active-highlight); color: #FFF; 
+            padding: 12px 35px; font-size: 28px; font-weight: bold; 
+            transform: rotate(-9deg); transform-origin: top left; z-index: 1000;
+            box-shadow: 4px 4px 12px rgba(0,0,0,0.2);
+            white-space: nowrap;
+            max-width: 80%; /* 写真上部1/3〜をカバーする範囲制限 */
+        }
+        
+        .cheki-hashtag { position: absolute; bottom: 15px; right: 20px; font-size: 16px; color: var(--neutral-border); letter-spacing: 1px; font-weight: bold; }
+        
+        /* 名前：油性マジック風、特大サイズ、敬称なし */
+        .cheki-name-area { 
+            margin-top: 60px; 
+            font-family: 'Yusei Magic', sans-serif;
+            font-size: 56px; 
+            color: var(--text-black); 
+            line-height: 1;
+        }
 
+        /* Description: 80%幅、ブランドフォント */
+        .cheki-description-area {
+            margin: 30px auto 0; width: 85%;
+            font-family: 'Noto Serif JP', serif;
+            font-size: 18px; line-height: 1.8;
+            color: var(--text-main);
+            text-align: left;
+        }
+
+        /* [Modal & Footer] */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.4); display: none; z-index: 1000; align-items: flex-start; justify-content: center; backdrop-filter: blur(10px); }
+        .modal-content { background: #FFF; width: 92%; height: 75vh; margin-top: 5vh; border-radius: var(--global-radius); padding: 40px 30px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--neutral-border); }
+        .policy-body { flex: 1; overflow-y: auto; font-size: 0.85rem; line-height: 2; color: #555; text-align: left; }
         .site-footer { background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.2); padding: 60px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D; }
         .footer-logo-img { width: 140px; margin-bottom: 25px; opacity: 0.7; }
-        .footer-info p { margin: 6px 0; }
-
         .hidden { display: none !important; }
-
-        /* [Cheki Template] */
-        #chekiWrapper { position: absolute; left: -9999px; }
-        #chekiTemplate { width: 400px; background: #FFF; padding: 20px 20px 80px 20px; border: 1px solid #EEE; text-align: center; }
-        .cheki-photo-area { width: 100%; aspect-ratio: 1/1; background: var(--mist-background); position: relative; overflow: hidden; border: 1px solid #F0F0F0; }
-        .cheki-result-badge { position: absolute; top: 10px; left: -5px; background: var(--active-highlight); color: #FFF; padding: 8px 20px; font-size: 18px; font-weight: bold; transform: rotate(-25deg); transform-origin: top left; }
-        .cheki-hashtag { position: absolute; bottom: 10px; right: 10px; font-size: 10px; color: var(--neutral-border); }
-        
-        /* 手書きフォントは維持し、敬称削除に対応 */
-        .cheki-name-area { 
-            margin-top: 35px; 
-            font-family: 'Zen Kurenaido', sans-serif;
-            font-size: 42px; 
-            color: var(--text-black); 
-            font-weight: bold; 
-        }
     </style>
 </head>
 <body>
-    <div id="logOverlay">準備中...</div>
+    <div id="logOverlay">道具を整えています...</div>
     <div id="washiBg"></div>
 
     <div class="container">
-        <div class="header reveal-item" id="reveal-1">
+        <header class="header reveal-item" id="reveal-1">
             <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" alt="K9 Harmony" class="logo-main">
-        </div>
+        </header>
 
-        <div id="sectionWrap">
+        <main id="sectionWrap">
             <section class="page-section active" id="page-home">
                 <div class="main-title-area reveal-item" id="reveal-2">
                     <h1 class="main-title">愛犬の性格診断</h1>
@@ -195,114 +216,70 @@
                 </div>
             </section>
 
-            <section class="page-section" id="page-groupA">
-                <div id="groupA-list"></div>
-                <div class="btn-container">
-                    <button class="btn" id="toGroupB" disabled>次へ進む</button>
-                </div>
-            </section>
-
-            <section class="page-section" id="page-groupB">
-                <div id="groupB-list"></div>
-                <div style="display:flex; justify-content:space-between; align-items:center; width:85%; margin:40px auto 0;">
-                    <span id="backToA" style="cursor:pointer; font-size:0.8rem; color:var(--neutral-border); text-decoration:underline;">戻る</span>
-                    <button class="btn" id="toGroupC" disabled style="width:75%;">次へ進む</button>
-                </div>
-            </section>
-
-            <section class="page-section" id="page-groupC">
-                <div id="groupC-list"></div>
-                <div style="display:flex; justify-content:space-between; align-items:center; width:85%; margin:40px auto 0;">
-                    <span id="backToB" style="cursor:pointer; font-size:0.8rem; color:var(--neutral-border); text-decoration:underline;">戻る</span>
-                    <button class="btn" id="finishBtn" disabled style="width:75%;">結果を見る</button>
-                </div>
-            </section>
-        </div>
+            <section class="page-section" id="page-groupA"><div id="groupA-list"></div><div class="btn-container"><button class="btn" id="toGroupB" disabled>次へ進む</button></div></section>
+            <section class="page-section" id="page-groupB"><div id="groupB-list"></div><div style="display:flex; justify-content:space-between; align-items:center; width:85%; margin:40px auto 0;"><span id="backToA" style="cursor:pointer; font-size:0.8rem; color:var(--neutral-border); text-decoration:underline;">戻る</span><button class="btn" id="toGroupC" disabled style="width:75%;">次へ進む</button></div></section>
+            <section class="page-section" id="page-groupC"><div id="groupC-list"></div><div style="display:flex; justify-content:space-between; align-items:center; width:85%; margin:40px auto 0;"><span id="backToB" style="cursor:pointer; font-size:0.8rem; color:var(--neutral-border); text-decoration:underline;">戻る</span><button class="btn" id="finishBtn" disabled style="width:75%;">結果を見る</button></div></section>
+        </main>
     </div>
 
-    <div id="resultArea" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--mist-background); z-index:500; overflow-y:auto; padding:40px 20px; box-sizing:border-box;">
-        <div class="card" style="text-align:center; background:rgba(255,255,255,0.7); border:1px solid var(--neutral-border); padding:30px;">
+    <div id="resultArea" class="hidden">
+        <div class="q-unit" style="text-align:center; opacity:1;">
             <h2 id="resultTypeTitle" style="color:var(--progress-track); margin-top:0;">診断結果</h2>
-            <img id="generatedImageOutput" style="width:100%; border:1px solid var(--neutral-border); margin:20px 0;">
-            <div id="resultDescription" style="text-align:left; font-size:0.85rem; line-height:1.8;"></div>
-            <button class="btn btn-ready" id="shareBtn" style="margin-top:30px; width:80%;">友だちに送る</button>
-            <p onclick="location.reload()" style="margin-top:30px; cursor:pointer; font-size:0.8rem; color:var(--neutral-border);">最初からやり直す</p>
+            <div id="imageContainer" style="margin: 20px 0;">
+                <img id="generatedImageOutput" style="width:100%; border:1px solid var(--neutral-border);" alt="結果チェキ">
+            </div>
+            <p id="backToHome" style="margin-top:40px; cursor:pointer; font-size:0.8rem; color:var(--neutral-border);">最初からやり直す</p>
         </div>
     </div>
 
     <footer class="site-footer reveal-item" id="reveal-5">
-        <div class="footer-logo-container">
-            <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony">
-        </div>
-        <div class="footer-info">
-            <p><strong>K9 Harmony</strong></p>
-            <p>〒174-0063 東京都板橋区前野町6-55-1</p>
-            <p>070-9043-1109</p>
-        </div>
+        <div class="footer-logo-container"><img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony"></div>
+        <div class="footer-info"><p><strong>K9 Harmony</strong></p><p>〒174-0063 東京都板橋区前野町6-55-1</p><p>070-9043-1109</p></div>
         <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
     </footer>
-
-    <div class="modal" id="privacyModal">
-        <div class="modal-content">
-            <h3 style="margin-top:0; color:var(--progress-track);">プライバシーポリシー</h3>
-            <div id="policyContent" class="policy-body"></div>
-            <div id="closePrivacy" style="margin-top:20px; text-align:center; padding:15px; background:var(--mist-background); cursor:pointer;">閉じる</div>
-        </div>
-    </div>
 
     <div id="chekiWrapper">
         <div id="chekiTemplate">
             <div class="cheki-photo-area">
                 <div class="cheki-result-badge" id="tmpl_type">タイプ名</div>
-                <div style="font-size:60px; margin-top:60px;">🐾</div>
+                <div style="font-size:70px; margin-top:70px;">🐾</div>
                 <div class="cheki-hashtag">#K9Harmony #愛犬の性格診断</div>
             </div>
             <div class="cheki-name-area" id="tmpl_name">名前</div>
+            <div class="cheki-description-area" id="tmpl_desc">解説文</div>
         </div>
     </div>
+
+    <div class="modal" id="privacyModal"><div class="modal-content"><div id="policyContent" class="policy-body"></div><div id="closePrivacy" style="margin-top:20px; text-align:center; padding:15px; background:var(--mist-background); cursor:pointer;">閉じる</div></div></div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
 /**
- * [K9 Harmony Engine]
- * 10年後の保守性を考慮し、各関数の責務を明確化。
+ * [K9 Harmony Logic v5.6]
+ * 10年後の保守性を正義とし、機能の棲み分けを厳守。
  */
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
     GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec"
 };
 
-// 質問データ（固定）
-const QUESTIONS = [
-    { id: 1, grp: 'A', text: "Q1, 初めての場所で", opts: [{t:"不安",s:1},{t:"警戒",s:10},{t:"平気",s:100}] },
-    { id: 2, grp: 'A', text: "Q2, 他の犬への反応", opts: [{t:"避ける",s:1},{t:"注視",s:10},{t:"遊ぶ",s:100}] },
-    { id: 3, grp: 'A', text: "Q3, 遊びへの意欲", opts: [{t:"低い",s:1},{t:"普通",s:10},{t:"高い",s:100}] },
-    { id: 4, grp: 'B', text: "Q4, 飼い主への追従", opts: [{t:"なし",s:1},{t:"時々",s:10},{t:"常に",s:100}] },
-    { id: 5, grp: 'B', text: "Q5, 留守番の様子", opts: [{t:"平気",s:1},{t:"ソワソワ",s:10},{t:"パニック",s:100}] },
-    { id: 6, grp: 'B', text: "Q6, 撫で終えた後", opts: [{t:"去る",s:1},{t:"停止",s:10},{t:"催促",s:100}] },
-    { id: 7, grp: 'C', text: "Q7, 今後の希望は？", opts: [{t:"自立してほしい",s:-1},{t:"今のままで良い",s:0},{t:"もっと甘えてほしい",s:1}] }
-];
-
+let MASTER_QUESTIONS = [];
+let MASTER_RESULTS = [];
 let state = { userId: null, dogName: "", answers: {} };
 
-/** [Logger] 開発用ログ出力 */
+/** [Logger] 動作状況の永続的表示 */
 function log(msg) {
     const ts = new Date().toLocaleTimeString();
     document.getElementById('logOverlay').innerText = `[${ts}] ${msg}`;
+    console.log(`[LOG] ${msg}`);
 }
 
-/**
- * [Opening Sequence]
- * 対策①：Promise.allを用いて、演出とデータロードを同期させる。
- * ロード画面を誤魔化すため、即時開始する。
- */
-async function playOpeningSequence() {
-    log("道具を整えています...");
-    // 背景和紙をふわっと表示
+/** [Opening Sequence] 1.2秒の書道演出と並行ロード */
+async function startOpening() {
+    log("和紙を広げています...");
     document.getElementById('washiBg').style.opacity = 1;
 
-    // 各要素を順次イーズインさせるタイマー設定
-    const animationPromises = [
+    const timeline = [
         { id: 'reveal-1', delay: 200 },
         { id: 'reveal-2', delay: 400 },
         { id: 'reveal-3', delay: 600 },
@@ -316,22 +293,32 @@ async function playOpeningSequence() {
         }, item.delay);
     }));
 
-    // アニメーションとLIFF初期化を並行して行い、両方の完了を待つ（堅牢性向上）
-    await Promise.all([...animationPromises, initLiff()]);
+    // 演出中にマスターデータを取得（並行処理）
+    await Promise.all([...timeline, fetchMasterData(), initLiff()]);
     log("準備が整いました。");
 }
 
-/** [LIFF] 初期化処理 */
+/** [Data Service] GAS連携：マスターデータ取得 */
+async function fetchMasterData() {
+    log("墨を摺っています(データ取得中)...");
+    try {
+        const res = await fetch(`${CONFIG.GAS_URL}?action=fetchMaster`);
+        const data = await res.json();
+        MASTER_QUESTIONS = data.questions;
+        MASTER_RESULTS = data.results;
+    } catch (e) { log("データロード失敗：通信環境を確認してください。"); }
+}
+
+/** [LIFF Service] 初期化 */
 async function initLiff() {
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
         if (!liff.isLoggedIn()) liff.login();
         state.userId = liff.getContext().userId;
-        log("LIFF接続完了。");
-    } catch (e) { log("LIFF初期化エラー（動作に影響はありません）。"); }
+    } catch (e) { log("LIFF接続エラー。"); }
 }
 
-/** [Navigator] ページ遷移制御 */
+/** [Navigator] セクション遷移制御 */
 function navigate(fromId, toId, direction) {
     const fromEl = document.getElementById(fromId);
     const toEl = document.getElementById(toId);
@@ -342,30 +329,31 @@ function navigate(fromId, toId, direction) {
         fromEl.classList.add('hidden');
         fromEl.classList.remove('exit-left', 'exit-right');
         toEl.classList.remove('hidden');
-        void toEl.offsetWidth; // リフロー強制
+        void toEl.offsetWidth; 
         toEl.classList.add('active', 'enter-down');
     }, 400);
 }
 
-/** [UI Builder] 質問セクション構築 */
+/** [UI Builder] 質問動的生成 */
 function buildSection(group, targetId) {
     const container = document.getElementById(targetId);
     container.innerHTML = '';
-    QUESTIONS.filter(q => q.grp === group).forEach(q => {
+    MASTER_QUESTIONS.filter(q => q.Section === group).forEach(q => {
         const div = document.createElement('div');
         div.className = 'q-unit';
-        div.innerHTML = `<div class="q-text">${q.text}</div>`;
+        div.innerHTML = `<div class="q-text">${q.Text}</div>`;
         const optGroup = document.createElement('div');
         optGroup.className = 'opt-group';
-        q.opts.forEach(opt => {
+        
+        const options = [{t: q.OptA_Text, s: q.OptA_Score}, {t: q.OptB_Text, s: q.OptB_Score}, {t: q.OptC_Text, s: q.OptC_Score}];
+        options.forEach(opt => {
             const btn = document.createElement('button');
             btn.className = 'opt-btn';
             btn.innerText = opt.t;
             btn.onclick = () => {
-                // 選択状態の切り替え（CSSで吸着アニメーションが発動）
                 optGroup.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
-                state.answers[q.id] = opt.s;
+                state.answers[q.QuestionID] = opt.s;
                 checkReady(group);
             };
             optGroup.appendChild(btn);
@@ -375,10 +363,9 @@ function buildSection(group, targetId) {
     });
 }
 
-/** [Validator] セクション完了判定 */
 function checkReady(group) {
-    const qCount = QUESTIONS.filter(q => q.grp === group).length;
-    const answered = QUESTIONS.filter(q => q.grp === group && state.answers[q.id] !== undefined).length;
+    const qCount = MASTER_QUESTIONS.filter(q => q.Section === group).length;
+    const answered = MASTER_QUESTIONS.filter(q => q.Section === group && state.answers[q.QuestionID] !== undefined).length;
     if (qCount === answered) {
         const btnId = group === 'A' ? 'toGroupB' : group === 'B' ? 'toGroupC' : 'finishBtn';
         const btn = document.getElementById(btnId);
@@ -387,35 +374,9 @@ function checkReady(group) {
     }
 }
 
-/** [Initializer] アプリ初期化 */
-function init() {
-    // 初期ゲートを廃止し、即時オープニングシーケンスを開始
-    playOpeningSequence();
-
-    // イベントリスナー登録
-    document.getElementById('startBtn').onclick = () => {
-        state.dogName = document.getElementById('dogName').value.trim();
-        if (!state.dogName) return alert("お名前を教えてください");
-        buildSection('A', 'groupA-list');
-        navigate('page-home', 'page-groupA', 'next');
-    };
-
-    document.getElementById('toGroupB').onclick = () => { buildSection('B', 'groupB-list'); navigate('page-groupA', 'page-groupB', 'next'); };
-    document.getElementById('toGroupC').onclick = () => { buildSection('C', 'groupC-list'); navigate('page-groupB', 'page-groupC', 'next'); };
-    document.getElementById('backToA').onclick = () => navigate('page-groupB', 'page-groupA', 'back');
-    document.getElementById('backToB').onclick = () => navigate('page-groupC', 'page-groupB', 'back');
-    document.getElementById('finishBtn').onclick = processFinal;
-
-    document.getElementById('openPrivacy').onclick = () => {
-        document.getElementById('policyContent').innerHTML = "K9 Harmony プライバシーポリシー全文...";
-        document.getElementById('privacyModal').style.display = 'flex';
-    };
-    document.getElementById('closePrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'none'; };
-}
-
-/** [Processor] 診断結果計算・表示 */
+/** [Core Logic] 診断結果処理と画像生成 */
 async function processFinal() {
-    log("診断結果を集計中...");
+    log("診断中...");
     const sX = state.answers[1] + state.answers[2] + state.answers[3];
     const sY = state.answers[4] + state.answers[5] + state.answers[6];
     const c = state.answers[7];
@@ -425,27 +386,48 @@ async function processFinal() {
     if ((sX === 12 || sX === 13) && c === 1) rX = 'MID';
     if ((sX === 12 || sX === 13) && c === -1) rX = 'LOW';
 
-    const m = { 'LOW_LOW':'哲学者', 'MID_LOW':'観察者', 'HIGH_LOW':'冒険家', 'LOW_MID':'のんびり', 'MID_MID':'黄金バランス', 'HIGH_MID':'アスリート', 'LOW_HIGH':'内向的守護者', 'MID_HIGH':'甘えん坊', 'HIGH_HIGH':'衝動的' };
-    const type = m[`${rX}_${rY}`] + "タイプ";
+    const result = MASTER_RESULTS.find(r => r.TypeKey === `${rX}_${rY}`);
+    const type = result.TypeName + "タイプ";
 
     document.getElementById('resultArea').classList.remove('hidden');
-    document.getElementById('resultTypeTitle').innerText = `診断結果：${type}`;
-    
     document.getElementById('tmpl_type').innerText = type;
-    // 敬称を削除し、名前のみを設定
-    document.getElementById('tmpl_name').innerText = state.dogName;
+    document.getElementById('tmpl_name').innerText = state.dogName; /* 敬称削除 */
+    document.getElementById('tmpl_desc').innerText = result.Description;
     
-    // 画像生成
-    html2canvas(document.getElementById('chekiTemplate'), { scale: 2 }).then(canvas => {
+    // フォント読み込み完了を待機して画像生成（欠け防止）
+    await document.fonts.ready;
+    html2canvas(document.getElementById('chekiTemplate'), { 
+        scale: 2, 
+        useCORS: true, 
+        logging: false 
+    }).then(canvas => {
         document.getElementById('generatedImageOutput').src = canvas.toDataURL();
-        log("診断完了。");
+        log("診断が完了しました。");
     });
 
-    // GASへ送信
+    gtag('event', 'diagnosis_complete', { 'type': type });
     fetch(CONFIG.GAS_URL, { method:'POST', mode:'no-cors', body: JSON.stringify({ uid:state.userId, dogName:state.dogName, scoreX:sX, scoreY:sY, resultType:type }) });
 }
 
-// アプリケーション開始
+/** [Initialization] */
+function init() {
+    startOpening();
+    document.getElementById('startBtn').onclick = () => {
+        state.dogName = document.getElementById('dogName').value.trim();
+        if (!state.dogName) return alert("お名前を教えてください");
+        buildSection('A', 'groupA-list');
+        navigate('page-home', 'page-groupA', 'next');
+    };
+    document.getElementById('toGroupB').onclick = () => { buildSection('B', 'groupB-list'); navigate('page-groupA', 'page-groupB', 'next'); };
+    document.getElementById('toGroupC').onclick = () => { buildSection('C', 'groupC-list'); navigate('page-groupB', 'page-groupC', 'next'); };
+    document.getElementById('backToA').onclick = () => navigate('page-groupB', 'page-groupA', 'back');
+    document.getElementById('backToB').onclick = () => navigate('page-groupC', 'page-groupB', 'back');
+    document.getElementById('finishBtn').onclick = processFinal;
+    document.getElementById('backToHome').onclick = () => location.reload();
+    document.getElementById('openPrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'flex'; };
+    document.getElementById('closePrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'none'; };
+}
+
 init();
 </script>
 </body>
