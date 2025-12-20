@@ -14,10 +14,10 @@
     </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Zen+Kurenaido&family=Yusei+Magic&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Yusei+Magic&display=swap" rel="stylesheet">
 
     <style>
-        /* [Design System Settings] */
+        /* [Design System Settings] 10年後も変わらないブランド基調 */
         :root {
             --active-highlight: #57C3C2;
             --neutral-border: #C7B299;
@@ -30,27 +30,27 @@
             --group-margin: 40px;
         }
 
-        /* [Base Layout] */
+        /* [Base Styles] */
         body {
             font-family: 'Noto Serif JP', serif;
-            background-color: #fafafa;
+            background-color: #fafafa; /* 演出開始時の地の色 */
             color: var(--text-main);
             margin: 0; padding: 0; min-height: 100vh;
             overflow-x: hidden;
             position: relative;
         }
 
-        /* [Background] 温かみのある雲龍紙テクスチャレイヤー */
+        /* [Visual Fix] 背景：雲龍紙テクスチャレイヤー（透過ブロック対策） */
         #washiBg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: linear-gradient(rgba(253, 251, 248, 0.7), rgba(253, 251, 248, 0.7)),
-                              url("https://www.transparenttextures.com/patterns/rice-paper.png");
+            background-image: linear-gradient(rgba(253, 251, 248, 0.75), rgba(253, 251, 248, 0.75)),
+                              url("https://www.transparenttextures.com/patterns/japanese-paper.png");
             background-attachment: fixed;
             opacity: 0; z-index: -1;
             transition: opacity 1.2s ease;
         }
 
-        /* [Debug Log Stamp] 開発用コンソール（永続表示） */
+        /* [Visual Log Stamp] 開発段階の状況を永続出力 */
         #logOverlay {
             position: fixed; top: 0; left: 0; width: 100%; background: rgba(47, 93, 98, 0.85);
             color: #FFF; font-size: 10px; padding: 4px 10px; z-index: 9999; pointer-events: none;
@@ -59,95 +59,137 @@
 
         .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; box-sizing: border-box; position: relative; }
         
-        /* [Opening Animation Items] */
+        /* [Opening Animation] 書道道具の配置を模した順次イーズイン */
         .reveal-item { opacity: 0; transform: translateY(15px); }
         .reveal-active { animation: revealEffect 0.8s forwards cubic-bezier(0.25, 0.1, 0.25, 1.0); }
-        @keyframes revealEffect { to { opacity: 1; transform: translateY(0); } }
 
-        /* [Header & Titles] */
+        @keyframes revealEffect {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* [Component Styles] */
         .header { text-align: center; margin-bottom: 50px; }
         .logo-main { width: 180px; }
-        .main-title-area { text-align: center; margin-bottom: var(--group-margin); }
-        .main-title { font-size: 1.8rem; font-weight: 700; color: var(--progress-track); letter-spacing: 0.08em; }
-        .sub-title-badge { font-size: 0.75rem; color: var(--neutral-border); display: block; margin-top: 5px; margin-bottom: 40px; }
 
-        /* [UI Components] */
-        .home-card, .q-unit {
+        .main-title-area { text-align: center; margin-bottom: var(--group-margin); }
+        .main-title { font-size: 1.8rem; font-weight: 700; margin: 0; color: var(--progress-track); letter-spacing: 0.08em; }
+        .sub-title-badge { font-size: 0.75rem; color: var(--neutral-border); letter-spacing: 0.05em; display: block; margin-top: 5px; margin-bottom: 40px; }
+        .description-text { font-size: 0.9rem; line-height: 2; color: var(--text-main); margin-bottom: 30px; }
+
+        .q-unit {
             background: rgba(255, 255, 255, 0.5); border: 1px solid var(--neutral-border);
-            padding: 35px; border-radius: var(--global-radius); margin-bottom: var(--group-margin);
-            backdrop-filter: blur(2px);
+            padding: 25px 20px; border-radius: var(--global-radius);
+            margin-bottom: var(--group-margin); backdrop-filter: blur(2px);
         }
-        .input-group label { display: block; font-size: 0.8rem; font-weight: bold; color: var(--progress-track); margin-bottom: 15px; }
-        .input-group input { width: 100%; padding: 12px 0; border: none; border-bottom: 1px solid var(--neutral-border); background: transparent; font-size: 1.4rem; outline: none; }
+        .q-text { font-size: 0.9rem; font-weight: bold; margin-bottom: 15px; color: var(--progress-track); }
+
+        .home-card { background: rgba(255, 255, 255, 0.4); border: 1px solid var(--neutral-border); padding: 35px; border-radius: var(--global-radius); margin-bottom: 40px; }
+        .input-group label { display: block; font-size: 0.8rem; margin-bottom: 15px; font-weight: bold; color: var(--progress-track); }
+        .input-group input { 
+            width: 100%; padding: 12px 0; border: none; border-bottom: 1px solid var(--neutral-border);
+            background: transparent; font-size: 1.4rem; outline: none; transition: 0.4s; font-family: inherit;
+        }
         .input-group input::placeholder { color: var(--neutral-border); opacity: 0.1; }
 
-        /* [Interactive] 回答ボタン：墨の滲みと吸着演出 */
+        /* [Interactive] 回答ボタン：15px下からの吸着演出 */
         .opt-group { display: flex; gap: 8px; justify-content: space-between; }
         .opt-btn {
             flex: 1; padding: 12px 2px; border: 1px solid var(--neutral-border); background: transparent;
             border-radius: var(--global-radius); cursor: pointer; font-size: 0.8rem; text-align: center; 
-            transition: all 0.5s ease; position: relative; overflow: hidden; z-index: 1;
+            transition: color 0.5s ease, border-color 0.5s ease; font-family: inherit;
+            position: relative; overflow: hidden; z-index: 1;
         }
-        /* 墨の滲みレイヤー */
-        .opt-btn::after {
-            content: ''; position: absolute; top: 50%; left: 50%; width: 0; height: 0;
-            background: radial-gradient(circle, rgba(47,93,98,0.2) 0%, rgba(47,93,98,0) 70%);
-            transform: translate(-50%, -50%) translateY(15px); opacity: 0; z-index: -1;
-            transition: width 0.6s ease-out, height 0.6s ease-out, transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s;
+        /* 吸着する四角形の背景演出 */
+        .opt-btn::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--active-highlight); z-index: -1; opacity: 0;
+            /* 15px下から湧き上がる初期位置 */
+            transform: translateY(15px);
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease;
+            will-change: transform, opacity;
         }
         .opt-btn.selected { color: #FFF; border-color: var(--active-highlight); }
-        .opt-btn.selected::after {
-            width: 250%; height: 250%; opacity: 1; transform: translate(-50%, -50%) translateY(0);
-            background-color: var(--active-highlight); /* 吸着後の色 */
+        .opt-btn.selected::before {
+            opacity: 1; transform: translateY(0); /* 定位置へ吸着 */
         }
 
-        /* [Action Buttons] */
+        /* [Buttons] */
         .btn-container { text-align: center; margin-top: 20px; }
-        .btn { width: 75%; padding: 20px; border-radius: var(--global-radius); border: 1px solid var(--neutral-border); font-weight: 700; cursor: pointer; transition: 0.6s; background: rgba(199, 178, 153, 0.2); color: var(--neutral-border); }
-        .btn.btn-ready { background: var(--active-highlight); color: #FFF; border: none; }
+        .btn {
+            width: 75%; padding: 20px; background: rgba(199, 178, 153, 0.2); color: var(--neutral-border);
+            border: 1px solid var(--neutral-border); border-radius: var(--global-radius); font-size: 1rem; 
+            cursor: pointer; transition: all 0.6s ease; font-family: inherit; font-weight: 700; letter-spacing: 0.1em;
+        }
+        .btn.btn-ready { background: var(--active-highlight); color: #FFF; border: none; box-shadow: 0 4px 15px rgba(87, 195, 194, 0.2); }
 
-        /* [Navigation Transitions] */
+        /* [Luxury Float Transitions] 上下左右のページ遷移 */
         .page-section { position: absolute; top: 0; left: 0; width: 100%; opacity: 0; pointer-events: none; transition: var(--luxury-transition); }
         .page-section.active { opacity: 1; pointer-events: auto; position: relative; }
         .exit-left { transform: translateX(-50px); opacity: 0; }
         .exit-right { transform: translateX(50px); opacity: 0; }
         .enter-down { animation: enterDown var(--luxury-transition) forwards; }
-        @keyframes enterDown { 0% { transform: translateY(-30px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+        @keyframes enterDown {
+            0% { transform: translateY(-30px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
 
-        /* [Cheki Template] */
+        /* [Result Area Specifics] */
+        #resultArea { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--mist-background); z-index: 500; overflow-y: auto; padding: 40px 20px; box-sizing: border-box; }
+        
+        /* [Output: Cheki Template] SNSインパクトと視覚的正確性の追求 */
         #chekiWrapper { position: absolute; left: -9999px; }
         #chekiTemplate { 
-            width: 500px; background: #FFF; padding: 40px 40px 140px 40px; 
-            border: 1px solid #EEE; text-align: center; position: relative; overflow: visible;
+            width: 480px; background: #FFF; padding: 30px 30px 140px 30px; 
+            border: 1px solid #EEE; text-align: center; position: relative;
+            overflow: visible; /* バッジのはみ出しを許容 */
         }
         .cheki-photo-area { 
-            width: 100%; aspect-ratio: 1/1; background: #F8F8F8; 
-            position: relative; overflow: visible; border: 1px solid #EAEAEA; 
+            width: 100%; aspect-ratio: 1/1; background: #f0f0f0; 
+            position: relative; overflow: visible; border: 1px solid #E0E0E0; 
         }
-        /* マスキングテープ風バッジ */
+        
+        /* バッジ：−9°の傾斜、最上層、見切れ防止設計 */
         .cheki-result-badge { 
-            position: absolute; top: 50px; left: -30px; /* 左開始点を50px下げ、少し外側へ */
-            background: rgba(87, 195, 194, 0.9); color: #FFF; 
-            padding: 15px 40px; font-size: 30px; font-weight: bold; 
+            position: absolute; top: -15px; left: -20px; 
+            background: var(--active-highlight); color: #FFF; 
+            padding: 12px 35px; font-size: 28px; font-weight: bold; 
             transform: rotate(-9deg); transform-origin: top left; z-index: 1000;
-            clip-path: polygon(2% 0%, 98% 1%, 100% 15%, 98% 98%, 2% 99%, 0% 85%); /* 手ちぎり風 */
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.1); white-space: nowrap;
+            box-shadow: 4px 4px 12px rgba(0,0,0,0.2);
+            white-space: nowrap;
+            max-width: 80%; /* 写真上部1/3〜をカバーする範囲制限 */
         }
-        .cheki-hashtag { position: absolute; bottom: 15px; right: 15px; font-size: 18px; color: var(--neutral-border); font-family: sans-serif; }
-        .cheki-name-area { margin-top: 60px; font-family: 'Yusei Magic', sans-serif; font-size: 58px; color: var(--text-black); }
-        .cheki-description-area { margin: 20px auto 0; width: 80%; font-family: 'Noto Serif JP', serif; font-size: 18px; line-height: 1.7; color: var(--text-main); text-align: left; }
+        
+        .cheki-hashtag { position: absolute; bottom: 15px; right: 20px; font-size: 16px; color: var(--neutral-border); letter-spacing: 1px; font-weight: bold; }
+        
+        /* 名前：油性マジック風、特大サイズ、敬称なし */
+        .cheki-name-area { 
+            margin-top: 60px; 
+            font-family: 'Yusei Magic', sans-serif;
+            font-size: 56px; 
+            color: var(--text-black); 
+            line-height: 1;
+        }
 
-        /* [Results Display] */
-        #resultArea { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--mist-background); z-index: 500; overflow-y: auto; padding: 40px 20px; box-sizing: border-box; }
-        .save-guide { font-size: 12px; color: var(--neutral-border); margin-top: 10px; }
-        .share-group { display: flex; flex-direction: column; gap: 10px; margin-top: 30px; width: 100%; align-items: center; }
+        /* Description: 80%幅、ブランドフォント */
+        .cheki-description-area {
+            margin: 30px auto 0; width: 85%;
+            font-family: 'Noto Serif JP', serif;
+            font-size: 18px; line-height: 1.8;
+            color: var(--text-main);
+            text-align: left;
+        }
 
+        /* [Modal & Footer] */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.4); display: none; z-index: 1000; align-items: flex-start; justify-content: center; backdrop-filter: blur(10px); }
+        .modal-content { background: #FFF; width: 92%; height: 75vh; margin-top: 5vh; border-radius: var(--global-radius); padding: 40px 30px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--neutral-border); }
+        .policy-body { flex: 1; overflow-y: auto; font-size: 0.85rem; line-height: 2; color: #555; text-align: left; }
         .site-footer { background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.2); padding: 60px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D; }
+        .footer-logo-img { width: 140px; margin-bottom: 25px; opacity: 0.7; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <div id="logOverlay">Initializing...</div>
+    <div id="logOverlay">道具を整えています...</div>
     <div id="washiBg"></div>
 
     <div class="container">
@@ -160,16 +202,20 @@
                 <div class="main-title-area reveal-item" id="reveal-2">
                     <h1 class="main-title">愛犬の性格診断</h1>
                     <span class="sub-title-badge">〈K9 Harmony ドッグトレーナー監修〉</span>
-                    <p class="description-text" style="text-align:center;">愛犬の行動から、潜在的な悩みと<br>最適な絆の深め方を可視化します。</p>
+                    <p class="description-text">愛犬の行動から、潜在的な悩みと<br>最適な絆の深め方を可視化します。</p>
                 </div>
                 <div class="home-card reveal-item" id="reveal-3">
-                    <div class="input-group"><label>愛犬の名前</label><input type="text" id="dogName" placeholder="例：ポチ" maxlength="10"></div>
+                    <div class="input-group">
+                        <label>愛犬の名前</label>
+                        <input type="text" id="dogName" placeholder="例：ポチ" maxlength="10">
+                    </div>
                 </div>
                 <div class="btn-container reveal-item" id="reveal-4">
                     <button class="btn btn-ready" id="startBtn">診断を始める</button>
                     <p style="margin-top:25px;"><span id="openPrivacy" style="text-decoration:underline; font-size:0.75rem; cursor:pointer; color:var(--neutral-border);">個人情報保護方針</span></p>
                 </div>
             </section>
+
             <section class="page-section" id="page-groupA"><div id="groupA-list"></div><div class="btn-container"><button class="btn" id="toGroupB" disabled>次へ進む</button></div></section>
             <section class="page-section" id="page-groupB"><div id="groupB-list"></div><div style="display:flex; justify-content:space-between; align-items:center; width:85%; margin:40px auto 0;"><span id="backToA" style="cursor:pointer; font-size:0.8rem; color:var(--neutral-border); text-decoration:underline;">戻る</span><button class="btn" id="toGroupC" disabled style="width:75%;">次へ進む</button></div></section>
             <section class="page-section" id="page-groupC"><div id="groupC-list"></div><div style="display:flex; justify-content:space-between; align-items:center; width:85%; margin:40px auto 0;"><span id="backToB" style="cursor:pointer; font-size:0.8rem; color:var(--neutral-border); text-decoration:underline;">戻る</span><button class="btn" id="finishBtn" disabled style="width:75%;">結果を見る</button></div></section>
@@ -179,15 +225,10 @@
     <div id="resultArea" class="hidden">
         <div class="q-unit" style="text-align:center; opacity:1;">
             <h2 id="resultTypeTitle" style="color:var(--progress-track); margin-top:0;">診断結果</h2>
-            <div id="imgOutWrap" style="position:relative; margin:20px 0;">
-                <img id="generatedImageOutput" style="width:100%; border:1px solid var(--neutral-border);" alt="結果画像">
-                <div class="save-guide">※画像長押しで保存</div>
+            <div id="imageContainer" style="margin: 20px 0;">
+                <img id="generatedImageOutput" style="width:100%; border:1px solid var(--neutral-border);" alt="結果チェキ">
             </div>
-            <div class="share-group">
-                <button class="btn btn-ready" id="sendLiffBtn">トークルームに送信</button>
-                <button class="btn" id="shareLiffBtn" style="background:#FFF;">SNSにシェアする</button>
-                <p id="backBtn" style="margin-top:20px; cursor:pointer; font-size:0.85rem; color:var(--neutral-border);">最初からやり直す</p>
-            </div>
+            <p id="backToHome" style="margin-top:40px; cursor:pointer; font-size:0.8rem; color:var(--neutral-border);">最初からやり直す</p>
         </div>
     </div>
 
@@ -201,19 +242,21 @@
         <div id="chekiTemplate">
             <div class="cheki-photo-area">
                 <div class="cheki-result-badge" id="tmpl_type">タイプ名</div>
-                <div style="font-size:80px; margin-top:80px;">🐾</div>
+                <div style="font-size:70px; margin-top:70px;">🐾</div>
                 <div class="cheki-hashtag">#K9Harmony #愛犬の性格診断</div>
             </div>
             <div class="cheki-name-area" id="tmpl_name">名前</div>
-            <div class="cheki-description-area" id="tmpl_desc">説明文</div>
+            <div class="cheki-description-area" id="tmpl_desc">解説文</div>
         </div>
     </div>
+
+    <div class="modal" id="privacyModal"><div class="modal-content"><div id="policyContent" class="policy-body"></div><div id="closePrivacy" style="margin-top:20px; text-align:center; padding:15px; background:var(--mist-background); cursor:pointer;">閉じる</div></div></div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
 /**
- * [K9 Harmony Logic v5.7]
- * 10年後の保守性を正義とし、DB連携と演出を完全同期。
+ * [K9 Harmony Logic v5.6]
+ * 10年後の保守性を正義とし、機能の棲み分けを厳守。
  */
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
@@ -222,66 +265,91 @@ const CONFIG = {
 
 let MASTER_QUESTIONS = [];
 let MASTER_RESULTS = [];
-let state = { userId: null, dogName: "", answers: {}, resultType: "" };
+let state = { userId: null, dogName: "", answers: {} };
 
-/** [Logger] 進捗出力 */
+/** [Logger] 動作状況の永続的表示 */
 function log(msg) {
     const ts = new Date().toLocaleTimeString();
     document.getElementById('logOverlay').innerText = `[${ts}] ${msg}`;
-    console.log(`[STAMP] ${msg}`);
+    console.log(`[LOG] ${msg}`);
 }
 
-/** [Data Load] 起動直後からバックグラウンドで読込開始 */
+/** [Opening Sequence] 1.2秒の書道演出と並行ロード */
+async function startOpening() {
+    log("和紙を広げています...");
+    document.getElementById('washiBg').style.opacity = 1;
+
+    const timeline = [
+        { id: 'reveal-1', delay: 200 },
+        { id: 'reveal-2', delay: 400 },
+        { id: 'reveal-3', delay: 600 },
+        { id: 'reveal-4', delay: 800 },
+        { id: 'reveal-5', delay: 1000 }
+    ].map(item => new Promise(resolve => {
+        setTimeout(() => {
+            const el = document.getElementById(item.id);
+            if (el) el.classList.add('reveal-active');
+            resolve();
+        }, item.delay);
+    }));
+
+    // 演出中にマスターデータを取得（並行処理）
+    await Promise.all([...timeline, fetchMasterData(), initLiff()]);
+    log("準備が整いました。");
+}
+
+/** [Data Service] GAS連携：マスターデータ取得 */
 async function fetchMasterData() {
-    log("データロード開始...");
+    log("墨を摺っています(データ取得中)...");
     try {
         const res = await fetch(`${CONFIG.GAS_URL}?action=fetchMaster`);
         const data = await res.json();
         MASTER_QUESTIONS = data.questions;
         MASTER_RESULTS = data.results;
-        log("データ取得完了。");
-    } catch (e) { log("通信エラー：マスター取得失敗。"); }
+    } catch (e) { log("データロード失敗：通信環境を確認してください。"); }
 }
 
-/** [Opening] 1.2秒の演出とロードの同期 */
-async function startOpeningSequence() {
-    log("和紙を広げています...");
-    document.getElementById('washiBg').style.opacity = 1;
-
-    const animations = [1,2,3,4,5].map(n => new Promise(res => {
-        setTimeout(() => {
-            document.getElementById(`reveal-${n}`).classList.add('reveal-active');
-            res();
-        }, 200 * n);
-    }));
-
-    // 演出と並行してLIFF初期化も行う
-    await Promise.all([...animations, initLiff()]);
-    log("準備が整いました。");
-}
-
+/** [LIFF Service] 初期化 */
 async function initLiff() {
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
         if (!liff.isLoggedIn()) liff.login();
         state.userId = liff.getContext().userId;
-    } catch (e) { log("LIFF Init Error."); }
+    } catch (e) { log("LIFF接続エラー。"); }
 }
 
-/** [UI Logic] 質問構築 */
+/** [Navigator] セクション遷移制御 */
+function navigate(fromId, toId, direction) {
+    const fromEl = document.getElementById(fromId);
+    const toEl = document.getElementById(toId);
+    fromEl.classList.remove('active');
+    fromEl.classList.add(direction === 'next' ? 'exit-left' : 'exit-right');
+    
+    setTimeout(() => {
+        fromEl.classList.add('hidden');
+        fromEl.classList.remove('exit-left', 'exit-right');
+        toEl.classList.remove('hidden');
+        void toEl.offsetWidth; 
+        toEl.classList.add('active', 'enter-down');
+    }, 400);
+}
+
+/** [UI Builder] 質問動的生成 */
 function buildSection(group, targetId) {
     const container = document.getElementById(targetId);
     container.innerHTML = '';
     MASTER_QUESTIONS.filter(q => q.Section === group).forEach(q => {
         const div = document.createElement('div');
-        div.className = 'q-unit'; div.style.opacity = 1;
+        div.className = 'q-unit';
         div.innerHTML = `<div class="q-text">${q.Text}</div>`;
         const optGroup = document.createElement('div');
         optGroup.className = 'opt-group';
         
-        [{t:q.OptA_Text,s:q.OptA_Score},{t:q.OptB_Text,s:q.OptB_Score},{t:q.OptC_Text,s:q.OptC_Score}].forEach(opt => {
+        const options = [{t: q.OptA_Text, s: q.OptA_Score}, {t: q.OptB_Text, s: q.OptB_Score}, {t: q.OptC_Text, s: q.OptC_Score}];
+        options.forEach(opt => {
             const btn = document.createElement('button');
-            btn.className = 'opt-btn'; btn.innerText = opt.t;
+            btn.className = 'opt-btn';
+            btn.innerText = opt.t;
             btn.onclick = () => {
                 optGroup.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
@@ -290,7 +358,8 @@ function buildSection(group, targetId) {
             };
             optGroup.appendChild(btn);
         });
-        div.appendChild(optGroup); container.appendChild(div);
+        div.appendChild(optGroup);
+        container.appendChild(div);
     });
 }
 
@@ -298,81 +367,65 @@ function checkReady(group) {
     const qCount = MASTER_QUESTIONS.filter(q => q.Section === group).length;
     const answered = MASTER_QUESTIONS.filter(q => q.Section === group && state.answers[q.QuestionID] !== undefined).length;
     if (qCount === answered) {
-        const btnId = group==='A'?'toGroupB':group==='B'?'toGroupC':'finishBtn';
+        const btnId = group === 'A' ? 'toGroupB' : group === 'B' ? 'toGroupC' : 'finishBtn';
         const btn = document.getElementById(btnId);
-        btn.disabled = false; btn.classList.add('btn-ready');
+        btn.disabled = false;
+        btn.classList.add('btn-ready');
     }
 }
 
-function navigate(fromId, toId, direction) {
-    const fromEl = document.getElementById(fromId);
-    const toEl = document.getElementById(toId);
-    fromEl.classList.remove('active');
-    fromEl.classList.add(direction==='next'?'exit-left':'exit-right');
-    setTimeout(() => {
-        fromEl.classList.add('hidden'); fromEl.classList.remove('exit-left','exit-right');
-        toEl.classList.remove('hidden'); void toEl.offsetWidth; toEl.classList.add('active','enter-down');
-    }, 400);
-}
-
-/** [Process] 診断実行・画像生成 */
+/** [Core Logic] 診断結果処理と画像生成 */
 async function processFinal() {
-    log("運命を確定させています...");
+    log("診断中...");
     const sX = state.answers[1] + state.answers[2] + state.answers[3];
     const sY = state.answers[4] + state.answers[5] + state.answers[6];
     const c = state.answers[7];
+
     const getR = (s) => (s <= 12 ? 'LOW' : s <= 111 ? 'MID' : 'HIGH');
     let rX = getR(sX), rY = getR(sY);
     if ((sX === 12 || sX === 13) && c === 1) rX = 'MID';
     if ((sX === 12 || sX === 13) && c === -1) rX = 'LOW';
 
-    const resObj = MASTER_RESULTS.find(r => r.TypeKey === `${rX}_${rY}`);
-    state.resultType = resObj.TypeName + "タイプ";
+    const result = MASTER_RESULTS.find(r => r.TypeKey === `${rX}_${rY}`);
+    const type = result.TypeName + "タイプ";
 
     document.getElementById('resultArea').classList.remove('hidden');
-    document.getElementById('resultTypeTitle').innerText = state.resultType;
+    document.getElementById('tmpl_type').innerText = type;
+    document.getElementById('tmpl_name').innerText = state.dogName; /* 敬称削除 */
+    document.getElementById('tmpl_desc').innerText = result.Description;
     
-    // 画像テンプレート流し込み
-    document.getElementById('tmpl_type').innerText = state.resultType;
-    document.getElementById('tmpl_name').innerText = state.dogName;
-    document.getElementById('tmpl_desc').innerText = resObj.Description;
-
-    // 画像生成（遅延なし表示のための同期待機）
+    // フォント読み込み完了を待機して画像生成（欠け防止）
     await document.fonts.ready;
-    html2canvas(document.getElementById('chekiTemplate'), { scale: 2, useCORS: true }).then(canvas => {
+    html2canvas(document.getElementById('chekiTemplate'), { 
+        scale: 2, 
+        useCORS: true, 
+        logging: false 
+    }).then(canvas => {
         document.getElementById('generatedImageOutput').src = canvas.toDataURL();
-        log("診断完了。");
+        log("診断が完了しました。");
     });
 
-    gtag('event', 'diagnosis_complete', { 'type': state.resultType });
-    fetch(CONFIG.GAS_URL, { method:'POST', mode:'no-cors', body: JSON.stringify({ uid:state.userId, dogName:state.dogName, scoreX:sX, scoreY:sY, resultType:state.resultType }) });
+    gtag('event', 'diagnosis_complete', { 'type': type });
+    fetch(CONFIG.GAS_URL, { method:'POST', mode:'no-cors', body: JSON.stringify({ uid:state.userId, dogName:state.dogName, scoreX:sX, scoreY:sY, resultType:type }) });
 }
 
-/** [Initialize] */
+/** [Initialization] */
 function init() {
-    fetchMasterData(); // 直ちに開始
-    startOpeningSequence();
-
+    startOpening();
     document.getElementById('startBtn').onclick = () => {
         state.dogName = document.getElementById('dogName').value.trim();
         if (!state.dogName) return alert("お名前を教えてください");
-        buildSection('A', 'groupA-list'); navigate('page-home', 'page-groupA', 'next');
+        buildSection('A', 'groupA-list');
+        navigate('page-home', 'page-groupA', 'next');
     };
     document.getElementById('toGroupB').onclick = () => { buildSection('B', 'groupB-list'); navigate('page-groupA', 'page-groupB', 'next'); };
     document.getElementById('toGroupC').onclick = () => { buildSection('C', 'groupC-list'); navigate('page-groupB', 'page-groupC', 'next'); };
     document.getElementById('backToA').onclick = () => navigate('page-groupB', 'page-groupA', 'back');
     document.getElementById('backToB').onclick = () => navigate('page-groupC', 'page-groupB', 'back');
     document.getElementById('finishBtn').onclick = processFinal;
-    document.getElementById('backBtn').onclick = () => location.reload();
-
-    // LIFF送信
-    document.getElementById('sendLiffBtn').onclick = () => {
-        liff.sendMessages([{ type: 'text', text: `診断結果は「${state.resultType}」でした！🐾` }]).then(() => liff.closeWindow());
-    };
-    // SNSシェア
-    document.getElementById('shareLiffBtn').onclick = () => {
-        liff.shareTargetPicker([{ type: 'text', text: `${state.dogName}の診断結果は${state.resultType}！ #K9Harmony #愛犬の性格診断` }]);
-    };
+    document.getElementById('backToHome').onclick = () => location.reload();
+    document.getElementById('openPrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'flex'; };
+    document.getElementById('closePrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'none'; };
 }
 
 init();
