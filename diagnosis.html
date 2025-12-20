@@ -46,15 +46,20 @@
             font-family: monospace; line-height: 1.5;
         }
 
-        /* [Background] 視認性を調整したSVG和紙テクスチャ */
+        /* [Background] 抜本的修正: 確実に描画されるBase64ノイズテクスチャ */
         #washiBg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--mist-background);
-            /* ノイズ密度を高め、不透明度を0.08に設定して視認性を確保 */
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
-            opacity: 0; z-index: -1;
+            /* ノイズテクスチャをBase64化して埋め込み（通信・生成エラーなし） */
+            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAAAAAABAQECAgIDAwMEBAQFBQUGBgYh41cYAAAACHRSTlMAM8MzMzMzMzOus8ADAAAAJUlEQVQ4y2NgGAWjYBSMglEwCkbBSMEYiEGMYwAxDqK4YRSMAgAHCwAB+j8F1AAAAABJRU5ErkJggg==");
+            background-size: 100px 100px;
+            opacity: 0.05; /* テクスチャの濃さ調整 */
+            z-index: -1;
+            /* 起動時にopacityを操作するクラス */
             transition: opacity 1.2s ease;
         }
+        /* JSで付与するクラス */
+        #washiBg.visible { opacity: 0.05; }
 
         .container { 
             width: 100%; max-width: 600px; margin: 0 auto; padding: 40px 20px; 
@@ -73,7 +78,7 @@
         .main-title { 
             font-size: 1.8rem; font-weight: 700; margin: 0; 
             color: var(--progress-track); letter-spacing: 0.08em; 
-            font-family: 'Noto Serif JP', serif; /* 復元 */
+            font-family: 'Noto Serif JP', serif;
         }
         .sub-title-badge { font-size: 0.75rem; color: var(--neutral-border); display: block; margin-top: 5px; margin-bottom: 40px; }
         .description-text { font-size: 0.9rem; line-height: 2; color: var(--text-main); margin-bottom: 30px; }
@@ -93,38 +98,41 @@
         }
         .input-group input::placeholder { color: var(--neutral-border); opacity: 0.1; }
 
-        /* [Interactive] 墨跡滲演出（0.8s / blur / トリミング） */
+        /* [Interactive] 選択肢ボタン演出（ブランドカラー適用） */
         .opt-group { display: flex; gap: 8px; justify-content: space-between; }
         .opt-btn {
             flex: 1; padding: 12px 2px; border: 1px solid var(--neutral-border); background: transparent;
             border-radius: var(--global-radius); cursor: pointer; font-size: 0.8rem; text-align: center; 
-            transition: color 0.5s ease, border-color 0.5s ease; position: relative; overflow: hidden; z-index: 1;
+            transition: color 0.4s ease, border-color 0.4s ease; 
+            position: relative; overflow: hidden; z-index: 1;
         }
+        /* 20pxの円からブランドカラーで広がる */
         .opt-btn::before {
-            content: ''; position: absolute; top: 50%; left: 50%; width: 4px; height: 4px;
-            background: radial-gradient(circle, var(--active-highlight) 0%, rgba(87,195,194,0.4) 60%, transparent 100%);
-            border-radius: 50%; transform: translate(-50%, -50%) scale(0);
-            opacity: 0; z-index: -1; filter: blur(12px);
-            transition: transform 0.8s ease-out, opacity 0.3s;
-            will-change: transform, opacity;
+            content: ''; position: absolute; 
+            top: 50%; left: 50%; width: 20px; height: 20px;
+            background: var(--active-highlight); /* ブランドカラー */
+            border-radius: 50%; 
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0; z-index: -1; filter: blur(8px);
+            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s, filter 0.6s;
+            will-change: transform, opacity, filter;
         }
         .opt-btn.selected { color: #FFF; border-color: var(--active-highlight); }
         .opt-btn.selected::before {
-            transform: translate(-50%, -50%) scale(80);
-            opacity: 1; border-radius: 0; filter: blur(2px);
+            transform: translate(-50%, -50%) scale(25); /* 枠外まで拡大 */
+            opacity: 1; filter: blur(0px);
         }
 
-        /* [Buttons] 強制中央配置の修正 */
+        /* [Buttons] */
         .btn-container { text-align: center; margin-top: 20px; width: 100%; }
         .btn {
-            display: block; /* ブロック要素化 */
-            margin: 0 auto; /* 左右マージン自動で中央寄せ */
-            width: 75%; padding: 20px; background: rgba(199, 178, 153, 0.2); color: var(--neutral-border);
-            border: 1px solid var(--neutral-border); border-radius: var(--global-radius); font-size: 1rem; 
-            cursor: pointer; transition: all 0.6s ease; font-family: inherit; font-weight: 700; letter-spacing: 0.1em;
+            display: block; margin: 0 auto; width: 75%; padding: 20px; 
+            background: rgba(199, 178, 153, 0.2); color: var(--neutral-border);
+            border: 1px solid var(--neutral-border); border-radius: var(--global-radius); 
+            font-size: 1rem; cursor: pointer; transition: all 0.6s ease; 
+            font-family: inherit; font-weight: 700; letter-spacing: 0.1em;
         }
         .btn.btn-ready { background: var(--active-highlight); color: #FFF; border: none; box-shadow: 0 4px 15px rgba(87, 195, 194, 0.2); }
-        /* ロード中は薄くする */
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* [Navigation] */
@@ -137,27 +145,47 @@
 
         /* [Result Area] */
         #resultArea { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--mist-background); z-index: 500; overflow-y: auto; padding: 40px 20px; box-sizing: border-box; }
+        /* タイトル改行 */
         .result-title-main { font-size: 1.5rem; color: var(--progress-track); margin-top: 0; line-height: 1.4; }
         .save-guide { font-size: 12px; color: var(--neutral-border); margin: 10px 0; font-family: 'Noto Serif JP'; }
         
+        /* ボタン横並び */
         .share-group { display: flex; flex-direction: row; gap: 10px; margin-top: 30px; width: 100%; justify-content: center; }
-        .btn-side { flex: 1; font-size: 0.9rem; margin: 0; /* 横並び時はマージンリセット */ }
+        .btn-side { flex: 1; font-size: 0.9rem; margin: 0; }
 
         /* [Cheki Template] */
         #chekiWrapper { position: absolute; left: -9999px; }
-        #chekiTemplate { width: 500px; background: #FFF; padding: 40px 40px 140px 40px; border: 1px solid #EEE; text-align: center; position: relative; overflow: visible; }
+        #chekiTemplate { 
+            width: 500px; background: #FFF; padding: 40px 40px 140px 40px; 
+            border: 1px solid #EEE; text-align: center; position: relative; overflow: visible;
+        }
         .cheki-photo-area { width: 100%; aspect-ratio: 1/1; background: #F8F8F8; position: relative; overflow: visible; border: 1px solid #EAEAEA; }
         
+        /* バッジ：マスキングテープ感（ギザギザ多め）、主張強め */
         .cheki-result-badge { 
-            position: absolute; top: 60px; left: -40px; 
-            background: rgba(87, 195, 194, 0.9); color: #FFF; padding: 12px 45px; font-size: 32px; font-weight: bold; 
+            position: absolute; top: 50px; left: -40px; 
+            background: rgba(87, 195, 194, 1); /* 透過なしで主張 */
+            color: #FFF; padding: 15px 45px; font-size: 36px; font-weight: bold; 
             transform: rotate(-9deg); transform-origin: top left; z-index: 2000;
-            clip-path: polygon(0% 12%, 2% 0%, 98% 3%, 100% 15%, 97% 92%, 94% 100%, 5% 98%, 0% 85%);
-            box-shadow: 2px 3px 6px rgba(0,0,0,0.15); white-space: nowrap; max-width: 65%;
+            clip-path: polygon(
+                0% 5%, 3% 0%, 7% 4%, 10% 0%, 15% 5%, 90% 2%, 95% 6%, 100% 0%, 
+                98% 90%, 95% 100%, 92% 95%, 88% 100%, 85% 96%, 
+                5% 98%, 0% 90%
+            );
+            box-shadow: 4px 6px 12px rgba(0,0,0,0.3); /* 影を強化 */
+            white-space: nowrap; max-width: 70%;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
         }
+        /* ハッシュタグ：太字禁止 */
         .cheki-hashtag { position: absolute; bottom: 15px; right: 20px; font-size: 18px; color: var(--neutral-border); font-family: sans-serif; font-weight: normal; }
         .cheki-name-area { margin-top: 60px; font-family: 'Yusei Magic', sans-serif; font-size: 64px; color: var(--text-black); line-height: 1; }
-        .cheki-description-area { margin: 20px auto 0; margin-bottom: 20px; width: 80%; font-family: 'Noto Serif JP', serif; font-size: 20px; line-height: 1.8; color: var(--text-main); text-align: left; }
+        
+        /* Description：下部余白20px */
+        .cheki-description-area { 
+            margin: 20px auto 20px; 
+            width: 80%; font-family: 'Noto Serif JP', serif; 
+            font-size: 20px; line-height: 1.8; color: var(--text-main); text-align: left; 
+        }
 
         /* [Footer] 最下部固定 */
         .site-footer { 
@@ -174,7 +202,7 @@
     </style>
 </head>
 <body>
-    <div id="logOverlay">Connecting...</div>
+    <div id="logOverlay">Initializing...</div>
     <div id="washiBg"></div>
 
     <div class="container">
@@ -254,10 +282,8 @@ function log(msg) {
     const ts = new Date().toLocaleTimeString();
     const overlay = document.getElementById('logOverlay');
     if(overlay) overlay.innerText = `[${ts}] ${msg}`;
-    console.log(`[LOG] ${ts}: ${msg}`);
 }
 
-/** [Data Load] データが届くまでボタンを有効化しない */
 async function fetchMasterData() {
     log("Loading data...");
     try {
@@ -266,8 +292,6 @@ async function fetchMasterData() {
         MASTER_QUESTIONS = data.questions;
         MASTER_RESULTS = data.results;
         log("Data ready.");
-        
-        // データ取得完了でボタンを有効化
         const btn = document.getElementById('startBtn');
         if(btn) {
             btn.disabled = false;
@@ -278,7 +302,9 @@ async function fetchMasterData() {
 
 async function startOpeningSequence() {
     log("Opening UI...");
-    document.getElementById('washiBg').style.opacity = 1;
+    // 起動時に背景を可視化
+    document.getElementById('washiBg').style.opacity = 1; 
+    
     const timeline = [1,2,3,4,5].map(n => new Promise(r => {
         setTimeout(() => {
             const el = document.getElementById(`reveal-${n}`);
@@ -303,7 +329,6 @@ function buildSection(group, targetId) {
     if(!container) return;
     container.innerHTML = '';
     
-    // データがない場合は処理しない（安全装置）
     if(MASTER_QUESTIONS.length === 0) return alert("通信エラー：再読み込みしてください");
 
     MASTER_QUESTIONS.filter(q => q.Section === group).forEach(q => {
@@ -366,6 +391,7 @@ async function processFinal() {
     state.typeName = resObj ? resObj.TypeName : "Unknown";
 
     document.getElementById('resultArea').classList.remove('hidden');
+    // タイトル改行適用
     document.getElementById('resultTypeTitle').innerText = state.typeName + "タイプ";
     
     document.getElementById('tmpl_type').innerText = state.typeName + "タイプ";
@@ -383,12 +409,10 @@ async function processFinal() {
 }
 
 function init() {
-    // データ取得開始（ボタンはDisabledで待機）
     fetchMasterData();
     startOpeningSequence();
 
     document.getElementById('startBtn').onclick = () => {
-        // データガード
         if(MASTER_QUESTIONS.length === 0) return;
         state.dogName = document.getElementById('dogName').value.trim();
         if (!state.dogName) return alert("お名前を教えてください");
@@ -401,13 +425,37 @@ function init() {
     document.getElementById('finishBtn').onclick = processFinal;
     document.getElementById('backToReload').onclick = () => location.reload();
 
+    // LINEに送信 (context check)
     document.getElementById('sendLiffBtn').onclick = () => {
-        liff.sendMessages([{ type: 'text', text: `${state.dogName}の性格診断結果は「${state.typeName}タイプ」でした！🐾` }])
-            .then(() => liff.closeWindow());
+        if (!liff.isInClient()) {
+            return alert("この機能はLINEアプリ内でのみ動作します。");
+        }
+        // Context判定
+        const context = liff.getContext();
+        if (context && context.type !== 'none') {
+            liff.sendMessages([{ type: 'text', text: `${state.dogName}の性格診断結果は「${state.typeName}タイプ」でした！🐾` }])
+                .then(() => alert("トークルームに送信しました！"))
+                .catch((e) => alert("送信に失敗しました。\n(詳細: " + e + ")"));
+        } else {
+            alert("トークルームが開かれていません。\n「シェア」ボタンをご利用ください。");
+        }
     };
+
+    // シェア (fallback check)
     document.getElementById('shareTargetBtn').onclick = () => {
-        liff.shareTargetPicker([{ type: 'text', text: `${state.dogName}の診断結果は${state.typeName}！ #K9Harmony` }]);
+        const shareText = `${state.dogName}の診断結果は${state.typeName}！ #K9Harmony #愛犬の性格診断`;
+        if (liff.isInClient() && liff.isApiAvailable('shareTargetPicker')) {
+            liff.shareTargetPicker([{ type: 'text', text: shareText }])
+                .catch(() => {
+                    // 失敗時フォールバック
+                    window.open(`https://line.me/R/msg/text/?${encodeURIComponent(shareText)}`);
+                });
+        } else {
+            // API利用不可時の確実なフォールバック
+            window.open(`https://line.me/R/msg/text/?${encodeURIComponent(shareText)}`);
+        }
     };
+    
     document.getElementById('openPrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'flex'; };
     document.getElementById('closePrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'none'; };
 }
