@@ -145,7 +145,7 @@
         #chekiWrapper { position: absolute; left: -9999px; }
         #chekiTemplate { 
             width: 500px; background: #FFF; 
-            padding: 40px 40px 40px 40px; /* 余白40px */
+            padding: 40px 40px 40px 40px; 
             border: 1px solid #EEE; text-align: center; position: relative; overflow: visible;
         }
         .cheki-photo-area { width: 100%; aspect-ratio: 1/1; background: #F8F8F8; position: relative; overflow: visible; border: 1px solid #EAEAEA; }
@@ -263,6 +263,9 @@
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
+// ==========================================
+// CONFIG: GAS URLを必ず更新してください
+// ==========================================
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
     GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec"
@@ -306,7 +309,6 @@ async function startOpeningSequence() {
 async function initLiff() {
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
-        // Redirect fix: 認証後、現在のページに戻る設定
         if (!liff.isLoggedIn()) {
             liff.login({ redirectUri: window.location.href });
         }
@@ -369,7 +371,6 @@ function navigate(fromId, toId, direction) {
         void toEl.offsetWidth; 
         toEl.classList.add('active','enter-down');
         
-        // 結果画面に遷移した場合、ヘッダーを隠す
         if (toId === 'page-result') {
             document.querySelector('.header').style.display = 'none';
         }
@@ -404,6 +405,7 @@ async function processFinal() {
     });
 
     gtag('event', 'diagnosis_complete', { 'type': state.typeName });
+    // 通常ログ保存 (セキュリティに関係なくログは残す)
     fetch(CONFIG.GAS_URL, { method:'POST', mode:'no-cors', body: JSON.stringify({ uid:state.userId, dogName:state.dogName, scoreX:sX, scoreY:sY, resultType:state.typeName }) });
 }
 
@@ -424,22 +426,35 @@ function init() {
     document.getElementById('finishBtn').onclick = processFinal;
     document.getElementById('backToReload').onclick = () => location.reload();
 
-    // [LINE送信] 修正：余計な判定なしで直接送信
+    // [LINE送信] 修正: IDトークン検証を使った高セキュリティ送信
     document.getElementById('sendLiffBtn').onclick = () => {
-        // テキストは編集可能
-        const messageText = `${state.dogName}の性格診断結果は「${state.typeName}」でした！🐾 #K9Harmony`;
+        const btn = document.getElementById('sendLiffBtn');
+        btn.disabled = true;
+        btn.innerText = "送信中...";
+        
+        // セキュリティトークンの取得
+        const idToken = liff.getIDToken();
 
-        liff.sendMessages([{ type: 'text', text: messageText }])
-            .then(() => {
-                alert("トークルームに送信しました！");
-                liff.closeWindow(); // 送信成功後に閉じる
-            })
-            .catch((err) => {
-                alert("送信に失敗しました: " + err);
-            });
+        fetch(CONFIG.GAS_URL, { 
+            method: 'POST', 
+            mode: 'no-cors',
+            body: JSON.stringify({ 
+                action: 'send_line', 
+                idToken: idToken, // ★IDトークンを送信（UIDは送らない）
+                dogName: state.dogName,
+                resultType: state.typeName
+            }) 
+        }).then(() => {
+            alert("診断結果を送信しました！\n通知をご確認ください🐾");
+            btn.innerText = "送信完了";
+        }).catch(err => {
+            alert("送信エラー: " + err);
+            btn.disabled = false;
+            btn.innerText = "LINEに送信";
+        });
     };
 
-    // [シェア] 変更なし (navigator.share)
+    // [シェア] 変更なし
     document.getElementById('shareTargetBtn').onclick = () => {
         const text = `${state.dogName}の診断結果は${state.typeName}！ #K9Harmony #愛犬の性格診断`;
         const url = "https://liff.line.me/" + CONFIG.LIFF_ID; 
