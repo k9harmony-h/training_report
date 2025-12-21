@@ -268,7 +268,7 @@
 // ==========================================
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
-    // GASのデプロイURLをここに貼り付けてください
+    // ★重要: GASのデプロイURLをここに貼り付けてください
     GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec"
 };
 
@@ -310,6 +310,7 @@ async function startOpeningSequence() {
 async function initLiff() {
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
+        // Redirect fix
         if (!liff.isLoggedIn()) {
             liff.login({ redirectUri: window.location.href });
         }
@@ -406,7 +407,6 @@ async function processFinal() {
     });
 
     gtag('event', 'diagnosis_complete', { 'type': state.typeName });
-    // 通常ログ保存
     fetch(CONFIG.GAS_URL, { method:'POST', mode:'no-cors', body: JSON.stringify({ uid:state.userId, dogName:state.dogName, scoreX:sX, scoreY:sY, resultType:state.typeName }) });
 }
 
@@ -427,12 +427,25 @@ function init() {
     document.getElementById('finishBtn').onclick = processFinal;
     document.getElementById('backToReload').onclick = () => location.reload();
 
-    // [LINE送信] 修正: IDトークンとUIDを両方送信（緊急モード対応）
+    // [LINE送信] 修正: 期限切れ対策 (Token refresh Logic)
     document.getElementById('sendLiffBtn').onclick = () => {
         const btn = document.getElementById('sendLiffBtn');
         btn.disabled = true;
         btn.innerText = "送信中...";
         
+        // 1. トークンの有効期限チェック
+        const decoded = liff.getDecodedIDToken();
+        const now = Math.floor(Date.now() / 1000);
+        
+        // 残り時間が60秒未満なら「期限切れリスクあり」と判断
+        if (!decoded || (decoded.exp - now) < 60) {
+            // 自動ログインでトークンをリフレッシュしてから送信
+            if (!liff.isLoggedIn()) {
+               liff.login({ redirectUri: window.location.href });
+               return;
+            }
+        }
+
         const idToken = liff.getIDToken();
 
         fetch(CONFIG.GAS_URL, { 
@@ -441,7 +454,7 @@ function init() {
             body: JSON.stringify({ 
                 action: 'send_line', 
                 idToken: idToken, 
-                uid: state.userId, // ★緊急モード用にUIDも送る
+                uid: state.userId, 
                 dogName: state.dogName,
                 resultType: state.typeName
             }) 
