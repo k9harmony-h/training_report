@@ -36,6 +36,7 @@
             color: var(--text-main);
             display: flex; flex-direction: column;
             min-height: 100vh; overflow-x: hidden; position: relative;
+            /* Android長押し対策: 全体は無効化しない */
         }
 
         #logOverlay {
@@ -58,7 +59,6 @@
             box-sizing: border-box; position: relative; flex: 1 0 auto;
         }
 
-        /* [Opening] */
         .reveal-item { opacity: 0; transform: translateY(15px); }
         .reveal-active { animation: revealEffect 0.8s forwards cubic-bezier(0.25, 0.1, 0.25, 1.0); }
         @keyframes revealEffect { to { opacity: 1; transform: translateY(0); } }
@@ -133,27 +133,24 @@
         .enter-down { animation: enterDown var(--luxury-transition) forwards; }
         @keyframes enterDown { 0% { transform: translateY(-30px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
 
-        /* [Result Page] */
         .result-logo { width: 40%; margin: 0 auto 20px; display: block; }
         .result-title-main { font-size: 1.5rem; color: var(--progress-track); margin-top: 0; line-height: 1.4; }
         .save-guide { font-size: 12px; color: var(--neutral-border); margin: 10px 0; font-family: 'Noto Serif JP'; }
         
-        /* * [Android Fix] 
-         * Androidにて画像を長押しして保存できるように、pointer-events等を強制有効化
-         */
+        /* [Android Fix: Enable Long Press] */
         #generatedImageOutput {
             width: 100%; border: 1px solid var(--neutral-border);
-            position: relative; z-index: 10;
+            /* 長押しを強制有効化: touch-calloutとuser-selectを明示的に許可 */
             pointer-events: auto !important;
             user-select: auto !important;
             -webkit-user-select: auto !important;
-            -webkit-touch-callout: default !important; /* iOS/Android default menu */
+            -webkit-touch-callout: default !important;
+            position: relative; z-index: 100; /* 重なり順を上げる */
         }
         
         .share-group { display: flex; flex-direction: row; gap: 10px; margin-top: 30px; width: 100%; justify-content: center; }
         .btn-side { flex: 1; font-size: 0.9rem; margin: 0; padding: 15px; }
 
-        /* [Cheki Template] */
         #chekiWrapper { position: absolute; left: -9999px; }
         #chekiTemplate { 
             width: 500px; background: #FFF; 
@@ -176,23 +173,9 @@
             text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
         }
         .cheki-hashtag { position: absolute; bottom: 15px; right: 20px; font-size: 18px; color: var(--neutral-border); font-family: sans-serif; font-weight: normal; }
-        
-        /* 名前: Zen Kurenaido */
-        .cheki-name-area { 
-            margin-top: 60px; 
-            font-family: 'Zen Kurenaido', sans-serif; 
-            font-size: 68px; 
-            color: var(--text-black); line-height: 1; 
-            font-weight: 700;
-        }
-        
-        .cheki-description-area { 
-            margin: 20px auto 0;
-            width: 80%; font-family: 'Noto Serif JP', serif; 
-            font-size: 20px; line-height: 1.8; color: var(--text-main); text-align: left; 
-        }
+        .cheki-name-area { margin-top: 60px; font-family: 'Zen Kurenaido', sans-serif; font-size: 68px; color: var(--text-black); line-height: 1; font-weight: 700; }
+        .cheki-description-area { margin: 20px auto 0; width: 80%; font-family: 'Noto Serif JP', serif; font-size: 20px; line-height: 1.8; color: var(--text-main); text-align: left; }
 
-        /* [Footer] */
         .site-footer { 
             flex-shrink: 0; margin-top: auto; 
             background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.2); 
@@ -295,7 +278,7 @@
 // ==========================================
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
-    // GASの新しいデプロイURLをここに貼る
+    // GASのデプロイURL (変更がなければそのままでOK)
     GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec"
 };
 
@@ -338,17 +321,15 @@ async function initLiff() {
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
         
-        // 1. ログイン確認
         if (!liff.isLoggedIn()) {
             liff.login({ redirectUri: window.location.href });
             return;
         }
         
-        // 2. アクセストークンチェック (無い場合は即リロード)
-        // ※ 入力前にここでチェックすることで、送信時のエラーや途中リロードを防ぐ
+        // アクセストークンチェック (空なら入力前にリロード)
         const accessToken = liff.getAccessToken();
         if (!accessToken) {
-            console.log("AccessToken is empty. Reloading...");
+            console.log("No Token. Reloading...");
             liff.login({ redirectUri: window.location.href });
             return;
         }
@@ -467,18 +448,18 @@ function init() {
     document.getElementById('finishBtn').onclick = processFinal;
     document.getElementById('backToReload').onclick = () => location.reload();
 
-    // [LINE送信] 修正: アクセストークンを送信 (12時間有効なのでループ不要)
+    // [LINE送信] 修正: アクセストークン送信 (ループなし)
     document.getElementById('sendLiffBtn').onclick = () => {
         const accessToken = liff.getAccessToken();
+        const btn = document.getElementById('sendLiffBtn');
         
-        // ※initでチェックしているので通常ここは通らないが、念のため
+        // 万が一空の場合は警告してリロード
         if (!accessToken) {
-            alert("接続エラー。再読み込みします。");
+            alert("接続エラーが発生しました。画面を再読み込みします。");
             liff.login({ redirectUri: window.location.href });
             return;
         }
 
-        const btn = document.getElementById('sendLiffBtn');
         btn.disabled = true;
         btn.innerText = "送信中...";
 
@@ -488,7 +469,6 @@ function init() {
             body: JSON.stringify({ 
                 action: 'send_line', 
                 accessToken: accessToken, // ★これを送る
-                // idToken: idToken,      // コメントアウト: 旧仕様
                 uid: state.userId,
                 dogName: state.dogName,
                 resultType: state.typeName
@@ -503,25 +483,24 @@ function init() {
         });
     };
 
-    // [シェア] 修正: Web Share APIを優先してSNSシェアを実現
+    // [シェア] 修正: AndroidフォールバックをTwitter(X)に変更
     document.getElementById('shareTargetBtn').onclick = () => {
         const text = `${state.dogName}の診断結果は${state.typeName}！ #K9Harmony #愛犬の性格診断`;
         const url = "https://liff.line.me/" + CONFIG.LIFF_ID; 
 
         if (navigator.share) {
-            // Android/iOSの標準シェアシート（Twitter/Insta等が出る）
+            // Android/iOS標準シェアシート
             navigator.share({
                 title: 'K9 Harmony 愛犬の性格診断',
                 text: text,
                 url: url
             }).catch((err) => { 
-                console.log('Share canceled', err); 
+                console.log('Share canceled/failed', err);
             });
         } else {
-            // Fallback: 非対応環境ではLINEスキームへ
-            // コメントアウト: クリップボードコピーは廃止
-            // if (navigator.clipboard) { ... } else { ... }
-            window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text + "\n" + url)}`);
+            // Android等でnavigator.share非対応ならTwitterへ
+            const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+            window.open(twitterUrl);
         }
     };
     
