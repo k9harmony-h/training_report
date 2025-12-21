@@ -36,7 +36,6 @@
             color: var(--text-main);
             display: flex; flex-direction: column;
             min-height: 100vh; overflow-x: hidden; position: relative;
-            /* Android長押し対策: 全体は無効化しない */
         }
 
         #logOverlay {
@@ -140,12 +139,12 @@
         /* [Android Fix: Enable Long Press] */
         #generatedImageOutput {
             width: 100%; border: 1px solid var(--neutral-border);
-            /* 長押しを強制有効化: touch-calloutとuser-selectを明示的に許可 */
+            /* Android長押し対策 */
             pointer-events: auto !important;
             user-select: auto !important;
             -webkit-user-select: auto !important;
             -webkit-touch-callout: default !important;
-            position: relative; z-index: 100; /* 重なり順を上げる */
+            position: relative; z-index: 10;
         }
         
         .share-group { display: flex; flex-direction: row; gap: 10px; margin-top: 30px; width: 100%; justify-content: center; }
@@ -261,7 +260,7 @@
         <div class="modal-content">
             <div id="policyContent" class="policy-body">
                 <h3>個人情報保護方針</h3>
-                <p><strong>1. 事業者情報</strong><br>K9 Harmony<br>代表: [代表者名]<br>住所: 〒174-0063 東京都板橋区前野町6-55-1</p>
+                <p><strong>1. 事業者情報</strong><br>K9 Harmony<br>代表: 根岸 亮太<br>住所: 〒174-0063 東京都板橋区前野町6-55-1</p>
                 <p><strong>2. 個人情報の取得方法</strong><br>当社は、お客様が診断サービスを利用する際に、LINEのユーザーID、愛犬の名前等の情報を自動または手動で取得します。</p>
                 <p><strong>3. 利用目的</strong><br>取得した情報は、診断結果の提供、サービス向上、およびお問い合わせ対応のために利用します。</p>
                 <p><strong>4. 第三者提供</strong><br>法令に基づく場合を除き、同意なく第三者に個人情報を提供することはありません。</p>
@@ -278,7 +277,7 @@
 // ==========================================
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
-    // GASのデプロイURL (変更がなければそのままでOK)
+    // GASのデプロイURL (そのまま)
     GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec"
 };
 
@@ -321,15 +320,18 @@ async function initLiff() {
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
         
+        // 1. ログイン確認
         if (!liff.isLoggedIn()) {
             liff.login({ redirectUri: window.location.href });
             return;
         }
         
-        // アクセストークンチェック (空なら入力前にリロード)
+        // 2. アクセストークンチェック (空なら入力前にリロード)
         const accessToken = liff.getAccessToken();
         if (!accessToken) {
             console.log("No Token. Reloading...");
+            // ここで一度logoutしないとAndroidは古い情報を保持し続ける可能性がある
+            liff.logout(); 
             liff.login({ redirectUri: window.location.href });
             return;
         }
@@ -448,14 +450,15 @@ function init() {
     document.getElementById('finishBtn').onclick = processFinal;
     document.getElementById('backToReload').onclick = () => location.reload();
 
-    // [LINE送信] 修正: アクセストークン送信 (ループなし)
+    // [LINE送信] 修正: Androidのキャッシュ問題を解決する強力なエラーハンドリング
     document.getElementById('sendLiffBtn').onclick = () => {
         const accessToken = liff.getAccessToken();
         const btn = document.getElementById('sendLiffBtn');
         
-        // 万が一空の場合は警告してリロード
+        // 空チェック & 強制ログアウト処理
         if (!accessToken) {
-            alert("接続エラーが発生しました。画面を再読み込みします。");
+            alert("接続エラーが発生しました。再接続します。");
+            liff.logout(); // ★ここが重要: キャッシュをクリア
             liff.login({ redirectUri: window.location.href });
             return;
         }
@@ -468,7 +471,7 @@ function init() {
             mode: 'no-cors',
             body: JSON.stringify({ 
                 action: 'send_line', 
-                accessToken: accessToken, // ★これを送る
+                accessToken: accessToken, 
                 uid: state.userId,
                 dogName: state.dogName,
                 resultType: state.typeName
@@ -478,18 +481,18 @@ function init() {
             btn.innerText = "送信完了";
         }).catch(err => {
             alert("送信エラー: " + err);
-            btn.disabled = false;
-            btn.innerText = "LINEに送信";
+            // エラー時もクリーンナップしてリロードを促す
+            liff.logout();
+            location.reload();
         });
     };
 
-    // [シェア] 修正: AndroidフォールバックをTwitter(X)に変更
+    // [シェア] 変更なし: Instagramもnavigator.share経由で表示される
     document.getElementById('shareTargetBtn').onclick = () => {
         const text = `${state.dogName}の診断結果は${state.typeName}！ #K9Harmony #愛犬の性格診断`;
         const url = "https://liff.line.me/" + CONFIG.LIFF_ID; 
 
         if (navigator.share) {
-            // Android/iOS標準シェアシート
             navigator.share({
                 title: 'K9 Harmony 愛犬の性格診断',
                 text: text,
