@@ -268,7 +268,7 @@
 // ==========================================
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
-    // GASの新しいウェブアプリURLをここに貼り付けてください
+    // GASのデプロイURLをここに貼り付けてください
     GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec"
 };
 
@@ -310,9 +310,24 @@ async function startOpeningSequence() {
 async function initLiff() {
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
+        
+        // 1. 未ログインならログイン
         if (!liff.isLoggedIn()) {
             liff.login({ redirectUri: window.location.href });
+            return;
         }
+
+        // 2. 起動直後に有効期限チェック
+        // 残り30分(1800秒)を切っていたら、診断開始前にリロードして新しい鍵を取る
+        const decoded = liff.getDecodedIDToken();
+        const now = Math.floor(Date.now() / 1000);
+        
+        if (!decoded || (decoded.exp - now) < 1800) {
+             console.log("Token refreshing...");
+             liff.login({ redirectUri: window.location.href });
+             return;
+        }
+
         state.userId = liff.getDecodedIDToken().sub;
         log("LIFF OK.");
     } catch (e) { log("LIFF Fail."); }
@@ -427,24 +442,9 @@ function init() {
     document.getElementById('finishBtn').onclick = processFinal;
     document.getElementById('backToReload').onclick = () => location.reload();
 
-    // [LINE送信] 修正版: トークン期限チェック追加
+    // [LINE送信] 修正: シンプルな送信のみ（リロードロジック撤廃）
     document.getElementById('sendLiffBtn').onclick = () => {
         const btn = document.getElementById('sendLiffBtn');
-        
-        // 1. トークン期限チェック
-        const decoded = liff.getDecodedIDToken();
-        const now = Math.floor(Date.now() / 1000);
-        
-        // 期限切れ、または残り5分(300秒)未満なら強制更新
-        if (!decoded || (decoded.exp - now) < 300) {
-            // ダイアログを出して更新
-            if(confirm("セキュリティ保護のため、接続有効期限が切れました。\n再接続して診断をやり直しますか？\n(※OKを押すと画面が更新され、診断結果はリセットされます)")) {
-                liff.login({ redirectUri: window.location.href });
-            }
-            return; // 処理を止める
-        }
-
-        // 2. 有効なら送信
         btn.disabled = true;
         btn.innerText = "送信中...";
         
