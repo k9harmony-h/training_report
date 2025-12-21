@@ -138,6 +138,18 @@
         .result-title-main { font-size: 1.5rem; color: var(--progress-track); margin-top: 0; line-height: 1.4; }
         .save-guide { font-size: 12px; color: var(--neutral-border); margin: 10px 0; font-family: 'Noto Serif JP'; }
         
+        /* * [Android Fix] 
+         * Androidにて画像を長押しして保存できるように、pointer-events等を強制有効化
+         */
+        #generatedImageOutput {
+            width: 100%; border: 1px solid var(--neutral-border);
+            position: relative; z-index: 10;
+            pointer-events: auto !important;
+            user-select: auto !important;
+            -webkit-user-select: auto !important;
+            -webkit-touch-callout: default !important; /* iOS/Android default menu */
+        }
+        
         .share-group { display: flex; flex-direction: row; gap: 10px; margin-top: 30px; width: 100%; justify-content: center; }
         .btn-side { flex: 1; font-size: 0.9rem; margin: 0; padding: 15px; }
 
@@ -189,9 +201,12 @@
         .footer-logo-img { width: 120px; margin-bottom: 25px; opacity: 0.7; }
         
         .hidden { display: none !important; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.4); display: none; z-index: 3000; align-items: flex-start; justify-content: center; backdrop-filter: blur(10px); }
-        .modal-content { background: #FFF; width: 92%; height: 75vh; margin-top: 5vh; border-radius: var(--global-radius); padding: 40px 30px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--neutral-border); }
-        .policy-body { flex: 1; overflow-y: auto; font-size: 0.85rem; line-height: 2; color: #555; text-align: left; }
+        
+        /* [Privacy Modal] */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.4); display: none; z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content { background: #FFF; width: 90%; max-width: 500px; max-height: 80vh; border-radius: var(--global-radius); padding: 30px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--neutral-border); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .policy-body { flex: 1; overflow-y: auto; font-size: 0.85rem; line-height: 1.8; color: #555; text-align: left; padding-right: 10px; }
+        .policy-body h3 { color: var(--progress-track); margin-top: 0; border-bottom: 1px solid var(--neutral-border); padding-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -229,7 +244,7 @@
                     <h2 class="result-title-main">診断結果<br><span id="resultTypeTitle">---</span></h2>
                     <div id="imgOutWrap" style="position:relative; margin:20px 0;">
                         <img id="generatedImageOutput" style="width:100%; border:1px solid var(--neutral-border);" alt="結果画像">
-                        <div class="save-guide">※画像長押しで保存</div>
+                        <div class="save-guide">※画像を長押しして保存</div>
                     </div>
                     <div class="share-group">
                         <button class="btn btn-ready btn-side" id="sendLiffBtn">LINEに送信</button>
@@ -259,7 +274,19 @@
         </div>
     </div>
 
-    <div class="modal" id="privacyModal"><div class="modal-content"><div id="policyContent" class="policy-body"></div><div id="closePrivacy" style="margin-top:20px; text-align:center; padding:15px; background:var(--mist-background); cursor:pointer;">閉じる</div></div></div>
+    <div class="modal" id="privacyModal">
+        <div class="modal-content">
+            <div id="policyContent" class="policy-body">
+                <h3>個人情報保護方針</h3>
+                <p><strong>1. 事業者情報</strong><br>K9 Harmony<br>代表: [代表者名]<br>住所: 〒174-0063 東京都板橋区前野町6-55-1</p>
+                <p><strong>2. 個人情報の取得方法</strong><br>当社は、お客様が診断サービスを利用する際に、LINEのユーザーID、愛犬の名前等の情報を自動または手動で取得します。</p>
+                <p><strong>3. 利用目的</strong><br>取得した情報は、診断結果の提供、サービス向上、およびお問い合わせ対応のために利用します。</p>
+                <p><strong>4. 第三者提供</strong><br>法令に基づく場合を除き、同意なく第三者に個人情報を提供することはありません。</p>
+                <p><strong>5. お問い合わせ</strong><br>個人情報の取り扱いに関するご質問は、公式LINEまでご連絡ください。</p>
+            </div>
+            <div id="closePrivacy" style="margin-top:20px; text-align:center; padding:15px; background:var(--mist-background); cursor:pointer;">閉じる</div>
+        </div>
+    </div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
@@ -268,7 +295,7 @@
 // ==========================================
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
-    // ★GASのデプロイURLをここに貼り付けてください
+    // GASの新しいデプロイURLをここに貼る
     GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec"
 };
 
@@ -310,10 +337,22 @@ async function startOpeningSequence() {
 async function initLiff() {
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
-        // シンプルにログイン確認だけ。時間チェックは全廃止。
+        
+        // 1. ログイン確認
         if (!liff.isLoggedIn()) {
             liff.login({ redirectUri: window.location.href });
+            return;
         }
+        
+        // 2. アクセストークンチェック (無い場合は即リロード)
+        // ※ 入力前にここでチェックすることで、送信時のエラーや途中リロードを防ぐ
+        const accessToken = liff.getAccessToken();
+        if (!accessToken) {
+            console.log("AccessToken is empty. Reloading...");
+            liff.login({ redirectUri: window.location.href });
+            return;
+        }
+
         state.userId = liff.getDecodedIDToken().sub;
         log("LIFF OK.");
     } catch (e) { log("LIFF Fail."); }
@@ -430,12 +469,18 @@ function init() {
 
     // [LINE送信] 修正: アクセストークンを送信 (12時間有効なのでループ不要)
     document.getElementById('sendLiffBtn').onclick = () => {
+        const accessToken = liff.getAccessToken();
+        
+        // ※initでチェックしているので通常ここは通らないが、念のため
+        if (!accessToken) {
+            alert("接続エラー。再読み込みします。");
+            liff.login({ redirectUri: window.location.href });
+            return;
+        }
+
         const btn = document.getElementById('sendLiffBtn');
         btn.disabled = true;
         btn.innerText = "送信中...";
-        
-        // ★IDトークンではなくアクセストークンを取得
-        const accessToken = liff.getAccessToken();
 
         fetch(CONFIG.GAS_URL, { 
             method: 'POST', 
@@ -443,6 +488,8 @@ function init() {
             body: JSON.stringify({ 
                 action: 'send_line', 
                 accessToken: accessToken, // ★これを送る
+                // idToken: idToken,      // コメントアウト: 旧仕様
+                uid: state.userId,
                 dogName: state.dogName,
                 resultType: state.typeName
             }) 
@@ -456,23 +503,29 @@ function init() {
         });
     };
 
-    // [シェア] 変更なし
+    // [シェア] 修正: Web Share APIを優先してSNSシェアを実現
     document.getElementById('shareTargetBtn').onclick = () => {
         const text = `${state.dogName}の診断結果は${state.typeName}！ #K9Harmony #愛犬の性格診断`;
         const url = "https://liff.line.me/" + CONFIG.LIFF_ID; 
 
         if (navigator.share) {
+            // Android/iOSの標準シェアシート（Twitter/Insta等が出る）
             navigator.share({
                 title: 'K9 Harmony 愛犬の性格診断',
                 text: text,
                 url: url
-            }).catch((err) => { console.log('Share canceled', err); });
+            }).catch((err) => { 
+                console.log('Share canceled', err); 
+            });
         } else {
-            // Fallback
+            // Fallback: 非対応環境ではLINEスキームへ
+            // コメントアウト: クリップボードコピーは廃止
+            // if (navigator.clipboard) { ... } else { ... }
             window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text + "\n" + url)}`);
         }
     };
     
+    // 個人情報保護方針
     document.getElementById('openPrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'flex'; };
     document.getElementById('closePrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'none'; };
 }
