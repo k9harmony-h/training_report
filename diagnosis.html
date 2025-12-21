@@ -268,6 +268,7 @@
 // ==========================================
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
+    // GASのデプロイURLをここに貼り付けてください
     GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec"
 };
 
@@ -405,7 +406,7 @@ async function processFinal() {
     });
 
     gtag('event', 'diagnosis_complete', { 'type': state.typeName });
-    // 通常ログ保存 (セキュリティに関係なくログは残す)
+    // 通常ログ保存
     fetch(CONFIG.GAS_URL, { method:'POST', mode:'no-cors', body: JSON.stringify({ uid:state.userId, dogName:state.dogName, scoreX:sX, scoreY:sY, resultType:state.typeName }) });
 }
 
@@ -426,13 +427,12 @@ function init() {
     document.getElementById('finishBtn').onclick = processFinal;
     document.getElementById('backToReload').onclick = () => location.reload();
 
-    // [LINE送信] 修正: IDトークン検証を使った高セキュリティ送信
+    // [LINE送信] 修正: IDトークンとUIDを両方送信（緊急モード対応）
     document.getElementById('sendLiffBtn').onclick = () => {
         const btn = document.getElementById('sendLiffBtn');
         btn.disabled = true;
         btn.innerText = "送信中...";
         
-        // セキュリティトークンの取得
         const idToken = liff.getIDToken();
 
         fetch(CONFIG.GAS_URL, { 
@@ -440,7 +440,8 @@ function init() {
             mode: 'no-cors',
             body: JSON.stringify({ 
                 action: 'send_line', 
-                idToken: idToken, // ★IDトークンを送信（UIDは送らない）
+                idToken: idToken, 
+                uid: state.userId, // ★緊急モード用にUIDも送る
                 dogName: state.dogName,
                 resultType: state.typeName
             }) 
