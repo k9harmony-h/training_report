@@ -372,5 +372,51 @@
 
 })();
 </script>
+  <div style="position:fixed; top:10px; right:10px; z-index:10000;">
+    <button onclick="checkMyId()" style="background:red; color:white; font-size:16px; padding:10px;">
+        私のIDを確認する
+    </button>
+</div>
+
+<script>
+function checkMyId() {
+    console.log("Checking ID...");
+    if (!liff.isLoggedIn()) {
+        console.error("LIFF: Not logged in.");
+        alert("LINEにログインできていません。");
+        return;
+    }
+    
+    liff.getProfile()
+    .then(profile => {
+        const userId = profile.userId;
+        console.log("★あなたのUser ID:", userId);
+        alert("あなたのUser ID:\n" + userId + "\n\nこのIDがスプレッドシートの「顧客情報」シートの「line_user_id」列に正確に入っているか確認してください。");
+        
+        // 念のためサーバーにこのIDで問い合わせてみる
+        console.log("サーバーに問い合わせ中...");
+        google.script.run
+        .withSuccessHandler(res => {
+            console.log("サーバーからの応答:", res);
+            if (JSON.parse(res).error) {
+                console.error("サーバー判定: エラー - " + JSON.parse(res).error);
+                alert("サーバー判定: 未登録 (Unregistered) です。\nスプレッドシートを確認してください。");
+            } else {
+                console.log("サーバー判定: 正常 (データあり)");
+                alert("サーバー判定: 正常。データは取得できています。");
+            }
+        })
+        .withFailureHandler(err => {
+            console.error("サーバー通信エラー:", err);
+            alert("サーバー通信エラーが発生しました。");
+        })
+        .getAllData(userId, null); // main.gs の関数を直接呼ぶ
+    })
+    .catch(err => {
+        console.error("Profile Error:", err);
+        alert("プロファイル取得失敗: " + err);
+    });
+}
+</script>
 </body>
 </html>
