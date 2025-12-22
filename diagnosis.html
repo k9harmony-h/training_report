@@ -289,7 +289,6 @@ function log(msg) {
     const ts = new Date().toLocaleTimeString();
     const overlay = document.getElementById('logOverlay');
     if(overlay) overlay.innerText = `[${ts}] ${msg}`;
-    console.log(`[SystemLog] ${msg}`);
 }
 
 async function fetchMasterData() {
@@ -327,10 +326,11 @@ async function initLiff() {
             return;
         }
         
-        // 2. アクセストークンチェック
+        // 2. アクセストークンチェック (空なら入力前にリロード)
         const accessToken = liff.getAccessToken();
         if (!accessToken) {
             console.log("No Token. Reloading...");
+            // ここで一度logoutしないとAndroidは古い情報を保持し続ける可能性がある
             liff.logout(); 
             liff.login({ redirectUri: window.location.href });
             return;
@@ -450,78 +450,45 @@ function init() {
     document.getElementById('finishBtn').onclick = processFinal;
     document.getElementById('backToReload').onclick = () => location.reload();
 
-    // ===============================================
-    // [FIX] LINE送信機能: ハイブリッド送信 (GAS優先 + Silent LIFF)
-    // ===============================================
-    document.getElementById('sendLiffBtn').onclick = async () => {
-        log("Action: Send LINE");
-        const btn = document.getElementById('sendLiffBtn');
+    // [LINE送信] 修正: Androidのキャッシュ問題を解決する強力なエラーハンドリング
+    document.getElementById('sendLiffBtn').onclick = () => {
         const accessToken = liff.getAccessToken();
-
-        // 1. トークンチェック (空ならリロード誘導)
+        const btn = document.getElementById('sendLiffBtn');
+        
+        // 空チェック & 強制ログアウト処理
         if (!accessToken) {
-            alert("接続エラーが発生しました。ページを再読み込みします。");
-            liff.logout();
-            location.reload();
+            alert("接続エラーが発生しました。再接続します。");
+            liff.logout(); // ★ここが重要: キャッシュをクリア
+            liff.login({ redirectUri: window.location.href });
             return;
         }
 
         btn.disabled = true;
         btn.innerText = "送信中...";
 
-        // 2. まずGASへ保存 (Server-side fetch) - 確実性を担保
-        try {
-            await fetch(CONFIG.GAS_URL, { 
-                method: 'POST', 
-                mode: 'no-cors',
-                body: JSON.stringify({ 
-                    action: 'send_line', 
-                    accessToken: accessToken, 
-                    uid: state.userId,
-                    dogName: state.dogName,
-                    resultType: state.typeName
-                }) 
-            });
-            
-            // 3. アプリ内ならトーク送信 (Client-side) - ユーザー体験向上
-            // エラーが出ても無視する (Silent Fail)
-            if (liff.isInClient()) {
-                const text = `${state.dogName}ちゃんは【${state.typeName}タイプ】でした！ #K9Harmony`;
-                const url = "https://liff.line.me/" + CONFIG.LIFF_ID;
-                liff.sendMessages([{
-                    type: "flex",
-                    altText: "診断結果",
-                    contents: {
-                        type: "bubble",
-                        body: {
-                            type: "box", layout: "vertical",
-                            contents: [
-                                { type: "text", text: "🐶 診断結果", weight: "bold", size: "xl", color: "#1DB446" },
-                                { type: "text", text: text, wrap: true, margin: "md", color: "#555555" },
-                                { type: "button", style: "primary", color: "#06C755", action: { type: "uri", label: "結果を見る", uri: url }, margin: "lg" }
-                            ]
-                        }
-                    }
-                }]).catch(e => console.log("Silent Liff Send Error:", e));
-            }
-
+        fetch(CONFIG.GAS_URL, { 
+            method: 'POST', 
+            mode: 'no-cors',
+            body: JSON.stringify({ 
+                action: 'send_line', 
+                accessToken: accessToken, 
+                uid: state.userId,
+                dogName: state.dogName,
+                resultType: state.typeName
+            }) 
+        }).then(() => {
             alert("診断結果を送信しました！\n通知をご確認ください🐾");
             btn.innerText = "送信完了";
-
-        } catch (err) {
-            // Fetch自体が失敗した場合のみエラー表示
-            log("Fetch Error: " + err);
-            alert("送信に失敗しました。通信環境を確認してください。");
-            btn.disabled = false;
-            btn.innerText = "LINEに送信";
-        }
+        }).catch(err => {
+            alert("送信エラー: " + err);
+            // エラー時もクリーンナップしてリロードを促す
+            liff.logout();
+            location.reload();
+        });
     };
 
-    // ===============================================
-    // [FIX] シェア機能: navigator.shareのみ (Strict)
-    // ===============================================
+    // [シェア] 変更なし: Instagramもnavigator.share経由で表示される
     document.getElementById('shareTargetBtn').onclick = () => {
-        log("Action: Share");
         const text = `${state.dogName}の診断結果は${state.typeName}！ #K9Harmony #愛犬の性格診断`;
         const url = "https://liff.line.me/" + CONFIG.LIFF_ID; 
 
@@ -531,12 +498,12 @@ function init() {
                 text: text,
                 url: url
             }).catch((err) => { 
-                // キャンセルまたはエラー時はログのみ
-                log('Share canceled/failed: ' + err);
+                console.log('Share canceled/failed', err);
             });
         } else {
-            // navigator.share非対応環境では何もしない (Silent)
-            log("Share API not supported.");
+            // Android等でnavigator.share非対応ならTwitterへ
+            const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+            window.open(twitterUrl);
         }
     };
     
