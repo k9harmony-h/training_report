@@ -124,13 +124,47 @@
             position: relative; z-index: 10;
         }
         
-        /* 完了画面のアクションボタン */
-        .action-group { margin-top: 20px; display: flex; flex-direction: column; gap: 15px; }
+        /* * [修復] 完了画面のアクションボタン・レイアウト
+         * flex-direction: row に変更し、横並びを強制します
+         */
+        .action-group { 
+            margin-top: 20px; 
+            display: flex; 
+            flex-direction: row; /* 横並び */
+            justify-content: center; 
+            align-items: center; 
+            gap: 15px; 
+            width: 100%;
+        }
+        
+        /* ボタン個別のスタイル調整 */
+        .btn-share, .btn-line-action {
+            flex: 1; /* 等分割 */
+            padding: 15px 5px; 
+            border: 1px solid var(--neutral-border);
+            font-weight: bold;
+            border-radius: var(--global-radius); 
+            cursor: pointer;
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 5px;
+            font-size: 0.9rem;
+            max-width: 48%; /* 崩れ防止 */
+        }
+        
+        /* LINEボタン専用色 */
+        .btn-line-action {
+            background: #06C755; 
+            color: #FFF; 
+            border: none;
+            box-shadow: 0 2px 5px rgba(6, 199, 85, 0.3);
+        }
+
+        /* シェアボタン */
         .btn-share {
-            width: 100%; padding: 15px; border: 1px solid var(--neutral-border);
-            background: #FFF; color: var(--progress-track); font-weight: bold;
-            border-radius: var(--global-radius); cursor: pointer;
-            display: flex; justify-content: center; align-items: center; gap: 8px;
+            background: #FFF; 
+            color: var(--progress-track); 
         }
 
         #chekiWrapper { position: absolute; left: -9999px; }
@@ -201,10 +235,12 @@
                     </div>
 
                     <div class="action-group">
-                        <button class="btn btn-ready" id="sendLiffBtn" style="width:100%;">LINEで結果を保存</button>
+                        <button class="btn-line-action" id="sendLiffBtn">
+                            LINEに送る
+                        </button>
                         
                         <button class="btn-share" id="shareUniversalBtn">
-                            シェア (Instagram / X)
+                            シェアする
                         </button>
                     </div>
                     
@@ -215,7 +251,7 @@
     </div>
 
     <footer class="site-footer reveal-item" id="reveal-5">
-        <div id="footerLog">[2025-12-22, Strict Login/IG-Fix, Ver 5.0]</div>
+        <div id="footerLog">[2025-12-22, Ver 6.0: Layout & Share Fix]</div>
         <div class="footer-logo-container"><img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony"></div>
         <div class="footer-info"><p><strong>K9 Harmony</strong></p><p>〒174-0063 東京都板橋区前野町6-55-1</p><p>070-9043-1109</p></div>
         <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
@@ -237,17 +273,17 @@ let state = { userId: null, dogName: "", answers: {}, typeName: "" };
 
 function log(msg) {
     const ts = new Date().toLocaleTimeString();
-    console.log(`[${ts}] ${msg}`);
+    console.log(`[System Log][${ts}] ${msg}`);
     // Footer log update
     const f = document.getElementById('footerLog');
-    if(f) f.innerText = `[Ver 5.0] ${msg}`;
+    if(f) f.innerText = `[Log] ${msg}`;
 }
 
 // ----------------------------------------------------
-// 1. LIFF初期化 (厳格なログイン・開始前必須)
+// 1. LIFF初期化
 // ----------------------------------------------------
 async function initSystem() {
-    log("Initializing...");
+    log("System Init Started.");
     
     // UIアニメーション
     document.getElementById('washiBg').style.opacity = 1;
@@ -262,52 +298,46 @@ async function initSystem() {
         const data = await res.json();
         MASTER_QUESTIONS = data.questions;
         MASTER_RESULTS = data.results;
-        log("Data Loaded.");
+        log("Master Data Loaded.");
     } catch (e) {
-        log("Data Error.");
-        alert("データの読み込みに失敗しました。通信環境を確認してください。");
-        return; // 続行不可
+        log("Master Data Error.");
+        alert("データの読み込みに失敗しました。");
+        return;
     }
 
     // LIFFログインチェック
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
         
-        // 未ログインなら強制ログイン画面へ (一切先に進ませない)
         if (!liff.isLoggedIn()) {
             liff.login({ redirectUri: window.location.href });
             return;
         }
 
-        // トークン取得 (Androidバグ対策の1回リロードのみ許容)
         const accessToken = liff.getAccessToken();
         if (!accessToken) {
             if (!sessionStorage.getItem('retry_token')) {
-                // 1回だけリロードして再試行
                 sessionStorage.setItem('retry_token', '1');
                 liff.logout();
                 location.reload();
                 return;
             } else {
-                // 2回目も失敗 -> 諦めてエラー表示 (ゲスト許可しない)
-                alert("ログイン情報の取得に失敗しました。外部ブラウザ(Chrome/Safari)でお試しください。");
+                alert("認証エラー: 外部ブラウザで開いてください。");
                 document.getElementById('startBtn').innerText = "認証エラー";
-                return; // ボタン有効化しない
+                return;
             }
         }
         
-        // 成功
         sessionStorage.removeItem('retry_token');
         state.userId = liff.getDecodedIDToken().sub;
-        log("Auth Success.");
+        log(`Auth Success. UserID: ${state.userId.slice(0,5)}...`);
         
-        // ボタン有効化
         const btn = document.getElementById('startBtn');
         btn.disabled = false;
         btn.innerText = "診断を始める";
 
     } catch (e) {
-        log("Auth Error: " + e.message);
+        log("Auth Failed: " + e.message);
         alert("LINE認証に失敗しました。");
     }
 }
@@ -371,7 +401,7 @@ function navigate(fromId, toId, direction) {
 // 3. 結果処理
 // ----------------------------------------------------
 async function processFinal() {
-    log("Calculating...");
+    log("Calculating Result...");
     const sX = (state.answers[1]||0) + (state.answers[2]||0) + (state.answers[3]||0);
     const sY = (state.answers[4]||0) + (state.answers[5]||0) + (state.answers[6]||0);
     const c = state.answers[7]||0;
@@ -395,76 +425,106 @@ async function processFinal() {
     await document.fonts.ready;
     html2canvas(document.getElementById('chekiTemplate'), { scale: 2, useCORS: true }).then(canvas => {
         document.getElementById('generatedImageOutput').src = canvas.toDataURL();
-        log("Image Ready.");
+        log("Image Generated Success.");
     });
 
     gtag('event', 'diagnosis_complete', { 'type': state.typeName });
 }
 
 // ----------------------------------------------------
-// 4. アクション (LINE送信 & シェア)
+// 4. アクション (【重要】修正箇所)
 // ----------------------------------------------------
 function setupActions() {
-    // A. LINE送信 (Form Data送信で堅牢化)
+    
+    // [Fix A] LINE送信 (liff.sendMessages)
+    // GASへのPOSTではなく、クライアント側から直接FlexMessageを送る形式に修正
     document.getElementById('sendLiffBtn').onclick = async () => {
+        log("[Click] Send LINE Button");
+        
+        if (!liff.isInClient()) {
+            alert('この機能はLINEアプリ内でのみ使用できます。');
+            return;
+        }
+
         const btn = document.getElementById('sendLiffBtn');
         btn.disabled = true;
         btn.innerText = "送信中...";
 
-        // ログインはStart時に済んでいる前提
-        const token = liff.getAccessToken();
-
-        const formData = new URLSearchParams();
-        formData.append('action', 'send_line');
-        formData.append('uid', state.userId);
-        formData.append('dogName', state.dogName);
-        formData.append('resultType', state.typeName);
-        if(token) formData.append('accessToken', token);
-
         try {
-            await fetch(CONFIG.GAS_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: formData.toString()
-            });
-            alert("送信しました！");
+            const shareText = `${state.dogName}ちゃんは【${state.typeName}タイプ】でした！ #K9Harmony`;
+            const shareUrl = "https://liff.line.me/2008546673-MJY7j3ox"; // 固定URL
+
+            await liff.sendMessages([
+                {
+                    type: "flex",
+                    altText: "診断結果が届きました！",
+                    contents: {
+                        type: "bubble",
+                        body: {
+                            type: "box",
+                            layout: "vertical",
+                            contents: [
+                                { type: "text", text: "🐶 診断結果", weight: "bold", size: "xl", color: "#1DB446" },
+                                { type: "separator", margin: "md" },
+                                { type: "text", text: shareText, wrap: true, margin: "md", color: "#555555" },
+                                { 
+                                    type: "button", 
+                                    style: "primary", 
+                                    color: "#06C755", 
+                                    height: "sm", 
+                                    action: { type: "uri", label: "結果を見る", uri: shareUrl }, 
+                                    margin: "lg" 
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]);
+
+            log("liff.sendMessages Success.");
+            alert("トークルームに結果を送信しました！");
             btn.innerText = "送信完了";
-        } catch(e) {
-            alert("送信エラー: 通信環境を確認してください");
+            // liff.closeWindow(); // 必要であればコメントアウト解除
+            
+        } catch(error) {
+            log("Send Error: " + error.message);
+            alert("送信に失敗しました。\n" + error.message);
             btn.disabled = false;
-            btn.innerText = "再送信";
+            btn.innerText = "LINEに送る";
         }
     };
 
-    // B. ユニバーサルシェア (Android LINE対応)
+    // [Fix B] シェア機能 (navigator.share)
+    // 画像Blob化処理(html2canvas wait)を排除し、即時実行することでAndroidブロックを回避
     document.getElementById('shareUniversalBtn').onclick = async () => {
-        const imgEl = document.getElementById('generatedImageOutput');
-        if(!imgEl.src) return;
+        log("[Click] Share Button");
 
-        // Blob化
-        const blob = await (await fetch(imgEl.src)).blob();
-        const file = new File([blob], "result.png", { type: "image/png" });
         const text = `${state.dogName}は${state.typeName}タイプ！ #K9Harmony`;
-        
-        // 試行: 画像ファイル共有
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        const url = "https://liff.line.me/2008546673-MJY7j3ox"; // 固定URL
+
+        // Navigator Share API (Android / iOS / PC-Edge/Chrome)
+        if (navigator.share) {
             try {
+                // 画像ファイル(File)を含めるとAndroid LINE等で失敗しやすいため
+                // 確実に動作する「Title, Text, URL」のみをシェアする構成に変更
                 await navigator.share({
-                    files: [file],
-                    title: 'K9 Harmony',
-                    text: text
-                    // Android LINE等でurlプロパティと画像を混ぜると死ぬため、textのみにする
+                    title: 'K9 Harmony 診断結果',
+                    text: text,
+                    url: url
                 });
-                return;
+                log("navigator.share Success.");
             } catch(e) {
-                console.log("Share API abort/error", e);
+                log("Share Canceled/Error: " + e.message);
             }
-        } 
-        
-        // 失敗時フォールバック (これがAndroid LINEブラウザでXが開く原因だった部分を修正)
-        // -> 画像共有ができない環境では、「長押し保存」を促すアラートを出すだけに留める
-        alert("お使いの環境では直接シェアができません。\n画像を長押しして保存し、InstagramやXに投稿してください🐾");
+        } else {
+            // Fallback (API非対応ブラウザ)
+            try {
+                await navigator.clipboard.writeText(`${text} ${url}`);
+                alert("リンクをコピーしました！\nInstagramやXに貼り付けて投稿してください。");
+            } catch(e) {
+                alert("お使いの環境ではシェアできません。画像を保存して投稿してください。");
+            }
+        }
     };
 }
 
