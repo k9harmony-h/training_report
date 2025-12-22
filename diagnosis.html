@@ -316,6 +316,14 @@ async function startOpeningSequence() {
     await Promise.all([...timeline, initLiff()]);
 }
 
+// 【Utility】画像データ変換（シェア用）※新規追加
+function dataURLtoFile(dataurl, filename) {
+    let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while(n--){ u8arr[n] = bstr.charCodeAt(n); }
+    return new File([u8arr], filename, {type:mime});
+}
+
 async function initLiff() {
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
@@ -327,13 +335,25 @@ async function initLiff() {
         }
         
         // 2. アクセストークンチェック (空なら入力前にリロード)
+        // 【修正1】Android無限リロード防止
         const accessToken = liff.getAccessToken();
         if (!accessToken) {
-            console.log("No Token. Reloading...");
-            // ここで一度logoutしないとAndroidは古い情報を保持し続ける可能性がある
-            liff.logout(); 
-            liff.login({ redirectUri: window.location.href });
-            return;
+            console.log("No Token. Checking retry...");
+            
+            // sessionStorageで「リロード済みフラグ」を確認
+            if (!sessionStorage.getItem('token_retry')) {
+                // 初回失敗ならフラグを立ててリロード（再取得試行）
+                sessionStorage.setItem('token_retry', '1');
+                liff.logout(); 
+                liff.login({ redirectUri: window.location.href });
+                return;
+            }
+            // 2回目以降は諦めて次に進む（ログだけ残す）
+            // これにより「無限ループ」が止まり、fetchMasterDataが走ってボタンが押せるようになる
+            log("Token Error (Skipped).");
+        } else {
+            // 成功したらフラグ消去
+            sessionStorage.removeItem('token_retry');
         }
 
         state.userId = liff.getDecodedIDToken().sub;
@@ -487,21 +507,43 @@ function init() {
         });
     };
 
-    // [シェア] 変更なし: Instagramもnavigator.share経由で表示される
+    // [シェア] 修正: 画像データを渡してInstagram等に対応
     document.getElementById('shareTargetBtn').onclick = () => {
         const text = `${state.dogName}の診断結果は${state.typeName}！ #K9Harmony #愛犬の性格診断`;
-        const url = "https://liff.line.me/" + CONFIG.LIFF_ID; 
+        const url = "https://liff.line.me/" + CONFIG.LIFF_ID;
+        const imgEl = document.getElementById('generatedImageOutput');
+
+        // ベースのシェアデータ
+        let shareData = {
+            title: 'K9 Harmony 愛犬の性格診断',
+            text: text,
+            url: url
+        };
+
+        // 画像があるならファイル化してshareDataに追加
+        try {
+            if (imgEl.src && navigator.canShare) {
+                const file = dataURLtoFile(imgEl.src, "diagnosis.png");
+                const fileData = { 
+                    files: [file], 
+                    title: shareData.title, 
+                    text: shareData.text 
+                    // filesとurlの同時指定は環境により無視されることがあるが、
+                    // IG対応のためfilesを優先する構成にします
+                };
+                if (navigator.canShare(fileData)) {
+                    shareData = fileData;
+                }
+            }
+        } catch(e) {
+            console.log("Image share prep failed:", e);
+        }
 
         if (navigator.share) {
-            navigator.share({
-                title: 'K9 Harmony 愛犬の性格診断',
-                text: text,
-                url: url
-            }).catch((err) => { 
+            navigator.share(shareData).catch((err) => { 
                 console.log('Share canceled/failed', err);
             });
         } else {
-            // Android等でnavigator.share非対応ならTwitterへ
             const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
             window.open(twitterUrl);
         }
