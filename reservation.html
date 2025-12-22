@@ -6,7 +6,7 @@
   <title>レッスンの予約</title>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f5; color: #333; margin: 0; padding: 20px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f5; color: #333; margin: 0; padding: 20px; padding-bottom: 320px; /* コンソール分空ける */ }
     h2 { font-size: 1.2rem; color: #444; border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 20px; }
     .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
     
@@ -16,17 +16,27 @@
     .btn { display: block; width: 100%; padding: 14px; background: #06c755; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; text-align: center; }
     .btn:disabled { background: #ccc; cursor: not-allowed; }
     
-    /* 予約枠ボタンのグリッド */
+    /* 予約枠ボタン */
     #slots-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
     .slot-btn { padding: 10px; background: white; border: 1px solid #06c755; color: #06c755; border-radius: 6px; font-size: 0.9rem; text-align: center; cursor: pointer; }
     .slot-btn:hover { background: #eafff0; }
     
-    /* ローディングオーバーレイ */
+    /* ローディング */
     #loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 999; text-align: center; justify-content: center; align-items: center; flex-direction: column; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #06c755; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     .error-msg { color: #d93025; font-size: 0.9rem; background: #ffe6e6; padding: 10px; border-radius: 8px; display: none; margin-bottom: 15px; white-space: pre-wrap; }
+
+    /* デバッグコンソール */
+    #debug-console {
+        position: fixed; bottom: 0; left: 0; width: 100%; height: 300px;
+        background: rgba(0,0,0,0.85); color: #0f0; font-family: monospace; font-size: 11px;
+        overflow-y: scroll; z-index: 9999; padding: 10px; box-sizing: border-box;
+        border-top: 2px solid #0f0;
+    }
+    .log-line { border-bottom: 1px solid #333; padding: 2px 0; word-break: break-all; }
+    .log-error { color: #ff4444; }
   </style>
 </head>
 <body>
@@ -63,6 +73,11 @@
     <button class="btn" style="background:#888; margin-top:15px;" onclick="resetSearch()">条件を変更する</button>
   </div>
 
+  <div id="debug-console">
+    <div style="font-weight:bold; color:#fff; border-bottom:1px solid #555; margin-bottom:5px;">Debug Console</div>
+    <div id="debug-logs"></div>
+  </div>
+
 <script>
   // ==========================================
   // 設定: デプロイしたGASのウェブアプリURL
@@ -70,23 +85,55 @@
   const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIqH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec';
   const LIFF_ID = '2008546673-MJY7j3ox'; 
 
+  // ロガー機能
+  function log(msg, data) {
+      const now = new Date().toLocaleTimeString();
+      const div = document.getElementById('debug-logs');
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      let text = `[${now}] ${msg}`;
+      if (data) {
+          try {
+             text += ' ' + (typeof data === 'object' ? JSON.stringify(data) : String(data));
+          } catch(e) { text += ' [Object]'; }
+      }
+      line.textContent = text;
+      div.appendChild(line);
+      document.getElementById('debug-console').scrollTop = document.getElementById('debug-console').scrollHeight;
+      console.log(`[${now}] ${msg}`, data || '');
+  }
+
+  function logError(msg, err) {
+      const now = new Date().toLocaleTimeString();
+      const div = document.getElementById('debug-logs');
+      const line = document.createElement('div');
+      line.className = 'log-line log-error';
+      line.textContent = `[${now}] [ERROR] ${msg} ` + (err ? err.toString() : '');
+      div.appendChild(line);
+      document.getElementById('debug-console').scrollTop = document.getElementById('debug-console').scrollHeight;
+      console.error(msg, err);
+  }
+
   // 状態管理用
   let currentUserData = null; 
   let userDogs = [];           
 
   // 初期化
   window.onload = async () => {
+    log('Window Loaded. Initializing LIFF...');
     showLoading(true, 'LIFFを起動中...');
     try {
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) {
+        log('Not logged in. Redirecting to login...');
         liff.login();
         return;
       }
       const profile = await liff.getProfile();
-      console.log("LIFF Logged in:", profile.userId);
+      log('LIFF Logged in. UserID:', profile.userId);
       fetchUserData(profile.userId);
     } catch (err) {
+      logError('LIFF Init Error:', err);
       showError('LIFF初期化エラー: ' + err.message);
     }
   };
@@ -94,30 +141,34 @@
   // 1. ユーザー情報の取得
   async function fetchUserData(userId) {
     showLoading(true, '会員情報を確認中...');
+    log('Fetching user data from GAS...');
     try {
       const response = await fetch(`${GAS_API_URL}?userId=${userId}&type=data`);
       const result = await response.json();
 
-      console.log("Fetch Result:", result);
+      log('Fetch Result received:', result);
 
       if (result.error) {
         throw new Error(result.error);
       }
 
-      // バリデーション: サーバーからのデータが期待通りかチェック
+      // バリデーション
       if (!result.customer || !result.customer.unique_key) {
-          throw new Error("顧客データの取得に失敗しました。管理者に連絡してください。(Missing ID)");
+          // コンソールに詳細を出力してエラーを投げる
+          logError('Validation Failed. Result dump:', result);
+          throw new Error("顧客データの取得に失敗しました。(Missing ID)");
       }
 
       currentUserData = result.customer;
       
-      // 犬情報の取得ロジック修正（後方互換性のため）
+      // 犬情報の取得（ハイブリッド対応）
       if (result.all_dogs && Array.isArray(result.all_dogs) && result.all_dogs.length > 0) {
           userDogs = result.all_dogs;
+          log('Using new system dog data (all_dogs). Count:', userDogs.length);
       } else if (result.dog) {
           userDogs = [result.dog];
+          log('Using legacy dog data (dog).');
       } else {
-          // 万が一犬情報がない場合
           throw new Error("登録されているワンちゃんが見つかりません。");
       }
 
@@ -126,9 +177,10 @@
       
       document.getElementById('form-card').style.display = 'block';
       showLoading(false);
+      log('User data loaded successfully.');
 
     } catch (err) {
-      console.error("Fetch Error:", err);
+      logError('fetchUserData Error:', err);
       showError('【エラー発生】\nサーバーからの応答: ' + err.message);
       showLoading(false);
     }
@@ -139,9 +191,8 @@
     const select = document.getElementById('dog-select');
     select.innerHTML = '';
     userDogs.forEach(dog => {
-      // 安全策: dogオブジェクトが壊れていないかチェック
       if (!dog || !dog.id) {
-          console.warn("Invalid dog object:", dog);
+          logError('Invalid dog object skipped:', dog);
           return;
       }
       const option = document.createElement('option');
@@ -171,6 +222,7 @@
 
     showLoading(true, '空き状況を確認中...');
     document.getElementById('error-box').style.display = 'none';
+    log('Searching slots...', { date: dateVal, duration: menuVal });
 
     const payload = {
       action: 'get_slots',
@@ -185,6 +237,7 @@
         body: JSON.stringify(payload)
       });
       const result = await response.json();
+      log('Slots search result:', result);
 
       if (result.status === 'success') {
         renderSlots(result.data, dateVal);
@@ -192,6 +245,7 @@
         throw new Error(result.message);
       }
     } catch (err) {
+      logError('Search Slots Error:', err);
       showError('検索エラー: ' + err.message);
     } finally {
       showLoading(false);
@@ -214,10 +268,8 @@
     slots.forEach(slot => {
       const btn = document.createElement('div');
       btn.className = 'slot-btn';
-      btn.textContent = slot.start || slot.time; // key揺らぎ吸収
-      
+      btn.textContent = slot.start || slot.time;
       btn.onclick = () => confirmReservation(slot, dateVal);
-      
       container.appendChild(btn);
     });
   }
@@ -242,11 +294,12 @@
     if (!confirm(confirmMsg)) return;
 
     showLoading(true, '予約処理中...');
+    log('Submitting reservation...');
     
     const payload = {
       action: 'add_reservation',
-      targetDate: dateVal, // yyyy-mm-dd
-      startTime: timeStr,  // HH:mm
+      targetDate: dateVal,
+      startTime: timeStr,
       menuDuration: duration,
       menuName: menuName,
       targetAddress: document.getElementById('target-address').value,
@@ -269,6 +322,7 @@
         body: JSON.stringify(payload)
       });
       const result = await response.json();
+      log('Reservation response:', result);
 
       if (result.status === 'success') {
         alert('予約が完了しました！\nご予約ありがとうございます。');
@@ -277,6 +331,7 @@
         throw new Error(result.message);
       }
     } catch (err) {
+      logError('Reservation Error:', err);
       showError('予約に失敗しました: ' + err.message);
     } finally {
       showLoading(false);
