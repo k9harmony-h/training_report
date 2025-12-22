@@ -281,5 +281,96 @@
     alert(msg);
   }
 </script>
+  <div id="debug-console" style="
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 300px;
+    background: rgba(0,0,0,0.85);
+    color: #0f0;
+    font-family: monospace;
+    font-size: 12px;
+    overflow-y: scroll;
+    z-index: 9999;
+    padding: 10px;
+    box-sizing: border-box;
+    border-top: 2px solid #0f0;
+    pointer-events: none; /* 下の要素を触れるようにする場合はautoにする */
+">
+    <div style="border-bottom:1px solid #444; margin-bottom:5px; font-weight:bold; color:#fff;">
+        Debug Console (Latest at Bottom)
+    </div>
+    <div id="debug-logs"></div>
+</div>
+
+<script>
+(function() {
+    const logDiv = document.getElementById('debug-logs');
+    const container = document.getElementById('debug-console');
+    
+    // 画面操作を邪魔しないよう、コンソール自体をクリックしたら非表示/表示を切り替える機能
+    container.style.pointerEvents = 'auto';
+    container.onclick = function() {
+        if(container.style.height === '30px') {
+            container.style.height = '300px';
+        } else {
+            container.style.height = '30px';
+        }
+    };
+
+    function printLog(type, args) {
+        const line = document.createElement('div');
+        line.style.borderBottom = '1px solid #333';
+        line.style.padding = '2px 0';
+        
+        // 日時
+        const time = new Date().toLocaleTimeString();
+        
+        // 内容のテキスト化
+        const msg = Array.from(args).map(arg => {
+            if (typeof arg === 'object') {
+                try {
+                    return JSON.stringify(arg, null, 2);
+                } catch(e) {
+                    return String(arg);
+                }
+            }
+            return String(arg);
+        }).join(' ');
+
+        line.innerText = `[${time}] [${type}] ${msg}`;
+        
+        if (type === 'ERROR') line.style.color = '#ff4444';
+        if (type === 'WARN')  line.style.color = '#ffbb33';
+
+        logDiv.appendChild(line);
+        container.scrollTop = container.scrollHeight; // 自動スクロール
+    }
+
+    // console.log を乗っ取る
+    const originalLog = console.log;
+    console.log = function(...args) {
+        originalLog.apply(console, args);
+        printLog('LOG', args);
+    };
+
+    // console.error を乗っ取る
+    const originalError = console.error;
+    console.error = function(...args) {
+        originalError.apply(console, args);
+        printLog('ERROR', args);
+    };
+
+    console.log("=== Debug Console Initialized ===");
+    console.log("LIFF ID / User Agent:", navigator.userAgent);
+    
+    // グローバルエラーも捕捉
+    window.onerror = function(message, source, lineno, colno, error) {
+        console.error("Window Error:", message, source, lineno);
+    };
+
+})();
+</script>
 </body>
 </html>
