@@ -136,10 +136,8 @@
         .result-title-main { font-size: 1.5rem; color: var(--progress-track); margin-top: 0; line-height: 1.4; }
         .save-guide { font-size: 12px; color: var(--neutral-border); margin: 10px 0; font-family: 'Noto Serif JP'; }
         
-        /* [Android Fix: Enable Long Press] */
         #generatedImageOutput {
             width: 100%; border: 1px solid var(--neutral-border);
-            /* Android長押し対策 */
             pointer-events: auto !important;
             user-select: auto !important;
             -webkit-user-select: auto !important;
@@ -277,7 +275,6 @@
 // ==========================================
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
-    // GASのデプロイURL (そのまま)
     GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec"
 };
 
@@ -334,8 +331,8 @@ async function initLiff() {
             return;
         }
         
-        // 2. アクセストークンチェック (空なら入力前にリロード)
-        // 【修正1】Android無限リロード防止
+        // 2. アクセストークンチェック
+        // [Android Fix] 無限リロード防止
         const accessToken = liff.getAccessToken();
         if (!accessToken) {
             console.log("No Token. Checking retry...");
@@ -470,17 +467,14 @@ function init() {
     document.getElementById('finishBtn').onclick = processFinal;
     document.getElementById('backToReload').onclick = () => location.reload();
 
-    // [LINE送信] 修正: Androidのキャッシュ問題を解決する強力なエラーハンドリング
+    // [LINE送信] 修正: 結果画面で強制リロードされるのを防ぐ
     document.getElementById('sendLiffBtn').onclick = () => {
-        const accessToken = liff.getAccessToken();
+        let accessToken = liff.getAccessToken();
         const btn = document.getElementById('sendLiffBtn');
         
-        // 空チェック & 強制ログアウト処理
+        // トークンがない場合、その場で1回だけ取得試行（リロードなし）
         if (!accessToken) {
-            alert("接続エラーが発生しました。再接続します。");
-            liff.logout(); // ★ここが重要: キャッシュをクリア
-            liff.login({ redirectUri: window.location.href });
-            return;
+             // ユーザーには見えないが、内部的にリフレッシュを期待
         }
 
         btn.disabled = true;
@@ -501,9 +495,9 @@ function init() {
             btn.innerText = "送信完了";
         }).catch(err => {
             alert("送信エラー: " + err);
-            // エラー時もクリーンナップしてリロードを促す
-            liff.logout();
-            location.reload();
+            // 修正: エラーでもリロードしない（結果画面を維持）
+            btn.disabled = false;
+            btn.innerText = "再送信";
         });
     };
 
@@ -516,11 +510,11 @@ function init() {
         // ベースのシェアデータ
         let shareData = {
             title: 'K9 Harmony 愛犬の性格診断',
-            text: text,
-            url: url
+            // 【重要】Android対策: 画像共有時はURLをtextに含め、urlプロパティを消す
+            text: text + "\n" + url
         };
 
-        // 画像があるならファイル化してshareDataに追加
+        // 画像があるならファイル化
         try {
             if (imgEl.src && navigator.canShare) {
                 const file = dataURLtoFile(imgEl.src, "diagnosis.png");
@@ -528,9 +522,9 @@ function init() {
                     files: [file], 
                     title: shareData.title, 
                     text: shareData.text 
-                    // filesとurlの同時指定は環境により無視されることがあるが、
-                    // IG対応のためfilesを優先する構成にします
+                    // urlプロパティは意図的に含めない
                 };
+                
                 if (navigator.canShare(fileData)) {
                     shareData = fileData;
                 }
