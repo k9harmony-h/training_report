@@ -7,19 +7,14 @@
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     /* =========================================
-       Design System Definition
+       Design System Definition (index.html準拠)
        ========================================= */
     :root {
-      /* Main Identity */
       --c-main-turquoise: #57C3C2;
-      /* Authority & Trust */
       --c-sub-deep-ocean: #2F5D62;
-      /* Conversion Trigger */
       --c-accent-copper: #C87A56;
-      /* Luxury Foundation */
       --c-base-washi: #FAFAFA;
       --c-bg-mist: #F4F7F7;
-      /* Typography */
       --c-text-sumi: #333333;
       --c-text-gray: #666666;
     }
@@ -143,17 +138,18 @@
     }
     .slot-btn:hover { background: #eafff0; }
 
-    /* ローディング */
+    /* ローディング (index.htmlのデザインに合わせる) */
     #loading {
       display: none;
       position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(255,255,255,0.9);
-      z-index: 999;
+      background: var(--c-base-washi);
+      z-index: 9999;
       text-align: center;
       justify-content: center;
       align-items: center;
       flex-direction: column;
+      color: var(--c-sub-deep-ocean);
     }
     .spinner {
       border: 4px solid #f3f3f3;
@@ -166,20 +162,20 @@
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     .error-msg {
-      color: #d93025;
+      color: #856404;
       font-size: 0.9rem;
-      background: #ffe6e6;
+      background: #fff3cd;
       padding: 15px;
-      border-radius: 8px;
+      border-radius: 12px;
+      border: 1px solid #ffeeba;
       display: none;
       margin-bottom: 20px;
       white-space: pre-wrap;
-      border: 1px solid #ffcccc;
     }
 
     /* デバッグコンソール */
     #debug-console {
-        position: fixed; bottom: 0; left: 0; width: 100%; height: 300px;
+        position: fixed; bottom: 0; left: 0; width: 100%; height: 200px;
         background: rgba(0,0,0,0.85); color: #0f0; font-family: monospace; font-size: 11px;
         overflow-y: scroll; z-index: 9999; padding: 10px; box-sizing: border-box;
         border-top: 2px solid #0f0;
@@ -192,7 +188,7 @@
   </style>
 </head>
 <body>
-<p>00300</p>
+
   <div id="loading"><div class="spinner"></div><span id="loading-text">読み込み中...</span></div>
 
   <h2>レッスンの予約</h2>
@@ -262,9 +258,9 @@
 
 <script>
   // ==========================================
-  // 設定: デプロイしたGASのウェブアプリURL
+  // 【重要】index.htmlと同じURLに変更
   // ==========================================
-  const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIqH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec';
+  const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
   const LIFF_ID = '2008546673-MJY7j3ox'; 
 
   // --- Logger ---
@@ -318,19 +314,31 @@
     }
   };
 
-  // 1. Fetch User Data
+  // 1. Fetch User Data (修正済み)
   async function fetchUserData(userId) {
     showLoading(true, '会員情報を確認中...');
     try {
-      const response = await fetch(`${GAS_API_URL}?userId=${userId}&type=data`);
+      // 【修正】キャッシュ回避のためタイムスタンプを付与 (index.html準拠)
+      const ts = new Date().getTime();
+      const response = await fetch(`${GAS_API_URL}?userId=${userId}&type=data&t=${ts}`);
       const result = await response.json();
 
       log('Fetch Result:', result);
 
       if (result.error) throw new Error(result.error);
-      if (!result.customer || !result.customer.unique_key) throw new Error("顧客データの取得に失敗しました。");
+      
+      // 【修正】バリデーションを緩和
+      // unique_key がなくても一旦描画を許可する (予約時にuserIdで代替)
+      if (!result.customer) throw new Error("顧客データの取得に失敗しました。(Data Empty)");
 
       currentUserData = result.customer;
+      
+      // unique_keyがない場合のフォールバック（画面表示後にWARN）
+      if (!currentUserData.unique_key) {
+         log('WARN: customer.unique_key is missing. Using LIFF userId as fallback.');
+         currentUserData.unique_key = userId; // Fallback
+         currentUserData.id = userId; // Fallback for id
+      }
       
       // 犬情報 (Hybrid対応)
       if (result.all_dogs && result.all_dogs.length > 0) {
@@ -364,8 +372,8 @@
     select.innerHTML = '';
     userDogs.forEach(dog => {
       const option = document.createElement('option');
-      option.value = dog.id;
-      option.textContent = dog.name_disp || dog.name;
+      option.value = dog.id || 'unknown'; // Fallback
+      option.textContent = dog.name_disp || dog.name || 'Unknown Dog';
       select.appendChild(option);
     });
   }
@@ -397,13 +405,12 @@
   async function searchSlots() {
     const dateVal = document.getElementById('target-date').value;
     const menuSelect = document.getElementById('menu-select');
-    const baseDuration = Number(menuSelect.value); // 基本90分
+    const baseDuration = Number(menuSelect.value); 
     const addressVal = document.getElementById('target-address').value;
     const isMultiDog = document.getElementById('multi-dog-check').checked;
 
     if (!dateVal) return alert('日付を選択してください');
 
-    // 計算用: 合計時間 (多頭なら+30分)
     const totalDuration = isMultiDog ? baseDuration + 30 : baseDuration;
 
     showLoading(true, '空き状況を確認中...');
@@ -413,7 +420,7 @@
     const payload = {
       action: 'get_slots',
       targetDate: dateVal,
-      menuDuration: totalDuration, // ここでは合計時間を送る
+      menuDuration: totalDuration,
       targetAddress: addressVal
     };
 
@@ -455,8 +462,6 @@
       const btn = document.createElement('div');
       btn.className = 'slot-btn';
       btn.textContent = slot.start || slot.time;
-      // 時間帯によって移動時間のアラートがあれば色を変えるなどの拡張も可能
-      
       btn.onclick = () => confirmReservation(slot, dateVal);
       container.appendChild(btn);
     });
@@ -465,7 +470,7 @@
   // 3. Confirm & Submit
   async function confirmReservation(slot, dateVal) {
     const dogId = document.getElementById('dog-select').value;
-    const dogObj = userDogs.find(d => d.id === dogId);
+    const dogObj = userDogs.find(d => (d.id || 'unknown') === dogId);
     
     const menuSelect = document.getElementById('menu-select');
     const menuName = menuSelect.options[menuSelect.selectedIndex].getAttribute('data-name');
@@ -474,10 +479,9 @@
     const isMultiDog = document.getElementById('multi-dog-check').checked;
     const timeStr = slot.start || slot.time;
     
-    // UI用の確認メッセージ作成
     let msg = `【予約内容の確認】\n\n`;
     msg += `日時: ${dateVal} ${timeStr} 〜\n`;
-    msg += `ワンちゃん: ${dogObj.name_disp || dogObj.name}\n`;
+    msg += `ワンちゃん: ${dogObj ? (dogObj.name_disp || dogObj.name) : '選択なし'}\n`;
     msg += `メニュー: ${menuName} (90分)\n`;
     if (isMultiDog) msg += `オプション: 2頭目追加 (+30分)\n`;
     msg += `\nこの内容で予約を確定しますか？`;
@@ -491,23 +495,22 @@
       action: 'add_reservation',
       targetDate: dateVal,
       startTime: timeStr,
-      menuDuration: baseDuration, // ★重要: ここでは「基本時間」を送る (Backendで再計算するため)
+      menuDuration: baseDuration,
       menuName: menuName,
       targetAddress: document.getElementById('target-address').value,
       
-      // 新規追加項目
       multiDog: isMultiDog,
       receiptRequired: document.getElementById('receipt-check').checked,
       receiptAddressee: document.getElementById('receipt-addressee').value,
       referralCode: document.getElementById('referral-code').value,
       
-      // 顧客・犬情報
-      userId: currentUserData.unique_key, // 顧客ユニークキー
-      customerKey: currentUserData.unique_key, // 明示的に送る
+      // 顧客・犬情報 (Fail-safe)
+      userId: currentUserData.unique_key || currentUserData.id, 
+      customerKey: currentUserData.unique_key || currentUserData.id,
       customerName: currentUserData.name,
       customerPhone: currentUserData.phone,
-      dogId: dogObj.id,
-      dogName: dogObj.name,
+      dogId: dogObj ? dogObj.id : '',
+      dogName: dogObj ? dogObj.name : '',
       
       userNotes: 'LIFFからの予約'
     };
@@ -541,15 +544,14 @@
 
   function showLoading(isLoading, text) {
     const el = document.getElementById('loading');
-    document.getElementById('loading-text').innerText = text || '読み込み中...';
+    if (text) document.getElementById('loading-text').innerText = text;
     el.style.display = isLoading ? 'flex' : 'none';
   }
 
-  function showError(msg) {
+  function showError(msg, detail) {
     const box = document.getElementById('error-box');
-    box.textContent = msg;
+    box.textContent = msg + (detail ? `\n${detail}` : '');
     box.style.display = 'block';
-    // エラー時は一番上へスクロール
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 </script>
