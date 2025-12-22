@@ -38,11 +38,19 @@
             min-height: 100vh; overflow-x: hidden; position: relative;
         }
 
+        #logOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; background: rgba(47, 93, 98, 0.85);
+            color: #FFF; font-size: 10px; padding: 4px 10px; z-index: 9999; pointer-events: none;
+            font-family: monospace; line-height: 1.5;
+        }
+
+        /* [Background] */
         #washiBg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--mist-background);
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.2'/%3E%3C/svg%3E");
-            opacity: 0; z-index: -1; transition: opacity 1.2s ease;
+            opacity: 0; z-index: -1;
+            transition: opacity 1.2s ease;
         }
 
         .container { 
@@ -87,7 +95,21 @@
             transition: color 0.4s ease, border-color 0.4s ease; 
             position: relative; overflow: hidden; z-index: 1;
         }
-        .opt-btn.selected { color: #FFF; background: var(--active-highlight); border-color: var(--active-highlight); }
+        .opt-btn::before {
+            content: ''; position: absolute; 
+            top: 50%; left: 50%; width: 20px; height: 20px;
+            background: var(--active-highlight);
+            border-radius: 50%; 
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0; z-index: -1; filter: blur(8px);
+            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s, filter 0.6s;
+            will-change: transform, opacity, filter;
+        }
+        .opt-btn.selected { color: #FFF; border-color: var(--active-highlight); }
+        .opt-btn.selected::before {
+            transform: translate(-50%, -50%) scale(25);
+            opacity: 1; filter: blur(0px);
+        }
 
         .btn-container { text-align: center; margin-top: 20px; width: 100%; }
         .btn {
@@ -105,7 +127,6 @@
             opacity: 0; pointer-events: none; transition: var(--luxury-transition); 
         }
         .page-section.active { opacity: 1; pointer-events: auto; position: relative; }
-        .hidden { display: none !important; }
         .exit-left { transform: translateX(-50px); opacity: 0; }
         .exit-right { transform: translateX(50px); opacity: 0; }
         .enter-down { animation: enterDown var(--luxury-transition) forwards; }
@@ -115,8 +136,10 @@
         .result-title-main { font-size: 1.5rem; color: var(--progress-track); margin-top: 0; line-height: 1.4; }
         .save-guide { font-size: 12px; color: var(--neutral-border); margin: 10px 0; font-family: 'Noto Serif JP'; }
         
+        /* [Android Fix: Enable Long Press] */
         #generatedImageOutput {
             width: 100%; border: 1px solid var(--neutral-border);
+            /* Android長押し対策 */
             pointer-events: auto !important;
             user-select: auto !important;
             -webkit-user-select: auto !important;
@@ -124,79 +147,52 @@
             position: relative; z-index: 10;
         }
         
-        /* * [修復] 完了画面のアクションボタン・レイアウト
-         * flex-direction: row に変更し、横並びを強制します
-         */
-        .action-group { 
-            margin-top: 20px; 
-            display: flex; 
-            flex-direction: row; /* 横並び */
-            justify-content: center; 
-            align-items: center; 
-            gap: 15px; 
-            width: 100%;
-        }
-        
-        /* ボタン個別のスタイル調整 */
-        .btn-share, .btn-line-action {
-            flex: 1; /* 等分割 */
-            padding: 15px 5px; 
-            border: 1px solid var(--neutral-border);
-            font-weight: bold;
-            border-radius: var(--global-radius); 
-            cursor: pointer;
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            gap: 5px;
-            font-size: 0.9rem;
-            max-width: 48%; /* 崩れ防止 */
-        }
-        
-        /* LINEボタン専用色 */
-        .btn-line-action {
-            background: #06C755; 
-            color: #FFF; 
-            border: none;
-            box-shadow: 0 2px 5px rgba(6, 199, 85, 0.3);
-        }
-
-        /* シェアボタン */
-        .btn-share {
-            background: #FFF; 
-            color: var(--progress-track); 
-        }
+        .share-group { display: flex; flex-direction: row; gap: 10px; margin-top: 30px; width: 100%; justify-content: center; }
+        .btn-side { flex: 1; font-size: 0.9rem; margin: 0; padding: 15px; }
 
         #chekiWrapper { position: absolute; left: -9999px; }
         #chekiTemplate { 
             width: 500px; background: #FFF; 
-            padding: 40px; border: 1px solid #EEE; text-align: center; 
+            padding: 40px 40px 40px 40px; 
+            border: 1px solid #EEE; text-align: center; position: relative; overflow: visible;
         }
-        .cheki-photo-area { width: 100%; aspect-ratio: 1/1; background: #F8F8F8; position: relative; border: 1px solid #EAEAEA; }
+        .cheki-photo-area { width: 100%; aspect-ratio: 1/1; background: #F8F8F8; position: relative; overflow: visible; border: 1px solid #EAEAEA; }
+        
         .cheki-result-badge { 
-            position: absolute; top: 60px; left: -40px; background: rgba(87, 195, 194, 0.95);
+            position: absolute; top: 60px; left: -40px; 
+            background: rgba(87, 195, 194, 0.95);
             color: #FFF; padding: 15px 45px; font-size: 36px; font-weight: bold; 
             transform: rotate(-9deg); transform-origin: top left; z-index: 2000;
+            clip-path: polygon(
+                2% 0%, 5% 5%, 8% 0%, 92% 2%, 95% 7%, 100% 0%, 
+                98% 95%, 95% 100%, 92% 95%, 8% 98%, 5% 90%, 2% 98%, 0% 10%
+            );
+            filter: drop-shadow(4px 4px 6px rgba(0,0,0,0.3));
+            white-space: nowrap; max-width: 70%;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
         }
-        .cheki-name-area { margin-top: 60px; font-family: 'Zen Kurenaido'; font-size: 68px; color: var(--text-black); font-weight: 700; line-height: 1; }
-        .cheki-description-area { margin: 20px auto 0; width: 80%; font-family: 'Noto Serif JP'; font-size: 20px; line-height: 1.8; color: var(--text-main); text-align: left; }
+        .cheki-hashtag { position: absolute; bottom: 15px; right: 20px; font-size: 18px; color: var(--neutral-border); font-family: sans-serif; font-weight: normal; }
+        .cheki-name-area { margin-top: 60px; font-family: 'Zen Kurenaido', sans-serif; font-size: 68px; color: var(--text-black); line-height: 1; font-weight: 700; }
+        .cheki-description-area { margin: 20px auto 0; width: 80%; font-family: 'Noto Serif JP', serif; font-size: 20px; line-height: 1.8; color: var(--text-main); text-align: left; }
 
         .site-footer { 
             flex-shrink: 0; margin-top: auto; 
             background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.2); 
-            padding: 40px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D; 
+            padding: 60px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D; 
         }
         .footer-logo-img { width: 120px; margin-bottom: 25px; opacity: 0.7; }
         
-        /* ログ用Footer */
-        #footerLog { font-size: 10px; color:#ccc; margin-bottom: 5px; font-family: monospace; }
-
+        .hidden { display: none !important; }
+        
+        /* [Privacy Modal] */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.4); display: none; z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .modal-content { background: #FFF; width: 90%; max-width: 500px; max-height: 80vh; border-radius: var(--global-radius); padding: 30px; overflow: hidden; display: flex; flex-direction: column; }
-        .policy-body { flex: 1; overflow-y: auto; font-size: 0.85rem; line-height: 1.8; color: #555; text-align: left; }
+        .modal-content { background: #FFF; width: 90%; max-width: 500px; max-height: 80vh; border-radius: var(--global-radius); padding: 30px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--neutral-border); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .policy-body { flex: 1; overflow-y: auto; font-size: 0.85rem; line-height: 1.8; color: #555; text-align: left; padding-right: 10px; }
+        .policy-body h3 { color: var(--progress-track); margin-top: 0; border-bottom: 1px solid var(--neutral-border); padding-bottom: 10px; }
     </style>
 </head>
 <body>
+    <div id="logOverlay">Initializing...</div>
     <div id="washiBg"></div>
 
     <div class="container">
@@ -215,7 +211,7 @@
                     <div class="input-group"><label>愛犬の名前</label><input type="text" id="dogName" placeholder="例：ポチ" maxlength="10"></div>
                 </div>
                 <div class="btn-container reveal-item" id="reveal-4">
-                    <button class="btn btn-ready" id="startBtn" disabled>ログイン確認中...</button>
+                    <button class="btn btn-ready" id="startBtn" disabled>準備中...</button>
                     <p style="margin-top:25px;"><span id="openPrivacy" style="text-decoration:underline; font-size:0.75rem; cursor:pointer; color:var(--neutral-border);">個人情報保護方針</span></p>
                 </div>
             </section>
@@ -228,22 +224,14 @@
                 <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" alt="K9 Harmony" class="result-logo">
                 <div class="q-unit" style="text-align:center; opacity:1;">
                     <h2 class="result-title-main">診断結果<br><span id="resultTypeTitle">---</span></h2>
-                    
                     <div id="imgOutWrap" style="position:relative; margin:20px 0;">
                         <img id="generatedImageOutput" style="width:100%; border:1px solid var(--neutral-border);" alt="結果画像">
-                        <div class="save-guide" style="font-weight:bold; color:var(--active-highlight);">※IG投稿用：画像を長押しして保存</div>
+                        <div class="save-guide">※画像を長押しして保存</div>
                     </div>
-
-                    <div class="action-group">
-                        <button class="btn-line-action" id="sendLiffBtn">
-                            LINEに送る
-                        </button>
-                        
-                        <button class="btn-share" id="shareUniversalBtn">
-                            シェアする
-                        </button>
+                    <div class="share-group">
+                        <button class="btn btn-ready btn-side" id="sendLiffBtn">LINEに送信</button>
+                        <button class="btn btn-side" id="shareTargetBtn" style="background:#FFF; color:var(--progress-track);">シェア</button>
                     </div>
-                    
                     <p id="backToReload" style="margin-top:20px; cursor:pointer; font-size:0.85rem; color:var(--neutral-border); text-decoration:underline;">最初からやり直す</p>
                 </div>
             </section>
@@ -251,19 +239,45 @@
     </div>
 
     <footer class="site-footer reveal-item" id="reveal-5">
-        <div id="footerLog">[2025-12-22, Ver 6.0: Layout & Share Fix]</div>
         <div class="footer-logo-container"><img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony"></div>
         <div class="footer-info"><p><strong>K9 Harmony</strong></p><p>〒174-0063 東京都板橋区前野町6-55-1</p><p>070-9043-1109</p></div>
         <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
     </footer>
 
-    <div id="chekiWrapper"><div id="chekiTemplate"><div class="cheki-photo-area"><div class="cheki-result-badge" id="tmpl_type">TYPE</div><div style="font-size:100px; margin-top:60px;">🐾</div></div><div class="cheki-name-area" id="tmpl_name">NAME</div><div class="cheki-description-area" id="tmpl_desc">DESC</div></div></div>
-    <div class="modal" id="privacyModal"><div class="modal-content"><div id="policyContent" class="policy-body"><h3>個人情報保護方針</h3><p>サービス向上のためアクセス解析ツールを使用しています。</p></div><div id="closePrivacy" style="margin-top:20px; text-align:center; padding:15px; cursor:pointer;">閉じる</div></div></div>
+    <div id="chekiWrapper">
+        <div id="chekiTemplate">
+            <div class="cheki-photo-area">
+                <div class="cheki-result-badge" id="tmpl_type">タイプ名</div>
+                <div style="font-size:100px; margin-top:60px;">🐾</div>
+                <div class="cheki-hashtag" id="tmpl_hash">#K9Harmony #愛犬の性格診断</div>
+            </div>
+            <div class="cheki-name-area" id="tmpl_name">名前</div>
+            <div class="cheki-description-area" id="tmpl_desc">説明文</div>
+        </div>
+    </div>
+
+    <div class="modal" id="privacyModal">
+        <div class="modal-content">
+            <div id="policyContent" class="policy-body">
+                <h3>個人情報保護方針</h3>
+                <p><strong>1. 事業者情報</strong><br>K9 Harmony<br>代表: 根岸 亮太<br>住所: 〒174-0063 東京都板橋区前野町6-55-1</p>
+                <p><strong>2. 個人情報の取得方法</strong><br>当社は、お客様が診断サービスを利用する際に、LINEのユーザーID、愛犬の名前等の情報を自動または手動で取得します。</p>
+                <p><strong>3. 利用目的</strong><br>取得した情報は、診断結果の提供、サービス向上、およびお問い合わせ対応のために利用します。</p>
+                <p><strong>4. 第三者提供</strong><br>法令に基づく場合を除き、同意なく第三者に個人情報を提供することはありません。</p>
+                <p><strong>5. お問い合わせ</strong><br>個人情報の取り扱いに関するご質問は、公式LINEまでご連絡ください。</p>
+            </div>
+            <div id="closePrivacy" style="margin-top:20px; text-align:center; padding:15px; background:var(--mist-background); cursor:pointer;">閉じる</div>
+        </div>
+    </div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
+// ==========================================
+// CONFIG: GAS URLを必ず更新してください
+// ==========================================
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
+    // GASのデプロイURL (そのまま)
     GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec"
 };
 
@@ -273,86 +287,71 @@ let state = { userId: null, dogName: "", answers: {}, typeName: "" };
 
 function log(msg) {
     const ts = new Date().toLocaleTimeString();
-    console.log(`[System Log][${ts}] ${msg}`);
-    // Footer log update
-    const f = document.getElementById('footerLog');
-    if(f) f.innerText = `[Log] ${msg}`;
+    const overlay = document.getElementById('logOverlay');
+    if(overlay) overlay.innerText = `[${ts}] ${msg}`;
+    console.log(`[SystemLog] ${msg}`);
 }
 
-// ----------------------------------------------------
-// 1. LIFF初期化
-// ----------------------------------------------------
-async function initSystem() {
-    log("System Init Started.");
-    
-    // UIアニメーション
-    document.getElementById('washiBg').style.opacity = 1;
-    [1,2,3,4,5].forEach((n) => setTimeout(() => {
-        const el = document.getElementById(`reveal-${n}`);
-        if(el) el.classList.add('reveal-active');
-    }, 200 * n));
-
-    // マスタデータ取得
+async function fetchMasterData() {
+    log("Loading...");
     try {
         const res = await fetch(`${CONFIG.GAS_URL}?action=fetchMaster`);
         const data = await res.json();
         MASTER_QUESTIONS = data.questions;
         MASTER_RESULTS = data.results;
-        log("Master Data Loaded.");
-    } catch (e) {
-        log("Master Data Error.");
-        alert("データの読み込みに失敗しました。");
-        return;
-    }
+        log("Ready.");
+        const btn = document.getElementById('startBtn');
+        if(btn) { btn.disabled = false; btn.innerText = "診断を始める"; }
+    } catch (e) { log("Data Error."); }
+}
 
-    // LIFFログインチェック
+async function startOpeningSequence() {
+    document.getElementById('washiBg').style.opacity = 1;
+    const timeline = [1,2,3,4,5].map(n => new Promise(r => {
+        setTimeout(() => {
+            const el = document.getElementById(`reveal-${n}`);
+            if(el) el.classList.add('reveal-active');
+            r();
+        }, 200 * n);
+    }));
+    await Promise.all([...timeline, initLiff()]);
+}
+
+async function initLiff() {
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
         
+        // 1. ログイン確認
         if (!liff.isLoggedIn()) {
             liff.login({ redirectUri: window.location.href });
             return;
         }
-
+        
+        // 2. アクセストークンチェック
         const accessToken = liff.getAccessToken();
         if (!accessToken) {
-            if (!sessionStorage.getItem('retry_token')) {
-                sessionStorage.setItem('retry_token', '1');
-                liff.logout();
-                location.reload();
-                return;
-            } else {
-                alert("認証エラー: 外部ブラウザで開いてください。");
-                document.getElementById('startBtn').innerText = "認証エラー";
-                return;
-            }
+            console.log("No Token. Reloading...");
+            liff.logout(); 
+            liff.login({ redirectUri: window.location.href });
+            return;
         }
-        
-        sessionStorage.removeItem('retry_token');
-        state.userId = liff.getDecodedIDToken().sub;
-        log(`Auth Success. UserID: ${state.userId.slice(0,5)}...`);
-        
-        const btn = document.getElementById('startBtn');
-        btn.disabled = false;
-        btn.innerText = "診断を始める";
 
-    } catch (e) {
-        log("Auth Failed: " + e.message);
-        alert("LINE認証に失敗しました。");
-    }
+        state.userId = liff.getDecodedIDToken().sub;
+        log("LIFF OK.");
+    } catch (e) { log("LIFF Fail."); }
 }
 
-// ----------------------------------------------------
-// 2. 診断ロジック
-// ----------------------------------------------------
 function buildSection(group, targetId) {
     const container = document.getElementById(targetId);
     if(!container) return;
     container.innerHTML = '';
     
+    if(MASTER_QUESTIONS.length === 0) return alert("通信エラー");
+
     MASTER_QUESTIONS.filter(q => q.Section === group).forEach(q => {
         const div = document.createElement('div');
         div.className = 'q-unit';
+        div.style.opacity = 1;
         div.innerHTML = `<div class="q-text">${q.Text}</div>`;
         const optGroup = document.createElement('div');
         optGroup.className = 'opt-group';
@@ -387,24 +386,27 @@ function navigate(fromId, toId, direction) {
     const toEl = document.getElementById(toId);
     if(!fromEl || !toEl) return;
     fromEl.classList.remove('active');
+    fromEl.classList.add(direction==='next'?'exit-left':'exit-right');
     
     setTimeout(() => {
         fromEl.classList.add('hidden'); 
+        fromEl.classList.remove('exit-left','exit-right');
         toEl.classList.remove('hidden'); 
         void toEl.offsetWidth; 
         toEl.classList.add('active','enter-down');
-        if (toId === 'page-result') document.querySelector('.header').style.display = 'none';
+        
+        if (toId === 'page-result') {
+            document.querySelector('.header').style.display = 'none';
+        }
     }, 400);
 }
 
-// ----------------------------------------------------
-// 3. 結果処理
-// ----------------------------------------------------
 async function processFinal() {
-    log("Calculating Result...");
+    log("Processing...");
     const sX = (state.answers[1]||0) + (state.answers[2]||0) + (state.answers[3]||0);
     const sY = (state.answers[4]||0) + (state.answers[5]||0) + (state.answers[6]||0);
     const c = state.answers[7]||0;
+
     const getR = (s) => (s <= 12 ? 'LOW' : s <= 111 ? 'MID' : 'HIGH');
     let rX = getR(sX), rY = getR(sY);
     if ((sX === 12 || sX === 13) && c === 1) rX = 'MID';
@@ -415,138 +417,135 @@ async function processFinal() {
 
     navigate('page-groupC', 'page-result', 'next');
 
-    // UI反映
     document.getElementById('resultTypeTitle').innerText = state.typeName + "タイプ";
     document.getElementById('tmpl_type').innerText = state.typeName + "タイプ";
     document.getElementById('tmpl_name').innerText = state.dogName;
     document.getElementById('tmpl_desc').innerText = resObj ? resObj.Description : "";
 
-    // 画像生成
     await document.fonts.ready;
     html2canvas(document.getElementById('chekiTemplate'), { scale: 2, useCORS: true }).then(canvas => {
         document.getElementById('generatedImageOutput').src = canvas.toDataURL();
-        log("Image Generated Success.");
+        log("Rendered.");
     });
 
     gtag('event', 'diagnosis_complete', { 'type': state.typeName });
+    // 通常ログ保存
+    fetch(CONFIG.GAS_URL, { method:'POST', mode:'no-cors', body: JSON.stringify({ uid:state.userId, dogName:state.dogName, scoreX:sX, scoreY:sY, resultType:state.typeName }) });
 }
 
-// ----------------------------------------------------
-// 4. アクション (【重要】修正箇所)
-// ----------------------------------------------------
-function setupActions() {
-    
-    // [Fix A] LINE送信 (liff.sendMessages)
-    // GASへのPOSTではなく、クライアント側から直接FlexMessageを送る形式に修正
+function init() {
+    fetchMasterData();
+    startOpeningSequence();
+
+    document.getElementById('startBtn').onclick = () => {
+        if(MASTER_QUESTIONS.length === 0) return;
+        state.dogName = document.getElementById('dogName').value.trim();
+        if (!state.dogName) return alert("お名前を教えてください");
+        buildSection('A', 'groupA-list'); navigate('page-home', 'page-groupA', 'next');
+    };
+    document.getElementById('toGroupB').onclick = () => { buildSection('B', 'groupB-list'); navigate('page-groupA', 'page-groupB', 'next'); };
+    document.getElementById('toGroupC').onclick = () => { buildSection('C', 'groupC-list'); navigate('page-groupB', 'page-groupC', 'next'); };
+    document.getElementById('backToA').onclick = () => navigate('page-groupB', 'page-groupA', 'back');
+    document.getElementById('backToB').onclick = () => navigate('page-groupC', 'page-groupB', 'back');
+    document.getElementById('finishBtn').onclick = processFinal;
+    document.getElementById('backToReload').onclick = () => location.reload();
+
+    // ===============================================
+    // [FIX] LINE送信機能: ハイブリッド送信 (GAS優先 + Silent LIFF)
+    // ===============================================
     document.getElementById('sendLiffBtn').onclick = async () => {
-        log("[Click] Send LINE Button");
-        
-        if (!liff.isInClient()) {
-            alert('この機能はLINEアプリ内でのみ使用できます。');
+        log("Action: Send LINE");
+        const btn = document.getElementById('sendLiffBtn');
+        const accessToken = liff.getAccessToken();
+
+        // 1. トークンチェック (空ならリロード誘導)
+        if (!accessToken) {
+            alert("接続エラーが発生しました。ページを再読み込みします。");
+            liff.logout();
+            location.reload();
             return;
         }
 
-        const btn = document.getElementById('sendLiffBtn');
         btn.disabled = true;
         btn.innerText = "送信中...";
 
+        // 2. まずGASへ保存 (Server-side fetch) - 確実性を担保
         try {
-            const shareText = `${state.dogName}ちゃんは【${state.typeName}タイプ】でした！ #K9Harmony`;
-            const shareUrl = "https://liff.line.me/2008546673-MJY7j3ox"; // 固定URL
-
-            await liff.sendMessages([
-                {
+            await fetch(CONFIG.GAS_URL, { 
+                method: 'POST', 
+                mode: 'no-cors',
+                body: JSON.stringify({ 
+                    action: 'send_line', 
+                    accessToken: accessToken, 
+                    uid: state.userId,
+                    dogName: state.dogName,
+                    resultType: state.typeName
+                }) 
+            });
+            
+            // 3. アプリ内ならトーク送信 (Client-side) - ユーザー体験向上
+            // エラーが出ても無視する (Silent Fail)
+            if (liff.isInClient()) {
+                const text = `${state.dogName}ちゃんは【${state.typeName}タイプ】でした！ #K9Harmony`;
+                const url = "https://liff.line.me/" + CONFIG.LIFF_ID;
+                liff.sendMessages([{
                     type: "flex",
-                    altText: "診断結果が届きました！",
+                    altText: "診断結果",
                     contents: {
                         type: "bubble",
                         body: {
-                            type: "box",
-                            layout: "vertical",
+                            type: "box", layout: "vertical",
                             contents: [
                                 { type: "text", text: "🐶 診断結果", weight: "bold", size: "xl", color: "#1DB446" },
-                                { type: "separator", margin: "md" },
-                                { type: "text", text: shareText, wrap: true, margin: "md", color: "#555555" },
-                                { 
-                                    type: "button", 
-                                    style: "primary", 
-                                    color: "#06C755", 
-                                    height: "sm", 
-                                    action: { type: "uri", label: "結果を見る", uri: shareUrl }, 
-                                    margin: "lg" 
-                                }
+                                { type: "text", text: text, wrap: true, margin: "md", color: "#555555" },
+                                { type: "button", style: "primary", color: "#06C755", action: { type: "uri", label: "結果を見る", uri: url }, margin: "lg" }
                             ]
                         }
                     }
-                }
-            ]);
+                }]).catch(e => console.log("Silent Liff Send Error:", e));
+            }
 
-            log("liff.sendMessages Success.");
-            alert("トークルームに結果を送信しました！");
+            alert("診断結果を送信しました！\n通知をご確認ください🐾");
             btn.innerText = "送信完了";
-            // liff.closeWindow(); // 必要であればコメントアウト解除
-            
-        } catch(error) {
-            log("Send Error: " + error.message);
-            alert("送信に失敗しました。\n" + error.message);
+
+        } catch (err) {
+            // Fetch自体が失敗した場合のみエラー表示
+            log("Fetch Error: " + err);
+            alert("送信に失敗しました。通信環境を確認してください。");
             btn.disabled = false;
-            btn.innerText = "LINEに送る";
+            btn.innerText = "LINEに送信";
         }
     };
 
-    // [Fix B] シェア機能 (navigator.share)
-    // 画像Blob化処理(html2canvas wait)を排除し、即時実行することでAndroidブロックを回避
-    document.getElementById('shareUniversalBtn').onclick = async () => {
-        log("[Click] Share Button");
+    // ===============================================
+    // [FIX] シェア機能: navigator.shareのみ (Strict)
+    // ===============================================
+    document.getElementById('shareTargetBtn').onclick = () => {
+        log("Action: Share");
+        const text = `${state.dogName}の診断結果は${state.typeName}！ #K9Harmony #愛犬の性格診断`;
+        const url = "https://liff.line.me/" + CONFIG.LIFF_ID; 
 
-        const text = `${state.dogName}は${state.typeName}タイプ！ #K9Harmony`;
-        const url = "https://liff.line.me/2008546673-MJY7j3ox"; // 固定URL
-
-        // Navigator Share API (Android / iOS / PC-Edge/Chrome)
         if (navigator.share) {
-            try {
-                // 画像ファイル(File)を含めるとAndroid LINE等で失敗しやすいため
-                // 確実に動作する「Title, Text, URL」のみをシェアする構成に変更
-                await navigator.share({
-                    title: 'K9 Harmony 診断結果',
-                    text: text,
-                    url: url
-                });
-                log("navigator.share Success.");
-            } catch(e) {
-                log("Share Canceled/Error: " + e.message);
-            }
+            navigator.share({
+                title: 'K9 Harmony 愛犬の性格診断',
+                text: text,
+                url: url
+            }).catch((err) => { 
+                // キャンセルまたはエラー時はログのみ
+                log('Share canceled/failed: ' + err);
+            });
         } else {
-            // Fallback (API非対応ブラウザ)
-            try {
-                await navigator.clipboard.writeText(`${text} ${url}`);
-                alert("リンクをコピーしました！\nInstagramやXに貼り付けて投稿してください。");
-            } catch(e) {
-                alert("お使いの環境ではシェアできません。画像を保存して投稿してください。");
-            }
+            // navigator.share非対応環境では何もしない (Silent)
+            log("Share API not supported.");
         }
     };
+    
+    // 個人情報保護方針
+    document.getElementById('openPrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'flex'; };
+    document.getElementById('closePrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'none'; };
 }
 
-// スタート
-initSystem();
-setupActions();
-
-// その他イベント
-document.getElementById('startBtn').onclick = () => {
-    state.dogName = document.getElementById('dogName').value.trim();
-    if (!state.dogName) return alert("お名前を教えてください");
-    buildSection('A', 'groupA-list'); navigate('page-home', 'page-groupA', 'next');
-};
-document.getElementById('toGroupB').onclick = () => { buildSection('B', 'groupB-list'); navigate('page-groupA', 'page-groupB', 'next'); };
-document.getElementById('toGroupC').onclick = () => { buildSection('C', 'groupC-list'); navigate('page-groupB', 'page-groupC', 'next'); };
-document.getElementById('backToA').onclick = () => navigate('page-groupB', 'page-groupA', 'back');
-document.getElementById('backToB').onclick = () => navigate('page-groupC', 'page-groupB', 'back');
-document.getElementById('finishBtn').onclick = processFinal;
-document.getElementById('backToReload').onclick = () => location.reload();
-document.getElementById('openPrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'flex'; };
-document.getElementById('closePrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'none'; };
-
+init();
 </script>
 </body>
 </html>
