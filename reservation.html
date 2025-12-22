@@ -3,30 +3,179 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>レッスンの予約</title>
+  <title>レッスンの予約 | K9 Harmony</title>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f5; color: #333; margin: 0; padding: 20px; padding-bottom: 320px; /* コンソール分空ける */ }
-    h2 { font-size: 1.2rem; color: #444; border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 20px; }
-    .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    /* =========================================
+       Design System Definition
+       ========================================= */
+    :root {
+      /* Main Identity */
+      --c-main-turquoise: #57C3C2;
+      /* Authority & Trust */
+      --c-sub-deep-ocean: #2F5D62;
+      /* Conversion Trigger */
+      --c-accent-copper: #C87A56;
+      /* Luxury Foundation */
+      --c-base-washi: #FAFAFA;
+      --c-bg-mist: #F4F7F7;
+      /* Typography */
+      --c-text-sumi: #333333;
+      --c-text-gray: #666666;
+    }
+
+    body {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--c-base-washi);
+      color: var(--c-text-sumi);
+      margin: 0;
+      padding: 20px;
+      padding-bottom: 320px; /* コンソール分 */
+    }
+
+    h2 {
+      font-size: 1.3rem;
+      color: var(--c-sub-deep-ocean);
+      border-bottom: 2px solid var(--c-main-turquoise);
+      padding-bottom: 10px;
+      margin-bottom: 24px;
+      font-weight: 600;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+      border: 1px solid rgba(0,0,0,0.02);
+    }
     
-    label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 0.9rem; }
-    select, input[type="date"], input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; margin-bottom: 15px; -webkit-appearance: none; background: #fff; }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+      color: var(--c-sub-deep-ocean);
+    }
+
+    .sub-label {
+      font-size: 0.85rem;
+      color: var(--c-text-gray);
+      margin-bottom: 8px;
+      display: block;
+      font-weight: normal;
+    }
+
+    select, input[type="date"], input[type="text"] {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+      -webkit-appearance: none;
+      background: #fff;
+      transition: border-color 0.2s;
+    }
+
+    select:focus, input:focus {
+      border-color: var(--c-main-turquoise);
+      outline: none;
+    }
     
-    .btn { display: block; width: 100%; padding: 14px; background: #06c755; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; text-align: center; }
-    .btn:disabled { background: #ccc; cursor: not-allowed; }
-    
+    /* Checkbox Style */
+    .checkbox-group {
+      margin-bottom: 20px;
+      padding: 10px;
+      background: var(--c-bg-mist);
+      border-radius: 8px;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      font-weight: normal;
+      margin: 0;
+      cursor: pointer;
+    }
+    .checkbox-label input {
+      margin-right: 10px;
+      transform: scale(1.2);
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: var(--c-accent-copper);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(200, 122, 86, 0.2);
+      transition: opacity 0.2s;
+    }
+    .btn:active { opacity: 0.8; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+    .btn-secondary { background: var(--c-text-gray); margin-top: 15px; }
+
     /* 予約枠ボタン */
-    #slots-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
-    .slot-btn { padding: 10px; background: white; border: 1px solid #06c755; color: #06c755; border-radius: 6px; font-size: 0.9rem; text-align: center; cursor: pointer; }
+    #slots-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 15px;
+    }
+    .slot-btn {
+      padding: 12px 5px;
+      background: white;
+      border: 1px solid var(--c-main-turquoise);
+      color: var(--c-sub-deep-ocean);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      text-align: center;
+      cursor: pointer;
+      font-weight: bold;
+    }
     .slot-btn:hover { background: #eafff0; }
-    
+
     /* ローディング */
-    #loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 999; text-align: center; justify-content: center; align-items: center; flex-direction: column; }
-    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #06c755; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+    #loading {
+      display: none;
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(255,255,255,0.9);
+      z-index: 999;
+      text-align: center;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--c-main-turquoise);
+      border-radius: 50%;
+      width: 40px; height: 40px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 10px;
+    }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    .error-msg { color: #d93025; font-size: 0.9rem; background: #ffe6e6; padding: 10px; border-radius: 8px; display: none; margin-bottom: 15px; white-space: pre-wrap; }
+    .error-msg {
+      color: #d93025;
+      font-size: 0.9rem;
+      background: #ffe6e6;
+      padding: 15px;
+      border-radius: 8px;
+      display: none;
+      margin-bottom: 20px;
+      white-space: pre-wrap;
+      border: 1px solid #ffcccc;
+    }
 
     /* デバッグコンソール */
     #debug-console {
@@ -37,6 +186,9 @@
     }
     .log-line { border-bottom: 1px solid #333; padding: 2px 0; word-break: break-all; }
     .log-error { color: #ff4444; }
+
+    /* 条件付き表示エリア */
+    .hidden-field { display: none; margin-top: 10px; padding-left: 20px; border-left: 3px solid #ddd; }
   </style>
 </head>
 <body>
@@ -47,30 +199,60 @@
   <div id="error-box" class="error-msg"></div>
 
   <div class="card" id="form-card" style="display:none;">
+    
     <label>ワンちゃんを選択</label>
     <select id="dog-select"></select>
 
-    <label>メニュー</label>
+    <div class="checkbox-group">
+      <label class="checkbox-label">
+        <input type="checkbox" id="multi-dog-check" onchange="toggleDurationDisplay()">
+        2頭目の追加 (+2,000円 / +30分)
+      </label>
+      <small style="color:#666; display:block; margin-top:5px; margin-left:24px;">
+        ※3頭以上の場合はLINEにて直接ご相談ください
+      </small>
+    </div>
+
+    <label>ご希望プラン <span id="duration-display" style="font-weight:normal; font-size:0.9rem;">(所要時間: 90分)</span></label>
     <select id="menu-select">
-      <option value="60">基本トレーニング (60分)</option>
-      <option value="90">長時間レッスン (90分)</option>
+      <option value="90" data-name="単発レッスン">単発レッスン (4,900円)</option>
+      <option value="90" data-name="4回チケット利用">4回チケット利用 (購入済みの方)</option>
+      <option value="90" data-name="8回チケット利用">8回チケット利用 (購入済みの方)</option>
     </select>
 
-    <label>出張先住所 (任意)</label>
-    <input type="text" id="target-address" placeholder="例: 東京都渋谷区...">
-    
+    <label>出張先住所</label>
+    <span class="sub-label">※板橋・練馬・北・豊島区以外は別途交通費が発生します</span>
+    <input type="text" id="target-address" placeholder="例: 東京都板橋区...">
+
     <label>希望日</label>
     <input type="date" id="target-date">
+
+    <div class="checkbox-group">
+        <label class="checkbox-label">
+            <input type="checkbox" id="receipt-check" onchange="toggleReceiptInput()">
+            領収書を希望する
+        </label>
+        <div id="receipt-area" class="hidden-field">
+            <label style="font-size:0.9rem;">宛名</label>
+            <input type="text" id="receipt-addressee" placeholder="例: 株式会社K9" style="margin-bottom:0;">
+        </div>
+    </div>
+
+    <label>紹介コード (お持ちの方)</label>
+    <input type="text" id="referral-code" placeholder="お友達のコードを入力">
 
     <button class="btn" onclick="searchSlots()">空き状況を検索</button>
   </div>
 
   <div class="card" id="slots-card" style="display:none;">
     <h3>予約可能な時間</h3>
-    <p style="font-size:0.8rem; color:#666;">タップして予約を確定してください</p>
+    <p style="font-size:0.8rem; color:var(--c-text-gray);">
+        ご希望の開始時間をタップしてください。<br>
+        <span id="slot-info-text"></span>
+    </p>
     <div id="slots-container">
       </div>
-    <button class="btn" style="background:#888; margin-top:15px;" onclick="resetSearch()">条件を変更する</button>
+    <button class="btn btn-secondary" onclick="resetSearch()">条件を変更する</button>
   </div>
 
   <div id="debug-console">
@@ -85,7 +267,7 @@
   const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIqH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec';
   const LIFF_ID = '2008546673-MJY7j3ox'; 
 
-  // ロガー機能
+  // --- Logger ---
   function log(msg, data) {
       const now = new Date().toLocaleTimeString();
       const div = document.getElementById('debug-logs');
@@ -93,9 +275,7 @@
       line.className = 'log-line';
       let text = `[${now}] ${msg}`;
       if (data) {
-          try {
-             text += ' ' + (typeof data === 'object' ? JSON.stringify(data) : String(data));
-          } catch(e) { text += ' [Object]'; }
+          try { text += ' ' + (typeof data === 'object' ? JSON.stringify(data) : String(data)); } catch(e) { text += ' [Object]'; }
       }
       line.textContent = text;
       div.appendChild(line);
@@ -114,18 +294,18 @@
       console.error(msg, err);
   }
 
-  // 状態管理用
+  // --- State ---
   let currentUserData = null; 
-  let userDogs = [];           
+  let userDogs = [];            
 
-  // 初期化
+  // --- Initialization ---
   window.onload = async () => {
     log('Window Loaded. Initializing LIFF...');
     showLoading(true, 'LIFFを起動中...');
     try {
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) {
-        log('Not logged in. Redirecting to login...');
+        log('Not logged in. Redirecting...');
         liff.login();
         return;
       }
@@ -138,36 +318,25 @@
     }
   };
 
-  // 1. ユーザー情報の取得
+  // 1. Fetch User Data
   async function fetchUserData(userId) {
     showLoading(true, '会員情報を確認中...');
-    log('Fetching user data from GAS...');
     try {
       const response = await fetch(`${GAS_API_URL}?userId=${userId}&type=data`);
       const result = await response.json();
 
-      log('Fetch Result received:', result);
+      log('Fetch Result:', result);
 
-      if (result.error) {
-        throw new Error(result.error);
-      }
-
-      // バリデーション
-      if (!result.customer || !result.customer.unique_key) {
-          // コンソールに詳細を出力してエラーを投げる
-          logError('Validation Failed. Result dump:', result);
-          throw new Error("顧客データの取得に失敗しました。(Missing ID)");
-      }
+      if (result.error) throw new Error(result.error);
+      if (!result.customer || !result.customer.unique_key) throw new Error("顧客データの取得に失敗しました。");
 
       currentUserData = result.customer;
       
-      // 犬情報の取得（ハイブリッド対応）
-      if (result.all_dogs && Array.isArray(result.all_dogs) && result.all_dogs.length > 0) {
+      // 犬情報 (Hybrid対応)
+      if (result.all_dogs && result.all_dogs.length > 0) {
           userDogs = result.all_dogs;
-          log('Using new system dog data (all_dogs). Count:', userDogs.length);
       } else if (result.dog) {
           userDogs = [result.dog];
-          log('Using legacy dog data (dog).');
       } else {
           throw new Error("登録されているワンちゃんが見つかりません。");
       }
@@ -175,26 +344,25 @@
       renderDogSelect();
       initDatePicker();
       
+      // 住所の自動入力
+      if (currentUserData.address) {
+          document.getElementById('target-address').value = currentUserData.address;
+      }
+
       document.getElementById('form-card').style.display = 'block';
       showLoading(false);
-      log('User data loaded successfully.');
 
     } catch (err) {
       logError('fetchUserData Error:', err);
-      showError('【エラー発生】\nサーバーからの応答: ' + err.message);
+      showError('【エラー発生】\n' + err.message);
       showLoading(false);
     }
   }
 
-  // 犬選択肢の生成
   function renderDogSelect() {
     const select = document.getElementById('dog-select');
     select.innerHTML = '';
     userDogs.forEach(dog => {
-      if (!dog || !dog.id) {
-          logError('Invalid dog object skipped:', dog);
-          return;
-      }
       const option = document.createElement('option');
       option.value = dog.id;
       option.textContent = dog.name_disp || dog.name;
@@ -202,7 +370,6 @@
     });
   }
 
-  // 日付選択の初期値
   function initDatePicker() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -212,22 +379,41 @@
     document.getElementById('target-date').value = `${yyyy}-${mm}-${dd}`;
   }
 
-  // 2. 空き枠の検索
+  // --- UI Toggles ---
+  function toggleDurationDisplay() {
+      const isMulti = document.getElementById('multi-dog-check').checked;
+      const display = document.getElementById('duration-display');
+      display.textContent = isMulti ? '(所要時間: 120分)' : '(所要時間: 90分)';
+      display.style.color = isMulti ? 'var(--c-accent-copper)' : '#666';
+      display.style.fontWeight = isMulti ? 'bold' : 'normal';
+  }
+
+  function toggleReceiptInput() {
+      const isChecked = document.getElementById('receipt-check').checked;
+      document.getElementById('receipt-area').style.display = isChecked ? 'block' : 'none';
+  }
+
+  // 2. Search Slots
   async function searchSlots() {
     const dateVal = document.getElementById('target-date').value;
-    const menuVal = document.getElementById('menu-select').value;
+    const menuSelect = document.getElementById('menu-select');
+    const baseDuration = Number(menuSelect.value); // 基本90分
     const addressVal = document.getElementById('target-address').value;
+    const isMultiDog = document.getElementById('multi-dog-check').checked;
 
     if (!dateVal) return alert('日付を選択してください');
 
+    // 計算用: 合計時間 (多頭なら+30分)
+    const totalDuration = isMultiDog ? baseDuration + 30 : baseDuration;
+
     showLoading(true, '空き状況を確認中...');
     document.getElementById('error-box').style.display = 'none';
-    log('Searching slots...', { date: dateVal, duration: menuVal });
+    log('Searching slots...', { date: dateVal, duration: totalDuration });
 
     const payload = {
       action: 'get_slots',
       targetDate: dateVal,
-      menuDuration: menuVal,
+      menuDuration: totalDuration, // ここでは合計時間を送る
       targetAddress: addressVal
     };
 
@@ -237,31 +423,31 @@
         body: JSON.stringify(payload)
       });
       const result = await response.json();
-      log('Slots search result:', result);
+      log('Slots result:', result);
 
       if (result.status === 'success') {
-        renderSlots(result.data, dateVal);
+        renderSlots(result.data, dateVal, totalDuration);
       } else {
         throw new Error(result.message);
       }
     } catch (err) {
-      logError('Search Slots Error:', err);
+      logError('Search Error:', err);
       showError('検索エラー: ' + err.message);
     } finally {
       showLoading(false);
     }
   }
 
-  // 枠ボタンの描画
-  function renderSlots(slots, dateVal) {
+  function renderSlots(slots, dateVal, duration) {
     const container = document.getElementById('slots-container');
     container.innerHTML = '';
     
     document.getElementById('form-card').style.display = 'none';
     document.getElementById('slots-card').style.display = 'block';
+    document.getElementById('slot-info-text').textContent = `所要時間: ${duration}分 / 日付: ${dateVal}`;
 
     if (slots.length === 0) {
-      container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:#888;">この条件で空いている枠はありませんでした。</p>';
+      container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:#888;">申し訳ありません。<br>この条件で空いている枠はありませんでした。</p>';
       return;
     }
 
@@ -269,47 +455,57 @@
       const btn = document.createElement('div');
       btn.className = 'slot-btn';
       btn.textContent = slot.start || slot.time;
+      // 時間帯によって移動時間のアラートがあれば色を変えるなどの拡張も可能
+      
       btn.onclick = () => confirmReservation(slot, dateVal);
       container.appendChild(btn);
     });
   }
 
-  // 3. 予約確認と送信
+  // 3. Confirm & Submit
   async function confirmReservation(slot, dateVal) {
     const dogId = document.getElementById('dog-select').value;
     const dogObj = userDogs.find(d => d.id === dogId);
-    const menuName = document.getElementById('menu-select').options[document.getElementById('menu-select').selectedIndex].text;
-    const duration = document.getElementById('menu-select').value;
+    
+    const menuSelect = document.getElementById('menu-select');
+    const menuName = menuSelect.options[menuSelect.selectedIndex].getAttribute('data-name');
+    const baseDuration = menuSelect.value;
+    
+    const isMultiDog = document.getElementById('multi-dog-check').checked;
     const timeStr = slot.start || slot.time;
     
-    const confirmMsg = `
-【予約内容の確認】
-日時: ${dateVal} ${timeStr} 〜
-ワンちゃん: ${dogObj.name_disp || dogObj.name}
-メニュー: ${menuName}
+    // UI用の確認メッセージ作成
+    let msg = `【予約内容の確認】\n\n`;
+    msg += `日時: ${dateVal} ${timeStr} 〜\n`;
+    msg += `ワンちゃん: ${dogObj.name_disp || dogObj.name}\n`;
+    msg += `メニュー: ${menuName} (90分)\n`;
+    if (isMultiDog) msg += `オプション: 2頭目追加 (+30分)\n`;
+    msg += `\nこの内容で予約を確定しますか？`;
 
-この内容で予約を確定しますか？
-    `.trim();
-
-    if (!confirm(confirmMsg)) return;
+    if (!confirm(msg)) return;
 
     showLoading(true, '予約処理中...');
-    log('Submitting reservation...');
     
+    // 収集データ
     const payload = {
       action: 'add_reservation',
       targetDate: dateVal,
       startTime: timeStr,
-      menuDuration: duration,
+      menuDuration: baseDuration, // ★重要: ここでは「基本時間」を送る (Backendで再計算するため)
       menuName: menuName,
       targetAddress: document.getElementById('target-address').value,
       
-      // 顧客情報
-      userId: currentUserData.unique_key, 
+      // 新規追加項目
+      multiDog: isMultiDog,
+      receiptRequired: document.getElementById('receipt-check').checked,
+      receiptAddressee: document.getElementById('receipt-addressee').value,
+      referralCode: document.getElementById('referral-code').value,
+      
+      // 顧客・犬情報
+      userId: currentUserData.unique_key, // 顧客ユニークキー
+      customerKey: currentUserData.unique_key, // 明示的に送る
       customerName: currentUserData.name,
       customerPhone: currentUserData.phone,
-      
-      // 犬情報
       dogId: dogObj.id,
       dogName: dogObj.name,
       
@@ -322,7 +518,7 @@
         body: JSON.stringify(payload)
       });
       const result = await response.json();
-      log('Reservation response:', result);
+      log('Reserve response:', result);
 
       if (result.status === 'success') {
         alert('予約が完了しました！\nご予約ありがとうございます。');
@@ -331,7 +527,7 @@
         throw new Error(result.message);
       }
     } catch (err) {
-      logError('Reservation Error:', err);
+      logError('Reserve Error:', err);
       showError('予約に失敗しました: ' + err.message);
     } finally {
       showLoading(false);
@@ -353,6 +549,8 @@
     const box = document.getElementById('error-box');
     box.textContent = msg;
     box.style.display = 'block';
+    // エラー時は一番上へスクロール
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 </script>
 </body>
