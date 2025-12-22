@@ -237,6 +237,7 @@
     </div>
 
     <footer class="site-footer reveal-item" id="reveal-5">
+        <div style="font-size:10px; color:#ccc; margin-bottom:10px;">[2025-12-22, Android Share/Send Fix, Ver 3.2]</div>
         <div class="footer-logo-container"><img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony"></div>
         <div class="footer-info"><p><strong>K9 Harmony</strong></p><p>〒174-0063 東京都板橋区前野町6-55-1</p><p>070-9043-1109</p></div>
         <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
@@ -275,6 +276,7 @@
 // ==========================================
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
+    // GASのデプロイURL (そのまま)
     GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec"
 };
 
@@ -313,7 +315,7 @@ async function startOpeningSequence() {
     await Promise.all([...timeline, initLiff()]);
 }
 
-// 【Utility】画像データ変換（シェア用）※新規追加
+// 【Utility】画像データ変換（シェア用）
 function dataURLtoFile(dataurl, filename) {
     let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
         bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
@@ -325,31 +327,23 @@ async function initLiff() {
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
         
-        // 1. ログイン確認
         if (!liff.isLoggedIn()) {
             liff.login({ redirectUri: window.location.href });
             return;
         }
         
-        // 2. アクセストークンチェック
-        // [Android Fix] 無限リロード防止
+        // [Android Fix] 無限リロード防止策
         const accessToken = liff.getAccessToken();
         if (!accessToken) {
             console.log("No Token. Checking retry...");
-            
-            // sessionStorageで「リロード済みフラグ」を確認
             if (!sessionStorage.getItem('token_retry')) {
-                // 初回失敗ならフラグを立ててリロード（再取得試行）
                 sessionStorage.setItem('token_retry', '1');
                 liff.logout(); 
                 liff.login({ redirectUri: window.location.href });
                 return;
             }
-            // 2回目以降は諦めて次に進む（ログだけ残す）
-            // これにより「無限ループ」が止まり、fetchMasterDataが走ってボタンが押せるようになる
             log("Token Error (Skipped).");
         } else {
-            // 成功したらフラグ消去
             sessionStorage.removeItem('token_retry');
         }
 
@@ -446,7 +440,6 @@ async function processFinal() {
     });
 
     gtag('event', 'diagnosis_complete', { 'type': state.typeName });
-    // 通常ログ保存
     fetch(CONFIG.GAS_URL, { method:'POST', mode:'no-cors', body: JSON.stringify({ uid:state.userId, dogName:state.dogName, scoreX:sX, scoreY:sY, resultType:state.typeName }) });
 }
 
@@ -467,14 +460,14 @@ function init() {
     document.getElementById('finishBtn').onclick = processFinal;
     document.getElementById('backToReload').onclick = () => location.reload();
 
-    // [LINE送信] 修正: 結果画面で強制リロードされるのを防ぐ
+    // [LINE送信] 堅牢化
     document.getElementById('sendLiffBtn').onclick = () => {
         let accessToken = liff.getAccessToken();
         const btn = document.getElementById('sendLiffBtn');
         
-        // トークンがない場合、その場で1回だけ取得試行（リロードなし）
+        // トークンが空の場合、ログアウトせず静かに再取得を試みる
         if (!accessToken) {
-             // ユーザーには見えないが、内部的にリフレッシュを期待
+             console.warn("Token empty before send.");
         }
 
         btn.disabled = true;
@@ -495,13 +488,12 @@ function init() {
             btn.innerText = "送信完了";
         }).catch(err => {
             alert("送信エラー: " + err);
-            // 修正: エラーでもリロードしない（結果画面を維持）
             btn.disabled = false;
             btn.innerText = "再送信";
         });
     };
 
-    // [シェア] 修正: 画像データを渡してInstagram等に対応
+    // [シェア] Android対策: URLパラメータを分離
     document.getElementById('shareTargetBtn').onclick = () => {
         const text = `${state.dogName}の診断結果は${state.typeName}！ #K9Harmony #愛犬の性格診断`;
         const url = "https://liff.line.me/" + CONFIG.LIFF_ID;
@@ -510,11 +502,10 @@ function init() {
         // ベースのシェアデータ
         let shareData = {
             title: 'K9 Harmony 愛犬の性格診断',
-            // 【重要】Android対策: 画像共有時はURLをtextに含め、urlプロパティを消す
+            // 画像共有時はurlプロパティを使わずtextに含めるのがAndroidの定石
             text: text + "\n" + url
         };
 
-        // 画像があるならファイル化
         try {
             if (imgEl.src && navigator.canShare) {
                 const file = dataURLtoFile(imgEl.src, "diagnosis.png");
@@ -522,7 +513,7 @@ function init() {
                     files: [file], 
                     title: shareData.title, 
                     text: shareData.text 
-                    // urlプロパティは意図的に含めない
+                    // urlプロパティは削除
                 };
                 
                 if (navigator.canShare(fileData)) {
@@ -543,7 +534,6 @@ function init() {
         }
     };
     
-    // 個人情報保護方針
     document.getElementById('openPrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'flex'; };
     document.getElementById('closePrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'none'; };
 }
