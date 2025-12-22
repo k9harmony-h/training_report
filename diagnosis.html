@@ -41,7 +41,7 @@
         #logOverlay {
             position: fixed; top: 0; left: 0; width: 100%; background: rgba(47, 93, 98, 0.85);
             color: #FFF; font-size: 10px; padding: 4px 10px; z-index: 9999; pointer-events: none;
-            font-family: monospace; line-height: 1.5;
+            font-family: monospace; line-height: 1.5; display: none; /* 通常時は非表示 */
         }
 
         /* [Background] */
@@ -136,10 +136,8 @@
         .result-title-main { font-size: 1.5rem; color: var(--progress-track); margin-top: 0; line-height: 1.4; }
         .save-guide { font-size: 12px; color: var(--neutral-border); margin: 10px 0; font-family: 'Noto Serif JP'; }
         
-        /* [Android Fix: Enable Long Press] */
         #generatedImageOutput {
             width: 100%; border: 1px solid var(--neutral-border);
-            /* Android長押し対策 */
             pointer-events: auto !important;
             user-select: auto !important;
             -webkit-user-select: auto !important;
@@ -192,7 +190,7 @@
     </style>
 </head>
 <body>
-    <div id="logOverlay">Initializing...</div>
+    <div id="logOverlay"></div>
     <div id="washiBg"></div>
 
     <div class="container">
@@ -261,10 +259,12 @@
             <div id="policyContent" class="policy-body">
                 <h3>個人情報保護方針</h3>
                 <p><strong>1. 事業者情報</strong><br>K9 Harmony<br>代表: 根岸 亮太<br>住所: 〒174-0063 東京都板橋区前野町6-55-1</p>
-                <p><strong>2. 個人情報の取得方法</strong><br>当社は、お客様が診断サービスを利用する際に、LINEのユーザーID、愛犬の名前等の情報を自動または手動で取得します。</p>
+                <p><strong>2. 個人情報の取得方法</strong><br>当社は、お客様が診断サービスを利用する際に、LINEのユーザーID、愛犬の名前等の情報を取得します。</p>
                 <p><strong>3. 利用目的</strong><br>取得した情報は、診断結果の提供、サービス向上、およびお問い合わせ対応のために利用します。</p>
-                <p><strong>4. 第三者提供</strong><br>法令に基づく場合を除き、同意なく第三者に個人情報を提供することはありません。</p>
-                <p><strong>5. お問い合わせ</strong><br>個人情報の取り扱いに関するご質問は、公式LINEまでご連絡ください。</p>
+                <p><strong>4. 解析ツール等の利用</strong><br>サービス向上のため、Google Analytics等のアクセス解析ツールを使用し、匿名化されたトラフィックデータを収集する場合があります。</p>
+                <p><strong>5. 免責事項</strong><br>本診断結果は愛犬の傾向を示すものであり、医学的・科学的な確定診断を保証するものではありません。</p>
+                <p><strong>6. 第三者提供</strong><br>法令に基づく場合を除き、同意なく第三者に個人情報を提供することはありません。</p>
+                <p><strong>7. お問い合わせ</strong><br>個人情報の取り扱いに関するご質問は、公式LINEまでご連絡ください。</p>
             </div>
             <div id="closePrivacy" style="margin-top:20px; text-align:center; padding:15px; background:var(--mist-background); cursor:pointer;">閉じる</div>
         </div>
@@ -277,8 +277,7 @@
 // ==========================================
 const CONFIG = {
     LIFF_ID: "2008546673-MJY7j3ox",
-    // GASのデプロイURL (そのまま)
-    GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec"
+    GAS_URL: "https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIqH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec"
 };
 
 let MASTER_QUESTIONS = [];
@@ -287,21 +286,20 @@ let state = { userId: null, dogName: "", answers: {}, typeName: "" };
 
 function log(msg) {
     const ts = new Date().toLocaleTimeString();
-    const overlay = document.getElementById('logOverlay');
-    if(overlay) overlay.innerText = `[${ts}] ${msg}`;
+    console.log(`[${ts}] ${msg}`);
 }
 
 async function fetchMasterData() {
-    log("Loading...");
+    log("Loading Master...");
     try {
         const res = await fetch(`${CONFIG.GAS_URL}?action=fetchMaster`);
         const data = await res.json();
         MASTER_QUESTIONS = data.questions;
         MASTER_RESULTS = data.results;
-        log("Ready.");
+        log("Master Ready.");
         const btn = document.getElementById('startBtn');
         if(btn) { btn.disabled = false; btn.innerText = "診断を始める"; }
-    } catch (e) { log("Data Error."); }
+    } catch (e) { console.error(e); }
 }
 
 async function startOpeningSequence() {
@@ -320,25 +318,46 @@ async function initLiff() {
     try {
         await liff.init({ liffId: CONFIG.LIFF_ID });
         
-        // 1. ログイン確認
+        // 1. 未ログインならログイン
         if (!liff.isLoggedIn()) {
             liff.login({ redirectUri: window.location.href });
             return;
         }
         
-        // 2. アクセストークンチェック (空なら入力前にリロード)
+        // 2. Android固有: トークン取得試行
+        // キャッシュ不整合で isLoggedIn=true なのに getAccessToken=null になる現象への対策
         const accessToken = liff.getAccessToken();
+        
         if (!accessToken) {
-            console.log("No Token. Reloading...");
-            // ここで一度logoutしないとAndroidは古い情報を保持し続ける可能性がある
-            liff.logout(); 
-            liff.login({ redirectUri: window.location.href });
+            console.warn("Token missing. Attempting recovery...");
+            
+            // 無限リロード防止策: sessionStorageでリトライ回数を管理
+            const retryKey = "liff_token_retry";
+            const retryCount = parseInt(sessionStorage.getItem(retryKey) || "0");
+            
+            if (retryCount < 1) {
+                // 1回だけ強制リロード（logout -> reload）を許可
+                sessionStorage.setItem(retryKey, (retryCount + 1).toString());
+                liff.logout();
+                location.reload(); 
+            } else {
+                // 2回目以降は諦めてエラー表示（ループ地獄回避）
+                alert("接続が不安定です。LINEアプリ内ブラウザ、またはChrome等の外部ブラウザで再度開き直してください。");
+                sessionStorage.removeItem(retryKey); // 次回のためにリセット
+            }
             return;
         }
 
+        // 正常ならリトライカウントをクリア
+        sessionStorage.removeItem("liff_token_retry");
         state.userId = liff.getDecodedIDToken().sub;
-        log("LIFF OK.");
-    } catch (e) { log("LIFF Fail."); }
+        log("LIFF Initialized & Token Valid.");
+
+    } catch (e) {
+        console.error("LIFF Init Error:", e);
+        // 重大なエラー時はアラート
+        alert("LINEへの接続に失敗しました。通信環境を確認してください。");
+    }
 }
 
 function buildSection(group, targetId) {
@@ -402,7 +421,7 @@ function navigate(fromId, toId, direction) {
 }
 
 async function processFinal() {
-    log("Processing...");
+    log("Processing Final...");
     const sX = (state.answers[1]||0) + (state.answers[2]||0) + (state.answers[3]||0);
     const sY = (state.answers[4]||0) + (state.answers[5]||0) + (state.answers[6]||0);
     const c = state.answers[7]||0;
@@ -424,13 +443,26 @@ async function processFinal() {
 
     await document.fonts.ready;
     html2canvas(document.getElementById('chekiTemplate'), { scale: 2, useCORS: true }).then(canvas => {
-        document.getElementById('generatedImageOutput').src = canvas.toDataURL();
-        log("Rendered.");
+        document.getElementById('generatedImageOutput').src = canvas.toDataURL("image/png");
+        log("Image Rendered.");
     });
 
     gtag('event', 'diagnosis_complete', { 'type': state.typeName });
-    // 通常ログ保存
-    fetch(CONFIG.GAS_URL, { method:'POST', mode:'no-cors', body: JSON.stringify({ uid:state.userId, dogName:state.dogName, scoreX:sX, scoreY:sY, resultType:state.typeName }) });
+    
+    // 診断ログ保存
+    fetch(CONFIG.GAS_URL, { 
+        method:'POST', 
+        mode:'no-cors', 
+        body: JSON.stringify({ uid:state.userId, dogName:state.dogName, scoreX:sX, scoreY:sY, resultType:state.typeName }) 
+    });
+}
+
+// [Utility] DataURL to Blob/File (シェア機能用)
+function dataURLtoFile(dataurl, filename) {
+    let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while(n--){ u8arr[n] = bstr.charCodeAt(n); }
+    return new File([u8arr], filename, {type:mime});
 }
 
 function init() {
@@ -450,16 +482,15 @@ function init() {
     document.getElementById('finishBtn').onclick = processFinal;
     document.getElementById('backToReload').onclick = () => location.reload();
 
-    // [LINE送信] 修正: Androidのキャッシュ問題を解決する強力なエラーハンドリング
+    // [LINE送信] 
     document.getElementById('sendLiffBtn').onclick = () => {
         const accessToken = liff.getAccessToken();
         const btn = document.getElementById('sendLiffBtn');
         
-        // 空チェック & 強制ログアウト処理
         if (!accessToken) {
             alert("接続エラーが発生しました。再接続します。");
-            liff.logout(); // ★ここが重要: キャッシュをクリア
-            liff.login({ redirectUri: window.location.href });
+            liff.logout();
+            location.reload();
             return;
         }
 
@@ -467,8 +498,7 @@ function init() {
         btn.innerText = "送信中...";
 
         fetch(CONFIG.GAS_URL, { 
-            method: 'POST', 
-            mode: 'no-cors',
+            method: 'POST', mode: 'no-cors',
             body: JSON.stringify({ 
                 action: 'send_line', 
                 accessToken: accessToken, 
@@ -481,27 +511,44 @@ function init() {
             btn.innerText = "送信完了";
         }).catch(err => {
             alert("送信エラー: " + err);
-            // エラー時もクリーンナップしてリロードを促す
-            liff.logout();
-            location.reload();
+            btn.disabled = false;
         });
     };
 
-    // [シェア] 変更なし: Instagramもnavigator.share経由で表示される
-    document.getElementById('shareTargetBtn').onclick = () => {
+    // [シェア] 画像ファイル共有機能搭載 (IG/X対応強化)
+    document.getElementById('shareTargetBtn').onclick = async () => {
         const text = `${state.dogName}の診断結果は${state.typeName}！ #K9Harmony #愛犬の性格診断`;
         const url = "https://liff.line.me/" + CONFIG.LIFF_ID; 
+        const imgEl = document.getElementById('generatedImageOutput');
+
+        // シェアデータの構築
+        let shareData = {
+            title: 'K9 Harmony 愛犬の性格診断',
+            text: text,
+            url: url
+        };
+
+        // 画像ファイル化を試みる
+        try {
+            if (imgEl.src && navigator.canShare) {
+                const file = dataURLtoFile(imgEl.src, "diagnosis_result.png");
+                const fileData = { files: [file], title: shareData.title, text: shareData.text }; // URLはfilesと同時だと無視される場合がある
+                
+                // 画像シェアが可能かチェック
+                if (navigator.canShare(fileData)) {
+                    shareData = fileData; // 可能なら画像を優先
+                }
+            }
+        } catch(e) {
+            console.log("File share prep failed, falling back to text", e);
+        }
 
         if (navigator.share) {
-            navigator.share({
-                title: 'K9 Harmony 愛犬の性格診断',
-                text: text,
-                url: url
-            }).catch((err) => { 
+            navigator.share(shareData).catch((err) => { 
                 console.log('Share canceled/failed', err);
             });
         } else {
-            // Android等でnavigator.share非対応ならTwitterへ
+            // PCや非対応ブラウザ用フォールバック (Xへのリンク)
             const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
             window.open(twitterUrl);
         }
