@@ -26,7 +26,7 @@
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #06c755; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    .error-msg { color: #d93025; font-size: 0.9rem; background: #ffe6e6; padding: 10px; border-radius: 8px; display: none; margin-bottom: 15px; }
+    .error-msg { color: #d93025; font-size: 0.9rem; background: #ffe6e6; padding: 10px; border-radius: 8px; display: none; margin-bottom: 15px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
@@ -68,11 +68,11 @@
   // 設定: デプロイしたGASのウェブアプリURL
   // ==========================================
   const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIqH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec';
-  const LIFF_ID = '2008546673-MJY7j3ox'; // 保存情報にあったLIFF ID
+  const LIFF_ID = '2008546673-MJY7j3ox'; 
 
   // 状態管理用
-  let currentUserData = null; // 顧客情報
-  let userDogs = [];          // 犬情報リスト
+  let currentUserData = null; 
+  let userDogs = [];          
 
   // 初期化
   window.onload = async () => {
@@ -84,26 +84,29 @@
         return;
       }
       const profile = await liff.getProfile();
+      console.log("LIFF Logged in:", profile.userId);
       fetchUserData(profile.userId);
     } catch (err) {
-      showError('LIFFの初期化に失敗しました: ' + err.message);
+      showError('LIFF初期化エラー: ' + err.message);
     }
   };
 
-  // 1. ユーザー情報の取得 (GAS doGet)
+  // 1. ユーザー情報の取得
   async function fetchUserData(userId) {
     showLoading(true, '会員情報を確認中...');
     try {
-      // doGetを叩く
       const response = await fetch(`${GAS_API_URL}?userId=${userId}&type=data`);
       const result = await response.json();
 
+      console.log("Fetch Result:", result);
+
       if (result.error) {
+        // ★重要: GASから返ってきたエラーをそのまま投げる
         throw new Error(result.error);
       }
 
       currentUserData = result.customer;
-      userDogs = result.all_dogs || [result.dog]; // 複数頭対応
+      userDogs = result.all_dogs || [result.dog]; 
 
       renderDogSelect();
       initDatePicker();
@@ -112,7 +115,9 @@
       showLoading(false);
 
     } catch (err) {
-      showError('会員情報の取得に失敗しました。\nまだ会員登録がお済みでない可能性があります。');
+      // ★修正: 本当のエラーメッセージを表示する
+      console.error("Fetch Error:", err);
+      showError('【エラー発生】\nサーバーからの応答: ' + err.message);
       showLoading(false);
     }
   }
@@ -129,7 +134,7 @@
     });
   }
 
-  // 日付選択の初期値 (明日以降)
+  // 日付選択の初期値
   function initDatePicker() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -139,7 +144,7 @@
     document.getElementById('target-date').value = `${yyyy}-${mm}-${dd}`;
   }
 
-  // 2. 空き枠の検索 (GAS doPost: get_slots)
+  // 2. 空き枠の検索
   async function searchSlots() {
     const dateVal = document.getElementById('target-date').value;
     const menuVal = document.getElementById('menu-select').value;
@@ -190,10 +195,9 @@
     }
 
     slots.forEach(slot => {
-      // slot = { start: "10:00", end: "11:00", ... }
       const btn = document.createElement('div');
       btn.className = 'slot-btn';
-      btn.textContent = slot.start;
+      btn.textContent = slot.start || slot.time; // key揺らぎ吸収
       
       btn.onclick = () => confirmReservation(slot, dateVal);
       
@@ -201,16 +205,17 @@
     });
   }
 
-  // 3. 予約確認と送信 (GAS doPost: add_reservation)
+  // 3. 予約確認と送信
   async function confirmReservation(slot, dateVal) {
     const dogId = document.getElementById('dog-select').value;
     const dogObj = userDogs.find(d => d.id === dogId);
     const menuName = document.getElementById('menu-select').options[document.getElementById('menu-select').selectedIndex].text;
     const duration = document.getElementById('menu-select').value;
+    const timeStr = slot.start || slot.time;
     
     const confirmMsg = `
 【予約内容の確認】
-日時: ${dateVal} ${slot.start} 〜
+日時: ${dateVal} ${timeStr} 〜
 ワンちゃん: ${dogObj.name_disp}
 メニュー: ${menuName}
 
@@ -221,18 +226,19 @@
 
     showLoading(true, '予約処理中...');
 
-    // 開始日時のISO文字列作成 (簡易版)
-    const startDateTime = new Date(`${dateVal}T${slot.start}:00`).toISOString();
-
+    // 開始日時のISO文字列作成
+    // ※ reservationService.gs は "startTime": "HH:mm" を期待しているため、そのまま送る形に合わせる
+    
     const payload = {
       action: 'add_reservation',
-      startTime: startDateTime,
+      targetDate: dateVal, // yyyy-mm-dd
+      startTime: timeStr,  // HH:mm
       menuDuration: duration,
       menuName: menuName,
       targetAddress: document.getElementById('target-address').value,
       
-      // 顧客情報 (fetchUserDataで取得済み)
-      customerId: currentUserData.unique_key,
+      // 顧客情報
+      userId: currentUserData.unique_key, // GAS側は userId or customerId で受けるが main.gs の createReservation 呼び出しを確認
       customerName: currentUserData.name,
       customerPhone: currentUserData.phone,
       
@@ -240,7 +246,7 @@
       dogId: dogObj.id,
       dogName: dogObj.name,
       
-      userMemo: 'LIFFからの予約'
+      userNotes: 'LIFFからの予約'
     };
 
     try {
@@ -252,7 +258,7 @@
 
       if (result.status === 'success') {
         alert('予約が完了しました！\nご予約ありがとうございます。');
-        liff.closeWindow(); // 完了したら閉じる
+        liff.closeWindow();
       } else {
         throw new Error(result.message);
       }
@@ -278,144 +284,76 @@
     const box = document.getElementById('error-box');
     box.textContent = msg;
     box.style.display = 'block';
-    alert(msg);
   }
 </script>
-  <div id="debug-console" style="
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 300px;
-    background: rgba(0,0,0,0.85);
-    color: #0f0;
-    font-family: monospace;
-    font-size: 12px;
-    overflow-y: scroll;
-    z-index: 9999;
-    padding: 10px;
-    box-sizing: border-box;
-    border-top: 2px solid #0f0;
-    pointer-events: none; /* 下の要素を触れるようにする場合はautoにする */
+
+<div id="debug-console" style="
+    position: fixed; bottom: 0; left: 0; width: 100%; height: 300px;
+    background: rgba(0,0,0,0.85); color: #0f0; font-family: monospace; font-size: 12px;
+    overflow-y: scroll; z-index: 9999; padding: 10px; box-sizing: border-box;
+    border-top: 2px solid #0f0; pointer-events: none;
 ">
     <div style="border-bottom:1px solid #444; margin-bottom:5px; font-weight:bold; color:#fff;">
-        Debug Console (Latest at Bottom)
+        Debug Console
     </div>
     <div id="debug-logs"></div>
 </div>
 
+<div style="position:fixed; top:10px; right:10px; z-index:10000;">
+    <button onclick="checkMyId()" style="background:red; color:white; font-size:16px; padding:10px;">
+        ID確認 (Fetch)
+    </button>
+</div>
+
 <script>
+// デバッグログ機能
 (function() {
     const logDiv = document.getElementById('debug-logs');
     const container = document.getElementById('debug-console');
-    
-    // 画面操作を邪魔しないよう、コンソール自体をクリックしたら非表示/表示を切り替える機能
     container.style.pointerEvents = 'auto';
-    container.onclick = function() {
-        if(container.style.height === '30px') {
-            container.style.height = '300px';
-        } else {
-            container.style.height = '30px';
-        }
-    };
+    container.onclick = function() { container.style.height = (container.style.height === '30px') ? '300px' : '30px'; };
 
     function printLog(type, args) {
         const line = document.createElement('div');
         line.style.borderBottom = '1px solid #333';
         line.style.padding = '2px 0';
-        
-        // 日時
         const time = new Date().toLocaleTimeString();
-        
-        // 内容のテキスト化
-        const msg = Array.from(args).map(arg => {
-            if (typeof arg === 'object') {
-                try {
-                    return JSON.stringify(arg, null, 2);
-                } catch(e) {
-                    return String(arg);
-                }
-            }
-            return String(arg);
-        }).join(' ');
-
+        const msg = Array.from(args).map(arg => (typeof arg === 'object') ? JSON.stringify(arg) : String(arg)).join(' ');
         line.innerText = `[${time}] [${type}] ${msg}`;
-        
         if (type === 'ERROR') line.style.color = '#ff4444';
-        if (type === 'WARN')  line.style.color = '#ffbb33';
-
         logDiv.appendChild(line);
-        container.scrollTop = container.scrollHeight; // 自動スクロール
+        container.scrollTop = container.scrollHeight;
     }
-
-    // console.log を乗っ取る
     const originalLog = console.log;
-    console.log = function(...args) {
-        originalLog.apply(console, args);
-        printLog('LOG', args);
-    };
-
-    // console.error を乗っ取る
+    console.log = function(...args) { originalLog.apply(console, args); printLog('LOG', args); };
     const originalError = console.error;
-    console.error = function(...args) {
-        originalError.apply(console, args);
-        printLog('ERROR', args);
-    };
-
-    console.log("=== Debug Console Initialized ===");
-    console.log("LIFF ID / User Agent:", navigator.userAgent);
-    
-    // グローバルエラーも捕捉
-    window.onerror = function(message, source, lineno, colno, error) {
-        console.error("Window Error:", message, source, lineno);
-    };
-
+    console.error = function(...args) { originalError.apply(console, args); printLog('ERROR', args); };
+    window.onerror = function(message) { console.error("Window Error:", message); };
 })();
-</script>
-  <div style="position:fixed; top:10px; right:10px; z-index:10000;">
-    <button onclick="checkMyId()" style="background:red; color:white; font-size:16px; padding:10px;">
-        私のIDを確認する
-    </button>
-</div>
 
-<script>
-function checkMyId() {
-    console.log("Checking ID...");
-    if (!liff.isLoggedIn()) {
-        console.error("LIFF: Not logged in.");
-        alert("LINEにログインできていません。");
-        return;
-    }
-    
-    liff.getProfile()
-    .then(profile => {
+// ID確認機能 (google.script.run を廃止し fetch を使用)
+async function checkMyId() {
+    if (!liff.isLoggedIn()) { alert("LINEログインしていません"); return; }
+    try {
+        const profile = await liff.getProfile();
         const userId = profile.userId;
-        console.log("★あなたのUser ID:", userId);
-        alert("あなたのUser ID:\n" + userId + "\n\nこのIDがスプレッドシートの「顧客情報」シートの「line_user_id」列に正確に入っているか確認してください。");
+        console.log("My User ID:", userId);
+        alert("あなたのUser ID:\n" + userId);
         
-        // 念のためサーバーにこのIDで問い合わせてみる
-        console.log("サーバーに問い合わせ中...");
-        google.script.run
-        .withSuccessHandler(res => {
-            console.log("サーバーからの応答:", res);
-            if (JSON.parse(res).error) {
-                console.error("サーバー判定: エラー - " + JSON.parse(res).error);
-                alert("サーバー判定: 未登録 (Unregistered) です。\nスプレッドシートを確認してください。");
-            } else {
-                console.log("サーバー判定: 正常 (データあり)");
-                alert("サーバー判定: 正常。データは取得できています。");
-            }
-        })
-        .withFailureHandler(err => {
-            console.error("サーバー通信エラー:", err);
-            alert("サーバー通信エラーが発生しました。");
-        })
-        .getAllData(userId, null); // main.gs の関数を直接呼ぶ
-    })
-    .catch(err => {
-        console.error("Profile Error:", err);
-        alert("プロファイル取得失敗: " + err);
-    });
+        console.log("Server Check Start...");
+        const res = await fetch(`${GAS_API_URL}?userId=${userId}&type=data`);
+        const json = await res.json();
+        console.log("Server Response:", json);
+        
+        if (json.error) {
+            alert("サーバー判定: エラー\n" + json.error);
+        } else {
+            alert("サーバー判定: 正常\nお名前: " + json.customer.name);
+        }
+    } catch(e) {
+        console.error(e);
+        alert("通信エラー: " + e.message);
+    }
 }
 </script>
 </body>
