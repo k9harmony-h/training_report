@@ -1,119 +1,132 @@
-/**
- * ============================================================================
- * K9 Harmony - Admin Portal Backend
- * ============================================================================
- * @file    adminService.gs
- * @version v2025.12.23-Phase4_Admin_Init
- * @desc    管理画面向けのデータ提供、緊急停止、代理登録機能。
- */
-
-/**
- * 管理画面のHTMLを返す
- */
-function getAdminHtml() {
-  return HtmlService.createHtmlOutputFromFile('admin')
-    .setTitle('K9 Harmony Admin Portal')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
-}
-
-/**
- * ダッシュボード用データ取得 (API)
- */
-function getAdminDashboardData() {
-  const today = new Date();
-  // 1. 火曜日チェック (0:日, 1:月, 2:火)
-  const isTuesday = (today.getDay() === 2);
-  
-  // 2. 予約リスト取得 (直近50件)
-  const reservations = _fetchRecentReservations(50);
-
-  // 3. メンテナンスモード確認
-  const isMaintenance = _checkMaintenanceMode();
-
-  return {
-    isTuesday: isTuesday,
-    reservations: reservations,
-    isMaintenance: isMaintenance
-  };
-}
-
-/**
- * メンテナンスモード切替
- */
-function toggleMaintenanceMode(isActive) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(SYS_CONFIG.SHEETS.MASTERS);
-  if (!sheet) {
-    sheet = ss.insertSheet(SYS_CONFIG.SHEETS.MASTERS);
-    sheet.appendRow(['key', 'value', 'memo']);
-  }
-  
-  const data = sheet.getDataRange().getValues();
-  let found = false;
-  
-  // 既存があれば更新
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === 'MAINTENANCE_MODE') {
-      sheet.getRange(i + 1, 2).setValue(isActive ? 'TRUE' : 'FALSE');
-      found = true;
-      break;
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --c-main-turquoise: #57C3C2;
+      --c-sub-deep-ocean: #2F5D62;
+      --c-accent-copper: #C87A56;
+      --c-bg-mist: #F4F7F7;
     }
-  }
-  
-  // なければ追加
-  if (!found) {
-    sheet.appendRow(['MAINTENANCE_MODE', isActive ? 'TRUE' : 'FALSE', 'システム緊急停止フラグ']);
-  }
-  
-  return { success: true, status: isActive };
-}
-
-// --- Helpers ---
-
-function _fetchRecentReservations(limit) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(SYS_CONFIG.SHEETS.RESERVATIONS);
-  if (!sheet) return [];
-  
-  const data = sheet.getDataRange().getValues();
-  if (data.length < 2) return [];
-
-  const headers = data[0];
-  const map = {};
-  headers.forEach((h, i) => map[String(h).trim()] = i);
-
-  // 新しい順にソートして取得
-  const rows = data.slice(1).sort((a, b) => {
-    return new Date(b[map['created_at']]) - new Date(a[map['created_at']]);
-  }).slice(0, limit);
-
-  return rows.map(r => ({
-    resId: r[map['res_id']],
-    startTime: _fmtDate(r[map['start_time']]),
-    status: r[map['status']],
-    payment: r[map['payment_status']],
-    isMultiDog: r[map['multi_dog_flag']] === 'TRUE',
-    receipt: r[map['receipt_required']] === 'TRUE',
-    memo: r[map['memo']]
-  }));
-}
-
-function _checkMaintenanceMode() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(SYS_CONFIG.SHEETS.MASTERS);
-  if (!sheet) return false;
-  
-  const data = sheet.getDataRange().getValues();
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === 'MAINTENANCE_MODE') {
-      return String(data[i][1]).toUpperCase() === 'TRUE';
+    body { font-family: 'Noto Sans JP', sans-serif; background: var(--c-bg-mist); color: #333; margin: 0; padding: 20px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    h1 { color: var(--c-sub-deep-ocean); margin: 0; font-size: 1.5rem; }
+    
+    .alert-box {
+      background: #ff4444; color: white; padding: 15px; border-radius: 8px;
+      margin-bottom: 20px; font-weight: bold; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
-  }
-  return false;
-}
+    
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { text-align: left; padding: 10px; border-bottom: 2px solid #eee; color: var(--c-sub-deep-ocean); }
+    td { padding: 10px; border-bottom: 1px solid #eee; }
+    
+    .tag { padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
+    .tag-ticket { background: #e0f7fa; color: #006064; }
+    .tag-pending { background: #fff3e0; color: #e65100; }
+    
+    .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .btn-stop { background: var(--c-accent-copper); color: white; }
+    .btn-live { background: var(--c-main-turquoise); color: white; }
+    
+    .icon-check { color: var(--c-main-turquoise); font-weight: bold; }
+  </style>
+</head>
+<body>
 
-function _fmtDate(d) {
-  try {
-    return Utilities.formatDate(new Date(d), Session.getScriptTimeZone(), 'MM/dd HH:mm');
-  } catch(e) { return String(d); }
-}
+  <div id="backup-alert" class="alert-box">
+    ⚠ 【週次メンテ】火曜日です。DBバックアップをDLし、Driveを整理してください。
+  </div>
+
+  <header>
+    <h1>K9 Harmony Admin Portal</h1>
+    <div id="status-area">
+      <span id="status-text" style="margin-right:10px; font-weight:bold;">読込中...</span>
+      <button id="toggle-btn" class="btn" onclick="toggleSystem()">切替</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <h3>直近の予約 (Latest 50)</h3>
+    <table id="res-table">
+      <thead>
+        <tr>
+          <th>日時</th>
+          <th>ID</th>
+          <th>多頭</th>
+          <th>領収書</th>
+          <th>支払</th>
+          <th>メモ</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  
+  <div class="card">
+    <h3>代理操作</h3>
+    <button class="btn btn-live" onclick="window.open('?page=data', '_blank')">予約フォームを開く (代理登録用)</button>
+    <small>※管理者が自身のLINEでログインし、代理入力してください。</small>
+  </div>
+
+  <script>
+    google.script.run.withSuccessHandler(init).getAdminDashboardData();
+
+    function init(data) {
+      // アラート表示
+      if (data.isTuesday) {
+        document.getElementById('backup-alert').style.display = 'block';
+      }
+      
+      // ステータス表示
+      updateStatusUI(data.isMaintenance);
+      
+      // テーブル描画
+      const tbody = document.querySelector('#res-table tbody');
+      data.reservations.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.startTime}</td>
+          <td><small>${r.resId}</small></td>
+          <td>${r.isMultiDog ? '<span class="icon-check">✔</span>' : '-'}</td>
+          <td>${r.receipt ? '<span class="icon-check">✔</span>' : '-'}</td>
+          <td><span class="tag ${r.payment === 'TICKET' ? 'tag-ticket' : 'tag-pending'}">${r.payment}</span></td>
+          <td>${r.memo}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateStatusUI(isStop) {
+      const txt = document.getElementById('status-text');
+      const btn = document.getElementById('toggle-btn');
+      if (isStop) {
+        txt.textContent = '⛔ 現在停止中 (メンテモード)';
+        txt.style.color = 'red';
+        btn.textContent = '稼働再開する';
+        btn.className = 'btn btn-live';
+      } else {
+        txt.textContent = '✅ 正常稼働中';
+        txt.style.color = 'green';
+        btn.textContent = '緊急停止する';
+        btn.className = 'btn btn-stop';
+      }
+    }
+
+    function toggleSystem() {
+      const isStop = document.getElementById('status-text').textContent.includes('停止中');
+      const nextState = !isStop; // trueなら停止にする
+      
+      if (!confirm(nextState ? '本当にシステムを緊急停止しますか？\n予約受付ができなくなります。' : 'システムを再開しますか？')) return;
+      
+      google.script.run.withSuccessHandler((res) => {
+        updateStatusUI(res.status);
+      }).toggleMaintenanceMode(nextState);
+    }
+  </script>
+</body>
+</html>
