@@ -232,7 +232,7 @@
 </head>
 <body>
 
-  <div id="log-stamp" style="font-size:10px; color:#ccc; text-align:center; margin-bottom:5px;">v2025.12.24-BizHours-UI-Update</div>
+  <div id="log-stamp" style="font-size:10px; color:#ccc; text-align:center; margin-bottom:5px;">v2025.12.24-BizHours-Strict-Check</div>
 
   <div id="loading"><div class="spinner"></div><span id="loading-text">読み込み中...</span></div>
 
@@ -550,14 +550,39 @@
       return;
     }
 
+    // ▼▼▼ 曜日判定ロジック (改修済み) ▼▼▼
+    // 日付文字列(yyyy-mm-dd)から正確に曜日を計算する
+    const parts = dateVal.split('-');
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // 0-based
+    const dayOfMonth = parseInt(parts[2], 10);
+    const dateObj = new Date(year, month, dayOfMonth);
+    const dayOfWeek = dateObj.getDay(); // 0=Sun, ..., 4=Thu
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    let visibleCount = 0;
+
     slots.forEach(slot => {
+      // ▼▼▼ 木曜フィルター (改修済み) ▼▼▼
+      // 木曜日(4) かつ 13:00より前なら非表示
+      const hour = parseInt(slot.start.split(':')[0], 10);
+      if (dayOfWeek === 4 && hour < 13) {
+        return; // スキップ
+      }
+      // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
       const btn = document.createElement('div');
       btn.className = 'slot-btn';
-      // 移動時間が算出されていれば表示するのも親切だが、一旦シンプルに
       btn.textContent = slot.start; 
       btn.onclick = () => confirmReservation(slot, dateVal);
       container.appendChild(btn);
+      visibleCount++;
     });
+
+    // フィルタリングの結果、枠が0になった場合
+    if (visibleCount === 0) {
+        container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:#888;">申し訳ありません。<br>本日は午前の営業を行っておりません。（13:00 Open）<br>別の条件をお試しください。</p>';
+    }
   }
 
   // 3. Confirm & Submit
