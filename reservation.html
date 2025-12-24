@@ -3,585 +3,234 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>レッスンの予約 | K9 Harmony</title>
-  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <title>K9 Harmony Admin Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    /* =========================================
-       Design System (Brand Identity)
-       ========================================= */
     :root {
-      /* Main Identity */
       --c-main-turquoise: #57C3C2;
-      /* Authority & Trust */
       --c-sub-deep-ocean: #2F5D62;
-      /* Conversion Trigger */
       --c-accent-copper: #C87A56;
-      /* Luxury Foundation */
-      --c-base-washi: #FAFAFA;
       --c-bg-mist: #F4F7F7;
-      /* Typography */
-      --c-text-sumi: #333333;
-      --c-text-gray: #666666;
-      /* Motion */
-      --ease-luxury: cubic-bezier(0.25, 0.1, 0.25, 1.0);
     }
-
-    body {
-      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--c-base-washi);
-      color: var(--c-text-sumi);
-      margin: 0;
-      padding: 20px;
-      padding-bottom: 320px; /* デバッグコンソール用余白 */
-    }
-
-    h2 {
-      font-size: 1.3rem;
-      color: var(--c-sub-deep-ocean);
-      border-bottom: 2px solid var(--c-main-turquoise);
-      padding-bottom: 10px;
-      margin-bottom: 24px;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-    }
-
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 24px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
-      border: 1px solid rgba(0,0,0,0.02);
+    body { font-family: 'Noto Sans JP', sans-serif; background: var(--c-bg-mist); color: #333; margin: 0; padding: 20px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    h1 { color: var(--c-sub-deep-ocean); margin: 0; font-size: 1.5rem; }
+    
+    .alert-box {
+      background: #ff4444; color: white; padding: 15px; border-radius: 8px;
+      margin-bottom: 20px; font-weight: bold; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     
-    label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 8px;
-      font-size: 0.95rem;
-      color: var(--c-sub-deep-ocean);
-    }
-
-    .sub-label {
-      font-size: 0.8rem;
-      color: var(--c-text-gray);
-      margin-bottom: 8px;
-      display: block;
-      font-weight: normal;
-    }
-
-    select, input[type="date"], input[type="text"] {
-      width: 100%;
-      padding: 14px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 1rem;
-      box-sizing: border-box;
-      margin-bottom: 20px;
-      -webkit-appearance: none;
-      background: #fff;
-      transition: border-color 0.2s var(--ease-luxury);
-      color: var(--c-text-sumi);
-    }
-
-    select:focus, input:focus {
-      border-color: var(--c-main-turquoise);
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(87, 195, 194, 0.1);
-    }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
     
-    /* Checkbox & Options */
-    .checkbox-group {
-      margin-bottom: 20px;
-      padding: 15px;
-      background: var(--c-bg-mist);
-      border-radius: 8px;
-      border: 1px solid rgba(0,0,0,0.03);
-    }
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      font-weight: bold;
-      margin: 0;
-      cursor: pointer;
-      color: var(--c-sub-deep-ocean);
-    }
-    .checkbox-label input {
-      margin-right: 12px;
-      width: 20px; height: 20px;
-      accent-color: var(--c-main-turquoise);
-      margin-bottom: 0; /* Override default input margin */
-    }
-
-    /* Buttons */
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 16px;
-      background: var(--c-accent-copper);
-      color: white;
-      border: none;
-      border-radius: 50px;
-      font-size: 1.1rem;
-      font-weight: bold;
-      cursor: pointer;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(200, 122, 86, 0.3);
-      transition: all 0.2s var(--ease-luxury);
-      letter-spacing: 0.05em;
-    }
-    .btn:active { opacity: 0.9; transform: scale(0.98); }
-    .btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { text-align: left; padding: 10px; border-bottom: 2px solid #eee; color: var(--c-sub-deep-ocean); white-space: nowrap; }
+    td { padding: 10px; border-bottom: 1px solid #eee; }
     
-    .btn-secondary {
-      background: #fff;
-      color: var(--c-text-gray);
-      border: 1px solid #ddd;
-      box-shadow: none;
-      margin-top: 15px;
-    }
-
-    /* 予約枠ボタン */
-    #slots-container {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-top: 15px;
-    }
-    .slot-btn {
-      padding: 12px 5px;
-      background: white;
-      border: 1px solid var(--c-main-turquoise);
-      color: var(--c-sub-deep-ocean);
-      border-radius: 8px;
-      font-size: 0.95rem;
-      text-align: center;
-      cursor: pointer;
-      font-weight: bold;
-      transition: all 0.2s;
-    }
-    .slot-btn:hover { background: #eafff0; }
-    .slot-btn:active { transform: scale(0.95); }
-
-    /* Loading Overlay */
-    #loading {
-      display: none;
-      position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(250, 250, 250, 0.9);
-      z-index: 999;
-      text-align: center;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      color: var(--c-sub-deep-ocean);
-      font-weight: bold;
-    }
-    .spinner {
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid var(--c-main-turquoise);
-      border-radius: 50%;
-      width: 40px; height: 40px;
-      animation: spin 1s linear infinite;
-      margin-bottom: 15px;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    .error-msg {
-      color: #856404;
-      font-size: 0.9rem;
-      background: #fff3cd;
-      padding: 15px;
-      border-radius: 8px;
-      border: 1px solid #ffeeba;
-      display: none;
-      margin-bottom: 20px;
-      white-space: pre-wrap;
-    }
-
-    /* Debug Console (Required) */
-    #debug-console {
-        position: fixed; bottom: 0; left: 0; width: 100%; height: 300px;
-        background: rgba(0,0,0,0.85); color: #0f0; font-family: monospace; font-size: 11px;
-        overflow-y: scroll; z-index: 9999; padding: 10px; box-sizing: border-box;
-        border-top: 2px solid #0f0;
-    }
-    .log-line { border-bottom: 1px solid #333; padding: 2px 0; word-break: break-all; }
-    .log-error { color: #ff4444; }
-
-    /* Hidden Fields */
-    .hidden-field { display: none; margin-top: 15px; padding-left: 15px; border-left: 3px solid #ddd; }
+    .tag { padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; display: inline-block; }
+    .tag-ticket { background: #e0f7fa; color: #006064; }
+    .tag-pending { background: #fff3e0; color: #e65100; }
+    .tag-confirmed { background: #e8f5e9; color: #2e7d32; }
+    
+    .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.8; }
+    .btn-stop { background: var(--c-accent-copper); color: white; }
+    .btn-live { background: var(--c-main-turquoise); color: white; }
+    
+    .icon-check { color: var(--c-main-turquoise); font-weight: bold; }
+    .loading { text-align: center; color: #666; padding: 20px; }
   </style>
 </head>
 <body>
 
-  <div id="log-stamp" style="font-size:10px; color:#ccc; text-align:center; margin-bottom:5px;">v2025.12.23-Phase3-Frontend-Complete</div>
+  <div id="backup-alert" class="alert-box">
+    ⚠ 【週次メンテ】火曜日です。DBバックアップをDLし、Driveを整理してください。
+  </div>
 
-  <div id="loading"><div class="spinner"></div><span id="loading-text">読み込み中...</span></div>
-
-  <h2>レッスンの予約</h2>
-  <div id="error-box" class="error-msg"></div>
-
-  <div class="card" id="form-card" style="display:none;">
-    
-    <label>ワンちゃんを選択</label>
-    <select id="dog-select"></select>
-
-    <div class="checkbox-group">
-      <label class="checkbox-label">
-        <input type="checkbox" id="multi-dog-check" onchange="toggleDurationDisplay()">
-        2頭目の追加 (+2,000円 / +30分)
-      </label>
-      <small style="color:var(--c-text-gray); display:block; margin-top:5px; margin-left:32px; font-size:0.85rem;">
-        ※3頭以上の場合はLINEにて直接ご相談ください
-      </small>
+  <header>
+    <h1>K9 Harmony Admin</h1>
+    <div id="status-area">
+      <span id="status-text" style="margin-right:10px; font-weight:bold;">通信中...</span>
+      <button id="toggle-btn" class="btn" onclick="toggleSystem()" disabled>---</button>
     </div>
+  </header>
 
-    <label>ご希望プラン <span id="duration-display" style="font-weight:normal; font-size:0.9rem;">(所要時間: 90分)</span></label>
-    <select id="menu-select">
-      <option value="90" data-key="PROD_SINGLE_90" data-name="単発レッスン">単発レッスン (4,900円)</option>
-      <option value="90" data-key="PROD_TICKET_4" data-name="4回チケット利用">4回チケット利用 (購入済みの方)</option>
-      <option value="90" data-key="PROD_TICKET_8" data-name="8回チケット利用">8回チケット利用 (購入済みの方)</option>
-    </select>
-
-    <label>出張先住所</label>
-    <span class="sub-label">※板橋・練馬・北・豊島区以外は別途交通費が発生します</span>
-    <input type="text" id="target-address" placeholder="例: 東京都板橋区...">
-
-    <label>希望日</label>
-    <input type="date" id="target-date">
-
-    <div class="checkbox-group">
-        <label class="checkbox-label">
-            <input type="checkbox" id="receipt-check" onchange="toggleReceiptInput()">
-            領収書を希望する
-        </label>
-        <div id="receipt-area" class="hidden-field">
-            <label style="font-size:0.9rem;">宛名</label>
-            <input type="text" id="receipt-addressee" placeholder="例: 株式会社K9" style="margin-bottom:0;">
-        </div>
+  <div class="card">
+    <h3>直近の予約 (Latest 50)</h3>
+    <div id="loading-spinner" class="loading">データを取得しています...</div>
+    <div style="overflow-x: auto;">
+      <table id="res-table" style="display:none;">
+        <thead>
+          <tr>
+            <th>日時</th>
+            <th>ID</th>
+            <th>多頭</th>
+            <th>領収書</th>
+            <th>支払</th>
+            <th>メモ</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
-
-    <label>紹介コード (お持ちの方)</label>
-    <input type="text" id="referral-code" placeholder="お友達のコードを入力">
-
-    <button class="btn" onclick="searchSlots()">空き状況を検索</button>
+  </div>
+  
+  <div class="card">
+    <h3>代理操作</h3>
+    <p style="font-size:0.9rem;">※管理者が自身のLINEでログインし、代理入力を行ってください。</p>
+    <a href="https://liff.line.me/2008546673-MJY7j3ox" target="_blank" class="btn btn-live" style="text-decoration:none; display:inline-block;">
+      LINE予約画面を開く
+    </a>
   </div>
 
-  <div class="card" id="slots-card" style="display:none;">
-    <h3>予約可能な時間</h3>
-    <p style="font-size:0.8rem; color:var(--c-text-gray);">
-        ご希望の開始時間をタップしてください。<br>
-        <span id="slot-info-text"></span>
-    </p>
-    <div id="slots-container">
-      </div>
-    <button class="btn btn-secondary" onclick="resetSearch()">条件を変更する</button>
-  </div>
+  <script>
+    // ▼▼▼ ここにGASのウェブアプリURLを貼り付けてください ▼▼▼
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIqH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec';
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-  <div id="debug-console">
-    <div style="font-weight:bold; color:#fff; border-bottom:1px solid #555; margin-bottom:5px;">Debug Console</div>
-    <div id="debug-logs"></div>
-  </div>
+    // 認証キー (systemConfig.gs の ADMIN.API_KEY と一致させる)
+    const API_KEY = 'k9_secret_key_2025';
 
-<script>
-  // ==========================================
-  // 設定: index.html と同一の稼働URL
-  // ==========================================
-  const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
-  const LIFF_ID = '2008546673-MJY7j3ox'; 
+    // 初期化
+    window.onload = function() {
+      fetchDashboard();
+    };
 
-  // --- Logger ---
-  function log(msg, data) {
-      const now = new Date().toLocaleTimeString();
-      const div = document.getElementById('debug-logs');
-      const line = document.createElement('div');
-      line.className = 'log-line';
-      let text = `[${now}] ${msg}`;
-      if (data) {
-          try { text += ' ' + (typeof data === 'object' ? JSON.stringify(data) : String(data)); } catch(e) { text += ' [Object]'; }
+    /**
+     * ダッシュボードデータ取得 (Fetch API)
+     */
+    async function fetchDashboard() {
+      try {
+        // PostData構築
+        const payload = {
+          action: 'get_admin_dashboard',
+          apiKey: API_KEY
+        };
+
+        const response = await fetch(GAS_API_URL, {
+          method: 'POST',
+          // GASはリダイレクトでJSONを返すため follow が必須
+          redirect: 'follow', 
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8' 
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+          renderDashboard(result.data);
+        } else {
+          showError('認証エラーまたはシステムエラー: ' + result.message);
+        }
+
+      } catch (e) {
+        console.error(e);
+        showError('通信エラー: サーバーに接続できませんでした。URLを確認してください。');
       }
-      line.textContent = text;
-      div.appendChild(line);
-      document.getElementById('debug-console').scrollTop = document.getElementById('debug-console').scrollHeight;
-      console.log(`[${now}] ${msg}`, data || '');
-  }
+    }
 
-  function logError(msg, err) {
-      const now = new Date().toLocaleTimeString();
-      const div = document.getElementById('debug-logs');
-      const line = document.createElement('div');
-      line.className = 'log-line log-error';
-      line.textContent = `[${now}] [ERROR] ${msg} ` + (err ? err.toString() : '');
-      div.appendChild(line);
-      document.getElementById('debug-console').scrollTop = document.getElementById('debug-console').scrollHeight;
-      console.error(msg, err);
-  }
+    /**
+     * 緊急停止切り替え
+     */
+    async function toggleSystem() {
+      const txt = document.getElementById('status-text');
+      const isStop = txt.textContent.includes('停止中');
+      const nextState = !isStop; // trueなら停止にする
+      
+      if (!confirm(nextState ? '【危険】本当にシステムを緊急停止しますか？\n予約受付が完全に停止します。' : 'システムを稼働再開しますか？')) return;
+      
+      // UIを一旦ロック
+      const btn = document.getElementById('toggle-btn');
+      btn.disabled = true;
+      btn.textContent = '処理中...';
 
-  // --- State ---
-  let currentUserData = null; 
-  let userDogs = [];            
+      try {
+        const payload = {
+          action: 'admin_toggle_maintenance',
+          apiKey: API_KEY,
+          isActive: nextState
+        };
 
-  // --- Initialization ---
-  window.onload = async () => {
-    log('Window Loaded. Initializing LIFF...');
-    showLoading(true, 'LIFFを起動中...');
-    try {
-      await liff.init({ liffId: LIFF_ID });
-      if (!liff.isLoggedIn()) {
-        log('Not logged in. Redirecting...');
-        liff.login();
+        const response = await fetch(GAS_API_URL, {
+          method: 'POST',
+          redirect: 'follow',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if (result.status === 'success') {
+          // 成功したら画面再取得
+          fetchDashboard(); 
+        } else {
+          alert('エラー: ' + result.message);
+          btn.disabled = false;
+        }
+      } catch (e) {
+        alert('通信エラー');
+        btn.disabled = false;
+      }
+    }
+
+    /**
+     * 画面描画
+     */
+    function renderDashboard(data) {
+      // ローディング消去
+      document.getElementById('loading-spinner').style.display = 'none';
+      document.getElementById('res-table').style.display = 'table';
+
+      // 1. 火曜アラート
+      if (data.isTuesday) {
+        document.getElementById('backup-alert').style.display = 'block';
+      }
+
+      // 2. ステータスボタン
+      const txt = document.getElementById('status-text');
+      const btn = document.getElementById('toggle-btn');
+      btn.disabled = false;
+
+      if (data.isMaintenance) {
+        txt.textContent = '⛔ 現在停止中';
+        txt.style.color = 'red';
+        btn.textContent = '稼働再開する';
+        btn.className = 'btn btn-live';
+      } else {
+        txt.textContent = '✅ 正常稼働中';
+        txt.style.color = 'green';
+        btn.textContent = '緊急停止する';
+        btn.className = 'btn btn-stop';
+      }
+
+      // 3. テーブル描画
+      const tbody = document.querySelector('#res-table tbody');
+      tbody.innerHTML = ''; // クリア
+
+      if (!data.reservations || data.reservations.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">予約データがありません</td></tr>';
         return;
       }
-      const profile = await liff.getProfile();
-      log('LIFF Logged in. UserID:', profile.userId);
-      fetchUserData(profile.userId);
-    } catch (err) {
-      logError('LIFF Init Error:', err);
-      showError('LIFF初期化エラー: ' + err.message);
-    }
-  };
 
-  // 1. Fetch User Data (Robust)
-  async function fetchUserData(userId) {
-    showLoading(true, '会員情報を確認中...');
-    try {
-      // キャッシュ回避
-      const ts = new Date().getTime();
-      const response = await fetch(`${GAS_API_URL}?userId=${userId}&type=data&t=${ts}`);
-      const result = await response.json();
-
-      log('Fetch Result:', result);
-
-      if (result.error) throw new Error(result.error);
-      if (!result.customer) throw new Error("顧客データの取得に失敗しました。(Data Empty)");
-
-      currentUserData = result.customer;
-      
-      // Phase 1でBOM対策済みだが、念の為フォールバック
-      if (!currentUserData.unique_key) {
-         log('WARN: customer.unique_key missing. Using LIFF ID fallback.');
-         currentUserData.unique_key = userId; 
-         currentUserData.id = userId;
-      }
-      
-      // 犬情報 (Hybrid対応)
-      if (result.all_dogs && result.all_dogs.length > 0) {
-          userDogs = result.all_dogs;
-      } else if (result.dog) {
-          userDogs = [result.dog];
-      } else {
-          throw new Error("登録されているワンちゃんが見つかりません。");
-      }
-
-      renderDogSelect();
-      initDatePicker();
-      
-      // 住所の自動入力
-      if (currentUserData.address && currentUserData.address.length > 5) {
-          document.getElementById('target-address').value = currentUserData.address;
-      }
-
-      document.getElementById('form-card').style.display = 'block';
-      showLoading(false);
-
-    } catch (err) {
-      logError('fetchUserData Error:', err);
-      showError('データ取得エラー', err.message);
-      showLoading(false);
-    }
-  }
-
-  function renderDogSelect() {
-    const select = document.getElementById('dog-select');
-    select.innerHTML = '';
-    userDogs.forEach(dog => {
-      const option = document.createElement('option');
-      option.value = dog.id || 'unknown'; 
-      option.textContent = dog.name_disp || dog.name || 'Unknown Dog';
-      select.appendChild(option);
-    });
-  }
-
-  function initDatePicker() {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const yyyy = tomorrow.getFullYear();
-    const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
-    const dd = String(tomorrow.getDate()).padStart(2, '0');
-    document.getElementById('target-date').value = `${yyyy}-${mm}-${dd}`;
-  }
-
-  // --- UI Toggles ---
-  function toggleDurationDisplay() {
-      const isMulti = document.getElementById('multi-dog-check').checked;
-      const display = document.getElementById('duration-display');
-      display.textContent = isMulti ? '(所要時間: 120分)' : '(所要時間: 90分)';
-      display.style.color = isMulti ? 'var(--c-accent-copper)' : '#666';
-      display.style.fontWeight = isMulti ? 'bold' : 'normal';
-  }
-
-  function toggleReceiptInput() {
-      const isChecked = document.getElementById('receipt-check').checked;
-      document.getElementById('receipt-area').style.display = isChecked ? 'block' : 'none';
-  }
-
-  // 2. Search Slots
-  async function searchSlots() {
-    const dateVal = document.getElementById('target-date').value;
-    const menuSelect = document.getElementById('menu-select');
-    const baseDuration = Number(menuSelect.value); // 90
-    const addressVal = document.getElementById('target-address').value;
-    const isMultiDog = document.getElementById('multi-dog-check').checked;
-
-    if (!dateVal) return alert('日付を選択してください');
-
-    // 検索時は合計時間を送る
-    const totalDuration = isMultiDog ? baseDuration + 30 : baseDuration;
-
-    showLoading(true, '空き状況を確認中...');
-    document.getElementById('error-box').style.display = 'none';
-    log('Searching slots...', { date: dateVal, duration: totalDuration, address: addressVal });
-
-    const payload = {
-      action: 'get_slots',
-      targetDate: dateVal,
-      menuDuration: totalDuration, 
-      targetAddress: addressVal
-    };
-
-    try {
-      const response = await fetch(GAS_API_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload)
+      data.reservations.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.startTime}</td>
+          <td><small style="color:#999;">${r.resId}</small></td>
+          <td>${r.isMultiDog ? '<span class="icon-check">✔</span>' : '-'}</td>
+          <td>${r.receipt ? '<span class="icon-check">✔</span>' : '-'}</td>
+          <td><span class="tag ${r.payment === 'TICKET' ? 'tag-ticket' : r.payment === 'CONFIRMED' ? 'tag-confirmed' : 'tag-pending'}">${r.payment}</span></td>
+          <td>${r.memo || ''}</td>
+        `;
+        tbody.appendChild(tr);
       });
-      const result = await response.json();
-      log('Slots result:', result);
-
-      if (result.status === 'success') {
-        renderSlots(result.data, dateVal, totalDuration);
-      } else {
-        throw new Error(result.message);
-      }
-    } catch (err) {
-      logError('Search Error:', err);
-      showError('検索エラー', err.message);
-    } finally {
-      showLoading(false);
-    }
-  }
-
-  function renderSlots(slots, dateVal, duration) {
-    const container = document.getElementById('slots-container');
-    container.innerHTML = '';
-    
-    document.getElementById('form-card').style.display = 'none';
-    document.getElementById('slots-card').style.display = 'block';
-    document.getElementById('slot-info-text').textContent = `所要時間: ${duration}分 / 日付: ${dateVal}`;
-
-    if (slots.length === 0) {
-      container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:#888;">申し訳ありません。<br>この条件で空いている枠はありませんでした。</p>';
-      return;
     }
 
-    slots.forEach(slot => {
-      const btn = document.createElement('div');
-      btn.className = 'slot-btn';
-      // 移動時間が算出されていれば表示するのも親切だが、一旦シンプルに
-      btn.textContent = slot.start; 
-      btn.onclick = () => confirmReservation(slot, dateVal);
-      container.appendChild(btn);
-    });
-  }
-
-  // 3. Confirm & Submit
-  async function confirmReservation(slot, dateVal) {
-    const dogId = document.getElementById('dog-select').value;
-    const dogObj = userDogs.find(d => (d.id || 'unknown') === dogId);
-    
-    const menuSelect = document.getElementById('menu-select');
-    const selectedOption = menuSelect.options[menuSelect.selectedIndex];
-    const menuName = selectedOption.getAttribute('data-name');
-    const productKey = selectedOption.getAttribute('data-key'); // ★DB用キー
-    const baseDuration = menuSelect.value;
-    
-    const isMultiDog = document.getElementById('multi-dog-check').checked;
-    const timeStr = slot.start;
-    
-    let msg = `【予約内容の確認】\n\n`;
-    msg += `日時: ${dateVal} ${timeStr} 〜\n`;
-    msg += `ワンちゃん: ${dogObj ? (dogObj.name_disp || dogObj.name) : '選択なし'}\n`;
-    msg += `メニュー: ${menuName} (90分)\n`;
-    if (isMultiDog) msg += `オプション: 2頭目追加 (+30分)\n`;
-    msg += `\nこの内容で予約を確定しますか？`;
-
-    if (!confirm(msg)) return;
-
-    showLoading(true, '予約処理中...');
-    
-    const payload = {
-      action: 'add_reservation',
-      targetDate: dateVal,
-      startTime: timeStr,
-      menuDuration: baseDuration, // 基本時間を送信(Backendで再計算)
-      menuName: menuName,
-      productKey: productKey,     // DB保存用
-      targetAddress: document.getElementById('target-address').value,
-      
-      multiDog: isMultiDog,
-      receiptRequired: document.getElementById('receipt-check').checked,
-      receiptAddressee: document.getElementById('receipt-addressee').value,
-      referralCode: document.getElementById('referral-code').value,
-      
-      userId: currentUserData.unique_key || currentUserData.id, 
-      customerKey: currentUserData.unique_key || currentUserData.id,
-      customerName: currentUserData.name,
-      customerPhone: currentUserData.phone,
-      dogId: dogObj ? dogObj.id : '',
-      dogName: dogObj ? dogObj.name : '',
-      
-      userNotes: 'LIFFからの予約'
-    };
-
-    try {
-      const response = await fetch(GAS_API_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      });
-      const result = await response.json();
-      log('Reserve response:', result);
-
-      if (result.status === 'success') {
-        alert('予約が完了しました！\nご予約ありがとうございます。');
-        liff.closeWindow();
-      } else {
-        throw new Error(result.message);
-      }
-    } catch (err) {
-      logError('Reserve Error:', err);
-      showError('予約エラー', err.message);
-    } finally {
-      showLoading(false);
+    function showError(msg) {
+      document.getElementById('loading-spinner').textContent = '❌ ' + msg;
+      document.getElementById('loading-spinner').style.color = 'red';
     }
-  }
-
-  function resetSearch() {
-    document.getElementById('slots-card').style.display = 'none';
-    document.getElementById('form-card').style.display = 'block';
-  }
-
-  function showLoading(isLoading, text) {
-    const el = document.getElementById('loading');
-    if (text) document.getElementById('loading-text').innerText = text;
-    el.style.display = isLoading ? 'flex' : 'none';
-  }
-
-  function showError(title, msg) {
-    const box = document.getElementById('error-box');
-    box.textContent = `【${title}】\n${msg}`;
-    box.style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-</script>
+  </script>
 </body>
 </html>
