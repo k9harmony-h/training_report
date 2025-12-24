@@ -77,7 +77,7 @@
       border-radius: 8px;
       font-size: 1rem;
       box-sizing: border-box;
-      margin-bottom: 20px;
+      margin-bottom: 10px; /* 余白調整 */
       -webkit-appearance: none;
       background: #fff;
       transition: border-color 0.2s var(--ease-luxury);
@@ -131,7 +131,13 @@
       letter-spacing: 0.05em;
     }
     .btn:active { opacity: 0.9; transform: scale(0.98); }
-    .btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+    /* Disabled State */
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      box-shadow: none;
+      opacity: 0.7;
+    }
     
     .btn-secondary {
       background: #fff;
@@ -199,6 +205,17 @@
       white-space: pre-wrap;
     }
 
+    /* Business Day Warning Message */
+    #date-warning {
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+      padding: 10px;
+      border-radius: 6px;
+      display: none;
+    }
+    .date-error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+    .date-info { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
+
     /* Debug Console (Required) */
     #debug-console {
         position: fixed; bottom: 0; left: 0; width: 100%; height: 300px;
@@ -215,7 +232,7 @@
 </head>
 <body>
 
-  <div id="log-stamp" style="font-size:10px; color:#ccc; text-align:center; margin-bottom:5px;">v2025.12.23-Phase3-Frontend-Complete</div>
+  <div id="log-stamp" style="font-size:10px; color:#ccc; text-align:center; margin-bottom:5px;">v2025.12.24-BizHours-UI-Update</div>
 
   <div id="loading"><div class="spinner"></div><span id="loading-text">読み込み中...</span></div>
 
@@ -250,6 +267,7 @@
 
     <label>希望日</label>
     <input type="date" id="target-date">
+    <div id="date-warning"></div>
 
     <div class="checkbox-group">
         <label class="checkbox-label">
@@ -265,7 +283,7 @@
     <label>紹介コード (お持ちの方)</label>
     <input type="text" id="referral-code" placeholder="お友達のコードを入力">
 
-    <button class="btn" onclick="searchSlots()">空き状況を検索</button>
+    <button class="btn" id="search-btn" onclick="searchSlots()">空き状況を検索</button>
   </div>
 
   <div class="card" id="slots-card" style="display:none;">
@@ -326,6 +344,10 @@
   window.onload = async () => {
     log('Window Loaded. Initializing LIFF...');
     showLoading(true, 'LIFFを起動中...');
+    
+    // 日付変更イベントの登録
+    document.getElementById('target-date').addEventListener('change', checkBusinessDay);
+
     try {
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) {
@@ -375,7 +397,7 @@
       }
 
       renderDogSelect();
-      initDatePicker();
+      initDatePicker(); // 日付初期化 & 曜日判定実行
       
       // 住所の自動入力
       if (currentUserData.address && currentUserData.address.length > 5) {
@@ -403,13 +425,57 @@
     });
   }
 
+  // --- Date Validation Logic ---
   function initDatePicker() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    // 初期値セット (yyyy-mm-dd)
     const yyyy = tomorrow.getFullYear();
     const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
     const dd = String(tomorrow.getDate()).padStart(2, '0');
     document.getElementById('target-date').value = `${yyyy}-${mm}-${dd}`;
+    
+    // 初期日付のバリデーション実行
+    checkBusinessDay();
+  }
+
+  /**
+   * 営業日・時間チェック (Frontend)
+   * 水曜日: 定休日 -> 警告 & ボタン無効化
+   * 木曜日: 13:00 Open -> 案内表示
+   */
+  function checkBusinessDay() {
+    const dateVal = document.getElementById('target-date').value;
+    const warningEl = document.getElementById('date-warning');
+    const searchBtn = document.getElementById('search-btn');
+    
+    // 初期化
+    warningEl.style.display = 'none';
+    warningEl.className = '';
+    searchBtn.disabled = false;
+
+    if (!dateVal) return;
+
+    const dateObj = new Date(dateVal);
+    const day = dateObj.getDay(); // 0=Sun, 1=Mon, ..., 3=Wed, 4=Thu
+
+    // 水曜日 (3) チェック
+    if (day === 3) {
+        warningEl.textContent = '⚠ 水曜日は定休日のためご予約いただけません。別の日程を選択してください。';
+        warningEl.className = 'date-error'; // 赤色
+        warningEl.style.display = 'block';
+        searchBtn.disabled = true; // 検索不可
+        return;
+    }
+
+    // 木曜日 (4) チェック
+    if (day === 4) {
+        warningEl.textContent = 'ℹ 木曜日は 13:00 オープンとなります。';
+        warningEl.className = 'date-info'; // 青色
+        warningEl.style.display = 'block';
+        // ボタンは有効のまま
+    }
   }
 
   // --- UI Toggles ---
@@ -525,7 +591,7 @@
       startTime: timeStr,
       menuDuration: baseDuration, // 基本時間を送信(Backendで再計算)
       menuName: menuName,
-      productKey: productKey,     // DB保存用
+      productKey: productKey,      // DB保存用
       targetAddress: document.getElementById('target-address').value,
       
       multiDog: isMultiDog,
