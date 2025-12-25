@@ -6,24 +6,41 @@
   <title>レッスンの予約 | K9 Harmony</title>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Zen+Kurenaido&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Lato:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
   <style>
     /* =========================================
-       K9 Harmony Design System (Ver 3.0)
+       K9 Harmony Design System (Strict Ver.)
+       Based on diagnosis.html CSS Variables
        ========================================= */
     :root {
-      --c-main: #57C3C2;
-      --c-deep: #2F5D62;
-      --c-accent: #C87A56;
-      --c-bg: #FAFAFA;
-      --c-text: #333333;
-      --c-gray: #666666;
+        /* Colors from diagnosis.html */
+        --c-main-turquoise: #57C3C2;
+        --c-sub-deep-ocean: #2F5D62;
+        --c-accent-copper: #C87A56;
+        --c-base-washi: #FAFAFA;
+        --c-bg-mist: #F4F7F7;
+        --c-sub-beige: #C7B299;
+        --c-text-sumi: #333333;
+        --c-text-gray: #666666;
+        
+        /* Fonts */
+        --font-serif-en: 'Cormorant Garamond', serif;
+        --font-serif-jp: 'Noto Serif JP', serif;
+        --font-sans-jp: 'Noto Sans JP', sans-serif;
+        --font-sans-en: 'Lato', sans-serif;
+
+        /* Motion */
+        --ease-luxury: cubic-bezier(0.25, 0.1, 0.25, 1.0);
     }
+
     body {
-      font-family: 'Noto Sans JP', sans-serif;
-      background-color: var(--c-bg);
-      color: var(--c-text);
-      margin: 0; padding: 0;
-      padding-bottom: 80px; /* Footer space */
+        font-family: var(--font-sans-jp);
+        background-color: var(--c-base-washi);
+        color: var(--c-text-sumi);
+        margin: 0; padding: 0;
+        padding-bottom: 80px;
     }
 
     /* Header */
@@ -33,10 +50,10 @@
     /* Progress Bar */
     .progress-container { display: flex; justify-content: space-between; padding: 20px 30px; position: relative; max-width: 600px; margin: 0 auto; }
     .progress-bg { position: absolute; top: 30px; left: 40px; right: 40px; height: 2px; background: #e0e0e0; z-index: 0; }
-    .progress-bar-fill { position: absolute; top: 30px; left: 40px; height: 2px; background: var(--c-main); z-index: 0; width: 0%; transition: width 0.3s; }
-    .step-dot { width: 20px; height: 20px; border-radius: 50%; background: #e0e0e0; z-index: 1; position: relative; border: 2px solid var(--c-bg); transition: background 0.3s; }
-    .step-dot.active { background: var(--c-main); transform: scale(1.2); }
-    .step-dot.done { background: var(--c-main); }
+    .progress-bar-fill { position: absolute; top: 30px; left: 40px; height: 2px; background: var(--c-main-turquoise); z-index: 0; width: 0%; transition: width 0.3s; }
+    .step-dot { width: 20px; height: 20px; border-radius: 50%; background: #e0e0e0; z-index: 1; position: relative; border: 2px solid var(--c-base-washi); transition: background 0.3s; }
+    .step-dot.active { background: var(--c-main-turquoise); transform: scale(1.2); }
+    .step-dot.done { background: var(--c-main-turquoise); }
 
     /* Main Container */
     #app-container { padding: 20px; max-width: 600px; margin: 0 auto; }
@@ -45,15 +62,15 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     /* UI Elements */
-    h2 { font-size: 1.1rem; color: var(--c-deep); border-left: 4px solid var(--c-main); padding-left: 10px; margin-bottom: 20px; }
+    h2 { font-size: 1.1rem; color: var(--c-sub-deep-ocean); border-left: 4px solid var(--c-main-turquoise); padding-left: 10px; margin-bottom: 20px; font-family: var(--font-serif-jp); }
     .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    label { display: block; font-weight: bold; font-size: 0.9rem; color: var(--c-deep); margin-bottom: 8px; }
-    select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; margin-bottom: 15px; box-sizing: border-box; }
+    label { display: block; font-weight: bold; font-size: 0.9rem; color: var(--c-sub-deep-ocean); margin-bottom: 8px; }
+    select, input[type="text"], input[type="tel"], input[type="number"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; margin-bottom: 15px; box-sizing: border-box; font-family: inherit; }
 
     /* Buttons */
-    .btn { display: block; width: 100%; padding: 15px; border-radius: 50px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; margin-top: 15px; }
-    .btn-primary { background: var(--c-accent); color: white; box-shadow: 0 4px 10px rgba(200, 122, 86, 0.3); }
-    .btn-secondary { background: white; border: 1px solid #ccc; color: var(--c-gray); }
+    .btn { display: block; width: 100%; padding: 15px; border-radius: 50px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; margin-top: 15px; transition: all 0.3s; }
+    .btn-primary { background: var(--c-accent-copper); color: white; box-shadow: 0 4px 10px rgba(200, 122, 86, 0.3); }
+    .btn-secondary { background: white; border: 1px solid #ccc; color: var(--c-text-gray); }
     .btn-cancel-rsv { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; font-size: 0.9rem; margin-top: 30px; }
     .btn-row { display: flex; gap: 10px; } .btn-row .btn { margin-top: 0; }
 
@@ -61,16 +78,19 @@
     .cal-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .cal-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #eee; }
     .cal-table { width: 100%; border-collapse: collapse; min-width: 400px; table-layout: fixed; }
-    .cal-table th { background: #f8f8f8; color: var(--c-deep); padding: 8px 2px; font-size: 0.75rem; border-bottom: 2px solid #ddd; border-right: 1px solid #eee; text-align: center; }
+    .cal-table th { background: #f8f8f8; color: var(--c-sub-deep-ocean); padding: 8px 2px; font-size: 0.75rem; border-bottom: 2px solid #ddd; border-right: 1px solid #eee; text-align: center; }
     .cal-table th:first-child { width: 50px; position: sticky; left: 0; background: #f8f8f8; z-index: 2; border-right: 2px solid #ddd; }
     .cal-table td { height: 45px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center; vertical-align: middle; padding: 0; position: relative; }
-    .cal-table td:first-child { position: sticky; left: 0; background: white; font-weight: bold; color: var(--c-deep); font-size: 0.8rem; z-index: 1; border-right: 2px solid #ddd; }
+    .cal-table td:first-child { position: sticky; left: 0; background: white; font-weight: bold; color: var(--c-sub-deep-ocean); font-size: 0.8rem; z-index: 1; border-right: 2px solid #ddd; }
     
     /* Symbols */
-    .sym-ok { color: var(--c-main); font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+    .sym-ok { color: var(--c-main-turquoise); font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
     .sym-lim { color: #fbc02d; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
     .sym-ng { background: #f0f0f0; color: #ccc; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
-    .cal-legend { display: flex; justify-content: center; gap: 15px; font-size: 0.8rem; margin-top: 10px; color: var(--c-gray); }
+    /* Highlight Selected */
+    .sym-sel { background-color: var(--c-main-turquoise) !important; color: white !important; }
+
+    .cal-legend { display: flex; justify-content: center; gap: 15px; font-size: 0.8rem; margin-top: 10px; color: var(--c-text-gray); }
 
     /* --- Modals (Common) --- */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; display: none; opacity: 0; transition: opacity 0.3s; }
@@ -81,7 +101,7 @@
     .center-modal.open { display: block; animation: popIn 0.3s ease-out; }
     @keyframes popIn { from { transform: translate(-50%, -40%); opacity: 0; } to { transform: translate(-50%, -50%); opacity: 1; } }
 
-    /* Time Select Modal (Bottom Sheet style for Time) */
+    /* Time Select Modal (Bottom Sheet style) */
     .time-modal { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; z-index: 302; transform: translateY(100%); transition: transform 0.3s; }
     .time-modal.open { transform: translateY(0); }
 
@@ -94,18 +114,22 @@
     /* Footer */
     footer { position: fixed; bottom: 0; width: 100%; background: #f9f9f9; padding: 15px; text-align: center; font-size: 0.7rem; color: #999; border-top: 1px solid #eee; z-index: 50; }
 
-    /* Debug */
-    #debug-console { display: none; } /* 本番は非表示、必要ならblock */
+    /* Debug (Restored) */
+    #debug-console { position: fixed; bottom:0; left:0; width:100%; height:150px; background:rgba(0,0,0,0.8); color:#0f0; font-size:10px; overflow-y:scroll; z-index:9999; display: none; }
+    #version-stamp { position:fixed; top:0; right:0; background:black; color:white; font-size:9px; padding:2px; z-index:9999; opacity:0.5; }
+
     #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--c-main); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--c-main-turquoise); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
 
+<div id="version-stamp">v2025.12.25-Final-Rev</div>
+
 <div id="loading-overlay">
   <div class="spinner"></div>
-  <div id="loading-text" style="color:var(--c-deep); font-weight:bold;">起動中...</div>
+  <div id="loading-text" style="color:var(--c-sub-deep-ocean); font-weight:bold;">起動中...</div>
 </div>
 
 <header>
@@ -131,7 +155,7 @@
       <div id="selected-dog-name" style="font-size:1.1rem; font-weight:bold; margin-bottom:10px;">---</div>
       <button class="btn btn-secondary" style="padding:8px; font-size:0.8rem; width:auto; display:inline-block;" onclick="showDogSelectModal(true)">変更する</button>
 
-      <div style="background:var(--c-bg); padding:10px; border-radius:8px; margin-top:15px;">
+      <div style="background:var(--c-bg-mist); padding:10px; border-radius:8px; margin-top:15px;">
         <label style="display:flex; align-items:center; margin:0; cursor:pointer;">
           <input type="checkbox" id="multi-dog-check" style="width:20px; height:20px; margin-right:10px;">
           2頭目の追加 (+2,000円 / +30分)
@@ -142,14 +166,12 @@
     <div class="card">
       <label>メニュー</label>
       <select id="menu-select">
-        <option value="90" data-key="SINGLE" data-price="4900">単発レッスン (90分 ¥4,900)</option>
-        <option value="90" data-key="TICKET_4" data-price="0">4回チケット利用 (残数ありの方)</option>
-        <option value="90" data-key="TICKET_8" data-price="0">8回チケット利用 (残数ありの方)</option>
+        <option>読み込み中...</option>
       </select>
     </div>
 
     <button class="btn btn-primary" onclick="goToView(2)">次へ (日時選択)</button>
-    <button class="btn btn-cancel-rsv" onclick="location.href='cancel.html'">予約のキャンセルはこちら</button>
+    <button class="btn btn-cancel-rsv" onclick="alert('キャンセル機能は別途実装')">予約のキャンセルはこちら</button>
   </div>
 
   <div id="view-2" class="view-section">
@@ -173,10 +195,27 @@
       </div>
 
       <div class="cal-legend">
-        <span><span style="color:var(--c-main); font-weight:bold;">○</span> 予約可能</span>
+        <span><span style="color:var(--c-main-turquoise); font-weight:bold;">○</span> 予約可能</span>
         <span><span style="color:#fbc02d; font-weight:bold;">▲</span> 残りわずか</span>
-        <span><span style="background:#ddd; padding:0 4px; color:#666;">×</span> 不可</span>
+        <span><span style="background:#f0f0f0; padding:0 4px; color:#ccc;">×</span> 不可</span>
       </div>
+    </div>
+
+    <div class="card">
+        <label style="display:flex; align-items:center; cursor:pointer; margin-bottom:0;">
+            <input type="checkbox" id="alt-address-check" style="width:20px; height:20px; margin-right:10px;" onchange="toggleAltAddress()">
+            申込住所と異なる場所で実施
+        </label>
+        <div id="alt-address-area" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
+            <label>郵便番号 <span style="color:red;font-size:0.8rem;">*</span></label>
+            <input type="text" id="alt-zip" placeholder="123-4567">
+            <label>住所 <span style="color:red;font-size:0.8rem;">*</span></label>
+            <input type="text" id="alt-addr" placeholder="東京都...">
+            <label>施設名 (任意)</label>
+            <input type="text" id="alt-building">
+            <label>目印・備考</label>
+            <input type="text" id="alt-note">
+        </div>
     </div>
 
     <div class="btn-row">
@@ -189,19 +228,50 @@
     <h2>確認と規約</h2>
     <div class="card">
       <label>ご予約内容</label>
-      <div id="conf-details" style="line-height:1.6;"></div>
-      <div id="conf-total" style="font-size:1.2rem; font-weight:bold; color:var(--c-accent); text-align:right; margin-top:10px;">¥---</div>
+      <div style="line-height:1.8; font-size:0.95rem;">
+        <div><strong>日時:</strong> <span id="conf-datetime">---</span></div>
+        <div><strong>場所:</strong> <span id="conf-place">---</span></div>
+        <div><strong>犬名:</strong> <span id="conf-dog">---</span></div>
+        <div><strong>コース:</strong> <span id="conf-course">---</span></div>
+      </div>
+      
+      <div style="border-top:1px solid #eee; margin:15px 0; padding-top:10px;">
+        <div style="display:flex; justify-content:space-between;">
+            <span>出張費</span>
+            <span id="conf-travel-fee" style="color:var(--c-accent-copper);">計算中...</span>
+        </div>
+        <div style="font-size:0.75rem; color:#888; margin-top:5px;">
+            ※表示される交通費は、拠点からの直線距離に基づく概算です。<br>実際のルートにより変動する場合がございます。
+        </div>
+        <details style="margin-top:5px; font-size:0.75rem; color:#666;">
+            <summary>交通費一覧表を見る</summary>
+            <ul style="padding-left:15px; margin-top:5px;">
+                <li>3km以内：無料</li>
+                <li>5km以内：500円</li>
+                <li>10km以内：1,000円</li>
+                <li>15km以内：1,500円</li>
+                <li>15km超：1,500円＋α</li>
+            </ul>
+        </details>
+      </div>
+
+      <div style="font-size:1.3rem; font-weight:bold; color:var(--c-sub-deep-ocean); text-align:right; margin-top:10px;">
+        合計: <span id="conf-total">¥---</span>
+      </div>
       
       <label style="margin-top:15px;">お支払い方法</label>
       <select id="payment-method">
         <option value="CARD">クレジットカード</option>
+        <option value="QUICPAY">QUICPay</option>
+        <option value="ID">iD</option>
+        <option value="IC">交通系IC</option>
         <option value="CASH">当日現金払い</option>
       </select>
     </div>
 
     <div class="card">
       <label>規約等の確認</label>
-      <ul style="padding-left:20px; color:var(--c-main); font-weight:bold; font-size:0.9rem; line-height:2;">
+      <ul style="padding-left:20px; color:var(--c-main-turquoise); font-weight:bold; font-size:0.9rem; line-height:2;">
         <li onclick="openTerms('policy')">キャンセルポリシー</li>
         <li onclick="openTerms('privacy')">個人情報の取扱について</li>
         <li onclick="openTerms('terms')">利用規約</li>
@@ -238,7 +308,7 @@
     <h2>最終確認</h2>
     <div class="card">
       <label>内容確認</label>
-      <div id="final-summary" style="white-space:pre-wrap; font-size:0.9rem;"></div>
+      <div id="final-summary" style="white-space:pre-wrap; font-size:0.9rem; line-height:1.6;"></div>
     </div>
     <div class="card" style="background:#fff3e0; border:1px solid #ffe0b2; color:#e65100;">
       <label style="color:#e65100;"><i class="fa-solid fa-triangle-exclamation"></i> キャンセル規定</label>
@@ -248,11 +318,27 @@
     <button class="btn btn-secondary" onclick="goToView(4)">戻る</button>
   </div>
 
-  <div id="view-6" class="view-section" style="text-align:center; padding-top:50px;">
-    <i class="fa-regular fa-circle-check" style="font-size:4rem; color:var(--c-main); margin-bottom:20px;"></i>
+  <div id="view-6" class="view-section" style="text-align:center; padding-top:30px;">
+    <i class="fa-regular fa-circle-check" style="font-size:4rem; color:var(--c-main-turquoise); margin-bottom:20px;"></i>
     <h2>予約完了</h2>
     <p>ご予約ありがとうございます。</p>
-    <button class="btn btn-secondary" onclick="liff.closeWindow()">閉じる</button>
+    
+    <div class="card">
+        <button class="btn btn-primary" style="background:#06C755; box-shadow:none;" onclick="shareLine()">
+            <i class="fa-brands fa-line"></i> LINEで送る
+        </button>
+        <button class="btn btn-secondary" onclick="addToGoogleCalendar()">
+            <i class="fa-regular fa-calendar"></i> Googleカレンダー登録
+        </button>
+        <button class="btn btn-secondary" onclick="shareNative()">
+            <i class="fa-solid fa-share-nodes"></i> シェア
+        </button>
+        <div style="margin-top:20px;">
+            <button class="btn btn-primary" onclick="location.reload()">続けて登録</button>
+        </div>
+    </div>
+    
+    <button class="btn btn-secondary" style="border:none; margin-top:20px;" onclick="liff.closeWindow()">閉じる</button>
   </div>
 
 </div>
@@ -261,7 +347,7 @@
 
 <div class="modal-overlay" id="dog-modal-overlay">
   <div class="center-modal" id="dog-modal">
-    <h3 style="text-align:center; color:var(--c-deep); margin-bottom:15px;">ワンちゃんを選択</h3>
+    <h3 style="text-align:center; color:var(--c-sub-deep-ocean); margin-bottom:15px;">ワンちゃんを選択</h3>
     <div id="dog-list-container"></div>
   </div>
 </div>
@@ -269,32 +355,36 @@
 <div class="modal-overlay" id="time-modal-overlay" onclick="closeTimeModal()">
   <div class="time-modal" id="time-modal">
     <h3 id="time-modal-title" style="font-size:1.1rem; text-align:center; margin-bottom:20px;">10:00〜 の選択</h3>
-    <div id="time-slot-buttons" style="display:grid; gap:10px;">
-      </div>
+    <div id="time-slot-buttons" style="display:grid; gap:10px;"></div>
     <button class="btn btn-secondary" onclick="closeTimeModal()">閉じる</button>
   </div>
 </div>
 
-<div class="modal-overlay" id="terms-overlay" onclick="closeTerms()"></div> <div class="top-sheet" id="terms-sheet">
+<div class="modal-overlay" id="terms-overlay" onclick="closeTerms()"></div>
+<div class="top-sheet" id="terms-sheet">
   <div style="padding:15px; border-bottom:1px solid #eee; text-align:center; font-weight:bold; display:flex; justify-content:space-between;">
     <span id="terms-title">規約</span>
     <span onclick="closeTerms()" style="cursor:pointer; font-size:1.2rem;">&times;</span>
   </div>
-  <div class="top-sheet-content" id="terms-content">
-    読み込み中...
-  </div>
+  <div class="top-sheet-content" id="terms-content">読み込み中...</div>
+  <div class="top-sheet-close-area" onclick="closeTerms()"></div>
 </div>
+
+<div id="debug-console"></div>
 
 <script>
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
   const LIFF_ID = '2008546673-MJY7j3ox';
+  // 事務所座標 (板橋区前野町6-55-1)
+  const OFFICE_POS = { lat: 35.7665, lng: 139.6936 };
 
   let userData = null;
   let userDogs = [];
+  let products = []; // 商品リスト
   let selectedDog = null;
-  let selectedSlot = null; // { date: 'YYYY-MM-DD', time: '10:00' }
+  let selectedSlot = null;
   let weekOffset = 0;
-
+  
   // Init
   window.onload = async () => {
     try {
@@ -315,10 +405,14 @@
       if(json.customer) userData = json.customer;
       if(json.all_dogs) userDogs = json.all_dogs;
       else if(json.dog) userDogs = [json.dog];
+      if(json.products) products = json.products; // 商品リスト取得
 
-      // ① 複数犬ならモーダル、1頭なら即選択
+      // メニュー生成
+      renderMenuSelect();
+
+      // 犬選択
       if (userDogs.length > 1) {
-        showDogSelectModal(false); // false = cannot close without selection
+        showDogSelectModal(false);
       } else if (userDogs.length === 1) {
         selectDog(0);
       } else {
@@ -326,7 +420,28 @@
       }
       document.getElementById('loading-overlay').style.display = 'none';
     } catch(e) {
-      alert('データ取得失敗');
+      alert('データ取得失敗: ' + e.message);
+    }
+  }
+
+  function renderMenuSelect() {
+    const sel = document.getElementById('menu-select');
+    sel.innerHTML = '';
+    if(products && products.length > 0) {
+        products.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = "90"; // 仮固定、実際はp.duration等が必要
+            opt.setAttribute('data-price', p.price);
+            opt.setAttribute('data-key', p.key);
+            opt.innerText = `${p.name} (¥${p.price.toLocaleString()})`;
+            sel.appendChild(opt);
+        });
+    } else {
+        // Fallback
+        const opt = document.createElement('option');
+        opt.value = "90"; opt.setAttribute('data-price', 4900); opt.setAttribute('data-key', 'SINGLE');
+        opt.innerText = "単発レッスン (¥4,900)";
+        sel.appendChild(opt);
     }
   }
 
@@ -383,9 +498,8 @@
     }
   }
 
-  // --- Calendar (Matrix) ---
+  // --- Calendar ---
   function shiftWeek(d) { weekOffset += d; renderCalendar(); }
-  
   function renderCalendar() {
     const tbody = document.getElementById('cal-body');
     const thead = document.getElementById('cal-header');
@@ -394,6 +508,8 @@
     // Dates
     const startDt = new Date();
     startDt.setDate(startDt.getDate() + (weekOffset*7));
+    document.getElementById('cal-range-text').innerText = `${startDt.getMonth()+1}/${startDt.getDate()} 〜`; // 日付反映
+
     let dates = [];
     let headHtml = '<th>時間</th>';
     for(let i=0; i<7; i++){
@@ -406,27 +522,16 @@
     }
     thead.innerHTML = headHtml;
 
-    // Rows (10:00 - 20:00)
     for(let h=10; h<=20; h++){
       let tr = document.createElement('tr');
-      // Time Label
       tr.innerHTML = `<td>${h}:00</td>`;
-      
       dates.forEach(dt => {
         let td = document.createElement('td');
-        
-        // Logic: 水曜(3)=NG, 木曜(4)&<13時=NG
-        let isNG = false;
-        if(dt.day === 3) isNG = true;
-        if(dt.day === 4 && h < 13) isNG = true;
-
+        let isNG = (dt.day === 3 || (dt.day === 4 && h < 13)); // Wed or Thu<13
         if(isNG) {
           td.innerHTML = '<span class="sym-ng">×</span>';
         } else {
-          // Mock availability logic: 
-          // 00分と30分が両方OKなら○, 片方なら▲
-          // ここでは仮に全部○とする（API実装時はここで判定）
-          td.innerHTML = `<span class="sym-ok" onclick="openTimeModal('${dt.date}', ${h})">○</span>`;
+          td.innerHTML = `<span class="sym-ok" onclick="openTimeModal('${dt.date}', ${h}, this)">○</span>`;
         }
         tr.appendChild(td);
       });
@@ -434,26 +539,21 @@
     }
   }
 
-  // --- Time Selection Modal ---
-  function openTimeModal(dateStr, hour) {
-    document.getElementById('time-modal-title').innerText = `${dateStr} ${hour}:00台の選択`;
+  // Time Modal
+  let currentCell = null; // Highlight用
+  function openTimeModal(dateStr, hour, cell) {
+    currentCell = cell;
+    document.getElementById('time-modal-title').innerText = `${dateStr} ${hour}:00台`;
     const cont = document.getElementById('time-slot-buttons');
     cont.innerHTML = '';
     
-    // 00分
-    const btn00 = document.createElement('button');
-    btn00.className = 'btn btn-primary'; btn00.style.marginTop='0';
-    btn00.innerText = `${hour}:00 開始`;
-    btn00.onclick = () => chooseTime(dateStr, `${hour}:00`);
-    cont.appendChild(btn00);
-
-    // 30分
-    const btn30 = document.createElement('button');
-    btn30.className = 'btn btn-primary'; btn30.style.marginTop='0';
-    btn30.innerText = `${hour}:30 開始`;
-    btn30.onclick = () => chooseTime(dateStr, `${hour}:30`);
-    cont.appendChild(btn30);
-
+    ['00','30'].forEach(min => {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-primary'; btn.style.marginTop='0';
+        btn.innerText = `${hour}:${min} 開始`;
+        btn.onclick = () => chooseTime(dateStr, `${hour}:${min}`);
+        cont.appendChild(btn);
+    });
     document.getElementById('time-modal-overlay').classList.add('open');
     document.getElementById('time-modal').classList.add('open');
   }
@@ -464,62 +564,111 @@
   function chooseTime(d, t) {
     selectedSlot = { date: d, time: t };
     closeTimeModal();
-    // Enable Next
-    document.getElementById('btn-to-step3').innerText = `${d} ${t} で進む`;
+    // Highlight
+    document.querySelectorAll('.sym-sel').forEach(el => el.classList.remove('sym-sel'));
+    if(currentCell) {
+        currentCell.parentElement.classList.add('sym-sel'); // tdではなくspanに当てる場合は調整
+        const span = currentCell.querySelector('.sym-ok');
+        if(span) span.classList.add('sym-sel');
+    }
     document.getElementById('btn-to-step3').disabled = false;
   }
 
-  // --- Terms Modal (Top Sheet) ---
-  const TERMS_TEXT = {
-    'policy': '【キャンセルポリシー】\n前日: 50%\n当日: 100%\n...',
-    'privacy': '【個人情報取扱】\n...',
-    'terms': '【利用規約】\n...',
-    'law': '【特商法】\n...'
-  };
-  function openTerms(key) {
-    document.getElementById('terms-content').innerText = TERMS_TEXT[key];
-    document.getElementById('terms-overlay').classList.add('open');
-    document.getElementById('terms-sheet').classList.add('open');
-  }
-  function closeTerms() {
-    document.getElementById('terms-overlay').classList.remove('open');
-    document.getElementById('terms-sheet').classList.remove('open');
+  // Alt Address
+  function toggleAltAddress() {
+    const chk = document.getElementById('alt-address-check').checked;
+    document.getElementById('alt-address-area').style.display = chk ? 'block' : 'none';
   }
 
-  // --- Confirm & Final ---
+  // --- Confirm (Calc Distance) ---
   function renderConfirm() {
     const isMulti = document.getElementById('multi-dog-check').checked;
     const menuEl = document.getElementById('menu-select');
     const price = parseInt(menuEl.options[menuEl.selectedIndex].dataset.price);
-    const total = price + (isMulti?2000:0);
     
-    let html = `
-      <div><strong>日時:</strong> ${selectedSlot.date} ${selectedSlot.time}</div>
-      <div><strong>犬:</strong> ${selectedDog.name_disp} ${isMulti?'+1頭':''}</div>
-      <div><strong>メニュー:</strong> ${menuEl.value}分</div>
-    `;
-    document.getElementById('conf-details').innerHTML = html;
-    document.getElementById('conf-total').innerText = `¥${total.toLocaleString()}`;
+    // 場所決定
+    let place = userData.address || "未登録";
+    let isAlt = document.getElementById('alt-address-check').checked;
+    if(isAlt) {
+        place = document.getElementById('alt-addr').value;
+        if(!place) place = "指定住所 (未入力)";
+    }
+
+    document.getElementById('conf-datetime').innerText = `${selectedSlot.date} ${selectedSlot.time}`;
+    document.getElementById('conf-place').innerText = place;
+    document.getElementById('conf-dog').innerText = selectedDog.name_disp;
+    document.getElementById('conf-course').innerText = menuEl.options[menuEl.selectedIndex].text + (isMulti?" (+2頭目)":"");
+
+    // 交通費計算 (ローディング演出)
+    document.getElementById('conf-travel-fee').innerText = "計算中...";
+    document.getElementById('conf-total').innerText = "---";
+    
+    setTimeout(() => {
+        let travelFee = 0;
+        // 簡易距離計算 (Haversine)
+        // userData.base_lat があればそれを使う、なければ直線距離計算できないので0(要相談)
+        // ここではサンプルとして、申込住所の場合のみ計算可能とする
+        if (!isAlt && userData.base_lat && userData.base_lng) {
+            const dist = calcDistance(OFFICE_POS.lat, OFFICE_POS.lng, userData.base_lat, userData.base_lng);
+            travelFee = calcTravelFee(dist);
+        } else {
+            // 指定住所の場合は座標がないため一旦0 (本来はGeocoding APIが必要)
+            // または固定費
+            travelFee = 0; 
+        }
+        
+        document.getElementById('conf-travel-fee').innerText = `¥${travelFee.toLocaleString()}`;
+        const total = price + (isMulti?2000:0) + travelFee;
+        document.getElementById('conf-total').innerText = `¥${total.toLocaleString()}`;
+    }, 800);
   }
 
+  // Haversine
+  function calcDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // km
+    const dLat = (lat2-lat1) * Math.PI / 180;
+    const dLon = (lon2-lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    return R * c;
+  }
+  function calcTravelFee(km) {
+    if(km <= 3) return 0;
+    if(km <= 5) return 500;
+    if(km <= 10) return 1000;
+    if(km <= 15) return 1500;
+    return 1500 + Math.ceil(km - 15) * 100;
+  }
+
+  // --- Final & Submit ---
   function renderFinal() {
-    // Clone content from step 3 for display
-    document.getElementById('final-summary').innerHTML = document.getElementById('conf-details').innerHTML + 
-      `<div style="margin-top:10px; font-weight:bold;">合計: ${document.getElementById('conf-total').innerText}</div>`;
+    const t = document.getElementById('conf-total').innerText;
+    document.getElementById('final-summary').innerText = 
+        `日時: ${selectedSlot.date} ${selectedSlot.time}\n` +
+        `場所: ${document.getElementById('conf-place').innerText}\n` +
+        `犬: ${document.getElementById('conf-dog').innerText}\n` +
+        `コース: ${document.getElementById('conf-course').innerText}\n` +
+        `交通費: ${document.getElementById('conf-travel-fee').innerText}\n\n` +
+        `合計: ${t}`;
   }
 
   async function submitReservation() {
+    // CVC Check
+    if(document.getElementById('payment-method').value === 'CARD') {
+        if(document.getElementById('cvc-input').value.length < 3) { alert('CVC入力必須'); return; }
+    }
+    
     document.getElementById('loading-text').innerText = '予約確定中...';
     document.getElementById('loading-overlay').style.display = 'flex';
     
-    // Payload
     const payload = {
       action: 'add_reservation',
       userId: userData.unique_key,
       date: selectedSlot.date,
       time: selectedSlot.time,
       dogId: selectedDog.id,
-      // ... others
+      // ...
     };
 
     try {
@@ -535,6 +684,42 @@
     } finally {
       document.getElementById('loading-overlay').style.display = 'none';
     }
+  }
+
+  // --- Thanks Actions ---
+  function shareLine() {
+    // diagnosis.html logic
+    if (liff.isInClient()) {
+        liff.sendMessages([{
+            type: 'text', text: 'レッスンの予約をしました！'
+        }]).then(() => alert('送信しました')).catch(e => alert('送信失敗'));
+    }
+  }
+  function addToGoogleCalendar() {
+    // 簡易リンク生成
+    const title = 'K9レッスン';
+    const dates = selectedSlot.date.replace(/-/g,'') + 'T' + selectedSlot.time.replace(':','') + '00/' + selectedSlot.date.replace(/-/g,'') + 'T' + (parseInt(selectedSlot.time)+1) + '3000'; // +90min approx
+    const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}`;
+    window.open(url, '_blank');
+  }
+  function shareNative() {
+    if(navigator.share) {
+        navigator.share({ title: 'K9 Harmony', text: 'レッスン予約しました', url: 'https://liff.line.me/' + LIFF_ID });
+    } else {
+        alert('シェア機能非対応');
+    }
+  }
+
+  // Terms
+  const TERMS_TEXT = { 'policy': 'キャンセルポリシー...', 'privacy': '個人情報...', 'terms': '利用規約...', 'law': '特商法...' };
+  function openTerms(k) {
+    document.getElementById('terms-content').innerText = TERMS_TEXT[k];
+    document.getElementById('terms-overlay').classList.add('open');
+    document.getElementById('terms-sheet').classList.add('open');
+  }
+  function closeTerms() {
+    document.getElementById('terms-overlay').classList.remove('open');
+    document.getElementById('terms-sheet').classList.remove('open');
   }
 </script>
 </body>
