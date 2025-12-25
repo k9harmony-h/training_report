@@ -10,7 +10,7 @@
 
   <style>
     /* =========================================
-       K9 Harmony Design System (Ver 4.0 - Strict)
+       K9 Harmony Design System (Final Ver)
        ========================================= */
     :root {
       --c-main-turquoise: #57C3C2;
@@ -27,17 +27,17 @@
       background-color: var(--c-base-washi);
       color: var(--c-text-sumi);
       margin: 0; padding: 0;
-      padding-bottom: 80px; /* Footer space */
+      padding-bottom: 120px;
     }
 
-    /* --- HEADER (Logo w40% Center) --- */
+    /* Header */
     header {
       background: white; padding: 15px 0; text-align: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 50;
     }
     .logo-img { width: 40%; max-width: 180px; height: auto; }
 
-    /* --- PROGRESS BAR --- */
+    /* Progress */
     .progress-container {
       display: flex; justify-content: space-between; padding: 20px 30px; position: relative;
       max-width: 600px; margin: 0 auto;
@@ -51,13 +51,13 @@
     .step-dot.active { background: var(--c-main-turquoise); transform: scale(1.2); }
     .step-dot.done { background: var(--c-main-turquoise); }
 
-    /* --- MAIN CONTAINER --- */
+    /* Container */
     #app-container { padding: 20px; max-width: 600px; margin: 0 auto; }
     .view-section { display: none; animation: fadeIn 0.4s ease-out; }
     .view-section.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* --- UI ELEMENTS --- */
+    /* Elements */
     h2 {
       font-size: 1.1rem; color: var(--c-sub-deep-ocean);
       border-left: 4px solid var(--c-main-turquoise); padding-left: 10px; margin-bottom: 20px;
@@ -72,74 +72,49 @@
     }
     select:focus, input:focus { border-color: var(--c-main-turquoise); outline: none; background: #fff; }
 
-    /* --- BUTTONS (Strict Coloring) --- */
+    /* Buttons */
     .btn {
       display: block; width: 100%; padding: 16px; border-radius: 50px; border: none;
-      font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; margin-top: 15px;
-      transition: all 0.2s;
+      font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; margin-top: 15px; transition: all 0.2s;
     }
-    /* Action Buttons (Next, Confirm): Brand Fill, White Text */
-    .btn-primary {
-      background: var(--c-main-turquoise); color: white;
-      box-shadow: 0 4px 10px rgba(87, 195, 194, 0.3);
-    }
+    /* Brand Color Fill (Important Actions) */
+    .btn-primary { background: var(--c-main-turquoise); color: white; box-shadow: 0 4px 10px rgba(87, 195, 194, 0.3); }
     .btn-primary:active { transform: scale(0.98); }
-    .btn-primary:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
+    .btn-primary:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
 
-    /* Secondary Buttons (Back): White Fill, Gray Border */
-    .btn-secondary {
-      background: white; border: 1px solid #ccc; color: var(--c-text-gray);
-    }
-
-    /* Modal Option Buttons (Dogs): Brand Border, Brand Text, White Fill */
-    .btn-outline-brand {
-      background: white; border: 2px solid var(--c-main-turquoise); color: var(--c-main-turquoise);
-      margin-top: 10px;
-    }
+    .btn-secondary { background: white; border: 1px solid #ccc; color: var(--c-text-gray); }
+    
+    /* White BG + Brand Border (Dog Select) */
+    .btn-outline-brand { background: white; border: 2px solid var(--c-main-turquoise); color: var(--c-main-turquoise); margin-top: 10px; }
     .btn-outline-brand:active { background: var(--c-bg-mist); }
 
-    /* Cancel Button */
     .btn-cancel-rsv { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; font-size: 0.9rem; margin-top: 30px; }
-
     .btn-row { display: flex; gap: 10px; } .btn-row .btn { margin-top: 0; }
 
-    /* --- CALENDAR (Matrix) --- */
+    /* --- Calendar --- */
     .cal-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .cal-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #eee; }
     .cal-table { width: 100%; border-collapse: collapse; min-width: 400px; table-layout: fixed; }
-    
-    .cal-table th {
-      background: #f8f8f8; color: var(--c-sub-deep-ocean); padding: 8px 2px;
-      font-size: 0.75rem; border-bottom: 2px solid #ddd; border-right: 1px solid #eee; text-align: center;
-    }
+    .cal-table th { background: #f8f8f8; color: var(--c-sub-deep-ocean); padding: 8px 2px; font-size: 0.75rem; border-bottom: 2px solid #ddd; border-right: 1px solid #eee; text-align: center; }
     .cal-table th:first-child { width: 50px; position: sticky; left: 0; background: #f8f8f8; z-index: 2; border-right: 2px solid #ddd; }
-    
-    .cal-table td {
-      height: 50px; border-bottom: 1px solid #eee; border-right: 1px solid #eee;
-      text-align: center; vertical-align: middle; padding: 0; position: relative;
-    }
-    .cal-table td:first-child {
-      position: sticky; left: 0; background: white; font-weight: bold;
-      color: var(--c-sub-deep-ocean); font-size: 0.8rem; z-index: 1; border-right: 2px solid #ddd;
-    }
+    .cal-table td { height: 50px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center; vertical-align: middle; padding: 0; position: relative; }
+    .cal-table td:first-child { position: sticky; left: 0; background: white; font-weight: bold; color: var(--c-sub-deep-ocean); font-size: 0.8rem; z-index: 1; border-right: 2px solid #ddd; }
 
-    /* Cell Symbols */
     .sym-ok { color: var(--c-main-turquoise); font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
     .sym-lim { color: #fbc02d; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
     .sym-ng { background: #f0f0f0; color: #ccc; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
     
-    /* [Highlight Logic] Selected Cell: Brand BG, White Text */
-    td.selected-cell { background-color: var(--c-main-turquoise) !important; transition: background 0.3s; }
-    td.selected-cell .sym-ok { color: white !important; }
-    td.selected-cell .sym-lim { color: white !important; }
+    /* Highlight: Brand Fill, White Text */
+    td.selected-cell { background-color: var(--c-main-turquoise) !important; transition: background 0.2s; }
+    td.selected-cell .sym-ok, td.selected-cell .sym-lim { color: white !important; }
 
     .cal-legend { display: flex; justify-content: center; gap: 15px; font-size: 0.8rem; margin-top: 10px; color: var(--c-text-gray); }
 
-    /* --- MODALS --- */
+    /* --- Modals --- */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; display: none; opacity: 0; transition: opacity 0.3s; }
     .modal-overlay.open { display: block; opacity: 1; }
 
-    /* Center Modal (Dog Select) */
+    /* Center (Dog Select) */
     .center-modal {
       position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
       width: 90%; max-width: 350px; background: white; border-radius: 12px; padding: 25px;
@@ -148,22 +123,19 @@
     .center-modal.open { display: block; animation: popIn 0.3s ease-out; }
     @keyframes popIn { from { transform: translate(-50%, -40%); opacity: 0; } to { transform: translate(-50%, -50%); opacity: 1; } }
 
-    /* Bottom Sheet (Time Select) - 20-30% from bottom? No, prompt said Terms is bottom sheet with gap */
-    /* Wait, Prompt said "Terms modal: Top slide down, leaving bottom 30% empty". Fixed in V3. */
-    /* Time select: User said "Modal display". Let's stick to a clean bottom sheet for time. */
+    /* Bottom Sheet (Time Select) */
     .time-modal { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; z-index: 302; transform: translateY(100%); transition: transform 0.3s; }
     .time-modal.open { transform: translateY(0); }
 
-    /* Top Sheet (Terms) - Fill top 70%, leave bottom 30% empty */
+    /* Top Sheet (Terms) - 80% */
     .top-sheet {
-      position: fixed; top: 0; left: 0; width: 100%; height: 70%;
+      position: fixed; top: 0; left: 0; width: 100%; height: 80%;
       background: white; border-radius: 0 0 20px 20px; z-index: 302;
       transform: translateY(-100%); transition: transform 0.3s; display: flex; flex-direction: column;
     }
     .top-sheet.open { transform: translateY(0); }
     .top-sheet-content { flex: 1; overflow-y: auto; padding: 20px; font-size: 0.9rem; line-height: 1.6; }
-    /* Bottom 30% area to close */
-    .top-sheet-close-area { position: fixed; top: 70%; left: 0; width: 100%; height: 30%; z-index: 301; }
+    .top-sheet-close-area { position: fixed; top: 80%; left: 0; width: 100%; height: 20%; z-index: 301; }
 
     /* Footer */
     footer { position: fixed; bottom: 0; width: 100%; background: #f9f9f9; padding: 15px; text-align: center; font-size: 0.7rem; color: #999; border-top: 1px solid #eee; z-index: 50; }
@@ -172,6 +144,9 @@
     #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--c-main-turquoise); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    .checkbox-row { display: flex; align-items: flex-start; margin-bottom: 10px; font-size: 0.9rem; color: var(--c-text-sumi); }
+    .checkbox-row input { width: 18px; height: 18px; margin-right: 10px; margin-top: 3px; accent-color: var(--c-main-turquoise); }
   </style>
 </head>
 <body>
@@ -201,13 +176,13 @@
     <h2>予約内容</h2>
     
     <div class="card" id="dog-info-card">
-      <label>レッスンを受けるワンちゃん</label>
+      <label>選択中のワンちゃん</label>
       <div id="selected-dog-name" style="font-size:1.2rem; font-weight:bold; color:var(--c-main-turquoise); margin-bottom:10px;">---</div>
       <button class="btn btn-secondary" style="padding:8px 15px; font-size:0.8rem; width:auto; display:inline-block;" onclick="showDogSelectModal(true)">変更する</button>
 
       <div style="background:var(--c-bg-mist); padding:10px; border-radius:8px; margin-top:15px;">
         <label style="display:flex; align-items:center; margin:0; cursor:pointer;">
-          <input type="checkbox" id="multi-dog-check" style="width:20px; height:20px; margin-right:10px;">
+          <input type="checkbox" id="multi-dog-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);">
           2頭目の追加 (+2,000円 / +30分)
         </label>
       </div>
@@ -215,9 +190,7 @@
 
     <div class="card">
       <label>メニュー</label>
-      <select id="menu-select">
-        <option>読み込み中...</option>
-      </select>
+      <select id="menu-select"><option>読み込み中...</option></select>
     </div>
 
     <button class="btn btn-primary" onclick="goToView(2)">次へ (日時選択)</button>
@@ -235,16 +208,14 @@
 
       <div class="cal-wrapper">
         <table class="cal-table">
-          <thead>
-            <tr id="cal-header"><th>時間</th></tr>
-          </thead>
+          <thead><tr id="cal-header"><th>時間</th></tr></thead>
           <tbody id="cal-body"></tbody>
         </table>
       </div>
 
       <div class="cal-legend">
-        <span><span style="color:var(--c-main-turquoise); font-weight:bold;">○</span> 予約可能</span>
-        <span><span style="color:#fbc02d; font-weight:bold;">▲</span> 残りわずか</span>
+        <span><span style="color:var(--c-main-turquoise); font-weight:bold;">○</span> 可能</span>
+        <span><span style="color:#fbc02d; font-weight:bold;">▲</span> わずか</span>
         <span><span style="background:#f0f0f0; padding:0 4px; color:#ccc;">×</span> 不可</span>
       </div>
     </div>
@@ -296,6 +267,15 @@
         </div>
       </div>
 
+      <div style="border-top:1px solid #eee; margin:15px 0; padding-top:15px;">
+        <label>Voucher / 紹介コード</label>
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="voucher-code" placeholder="コードを入力" style="margin-bottom:0;">
+            <button class="btn btn-secondary" style="margin-top:0; padding:10px;" onclick="applyVoucher()">適用</button>
+        </div>
+        <div id="voucher-msg" style="font-size:0.8rem; color:var(--c-accent-copper); margin-top:5px;"></div>
+      </div>
+
       <div style="font-size:1.3rem; font-weight:bold; color:var(--c-sub-deep-ocean); text-align:right; margin-top:10px;">
         合計: <span id="conf-total">¥---</span>
       </div>
@@ -312,17 +292,34 @@
 
     <div class="card">
       <label>規約等の確認</label>
-      <ul style="padding-left:20px; color:var(--c-main-turquoise); font-weight:bold; font-size:0.9rem; line-height:2;">
-        <li onclick="openTerms('policy')" style="cursor:pointer; text-decoration:underline;">キャンセルポリシー</li>
-        <li onclick="openTerms('privacy')" style="cursor:pointer; text-decoration:underline;">個人情報の取扱について</li>
-        <li onclick="openTerms('terms')" style="cursor:pointer; text-decoration:underline;">利用規約</li>
-        <li onclick="openTerms('law')" style="cursor:pointer; text-decoration:underline;">特定商取引法に基づく表記</li>
-      </ul>
+      <div class="checkbox-row">
+        <input type="checkbox" class="term-check" id="chk-policy" onchange="checkAllTerms()">
+        <span onclick="openTerms('policy')" style="cursor:pointer; text-decoration:underline; flex:1;">キャンセルポリシーに同意</span>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" class="term-check" id="chk-privacy" onchange="checkAllTerms()">
+        <span onclick="openTerms('privacy')" style="cursor:pointer; text-decoration:underline; flex:1;">個人情報の取扱に同意</span>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" class="term-check" id="chk-terms" onchange="checkAllTerms()">
+        <span onclick="openTerms('terms')" style="cursor:pointer; text-decoration:underline; flex:1;">利用規約に同意</span>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" class="term-check" id="chk-law" onchange="checkAllTerms()">
+        <span onclick="openTerms('law')" style="cursor:pointer; text-decoration:underline; flex:1;">特定商取引法に基づく表記を確認</span>
+      </div>
+      
+      <div style="border-top:1px solid #eee; margin-top:10px; padding-top:10px; font-weight:bold;">
+        <label style="display:flex; align-items:center; cursor:pointer;">
+            <input type="checkbox" id="chk-all" style="width:20px; height:20px; accent-color:var(--c-main-turquoise);" onchange="toggleAllTerms()">
+            全てに同意する
+        </label>
+      </div>
     </div>
 
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="goToView(2)">戻る</button>
-      <button class="btn btn-primary" id="btn-confirm-next" onclick="checkUserAndNext()">お支払いへ</button>
+      <button class="btn btn-primary" id="btn-confirm-next" disabled onclick="checkUserAndNext()">お支払いへ</button>
     </div>
   </div>
 
@@ -338,26 +335,27 @@
           </div>
           <div style="text-align:right;">
             <span style="font-size:0.8rem; font-weight:bold;">CVC (3桁)</span>
-            <input type="tel" id="cvc-input" maxlength="4" placeholder="123" style="width:80px; text-align:center; display:inline-block; margin-left:10px;">
+            <input type="tel" id="cvc-input" maxlength="4" placeholder="123" style="width:80px; text-align:center; display:inline-block; margin-left:10px;" oninput="checkCVC()">
           </div>
+          <button class="btn btn-secondary" style="font-size:0.8rem; margin-top:15px;">＋ 新しいカードを使う</button>
         </div>
     </div>
 
     <div id="form-new" style="display:none;">
         <div class="card">
-            <h3 style="margin-top:0; color:var(--c-main-turquoise);">会員登録</h3>
+            <h3 style="margin-top:0; color:var(--c-main-turquoise); font-size:1rem;">会員登録</h3>
             <label>お名前 <span style="color:red">*</span></label>
             <input type="text" id="reg-name" placeholder="山田 太郎">
             <label>電話番号 <span style="color:red">*</span></label>
             <input type="tel" id="reg-phone" placeholder="090-1234-5678">
             <label>愛犬のお名前 <span style="color:red">*</span></label>
             <input type="text" id="reg-dog-name" placeholder="ポチ">
-            </div>
+        </div>
     </div>
 
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="goToView(3)">戻る</button>
-      <button class="btn btn-primary" onclick="goToView(5)">最終確認へ</button>
+      <button class="btn btn-primary" id="btn-final-check" disabled onclick="goToView(5)">最終確認へ</button>
     </div>
   </div>
 
@@ -370,8 +368,8 @@
     <div class="card" style="background:#fff3e0; border:1px solid #ffe0b2; color:#e65100;">
       <label style="color:#e65100;"><i class="fa-solid fa-triangle-exclamation"></i> キャンセル規定</label>
       <p style="font-size:0.85rem; margin:0;">
-        キャンセル受付締切: 前日18:00まで<br>
-        前日: 50% / 当日: 100% の料金が発生します。
+        受付締切: 前日18:00<br>
+        前日: 50% / 当日: 100% のキャンセル料が発生します。
       </p>
     </div>
     <button class="btn btn-primary" onclick="submitReservation()">上記に同意して予約を確定する</button>
@@ -432,7 +430,7 @@
 <script>
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
   const LIFF_ID = '2008546673-MJY7j3ox';
-  const OFFICE_POS = { lat: 35.7665, lng: 139.6936 }; // 板橋区前野町
+  const OFFICE_POS = { lat: 35.7665, lng: 139.6936 };
 
   let userData = null;
   let userDogs = [];
@@ -440,8 +438,8 @@
   let selectedDog = null;
   let selectedSlot = null; 
   let weekOffset = 0;
+  let voucherData = null; // { discount: 1000 }
   
-  // Init
   window.onload = async () => {
     try {
       await liff.init({ liffId: LIFF_ID });
@@ -458,32 +456,26 @@
       const res = await fetch(`${GAS_URL}?userId=${userId}&type=data&t=${Date.now()}`);
       const json = await res.json();
       
-      // 新規判定
       if (json.customer) {
           userData = json.customer;
           userDogs = json.all_dogs || [json.dog];
       } else {
-          userData = null; // 新規
+          userData = null; 
           userDogs = [];
       }
-      
       if(json.products) products = json.products;
       renderMenuSelect();
 
-      // 犬選択ロジック
       if (userDogs.length > 1) {
         showDogSelectModal(false);
       } else if (userDogs.length === 1) {
         selectDog(0);
       } else {
-        // 新規または犬なし -> フォームで入力させるため、ここではダミー表示
         document.getElementById('selected-dog-name').innerText = "未登録 (新規)";
-        document.getElementById('dog-info-card').style.display = 'none'; // 新規なら隠すか、新規用表示に
       }
-      
       document.getElementById('loading-overlay').style.display = 'none';
     } catch(e) {
-      alert('データ取得失敗: ' + e.message);
+      alert('通信失敗');
     }
   }
 
@@ -495,35 +487,33 @@
             const opt = document.createElement('option');
             opt.value = 90; 
             opt.setAttribute('data-price', p.price);
-            opt.setAttribute('data-key', p.key);
             opt.innerText = `${p.name} (¥${p.price.toLocaleString()})`;
             sel.appendChild(opt);
         });
     } else {
         const opt = document.createElement('option');
-        opt.value = 90; opt.setAttribute('data-price', 4900);
-        opt.innerText = "単発レッスン (¥4,900)";
+        opt.value = 90; opt.setAttribute('data-price', 4900); opt.innerText = "単発レッスン (¥4,900)";
         sel.appendChild(opt);
     }
   }
 
-  // --- Dog Selection ---
   function showDogSelectModal(canClose) {
     const cont = document.getElementById('dog-list-container');
     cont.innerHTML = '';
     userDogs.forEach((d, idx) => {
-      // 指示: ボタンはブランドカラー枠で塗り、文字はブランドカラー
       const btn = document.createElement('button');
       btn.className = 'btn btn-outline-brand'; 
       btn.innerText = d.name_disp || d.name;
       btn.onclick = () => { selectDog(idx); closeDogModal(); };
       cont.appendChild(btn);
     });
-    // 新規登録ボタン(Option)
-    if(userDogs.length === 0) {
-        cont.innerHTML = '<div>登録されたワンちゃんがいません。<br>新規登録へ進んでください。</div>';
+    if(userDogs.length===0 || canClose) {
+        const close = document.createElement('button');
+        close.className = 'btn btn-secondary';
+        close.innerText = userDogs.length===0?'閉じる':'キャンセル';
+        close.onclick = closeDogModal;
+        cont.appendChild(close);
     }
-    
     document.getElementById('dog-modal-overlay').classList.add('open');
     document.getElementById('dog-modal').classList.add('open');
   }
@@ -536,33 +526,31 @@
     document.getElementById('selected-dog-name').innerText = selectedDog.name_disp || selectedDog.name;
   }
 
-  // --- Navigation & Flow Check ---
+  // --- Flow ---
   function goToView(step) {
     document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
     document.getElementById(`view-${step}`).classList.add('active');
     updateProgress(step);
     window.scrollTo(0,0);
-    
-    if(step === 2) renderCalendar();
-    if(step === 3) renderConfirm();
-    if(step === 5) renderFinal();
+    if(step===2) renderCalendar();
+    if(step===3) renderConfirm();
+    if(step===5) renderFinal();
   }
-  
   function checkUserAndNext() {
       if(userData) {
-          // 既存 -> View 4 (Card Input)
           document.getElementById('form-existing').style.display = 'block';
           document.getElementById('form-new').style.display = 'none';
-          document.getElementById('btn-confirm-next').innerText = 'お支払いへ';
+          document.getElementById('btn-final-check').disabled = true; // wait for CVC
+          if(document.getElementById('payment-method').value !== 'CARD') {
+              document.getElementById('btn-final-check').disabled = false;
+          }
       } else {
-          // 新規 -> View 4 (Reg Form)
           document.getElementById('form-existing').style.display = 'none';
           document.getElementById('form-new').style.display = 'block';
-          document.getElementById('btn-confirm-next').innerText = '会員登録へ';
+          document.getElementById('btn-final-check').disabled = false;
       }
       goToView(4);
   }
-
   function updateProgress(step) {
     if(step>5) return;
     const pct = ((step-1)/4)*100;
@@ -581,20 +569,16 @@
     const tbody = document.getElementById('cal-body');
     const thead = document.getElementById('cal-header');
     tbody.innerHTML = '';
-    
-    const startDt = new Date();
-    startDt.setDate(startDt.getDate() + (weekOffset*7));
+    const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
     document.getElementById('cal-range-text').innerText = `${startDt.getMonth()+1}/${startDt.getDate()} 〜`;
 
     let dates = [];
     let headHtml = '<th>時間</th>';
     for(let i=0; i<7; i++){
       let d = new Date(startDt); d.setDate(startDt.getDate()+i);
-      let ds = `${d.getMonth()+1}/${d.getDate()}`;
-      let w = ['日','月','火','水','木','金','土'][d.getDay()];
       let col = (d.getDay()===0)?'red':(d.getDay()===6)?'blue':'#333';
       dates.push({ date: d.toISOString().split('T')[0], day: d.getDay() });
-      headHtml += `<th style="color:${col}">${ds}<br>(${w})</th>`;
+      headHtml += `<th style="color:${col}">${d.getMonth()+1}/${d.getDate()}<br>(${['日','月','火','水','木','金','土'][d.getDay()]})</th>`;
     }
     thead.innerHTML = headHtml;
 
@@ -603,7 +587,6 @@
       tr.innerHTML = `<td>${h}:00</td>`;
       dates.forEach(dt => {
         let td = document.createElement('td');
-        // 仮ロジック
         let isNG = (dt.day === 3 || (dt.day === 4 && h < 13)); 
         if(isNG) {
           td.innerHTML = '<span class="sym-ng">×</span>';
@@ -616,17 +599,15 @@
     }
   }
 
-  // Time Modal & Highlight
-  let currentCell = null; 
+  let currentCell = null;
   function openTimeModal(dateStr, hour, cell) {
     currentCell = cell; 
     document.getElementById('time-modal-title').innerText = `${dateStr} ${hour}:00台`;
     const cont = document.getElementById('time-slot-buttons');
     cont.innerHTML = '';
-    
     ['00','30'].forEach(min => {
         const btn = document.createElement('button');
-        btn.className = 'btn btn-outline-brand'; // 白背景・枠あり
+        btn.className = 'btn btn-outline-brand'; 
         btn.style.marginTop='0';
         btn.innerText = `${hour}:${min} 開始`;
         btn.onclick = () => chooseTime(dateStr, `${hour}:${min}`);
@@ -642,38 +623,29 @@
   function chooseTime(d, t) {
     selectedSlot = { date: d, time: t };
     closeTimeModal();
-    // Highlight Logic: Cell fill brand color, text white
     document.querySelectorAll('.selected-cell').forEach(el => el.classList.remove('selected-cell'));
-    if(currentCell) {
-        currentCell.parentElement.classList.add('selected-cell'); // Apply to TD
-    }
+    if(currentCell) currentCell.classList.add('selected-cell'); 
     document.getElementById('btn-to-step3').disabled = false;
   }
 
-  // Alt Address
-  function toggleAltAddress() {
-    const chk = document.getElementById('alt-address-check').checked;
-    document.getElementById('alt-address-area').style.display = chk ? 'block' : 'none';
-  }
-
-  // --- Confirm & Travel Fee ---
+  // --- Confirm ---
   function renderConfirm() {
     const isMulti = document.getElementById('multi-dog-check').checked;
     const menuEl = document.getElementById('menu-select');
     const price = parseInt(menuEl.options[menuEl.selectedIndex].getAttribute('data-price'));
     
-    let place = userData ? (userData.address || "未登録") : "新規登録";
+    let place = userData ? (userData.address || "未登録") : "新規登録住所";
     if(document.getElementById('alt-address-check').checked) {
         place = document.getElementById('alt-addr').value || "指定住所";
     }
 
     document.getElementById('conf-datetime').innerText = `${selectedSlot.date} ${selectedSlot.time}`;
     document.getElementById('conf-place').innerText = place;
-    document.getElementById('conf-dog').innerText = selectedDog ? selectedDog.name_disp : (userData ? '選択なし' : '新規登録犬');
+    document.getElementById('conf-dog').innerText = selectedDog ? selectedDog.name_disp : '新規登録犬';
     document.getElementById('conf-course').innerText = menuEl.options[menuEl.selectedIndex].text + (isMulti?" (+2頭目)":"");
 
-    // 出張費計算
     document.getElementById('conf-travel-fee').innerText = "計算中...";
+    document.getElementById('conf-travel-msg').innerText = "正確な出張費を計算しております。最終確認画面にて正式な交通費をお知らせいたします。";
     document.getElementById('conf-total').innerText = "---";
     
     setTimeout(() => {
@@ -681,15 +653,14 @@
         if (userData && userData.base_lat && !document.getElementById('alt-address-check').checked) {
             const dist = calcDistance(OFFICE_POS.lat, OFFICE_POS.lng, userData.base_lat, userData.base_lng);
             travelFee = calcTravelFee(dist);
-        } else {
-            // 指定住所 or 新規
-            travelFee = 0; // 仮
         }
         
-        document.getElementById('conf-travel-fee').innerText = `¥${travelFee.toLocaleString()}`;
-        document.getElementById('conf-travel-msg').innerText = "最終確認画面にて正式な交通費をお知らせいたします。";
+        const feeStr = travelFee === 0 ? "無料" : `¥${travelFee.toLocaleString()}`;
+        document.getElementById('conf-travel-fee').innerText = feeStr;
         
-        const total = price + (isMulti?2000:0) + travelFee;
+        let total = price + (isMulti?2000:0) + travelFee;
+        if(voucherData) total -= voucherData.discount_value; // 仮
+        
         document.getElementById('conf-total').innerText = `¥${total.toLocaleString()}`;
     }, 800);
   }
@@ -710,7 +681,45 @@
     return 1500 + Math.ceil(km - 15) * 100;
   }
 
-  // --- Final & Submit ---
+  // Terms Check
+  function toggleAllTerms() {
+      const chk = document.getElementById('chk-all').checked;
+      document.querySelectorAll('.term-check').forEach(c => c.checked = chk);
+      checkAllTerms();
+  }
+  function checkAllTerms() {
+      const all = document.querySelectorAll('.term-check');
+      const checked = document.querySelectorAll('.term-check:checked');
+      document.getElementById('btn-confirm-next').disabled = (all.length !== checked.length);
+      // 連動
+      document.getElementById('chk-all').checked = (all.length === checked.length);
+  }
+
+  // Voucher
+  async function applyVoucher() {
+      const code = document.getElementById('voucher-code').value;
+      if(!code) return;
+      const res = await fetch(`${GAS_URL}?type=check_voucher&code=${code}&userId=DUMMY`); // GET
+      const json = await res.json();
+      const msg = document.getElementById('voucher-msg');
+      if(json.valid) {
+          msg.style.color = 'green';
+          msg.innerText = `適用: ${json.name} (-${json.discount_value})`;
+          voucherData = json;
+          renderConfirm(); // Recalc
+      } else {
+          msg.style.color = 'red';
+          msg.innerText = json.message;
+          voucherData = null;
+      }
+  }
+
+  // CVC Check
+  function checkCVC() {
+      const val = document.getElementById('cvc-input').value;
+      document.getElementById('btn-final-check').disabled = (val.length < 3);
+  }
+
   function renderFinal() {
     const t = document.getElementById('conf-total').innerText;
     document.getElementById('final-summary').innerText = 
@@ -718,47 +727,41 @@
         `場所: ${document.getElementById('conf-place').innerText}\n` +
         `犬: ${document.getElementById('conf-dog').innerText}\n` +
         `コース: ${document.getElementById('conf-course').innerText}\n` +
-        `交通費: ${document.getElementById('conf-travel-fee').innerText}\n\n` +
-        `合計: ${t}`;
+        `交通費: ${document.getElementById('conf-travel-fee').innerText}\n` +
+        (voucherData ? `割引: -${voucherData.discount_value}\n` : '') + 
+        `\n合計: ${t}`;
   }
 
   async function submitReservation() {
-    if(document.getElementById('payment-method').value === 'CARD' && userData) {
-        if(document.getElementById('cvc-input').value.length < 3) { alert('CVC入力必須'); return; }
-    }
-    
-    document.getElementById('loading-text').innerText = '予約確定中...';
     document.getElementById('loading-overlay').style.display = 'flex';
-    
     const payload = {
       action: 'add_reservation',
-      userId: userData ? userData.unique_key : 'NEW_USER', // 新規なら Backendで処理
+      userId: userData ? userData.unique_key : 'NEW_USER',
       date: selectedSlot.date,
       time: selectedSlot.time,
       dogId: selectedDog ? selectedDog.id : null,
-      regData: !userData ? { // 新規データ
-          name: document.getElementById('reg-name').value,
-          phone: document.getElementById('reg-phone').value
-      } : null
+      voucher: voucherData ? voucherData.name : null
     };
-
     try {
       const res = await fetch(GAS_URL, { method:'POST', body:JSON.stringify(payload) });
       const json = await res.json();
-      if(json.status === 'success') goToView(6);
-      else alert('エラー: '+json.message);
-    } catch(e) {
-      alert('通信エラー');
-    } finally {
-      document.getElementById('loading-overlay').style.display = 'none';
-    }
+      if(json.status==='success') goToView(6);
+      else alert(json.message);
+    } catch(e){ alert('Error'); }
+    finally { document.getElementById('loading-overlay').style.display='none'; }
   }
 
-  // --- Actions ---
+  // Actions
   function shareLine() {
     if (liff.isInClient()) {
         liff.sendMessages([{ type: 'text', text: 'レッスン予約しました！' }])
-        .then(()=>alert('送信しました')).catch(e=>alert('失敗'));
+        .then(()=>alert('送信しました'))
+        .catch(e=> {
+            // Fallback
+            window.location.href = "https://line.me/R/msg/text/?レッスン予約しました！";
+        });
+    } else {
+        window.open("https://line.me/R/msg/text/?レッスン予約しました！");
     }
   }
   function addToGoogleCalendar() {
@@ -773,12 +776,7 @@
   }
 
   // Terms
-  const TERMS = { 
-      'policy': '【キャンセルポリシー】\n前日: 50%, 当日: 100%', 
-      'privacy': '個人情報保護方針...', 
-      'terms': '利用規約...', 
-      'law': '特商法...' 
-  };
+  const TERMS = { 'policy':'...','privacy':'...','terms':'...','law':'...' };
   function openTerms(k) {
     document.getElementById('terms-content').innerText = TERMS[k];
     document.getElementById('terms-overlay').classList.add('open');
@@ -787,6 +785,10 @@
   function closeTerms() {
     document.getElementById('terms-overlay').classList.remove('open');
     document.getElementById('terms-sheet').classList.remove('open');
+  }
+  function toggleAltAddress() {
+      const chk = document.getElementById('alt-address-check').checked;
+      document.getElementById('alt-address-area').style.display = chk ? 'block' : 'none';
   }
 </script>
 </body>
