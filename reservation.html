@@ -7,7 +7,7 @@
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     /* =========================================
-       K9 Harmony Design System (Debug Restored)
+       K9 Harmony Design System (v2.2 Stable)
        ========================================= */
     :root {
       --c-main-turquoise: #57C3C2;
@@ -26,7 +26,7 @@
       color: var(--c-text-sumi);
       margin: 0;
       padding: 20px;
-      padding-bottom: 350px; /* デバッグログ用の余白 */
+      padding-bottom: 350px; /* デバッグログ用余白 */
     }
 
     h2 {
@@ -38,9 +38,9 @@
       letter-spacing: 0.05em;
     }
 
-    /* --- Debug & Version Stamp --- */
+    /* --- Debug Console (Restored) --- */
     #version-stamp {
-      font-size: 0.7rem; color: #aaa; text-align: center; margin-bottom: 5px;
+      font-size: 0.7rem; color: #aaa; text-align: center; margin-bottom: 5px; font-family: monospace;
     }
     #debug-console {
       position: fixed; bottom: 0; left: 0; width: 100%; height: 300px;
@@ -51,64 +51,78 @@
     }
     .log-line { border-bottom: 1px solid #333; padding: 2px 0; word-break: break-all; }
     .log-error { color: #ff4444; background: rgba(50,0,0,0.5); }
-    .log-warn { color: #ffeb3b; }
 
     /* --- UI Components --- */
     .card {
       background: white; border-radius: 16px; padding: 24px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.04); margin-bottom: 20px;
+      animation: fadeIn 0.4s var(--ease-luxury);
     }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
     .step-section { display: none; }
     .step-section.active { display: block; }
 
-    label { display: block; font-weight: bold; margin-bottom: 8px; color: var(--c-sub-deep-ocean); }
+    label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 0.9rem; color: var(--c-sub-deep-ocean); }
     .info-value { font-size: 1.1rem; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; min-height: 24px; }
 
-    select, input {
+    select, input[type="text"], input[type="tel"], input[type="number"], input[type="date"] {
       width: 100%; padding: 14px; border: 1px solid #e0e0e0;
-      border-radius: 8px; font-size: 1rem; margin-bottom: 15px;
-      background: #fafafa; box-sizing: border-box;
+      border-radius: 8px; font-size: 1rem; box-sizing: border-box;
+      margin-bottom: 15px; background: #fafafa; appearance: none;
     }
+    select:focus, input:focus { border-color: var(--c-main-turquoise); outline: none; background: #fff; }
 
-    /* Checkbox & Buttons */
+    /* Checkbox */
     .checkbox-group { background: var(--c-bg-mist); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-    .checkbox-label { display: flex; align-items: center; font-weight: bold; }
-    .checkbox-label input { width: 20px; margin-right: 10px; margin-bottom: 0; }
+    .checkbox-label { display: flex; align-items: center; cursor: pointer; font-weight: bold; color: var(--c-sub-deep-ocean); }
+    .checkbox-label input { width: 20px; height: 20px; margin-right: 10px; accent-color: var(--c-main-turquoise); }
 
-    .plan-option { border: 2px solid #eee; border-radius: 12px; padding: 15px; margin-bottom: 10px; }
+    /* Plan Option */
+    .plan-option { border: 2px solid #eee; border-radius: 12px; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; }
     .plan-option.selected { border-color: var(--c-main-turquoise); background: rgba(87, 195, 194, 0.05); }
-    .plan-name { font-weight: bold; } .plan-price { float: right; color: #666; }
+    .plan-name { font-weight: bold; font-size: 1rem; }
+    .plan-price { font-size: 0.9rem; color: var(--c-text-gray); float: right; }
 
-    .slot-btn { 
-      padding: 12px; background: white; border: 1px solid var(--c-main-turquoise); 
-      border-radius: 8px; text-align: center; font-weight: bold; 
+    /* Slots */
+    #slots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+    .slot-btn {
+      padding: 12px 5px; background: white; border: 1px solid var(--c-main-turquoise);
+      color: var(--c-sub-deep-ocean); border-radius: 8px; text-align: center; font-weight: bold; cursor: pointer;
     }
-    #slots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .slot-btn:active { background: var(--c-main-turquoise); color: white; }
 
+    /* Buttons */
     .btn {
-      width: 100%; padding: 16px; background: var(--c-accent-copper); color: white;
-      border: none; border-radius: 50px; font-size: 1.1rem; font-weight: bold; margin-top: 20px;
+      display: block; width: 100%; padding: 16px; background: var(--c-accent-copper); color: white;
+      border: none; border-radius: 50px; font-size: 1.1rem; font-weight: bold; text-align: center; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(200, 122, 86, 0.3); margin-top: 20px;
     }
-    .btn-secondary { background: transparent; color: #666; margin-top: 10px; }
+    .btn-secondary { background: transparent; color: var(--c-text-gray); box-shadow: none; font-size: 0.9rem; margin-top: 10px; }
 
-    /* Loading */
+    /* Loading & Error */
     #loading-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(255,255,255,0.9); display: flex; flex-direction: column;
       justify-content: center; align-items: center; z-index: 1000; display: none;
     }
     .spinner {
-      width: 40px; height: 40px; border: 4px solid #eee; border-top: 4px solid var(--c-main-turquoise);
+      width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--c-main-turquoise);
       border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px;
     }
     @keyframes spin { 0% {transform: rotate(0deg);} 100% {transform: rotate(360deg);} }
+
+    .error-msg { background: #ffebee; color: #c62828; padding: 15px; border-radius: 8px; display: none; margin-bottom: 20px; font-size: 0.9rem; white-space: pre-wrap; }
     
-    .error-msg { background: #ffebee; color: #c62828; padding: 15px; display: none; margin-bottom: 20px; }
+    .credit-card-mock {
+      background: linear-gradient(135deg, #2F5D62, #1a3a3e); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;
+    }
+    .cc-cvc-input { width: 80px; padding: 8px; border-radius: 4px; border: none; text-align: center; font-weight: bold; display: block; margin-left: auto; }
   </style>
 </head>
 <body>
 
-  <div id="version-stamp">v2025.12.25-Fix-DebugRestored</div>
+  <div id="version-stamp">v2025.12.25-URL-Fix-Debug</div>
 
   <div id="loading-overlay">
     <div class="spinner"></div>
@@ -118,7 +132,7 @@
   <div id="error-box" class="error-msg"></div>
 
   <div id="step-1" class="step-section active">
-    <div style="text-align:center; color:var(--c-main-turquoise); font-weight:bold; margin-bottom:10px;">STEP 1/4: ご確認</div>
+    <div class="step-indicator">STEP 1/4: ご確認</div>
     <h2>ご登録情報の確認</h2>
     <div class="card">
       <label>出張先ご住所</label>
@@ -133,23 +147,23 @@
           2頭目の追加 (+2,000円 / +30分)
         </label>
       </div>
-      <p style="font-size:0.8rem; color:#666;">※住所変更はLINEにてご相談ください。</p>
+      <p style="font-size:0.85rem; color:var(--c-text-gray);">※住所変更はLINEにて直接ご相談ください。</p>
     </div>
     <button class="btn" onclick="goToStep2()">プラン選択へ進む</button>
   </div>
 
   <div id="step-2" class="step-section">
-    <div style="text-align:center; color:var(--c-main-turquoise); font-weight:bold; margin-bottom:10px;">STEP 2/4: プラン選択</div>
+    <div class="step-indicator">STEP 2/4: プラン選択</div>
     <h2>プランをお選びください</h2>
     <div class="card">
       <div class="plan-option selected" onclick="selectPlan(this, 'SINGLE', 90, 4900)">
-        <div class="plan-name">単発レッスン</div><div class="plan-price">4,900円</div>
+        <div class="plan-name">単発レッスン</div><div class="plan-price">4,900円 (90分)</div>
       </div>
       <div class="plan-option" onclick="selectPlan(this, 'TICKET_4', 90, 0)">
-        <div class="plan-name">4回チケット利用</div><div class="plan-price">消費</div>
+        <div class="plan-name">4回チケット利用</div><div class="plan-price">チケット消費</div>
       </div>
       <div class="plan-option" onclick="selectPlan(this, 'TICKET_8', 90, 0)">
-        <div class="plan-name">8回チケット利用</div><div class="plan-price">消費</div>
+        <div class="plan-name">8回チケット利用</div><div class="plan-price">チケット消費</div>
       </div>
     </div>
     <button class="btn" onclick="goToStep3()">日時選択へ進む</button>
@@ -157,40 +171,37 @@
   </div>
 
   <div id="step-3" class="step-section">
-    <div style="text-align:center; color:var(--c-main-turquoise); font-weight:bold; margin-bottom:10px;">STEP 3/4: 日時選択</div>
+    <div class="step-indicator">STEP 3/4: 日時選択</div>
     <h2>ご希望の日時</h2>
     <div class="card">
       <label>日付</label>
       <input type="date" id="target-date" onchange="onDateChange()">
-      <div id="date-msg" style="color:red; margin-bottom:10px;"></div>
+      <div id="date-msg" style="font-size:0.85rem; margin-bottom:15px; color:#e53935;"></div>
       <label>開始時間</label>
-      <div id="slots-grid">
-        <div style="grid-column:1/-1; text-align:center; color:#999; padding:20px;">日付を選択してください</div>
-      </div>
+      <div id="slots-grid"><div style="grid-column:1/-1; text-align:center; color:#999; padding:20px;">日付を選択してください</div></div>
     </div>
     <button class="btn btn-secondary" onclick="showStep(2)">戻る</button>
   </div>
 
   <div id="step-4" class="step-section">
-    <div style="text-align:center; color:var(--c-main-turquoise); font-weight:bold; margin-bottom:10px;">STEP 4/4: 最終確認</div>
+    <div class="step-indicator">STEP 4/4: 最終確認</div>
     <h2>ご予約内容と決済</h2>
     <div class="card">
       <label>合計金額</label>
-      <div class="info-value" id="summ-total" style="font-weight:bold; color:var(--c-accent-copper);">¥---</div>
+      <div style="font-weight:bold; font-size:1.2rem; color:var(--c-accent-copper); text-align:right; margin-bottom:20px;" id="summ-total">¥---</div>
       
-      <label>お支払い</label>
-      <div style="background:#333; color:white; padding:15px; border-radius:8px; margin-bottom:15px;">
-        <div style="letter-spacing:2px; margin-bottom:10px;">**** **** **** 1234</div>
-        <div style="display:flex; justify-content:space-between;">
-           <span>TARO YAMADA</span>
-           <input type="tel" id="cvc-input" placeholder="CVC" maxlength="4" style="width:60px; margin:0; padding:5px; text-align:center;">
+      <label>お支払い方法</label>
+      <div class="credit-card-mock">
+        <div style="font-size:0.8rem; opacity:0.8;">CREDIT CARD</div>
+        <div style="font-family:monospace; font-size:1.2rem; margin:15px 0; letter-spacing:2px;">**** **** **** 1234</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size:0.9rem; text-transform:uppercase;">TARO YAMADA</div>
+          <input type="tel" id="cvc-input" class="cc-cvc-input" placeholder="CVC" maxlength="4">
         </div>
       </div>
 
       <div class="checkbox-group">
-        <label class="checkbox-label">
-          <input type="checkbox" id="policy-check"> キャンセルポリシーに同意する
-        </label>
+        <label class="checkbox-label"><input type="checkbox" id="policy-check"> キャンセルポリシーに同意する</label>
       </div>
       <input type="text" id="referral-code" placeholder="紹介コード (任意)">
     </div>
@@ -204,7 +215,8 @@
   </div>
 
   <script>
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIqH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec';
+    // 【重要修正】 index.html (他機能) と同じURLを使用します
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
     const LIFF_ID = '2008546673-MJY7j3ox';
 
     let userData = null;
@@ -213,15 +225,13 @@
     let selectedDate = '';
     let selectedTime = '';
 
-    // --- Logger ---
+    // Logger
     function log(msg, data) {
       const div = document.getElementById('debug-logs');
       const line = document.createElement('div');
       line.className = 'log-line';
       let text = msg;
-      if (data) {
-        try { text += ' ' + JSON.stringify(data); } catch(e) { text += ' [Obj]'; }
-      }
+      if (data) { try { text += ' ' + JSON.stringify(data); } catch(e) { text += ' [Obj]'; } }
       line.textContent = text;
       div.appendChild(line);
       document.getElementById('debug-console').scrollTop = 99999;
@@ -236,55 +246,46 @@
       console.error(msg);
     }
 
-    // --- Init ---
+    // Init
     window.onload = async () => {
       showLoading(true, '起動中...');
       try {
-        log('LIFF Init Start...');
         await liff.init({ liffId: LIFF_ID });
-        if (!liff.isLoggedIn()) {
-          log('Not logged in. Redirecting...');
-          liff.login(); return;
-        }
+        if (!liff.isLoggedIn()) { liff.login(); return; }
         const profile = await liff.getProfile();
-        log('LIFF OK. User:', profile.userId);
+        log('User:', profile.userId);
         fetchUserData(profile.userId);
       } catch (e) {
-        logError('LIFF Init Error: ' + e.message);
+        logError('Init Error: ' + e.message);
         showError('起動エラー: ' + e.message);
       }
     };
 
-    // --- Data Fetch ---
+    // Data Fetch
     async function fetchUserData(userId) {
-      showLoading(true, '会員情報を取得中...');
+      showLoading(true, '情報を取得中...');
       try {
         const url = `${GAS_API_URL}?userId=${userId}&type=data&t=${new Date().getTime()}`;
         log('Fetching:', url);
         
         const res = await fetch(url);
         const json = await res.json();
-        
-        // ★重要: 生データをログに出す
-        log('Fetch Response:', json);
+        log('Response:', json);
 
         if (json.error) {
-            logError('API Error: ' + json.error);
-            throw new Error(json.error);
+            if(json.error === 'Unregistered') throw new Error('会員登録が見つかりません');
+            throw new Error('API Error: ' + json.error);
         }
         
         userData = json.customer;
         
-        // ★重要: 住所の表示を最優先で行う (犬情報エラーで止めない)
-        if (userData && userData.address) {
-            document.getElementById('display-address').textContent = userData.address;
-            log('Address Rendered:', userData.address);
-        } else {
-            document.getElementById('display-address').textContent = '住所未登録';
-            log('Address is empty');
-        }
+        // 住所の表示 (ない場合は未登録と表示)
+        // json.customer.address がない場合もあるため防御的記述
+        const addr = (userData && userData.address) ? userData.address : '住所未登録';
+        document.getElementById('display-address').textContent = addr;
+        log('Address:', addr);
 
-        // 犬情報の抽出 (堅牢化)
+        // 犬情報の取得 (index.htmlと同じロジックで判定)
         if (json.all_dogs && json.all_dogs.length > 0) {
             userDogs = json.all_dogs;
         } else if (json.multiple_dogs && json.multiple_dogs.length > 0) {
@@ -292,10 +293,10 @@
         } else if (json.dog) {
             userDogs = [json.dog];
         } else {
+            // 犬がいない場合でもクラッシュさせない
+            logError('No dog data.');
             userDogs = [];
-            logError('No dog data found in JSON');
-            // アラートは出すが、クラッシュはさせない
-            document.getElementById('dog-select').innerHTML = '<option value="">登録なし</option>';
+            document.getElementById('dog-select').innerHTML = '<option value="">登録なし (ID要確認)</option>';
         }
 
         if (userDogs.length > 0) {
@@ -305,7 +306,7 @@
         showLoading(false);
 
       } catch (e) {
-        logError('FetchUserData Exception: ' + e.message);
+        logError(e.message);
         showError(e.message);
         showLoading(false);
       }
@@ -320,10 +321,9 @@
         opt.textContent = d.name_disp || d.name;
         sel.appendChild(opt);
       });
-      log('Dogs Rendered:', userDogs.length);
     }
 
-    // --- Navigation ---
+    // Navigation
     function showStep(num) {
       document.querySelectorAll('.step-section').forEach(el => el.classList.remove('active'));
       document.getElementById(`step-${num}`).classList.add('active');
@@ -339,7 +339,7 @@
     }
 
     function goToStep3() {
-      // 日付初期化 (明日以降)
+      // 日付初期化
       const d = new Date(); d.setDate(d.getDate()+1);
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth()+1).padStart(2,'0');
@@ -352,7 +352,6 @@
       showStep(3);
     }
 
-    // --- Slot Search ---
     async function onDateChange() {
       const dateVal = document.getElementById('target-date').value;
       if (!dateVal) return;
@@ -363,7 +362,7 @@
       if (day === 3) { document.getElementById('slots-grid').innerHTML = ''; return; }
 
       const grid = document.getElementById('slots-grid');
-      grid.innerHTML = '<div style="text-align:center;">確認中...</div>';
+      grid.innerHTML = '<div style="text-align:center;">空き状況を確認中...</div>';
       
       try {
         const isMulti = document.getElementById('multi-dog-check').checked;
@@ -376,16 +375,15 @@
           targetAddress: userData ? userData.address : ''
         };
         
-        log('Fetching Slots:', payload);
+        log('GetSlots:', payload);
         const res = await fetch(GAS_API_URL, { method:'POST', body:JSON.stringify(payload) });
         const json = await res.json();
-        log('Slots Response:', json);
         
         grid.innerHTML = '';
         if (json.status === 'success' && json.data && json.data.length > 0) {
           json.data.forEach(slot => {
             const h = parseInt(slot.start.split(':')[0]);
-            if (day === 4 && h < 13) return; // Thu check
+            if (day === 4 && h < 13) return; 
 
             const btn = document.createElement('div');
             btn.className = 'slot-btn';
@@ -393,13 +391,13 @@
             btn.onclick = () => selectSlot(slot.start);
             grid.appendChild(btn);
           });
-          if(grid.children.length === 0) grid.innerHTML = '<div>空きなし</div>';
+          if(grid.children.length === 0) grid.innerHTML = '<div style="grid-column:1/-1; text-align:center;">空きなし</div>';
         } else {
-          grid.innerHTML = '<div>空きなし</div>';
+          grid.innerHTML = '<div style="grid-column:1/-1; text-align:center;">空きなし</div>';
         }
       } catch(e) {
         logError('Slot Error: ' + e.message);
-        grid.innerHTML = '<div>エラー</div>';
+        grid.innerHTML = '<div style="color:red;">エラー発生</div>';
       }
     }
 
@@ -438,10 +436,9 @@
             customerPhone: userData.phone,
             dogId: document.getElementById('dog-select').value
          };
-         log('Submit:', payload);
+         
          const res = await fetch(GAS_API_URL, { method:'POST', body:JSON.stringify(payload) });
          const json = await res.json();
-         log('Submit Res:', json);
          
          if (json.status === 'success') {
              alert('予約完了');
