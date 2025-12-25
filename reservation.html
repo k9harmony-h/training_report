@@ -7,7 +7,7 @@
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     /* =========================================
-       K9 Harmony Design System (v2.0)
+       K9 Harmony Design System (Debug Restored)
        ========================================= */
     :root {
       --c-main-turquoise: #57C3C2;
@@ -26,10 +26,9 @@
       color: var(--c-text-sumi);
       margin: 0;
       padding: 20px;
-      padding-bottom: 120px; /* フッター考慮 */
+      padding-bottom: 350px; /* デバッグログ用の余白 */
     }
 
-    /* --- Typography & Header --- */
     h2 {
       font-size: 1.2rem;
       color: var(--c-sub-deep-ocean);
@@ -38,194 +37,78 @@
       font-weight: 600;
       letter-spacing: 0.05em;
     }
-    
-    .step-indicator {
-      text-align: center;
-      font-size: 0.8rem;
-      color: var(--c-main-turquoise);
-      margin-bottom: 15px;
-      font-weight: bold;
-    }
 
-    /* --- Cards & Layout --- */
+    /* --- Debug & Version Stamp --- */
+    #version-stamp {
+      font-size: 0.7rem; color: #aaa; text-align: center; margin-bottom: 5px;
+    }
+    #debug-console {
+      position: fixed; bottom: 0; left: 0; width: 100%; height: 300px;
+      background: rgba(0,0,0,0.9); color: #0f0; 
+      font-family: monospace; font-size: 11px;
+      overflow-y: scroll; z-index: 9999; padding: 10px; box-sizing: border-box;
+      border-top: 2px solid #0f0;
+    }
+    .log-line { border-bottom: 1px solid #333; padding: 2px 0; word-break: break-all; }
+    .log-error { color: #ff4444; background: rgba(50,0,0,0.5); }
+    .log-warn { color: #ffeb3b; }
+
+    /* --- UI Components --- */
     .card {
-      background: white;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.04);
-      margin-bottom: 20px;
-      animation: fadeIn 0.4s var(--ease-luxury);
+      background: white; border-radius: 16px; padding: 24px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.04); margin-bottom: 20px;
     }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
     .step-section { display: none; }
     .step-section.active { display: block; }
 
-    /* --- Form Elements --- */
-    label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 8px;
-      font-size: 0.9rem;
-      color: var(--c-sub-deep-ocean);
-    }
-    .info-value {
-      font-size: 1.1rem;
-      margin-bottom: 20px;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 10px;
+    label { display: block; font-weight: bold; margin-bottom: 8px; color: var(--c-sub-deep-ocean); }
+    .info-value { font-size: 1.1rem; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; min-height: 24px; }
+
+    select, input {
+      width: 100%; padding: 14px; border: 1px solid #e0e0e0;
+      border-radius: 8px; font-size: 1rem; margin-bottom: 15px;
+      background: #fafafa; box-sizing: border-box;
     }
 
-    select, input[type="text"], input[type="tel"], input[type="number"] {
-      width: 100%;
-      padding: 14px;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      font-size: 1rem;
-      box-sizing: border-box;
-      margin-bottom: 15px;
-      background: #fafafa;
-      appearance: none;
-    }
-    select:focus, input:focus {
-      border-color: var(--c-main-turquoise);
-      outline: none;
-      background: #fff;
-    }
+    /* Checkbox & Buttons */
+    .checkbox-group { background: var(--c-bg-mist); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    .checkbox-label { display: flex; align-items: center; font-weight: bold; }
+    .checkbox-label input { width: 20px; margin-right: 10px; margin-bottom: 0; }
 
-    /* --- Custom Checkbox --- */
-    .checkbox-group {
-      background: var(--c-bg-mist);
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      font-weight: bold;
-      color: var(--c-sub-deep-ocean);
-    }
-    .checkbox-label input {
-      width: 20px; height: 20px;
-      margin-right: 10px;
-      accent-color: var(--c-main-turquoise);
-    }
+    .plan-option { border: 2px solid #eee; border-radius: 12px; padding: 15px; margin-bottom: 10px; }
+    .plan-option.selected { border-color: var(--c-main-turquoise); background: rgba(87, 195, 194, 0.05); }
+    .plan-name { font-weight: bold; } .plan-price { float: right; color: #666; }
 
-    /* --- Plan Selection Buttons --- */
-    .plan-option {
-      border: 2px solid #eee;
-      border-radius: 12px;
-      padding: 15px;
-      margin-bottom: 10px;
-      cursor: pointer;
-      transition: all 0.2s;
+    .slot-btn { 
+      padding: 12px; background: white; border: 1px solid var(--c-main-turquoise); 
+      border-radius: 8px; text-align: center; font-weight: bold; 
     }
-    .plan-option.selected {
-      border-color: var(--c-main-turquoise);
-      background: rgba(87, 195, 194, 0.05);
-    }
-    .plan-name { font-weight: bold; font-size: 1rem; }
-    .plan-price { font-size: 0.9rem; color: var(--c-text-gray); float: right; }
+    #slots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
-    /* --- Calendar / Slot Buttons --- */
-    #slots-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 15px;
-    }
-    .slot-btn {
-      padding: 12px 5px;
-      background: white;
-      border: 1px solid var(--c-main-turquoise);
-      color: var(--c-sub-deep-ocean);
-      border-radius: 8px;
-      text-align: center;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .slot-btn:active { background: var(--c-main-turquoise); color: white; }
-
-    /* --- Payment Card Mockup --- */
-    .credit-card-mock {
-      background: linear-gradient(135deg, #2F5D62, #1a3a3e);
-      color: white;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      position: relative;
-    }
-    .cc-number { font-family: monospace; font-size: 1.2rem; margin: 15px 0; letter-spacing: 2px; }
-    .cc-name { font-size: 0.9rem; text-transform: uppercase; }
-    .cc-cvc-input {
-      width: 80px;
-      padding: 8px;
-      border-radius: 4px;
-      border: none;
-      text-align: center;
-      font-weight: bold;
-      margin-left: auto;
-      display: block;
-    }
-
-    /* --- Action Buttons --- */
     .btn {
-      display: block;
-      width: 100%;
-      padding: 16px;
-      background: var(--c-accent-copper);
-      color: white;
-      border: none;
-      border-radius: 50px;
-      font-size: 1.1rem;
-      font-weight: bold;
-      text-align: center;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(200, 122, 86, 0.3);
-      margin-top: 20px;
+      width: 100%; padding: 16px; background: var(--c-accent-copper); color: white;
+      border: none; border-radius: 50px; font-size: 1.1rem; font-weight: bold; margin-top: 20px;
     }
-    .btn:active { transform: scale(0.98); }
-    .btn-secondary {
-      background: transparent;
-      color: var(--c-text-gray);
-      box-shadow: none;
-      font-size: 0.9rem;
-      margin-top: 10px;
-    }
+    .btn-secondary { background: transparent; color: #666; margin-top: 10px; }
 
-    /* --- Loading & Error --- */
+    /* Loading */
     #loading-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255,255,255,0.9);
-      display: flex; flex-direction: column;
-      justify-content: center; align-items: center;
-      z-index: 1000;
-      display: none;
+      background: rgba(255,255,255,0.9); display: flex; flex-direction: column;
+      justify-content: center; align-items: center; z-index: 1000; display: none;
     }
     .spinner {
-      width: 40px; height: 40px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid var(--c-main-turquoise);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 10px;
+      width: 40px; height: 40px; border: 4px solid #eee; border-top: 4px solid var(--c-main-turquoise);
+      border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px;
     }
     @keyframes spin { 0% {transform: rotate(0deg);} 100% {transform: rotate(360deg);} }
-
-    .error-msg {
-      background: #ffebee; color: #c62828;
-      padding: 15px; border-radius: 8px;
-      display: none; margin-bottom: 20px;
-      font-size: 0.9rem;
-    }
-
-    /* Debug Console (Hidden by default in Prod) */
-    #debug-console { display: none; } 
+    
+    .error-msg { background: #ffebee; color: #c62828; padding: 15px; display: none; margin-bottom: 20px; }
   </style>
 </head>
 <body>
+
+  <div id="version-stamp">v2025.12.25-Fix-DebugRestored</div>
 
   <div id="loading-overlay">
     <div class="spinner"></div>
@@ -235,11 +118,14 @@
   <div id="error-box" class="error-msg"></div>
 
   <div id="step-1" class="step-section active">
-    <div class="step-indicator">STEP 1/4: ご確認</div>
+    <div style="text-align:center; color:var(--c-main-turquoise); font-weight:bold; margin-bottom:10px;">STEP 1/4: ご確認</div>
     <h2>ご登録情報の確認</h2>
     <div class="card">
+      <label>出張先ご住所</label>
+      <div id="display-address" class="info-value">読み込み中...</div>
+      
       <label>レッスンを受けるワンちゃん</label>
-      <select id="dog-select"></select>
+      <select id="dog-select"><option>読み込み中...</option></select>
 
       <div class="checkbox-group">
         <label class="checkbox-label">
@@ -247,32 +133,23 @@
           2頭目の追加 (+2,000円 / +30分)
         </label>
       </div>
-
-      <label>出張先ご住所</label>
-      <div id="display-address" class="info-value">読み込み中...</div>
-      
-      <p style="font-size:0.85rem; color:var(--c-text-gray);">
-        ※ご登録住所と異なる場所でのレッスンをご希望の場合は、LINEにて直接ご相談ください。
-      </p>
+      <p style="font-size:0.8rem; color:#666;">※住所変更はLINEにてご相談ください。</p>
     </div>
     <button class="btn" onclick="goToStep2()">プラン選択へ進む</button>
   </div>
 
   <div id="step-2" class="step-section">
-    <div class="step-indicator">STEP 2/4: プラン選択</div>
+    <div style="text-align:center; color:var(--c-main-turquoise); font-weight:bold; margin-bottom:10px;">STEP 2/4: プラン選択</div>
     <h2>プランをお選びください</h2>
     <div class="card">
       <div class="plan-option selected" onclick="selectPlan(this, 'SINGLE', 90, 4900)">
-        <div class="plan-name">単発レッスン</div>
-        <div class="plan-price">4,900円 (90分)</div>
+        <div class="plan-name">単発レッスン</div><div class="plan-price">4,900円</div>
       </div>
       <div class="plan-option" onclick="selectPlan(this, 'TICKET_4', 90, 0)">
-        <div class="plan-name">4回チケット利用</div>
-        <div class="plan-price">チケット消費</div>
+        <div class="plan-name">4回チケット利用</div><div class="plan-price">消費</div>
       </div>
       <div class="plan-option" onclick="selectPlan(this, 'TICKET_8', 90, 0)">
-        <div class="plan-name">8回チケット利用</div>
-        <div class="plan-price">チケット消費</div>
+        <div class="plan-name">8回チケット利用</div><div class="plan-price">消費</div>
       </div>
     </div>
     <button class="btn" onclick="goToStep3()">日時選択へ進む</button>
@@ -280,133 +157,155 @@
   </div>
 
   <div id="step-3" class="step-section">
-    <div class="step-indicator">STEP 3/4: 日時選択</div>
+    <div style="text-align:center; color:var(--c-main-turquoise); font-weight:bold; margin-bottom:10px;">STEP 3/4: 日時選択</div>
     <h2>ご希望の日時</h2>
     <div class="card">
       <label>日付</label>
       <input type="date" id="target-date" onchange="onDateChange()">
-      <div id="date-msg" style="font-size:0.85rem; margin-bottom:15px; color:#e53935;"></div>
-      
+      <div id="date-msg" style="color:red; margin-bottom:10px;"></div>
       <label>開始時間</label>
       <div id="slots-grid">
-        <div style="grid-column:1/-1; text-align:center; color:#999; padding:20px;">
-          日付を選択してください
-        </div>
+        <div style="grid-column:1/-1; text-align:center; color:#999; padding:20px;">日付を選択してください</div>
       </div>
     </div>
-    <button class="btn btn-secondary" onclick="showStep(2)">プラン選択に戻る</button>
+    <button class="btn btn-secondary" onclick="showStep(2)">戻る</button>
   </div>
 
   <div id="step-4" class="step-section">
-    <div class="step-indicator">STEP 4/4: 最終確認</div>
+    <div style="text-align:center; color:var(--c-main-turquoise); font-weight:bold; margin-bottom:10px;">STEP 4/4: 最終確認</div>
     <h2>ご予約内容と決済</h2>
     <div class="card">
-      <label>ご請求額</label>
-      <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-        <span>レッスン料金</span>
-        <span id="summ-plan-price">¥4,900</span>
-      </div>
-      <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-        <span>出張費 (概算)</span>
-        <span id="summ-travel-fee">計算中...</span>
-      </div>
-      <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-        <span>オプション (多頭)</span>
-        <span id="summ-option-fee">¥0</span>
-      </div>
-      <div style="border-top:1px solid #eee; margin-top:10px; padding-top:10px; font-weight:bold; font-size:1.2rem; text-align:right; color:var(--c-accent-copper);">
-        合計: <span id="summ-total">¥---</span>
-      </div>
-
-      <div style="margin-top:20px;">
-        <label>お支払い方法</label>
-        <div class="credit-card-mock">
-          <div style="font-size:0.8rem; opacity:0.8;">CREDIT CARD</div>
-          <div class="cc-number">**** **** **** 1234</div> <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div class="cc-name">TARO YAMADA</div> <input type="tel" id="cvc-input" class="cc-cvc-input" placeholder="CVC" maxlength="4">
-          </div>
-        </div>
-        <p style="font-size:0.8rem; color:var(--c-text-gray);">
-          ※セキュリティのため、セキュリティコード(CVC)のみ入力してください。
-        </p>
-      </div>
-
-      <div class="checkbox-group" style="margin-top:20px;">
-        <label class="checkbox-label">
-          <input type="checkbox" id="policy-check">
-          キャンセルポリシーに同意する
-        </label>
-        <div style="font-size:0.8rem; margin-top:5px; color:var(--c-text-gray);">
-          前日50%、当日100%のキャンセル料が発生します。
-        </div>
-      </div>
+      <label>合計金額</label>
+      <div class="info-value" id="summ-total" style="font-weight:bold; color:var(--c-accent-copper);">¥---</div>
       
-      <label>紹介コード (任意)</label>
-      <input type="text" id="referral-code" placeholder="お持ちの方のみ入力">
+      <label>お支払い</label>
+      <div style="background:#333; color:white; padding:15px; border-radius:8px; margin-bottom:15px;">
+        <div style="letter-spacing:2px; margin-bottom:10px;">**** **** **** 1234</div>
+        <div style="display:flex; justify-content:space-between;">
+           <span>TARO YAMADA</span>
+           <input type="tel" id="cvc-input" placeholder="CVC" maxlength="4" style="width:60px; margin:0; padding:5px; text-align:center;">
+        </div>
+      </div>
 
+      <div class="checkbox-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="policy-check"> キャンセルポリシーに同意する
+        </label>
+      </div>
+      <input type="text" id="referral-code" placeholder="紹介コード (任意)">
     </div>
     <button class="btn" onclick="submitReservation()">予約を確定する</button>
-    <button class="btn btn-secondary" onclick="showStep(3)">日時選択に戻る</button>
+    <button class="btn btn-secondary" onclick="showStep(3)">戻る</button>
+  </div>
+
+  <div id="debug-console">
+    <div style="border-bottom:1px solid #0f0; margin-bottom:5px;">Debug Console</div>
+    <div id="debug-logs"></div>
   </div>
 
   <script>
-    // ==========================================
-    // Config & State
-    // ==========================================
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyJ2j7iNeojVPB8SeRozbh9WIqH0CLkwb8Q67300WK2ydsxt8nKdZmLbNQq1Wuu9zX0/exec';
     const LIFF_ID = '2008546673-MJY7j3ox';
 
-    // State Objects
     let userData = null;
     let userDogs = [];
-    let cachedSlots = {}; // { "2025-12-25": [...] }
     let selectedPlan = { code: 'SINGLE', duration: 90, price: 4900, name: '単発レッスン' };
     let selectedDate = '';
     let selectedTime = '';
-    
-    // ==========================================
-    // Initialization
-    // ==========================================
+
+    // --- Logger ---
+    function log(msg, data) {
+      const div = document.getElementById('debug-logs');
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      let text = msg;
+      if (data) {
+        try { text += ' ' + JSON.stringify(data); } catch(e) { text += ' [Obj]'; }
+      }
+      line.textContent = text;
+      div.appendChild(line);
+      document.getElementById('debug-console').scrollTop = 99999;
+      console.log(msg, data);
+    }
+    function logError(msg) {
+      const div = document.getElementById('debug-logs');
+      const line = document.createElement('div');
+      line.className = 'log-line log-error';
+      line.textContent = '[ERROR] ' + msg;
+      div.appendChild(line);
+      console.error(msg);
+    }
+
+    // --- Init ---
     window.onload = async () => {
       showLoading(true, '起動中...');
       try {
+        log('LIFF Init Start...');
         await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) {
+          log('Not logged in. Redirecting...');
           liff.login(); return;
         }
         const profile = await liff.getProfile();
+        log('LIFF OK. User:', profile.userId);
         fetchUserData(profile.userId);
       } catch (e) {
-        showError('LIFF Init Error: ' + e.message);
+        logError('LIFF Init Error: ' + e.message);
+        showError('起動エラー: ' + e.message);
       }
     };
 
-    // ==========================================
-    // Core Logic: Data Fetching
-    // ==========================================
+    // --- Data Fetch ---
     async function fetchUserData(userId) {
       showLoading(true, '会員情報を取得中...');
       try {
         const url = `${GAS_API_URL}?userId=${userId}&type=data&t=${new Date().getTime()}`;
+        log('Fetching:', url);
+        
         const res = await fetch(url);
         const json = await res.json();
+        
+        // ★重要: 生データをログに出す
+        log('Fetch Response:', json);
 
-        if (json.error) throw new Error(json.error);
+        if (json.error) {
+            logError('API Error: ' + json.error);
+            throw new Error(json.error);
+        }
         
         userData = json.customer;
-        // 犬情報の正規化
-        userDogs = json.all_dogs || (json.dog ? [json.dog] : []);
-        if(userDogs.length === 0) throw new Error('ワンちゃんが登録されていません');
+        
+        // ★重要: 住所の表示を最優先で行う (犬情報エラーで止めない)
+        if (userData && userData.address) {
+            document.getElementById('display-address').textContent = userData.address;
+            log('Address Rendered:', userData.address);
+        } else {
+            document.getElementById('display-address').textContent = '住所未登録';
+            log('Address is empty');
+        }
 
-        // Render Step 1
-        renderDogSelect();
-        document.getElementById('display-address').textContent = userData.address || '住所未登録';
-        
-        // ★重要: 裏でカレンダーデータを先読み (とりあえず直近1ヶ月分等はAPI仕様によるが、ここでは今日明日を想定してキャッシュ準備)
-        // 今回のAPIは日付指定型なので、Step3でfetchするが、緯度経度計算があればここで行う。
-        
+        // 犬情報の抽出 (堅牢化)
+        if (json.all_dogs && json.all_dogs.length > 0) {
+            userDogs = json.all_dogs;
+        } else if (json.multiple_dogs && json.multiple_dogs.length > 0) {
+            userDogs = json.multiple_dogs;
+        } else if (json.dog) {
+            userDogs = [json.dog];
+        } else {
+            userDogs = [];
+            logError('No dog data found in JSON');
+            // アラートは出すが、クラッシュはさせない
+            document.getElementById('dog-select').innerHTML = '<option value="">登録なし</option>';
+        }
+
+        if (userDogs.length > 0) {
+            renderDogSelect();
+        }
+
         showLoading(false);
+
       } catch (e) {
+        logError('FetchUserData Exception: ' + e.message);
         showError(e.message);
         showLoading(false);
       }
@@ -421,23 +320,17 @@
         opt.textContent = d.name_disp || d.name;
         sel.appendChild(opt);
       });
+      log('Dogs Rendered:', userDogs.length);
     }
 
-    // ==========================================
-    // Navigation & Logic
-    // ==========================================
+    // --- Navigation ---
     function showStep(num) {
       document.querySelectorAll('.step-section').forEach(el => el.classList.remove('active'));
       document.getElementById(`step-${num}`).classList.add('active');
       window.scrollTo(0,0);
     }
-
-    // Step 1 -> 2
-    function goToStep2() {
-      showStep(2);
-    }
-
-    // Step 2 Logic
+    function goToStep2() { showStep(2); }
+    
     function selectPlan(el, code, duration, price) {
       document.querySelectorAll('.plan-option').forEach(d => d.classList.remove('selected'));
       el.classList.add('selected');
@@ -445,44 +338,34 @@
       selectedPlan = { code, duration, price, name };
     }
 
-    // Step 2 -> 3
     function goToStep3() {
-      // 日付初期化
+      // 日付初期化 (明日以降)
       const d = new Date(); d.setDate(d.getDate()+1);
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth()+1).padStart(2,'0');
       const dd = String(d.getDate()).padStart(2,'0');
-      
       const dateInput = document.getElementById('target-date');
       if(!dateInput.value) {
         dateInput.value = `${yyyy}-${mm}-${dd}`;
-        onDateChange(); // Load slots
+        onDateChange();
       }
       showStep(3);
     }
 
-    // Step 3 Logic (Calendar/Slots)
+    // --- Slot Search ---
     async function onDateChange() {
       const dateVal = document.getElementById('target-date').value;
       if (!dateVal) return;
       selectedDate = dateVal;
       
-      // 営業日チェック (簡易)
       const day = new Date(dateVal).getDay();
-      const msgEl = document.getElementById('date-msg');
-      msgEl.textContent = '';
-      if (day === 3) { // Wed
-        msgEl.textContent = '水曜日は定休日です。';
-        document.getElementById('slots-grid').innerHTML = '';
-        return;
-      }
+      document.getElementById('date-msg').textContent = (day === 3) ? '水曜日は定休日です。' : '';
+      if (day === 3) { document.getElementById('slots-grid').innerHTML = ''; return; }
 
-      // Fetch Slots
       const grid = document.getElementById('slots-grid');
-      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;">空き状況を確認中...</div>';
+      grid.innerHTML = '<div style="text-align:center;">確認中...</div>';
       
       try {
-        // 多頭飼いなら+30分
         const isMulti = document.getElementById('multi-dog-check').checked;
         const duration = selectedPlan.duration + (isMulti ? 30 : 0);
 
@@ -490,18 +373,19 @@
           action: 'get_slots',
           targetDate: dateVal,
           menuDuration: duration,
-          targetAddress: userData.address // 出張時間計算用
+          targetAddress: userData ? userData.address : ''
         };
         
+        log('Fetching Slots:', payload);
         const res = await fetch(GAS_API_URL, { method:'POST', body:JSON.stringify(payload) });
         const json = await res.json();
+        log('Slots Response:', json);
         
         grid.innerHTML = '';
-        if (json.status === 'success' && json.data.length > 0) {
+        if (json.status === 'success' && json.data && json.data.length > 0) {
           json.data.forEach(slot => {
-            // 木曜13時前フィルタ
             const h = parseInt(slot.start.split(':')[0]);
-            if (day === 4 && h < 13) return;
+            if (day === 4 && h < 13) return; // Thu check
 
             const btn = document.createElement('div');
             btn.className = 'slot-btn';
@@ -509,90 +393,69 @@
             btn.onclick = () => selectSlot(slot.start);
             grid.appendChild(btn);
           });
-          if(grid.children.length === 0) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;">予約可能な枠がありません</div>';
+          if(grid.children.length === 0) grid.innerHTML = '<div>空きなし</div>';
         } else {
-          grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;">空き枠がありません</div>';
+          grid.innerHTML = '<div>空きなし</div>';
         }
       } catch(e) {
-        grid.innerHTML = '<div style="grid-column:1/-1;color:red;text-align:center;">エラーが発生しました</div>';
+        logError('Slot Error: ' + e.message);
+        grid.innerHTML = '<div>エラー</div>';
       }
     }
 
     function selectSlot(time) {
       selectedTime = time;
-      // Step 3 -> 4
       updateSummary();
       showStep(4);
     }
 
-    // Step 4 Logic (Summary & Pay)
     function updateSummary() {
       const isMulti = document.getElementById('multi-dog-check').checked;
-      
-      const planPrice = selectedPlan.price;
-      const optionFee = isMulti ? 2000 : 0;
-      
-      // 出張費 (仮: 本来はBackend計算値を表示すべきだが、要件通り「計算中...」演出を入れるなら非同期で取る)
-      // ここでは簡易ロジック or 0円表示 + 「現地精算」注記を入れるのが安全だが、
-      // 統合要件では「概算表示」となっていたため、一旦「計算完了」として表示する
-      // TODO: 距離計算APIの結果を使う (Phase 2) -> 今回は仮で 0円 または 固定
-      const travelFee = 0; // ※実際は distance API の結果を入れる
-      
-      document.getElementById('summ-plan-price').textContent = `¥${planPrice.toLocaleString()}`;
-      document.getElementById('summ-option-fee').textContent = `¥${optionFee.toLocaleString()}`;
-      document.getElementById('summ-travel-fee').textContent = `¥${travelFee.toLocaleString()}`; // 仮
-      
-      const total = planPrice + optionFee + travelFee;
+      const total = selectedPlan.price + (isMulti ? 2000 : 0);
       document.getElementById('summ-total').textContent = `¥${total.toLocaleString()}`;
     }
 
     async function submitReservation() {
-      // Validation
       const cvc = document.getElementById('cvc-input').value;
-      if (!cvc || cvc.length < 3) return alert('セキュリティコード(CVC)を入力してください');
-      if (!document.getElementById('policy-check').checked) return alert('キャンセルポリシーへの同意が必要です');
+      if (!cvc || cvc.length < 3) return alert('CVCを入力してください');
+      if (!document.getElementById('policy-check').checked) return alert('同意が必要です');
 
-      showLoading(true, '予約を確定中...');
-      
-      // Payload
-      const isMulti = document.getElementById('multi-dog-check').checked;
-      const duration = selectedPlan.duration + (isMulti ? 30 : 0);
-
-      const payload = {
-        action: 'add_reservation',
-        userId: userData.unique_key || userData.id,
-        targetDate: selectedDate,
-        startTime: selectedTime,
-        menuDuration: duration,
-        menuName: selectedPlan.name,
-        productKey: selectedPlan.code,
-        
-        multiDog: isMulti,
-        receiptRequired: false, // 今回UI未実装のため固定(必要なら追加)
-        referralCode: document.getElementById('referral-code').value,
-        
-        customerName: userData.name,
-        customerPhone: userData.phone,
-        dogId: document.getElementById('dog-select').value
-      };
-
+      showLoading(true, '予約中...');
       try {
-        const res = await fetch(GAS_API_URL, { method:'POST', body:JSON.stringify(payload) });
-        const json = await res.json();
-        
-        if (json.status === 'success') {
-          alert('予約が完了しました！');
-          liff.closeWindow();
-        } else {
-          throw new Error(json.message);
-        }
+         const isMulti = document.getElementById('multi-dog-check').checked;
+         const payload = {
+            action: 'add_reservation',
+            userId: userData.unique_key || userData.id,
+            targetDate: selectedDate,
+            startTime: selectedTime,
+            menuDuration: selectedPlan.duration + (isMulti ? 30 : 0),
+            menuName: selectedPlan.name,
+            productKey: selectedPlan.code,
+            multiDog: isMulti,
+            receiptRequired: false,
+            referralCode: document.getElementById('referral-code').value,
+            customerName: userData.name,
+            customerPhone: userData.phone,
+            dogId: document.getElementById('dog-select').value
+         };
+         log('Submit:', payload);
+         const res = await fetch(GAS_API_URL, { method:'POST', body:JSON.stringify(payload) });
+         const json = await res.json();
+         log('Submit Res:', json);
+         
+         if (json.status === 'success') {
+             alert('予約完了');
+             liff.closeWindow();
+         } else {
+             throw new Error(json.message);
+         }
       } catch(e) {
-        showError('予約エラー: ' + e.message);
-        showLoading(false);
+         logError(e.message);
+         alert('エラー: ' + e.message);
+         showLoading(false);
       }
     }
 
-    // Helpers
     function showLoading(b, t) {
       document.getElementById('loading-overlay').style.display = b ? 'flex' : 'none';
       if(t) document.getElementById('loading-text').textContent = t;
