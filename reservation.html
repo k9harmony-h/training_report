@@ -10,7 +10,7 @@
 
   <style>
     /* =========================================
-       K9 Harmony Design System (Final Fix)
+       K9 Harmony Design System (Ver 8.0 - Strict Fix)
        ========================================= */
     :root {
       --c-main-turquoise: #57C3C2;
@@ -29,10 +29,9 @@
       background-color: var(--c-base-washi);
       color: var(--c-text-sumi);
       margin: 0; padding: 0;
-      padding-bottom: 80px;
+      padding-bottom: 120px;
     }
 
-    /* Header */
     header {
       background: white; padding: 15px 0; text-align: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 50;
@@ -59,7 +58,7 @@
     .view-section.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Elements */
+    /* UI Elements */
     h2 {
       font-size: 1.1rem; color: var(--c-sub-deep-ocean);
       border-left: 4px solid var(--c-main-turquoise); padding-left: 10px; margin-bottom: 20px;
@@ -84,11 +83,8 @@
     .btn-primary:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
 
     .btn-secondary { background: white; border: 1px solid #ccc; color: var(--c-text-gray); }
-    
-    /* Outline Brand (Dog Select Modal) */
     .btn-outline-brand { background: white; border: 2px solid var(--c-main-turquoise); color: var(--c-main-turquoise); margin-top: 10px; }
     .btn-outline-brand:active { background: var(--c-bg-mist); }
-
     .btn-cancel-rsv { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; font-size: 0.9rem; margin-top: 30px; }
     .btn-row { display: flex; gap: 10px; } .btn-row .btn { margin-top: 0; }
 
@@ -99,6 +95,7 @@
     
     .cal-table th { background: #f8f8f8; color: var(--c-sub-deep-ocean); padding: 8px 2px; font-size: 0.75rem; border-bottom: 2px solid #ddd; border-right: 1px solid #eee; text-align: center; }
     .cal-table th:first-child { width: 50px; position: sticky; left: 0; background: #f8f8f8; z-index: 2; border-right: 2px solid #ddd; }
+    
     .cal-table td { height: 50px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center; vertical-align: middle; padding: 0; position: relative; }
     .cal-table td:first-child { position: sticky; left: 0; background: white; font-weight: bold; color: var(--c-sub-deep-ocean); font-size: 0.8rem; z-index: 1; border-right: 2px solid #ddd; }
 
@@ -107,8 +104,8 @@
     .sym-lim { color: #fbc02d; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
     .sym-ng { background: #f0f0f0; color: #ccc; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; cursor: default; }
     
-    /* Highlight Selected: Brand BG, White Text */
-    td.selected-cell { background-color: var(--c-main-turquoise) !important; transition: background 0.2s; }
+    /* Highlight Logic: Brand Fill, White Text - !important for Override */
+    td.selected-cell { background-color: var(--c-main-turquoise) !important; color: white !important; transition: background 0.2s; }
     td.selected-cell .sym-ok, td.selected-cell .sym-lim { color: white !important; }
 
     .cal-legend { display: flex; justify-content: center; gap: 15px; font-size: 0.8rem; margin-top: 10px; color: var(--c-text-gray); }
@@ -138,7 +135,7 @@
     .top-sheet-content { flex: 1; overflow-y: auto; padding: 20px; font-size: 0.9rem; line-height: 1.6; }
     .top-sheet-close-area { position: fixed; top: 80%; left: 0; width: 100%; height: 20%; z-index: 301; }
 
-    /* Footer (index.html style) */
+    /* Footer */
     .site-footer {
         flex-shrink: 0; margin-top: auto;
         background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.2);
@@ -451,7 +448,7 @@
   const LIFF_ID = '2008546673-MJY7j3ox';
   const OFFICE_POS = { lat: 35.7665, lng: 139.6936 };
 
-  // 1. Tips
+  // Tips
   const DOG_TIPS = [
     "犬の鼻紋は一頭一頭違います。", "犬は人間の約4倍の聴力を持っています。", 
     "犬の嗅覚は人間の100万倍以上。", "犬は肉球からしか汗をかけません。", 
@@ -468,10 +465,13 @@
   let selectedSlot = null; 
   let weekOffset = 0;
   let voucherData = null; 
-  let weekAvailability = {}; // { "2025-01-01": ["10:00", ...], ... }
+  let weekAvailability = {}; // cache
 
   window.onload = async () => {
     startTips();
+    // [PREFETCH] カレンダーデータを裏で先行取得
+    fetchAvailability(0); 
+
     try {
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login(); return; }
@@ -521,7 +521,6 @@
     }
   }
 
-  // 2. Menu Filter
   function renderMenuSelect() {
     const sel = document.getElementById('menu-select');
     sel.innerHTML = '';
@@ -571,22 +570,15 @@
     document.getElementById('selected-dog-name').innerText = selectedDog.name_disp || selectedDog.name;
   }
 
-  // Navigation
   function goToView(step) {
     document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
     document.getElementById(`view-${step}`).classList.add('active');
     updateProgress(step);
     window.scrollTo(0,0);
-    
-    // Step 2: Load Calendar Availability
-    if(step===2) {
-        renderCalendarStructure(); // Render table first
-        fetchAvailability();       // Fetch & update cells
-    }
+    if(step===2) renderCalendarStructure(); // Render with pre-fetched data
     if(step===3) renderConfirm();
     if(step===5) renderFinal();
   }
-  
   function checkUserAndNext() {
       if(userData) {
           document.getElementById('form-existing').style.display = 'block';
@@ -614,18 +606,34 @@
     }
   }
 
-  // 3. Calendar with Availability
+  // --- Calendar ---
   function shiftWeek(d) { 
       weekOffset += d; 
-      renderCalendarStructure(); 
-      fetchAvailability(); 
+      fetchAvailability(weekOffset); // Re-fetch for new week
+      renderCalendarStructure();
   }
   
+  // Data Fetch for Calendar
+  async function fetchAvailability(offset) {
+      const startDt = new Date(); 
+      startDt.setDate(startDt.getDate() + (offset*7));
+      const sStr = startDt.toISOString().split('T')[0];
+      
+      try {
+          const res = await fetch(GAS_URL, {
+              method: 'POST',
+              body: JSON.stringify({ action: 'get_week_availability', startDate: sStr, menuDuration: 90 })
+          });
+          const json = await res.json();
+          weekAvailability = json.data || {};
+          renderCalendarStructure(); // Re-render when data arrives
+      } catch(e) {}
+  }
+
   function renderCalendarStructure() {
     const tbody = document.getElementById('cal-body');
     const thead = document.getElementById('cal-header');
-    tbody.innerHTML = '<tr><td colspan="8">読み込み中...</td></tr>';
-    
+    tbody.innerHTML = '';
     const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
     document.getElementById('cal-range-text').innerText = `${startDt.getMonth()+1}/${startDt.getDate()} 〜`;
 
@@ -638,60 +646,33 @@
       headHtml += `<th style="color:${col}">${d.getMonth()+1}/${d.getDate()}<br>(${['日','月','火','水','木','金','土'][d.getDay()]})</th>`;
     }
     thead.innerHTML = headHtml;
-    // Tbody will be filled after fetch
-  }
 
-  async function fetchAvailability() {
-      const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
-      const sStr = startDt.toISOString().split('T')[0];
-      
-      try {
-          const res = await fetch(GAS_URL, {
-              method: 'POST',
-              body: JSON.stringify({ action: 'get_week_availability', startDate: sStr, menuDuration: 90 })
-          });
-          const json = await res.json();
-          weekAvailability = json.data || {};
-          fillCalendarBody();
-      } catch(e) {
-          document.getElementById('cal-body').innerHTML = '<tr><td colspan="8">エラー</td></tr>';
-      }
-  }
-
-  function fillCalendarBody() {
-      const tbody = document.getElementById('cal-body');
-      tbody.innerHTML = '';
-      const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
-      let dates = [];
-      for(let i=0; i<7; i++){
-          let d = new Date(startDt); d.setDate(startDt.getDate()+i);
-          dates.push({ date: d.toISOString().split('T')[0], day: d.getDay() });
-      }
-
-      for(let h=10; h<=20; h++){
-          let tr = document.createElement('tr');
-          tr.innerHTML = `<td>${h}:00</td>`;
-          dates.forEach(dt => {
-              let td = document.createElement('td');
-              // Check availability from fetched data
-              const slots = weekAvailability[dt.date] || []; // ["10:00", "10:30"...]
-              
-              // 00 or 30 exists?
-              const has00 = slots.includes(`${h}:00`);
-              const has30 = slots.includes(`${h}:30`);
-              
-              // Logic: At least one slot open?
-              // Simple check: if NO slots in this hour, mark NG
-              if (!has00 && !has30) {
-                  td.innerHTML = '<span class="sym-ng">×</span>';
-              } else {
-                  // Pass data for modal
-                  td.innerHTML = `<span class="sym-ok" onclick="openTimeModal('${dt.date}', ${h}, this, ${has00}, ${has30})">○</span>`;
-              }
-              tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
-      }
+    for(let h=10; h<=20; h++){
+      let tr = document.createElement('tr');
+      tr.innerHTML = `<td>${h}:00</td>`;
+      dates.forEach(dt => {
+        let td = document.createElement('td');
+        
+        // 1. Static Rules (Wed/Thu)
+        let isStaticNG = false;
+        if (dt.day === 3) isStaticNG = true; // Wed
+        if (dt.day === 4 && h < 13) isStaticNG = true; // Thu < 13
+        
+        // 2. Dynamic Rules (Availability)
+        const slots = weekAvailability[dt.date] || []; 
+        const has00 = slots.includes(`${h}:00`);
+        const has30 = slots.includes(`${h}:30`);
+        
+        if (isStaticNG || (!has00 && !has30)) {
+          td.innerHTML = '<span class="sym-ng">×</span>';
+        } else {
+          // OK
+          td.innerHTML = `<span class="sym-ok" onclick="openTimeModal('${dt.date}', ${h}, this, ${has00}, ${has30})">○</span>`;
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    }
   }
 
   let currentCell = null;
@@ -715,7 +696,6 @@
         btn.onclick = () => chooseTime(dateStr, `${hour}:30`);
         cont.appendChild(btn);
     }
-    
     document.getElementById('time-modal-overlay').classList.add('open');
     document.getElementById('time-modal').classList.add('open');
   }
@@ -727,20 +707,22 @@
     selectedSlot = { date: d, time: t };
     closeTimeModal();
     
+    // Highlight logic
     document.querySelectorAll('.selected-cell').forEach(el => el.classList.remove('selected-cell'));
     if(currentCell) {
-        currentCell.classList.add('selected-cell'); 
+        currentCell.classList.add('selected-cell'); // Add class to TD
     }
-    document.getElementById('btn-to-step3').disabled = false;
+    
+    const btn = document.getElementById('btn-to-step3');
+    btn.disabled = false;
+    btn.innerText = `${d.substring(5)} ${t} で進む`; // Change Text
   }
 
-  // Address
   function toggleAltAddress() {
       const chk = document.getElementById('alt-address-check').checked;
       document.getElementById('alt-address-area').style.display = chk ? 'block' : 'none';
   }
 
-  // 4. Voucher & Confirm
   function renderConfirm() {
     const isMulti = document.getElementById('multi-dog-check').checked;
     const menuEl = document.getElementById('menu-select');
@@ -825,7 +807,6 @@
       document.getElementById('chk-all').checked = (all.length === checked.length);
   }
 
-  // 5. Card Button Logic
   function toggleNewCardForm() {
       const f = document.getElementById('new-card-form');
       f.style.display = (f.style.display === 'none') ? 'block' : 'none';
