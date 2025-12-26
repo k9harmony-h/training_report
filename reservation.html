@@ -6,11 +6,11 @@
   <title>レッスンの予約 | K9 Harmony</title>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
     /* =========================================
-       K9 Harmony Design System (Final Ver)
+       K9 Harmony Design System (Final Fix)
        ========================================= */
     :root {
       --c-main-turquoise: #57C3C2;
@@ -20,14 +20,16 @@
       --c-bg-mist: #F4F7F7;
       --c-text-sumi: #333333;
       --c-text-gray: #666666;
+      --font-main: 'Noto Sans JP', sans-serif;
+      --font-serif: 'Noto Serif JP', serif;
     }
 
     body {
-      font-family: 'Noto Sans JP', sans-serif;
+      font-family: var(--font-main);
       background-color: var(--c-base-washi);
       color: var(--c-text-sumi);
       margin: 0; padding: 0;
-      padding-bottom: 120px;
+      padding-bottom: 80px;
     }
 
     /* Header */
@@ -61,7 +63,7 @@
     h2 {
       font-size: 1.1rem; color: var(--c-sub-deep-ocean);
       border-left: 4px solid var(--c-main-turquoise); padding-left: 10px; margin-bottom: 20px;
-      font-family: 'Noto Serif JP', serif;
+      font-family: var(--font-serif);
     }
     .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
     label { display: block; font-weight: bold; font-size: 0.9rem; color: var(--c-sub-deep-ocean); margin-bottom: 8px; }
@@ -77,14 +79,13 @@
       display: block; width: 100%; padding: 16px; border-radius: 50px; border: none;
       font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; margin-top: 15px; transition: all 0.2s;
     }
-    /* Brand Color Fill (Important Actions) */
     .btn-primary { background: var(--c-main-turquoise); color: white; box-shadow: 0 4px 10px rgba(87, 195, 194, 0.3); }
     .btn-primary:active { transform: scale(0.98); }
     .btn-primary:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
 
     .btn-secondary { background: white; border: 1px solid #ccc; color: var(--c-text-gray); }
     
-    /* White BG + Brand Border (Dog Select) */
+    /* Outline Brand (Dog Select Modal) */
     .btn-outline-brand { background: white; border: 2px solid var(--c-main-turquoise); color: var(--c-main-turquoise); margin-top: 10px; }
     .btn-outline-brand:active { background: var(--c-bg-mist); }
 
@@ -95,16 +96,18 @@
     .cal-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .cal-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #eee; }
     .cal-table { width: 100%; border-collapse: collapse; min-width: 400px; table-layout: fixed; }
+    
     .cal-table th { background: #f8f8f8; color: var(--c-sub-deep-ocean); padding: 8px 2px; font-size: 0.75rem; border-bottom: 2px solid #ddd; border-right: 1px solid #eee; text-align: center; }
     .cal-table th:first-child { width: 50px; position: sticky; left: 0; background: #f8f8f8; z-index: 2; border-right: 2px solid #ddd; }
     .cal-table td { height: 50px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center; vertical-align: middle; padding: 0; position: relative; }
     .cal-table td:first-child { position: sticky; left: 0; background: white; font-weight: bold; color: var(--c-sub-deep-ocean); font-size: 0.8rem; z-index: 1; border-right: 2px solid #ddd; }
 
+    /* Symbols */
     .sym-ok { color: var(--c-main-turquoise); font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
     .sym-lim { color: #fbc02d; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
-    .sym-ng { background: #f0f0f0; color: #ccc; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+    .sym-ng { background: #f0f0f0; color: #ccc; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; cursor: default; }
     
-    /* Highlight: Brand Fill, White Text */
+    /* Highlight Selected: Brand BG, White Text */
     td.selected-cell { background-color: var(--c-main-turquoise) !important; transition: background 0.2s; }
     td.selected-cell .sym-ok, td.selected-cell .sym-lim { color: white !important; }
 
@@ -114,7 +117,6 @@
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; display: none; opacity: 0; transition: opacity 0.3s; }
     .modal-overlay.open { display: block; opacity: 1; }
 
-    /* Center (Dog Select) */
     .center-modal {
       position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
       width: 90%; max-width: 350px; background: white; border-radius: 12px; padding: 25px;
@@ -123,7 +125,6 @@
     .center-modal.open { display: block; animation: popIn 0.3s ease-out; }
     @keyframes popIn { from { transform: translate(-50%, -40%); opacity: 0; } to { transform: translate(-50%, -50%); opacity: 1; } }
 
-    /* Bottom Sheet (Time Select) */
     .time-modal { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; z-index: 302; transform: translateY(100%); transition: transform 0.3s; }
     .time-modal.open { transform: translateY(0); }
 
@@ -137,8 +138,13 @@
     .top-sheet-content { flex: 1; overflow-y: auto; padding: 20px; font-size: 0.9rem; line-height: 1.6; }
     .top-sheet-close-area { position: fixed; top: 80%; left: 0; width: 100%; height: 20%; z-index: 301; }
 
-    /* Footer */
-    footer { position: fixed; bottom: 0; width: 100%; background: #f9f9f9; padding: 15px; text-align: center; font-size: 0.7rem; color: #999; border-top: 1px solid #eee; z-index: 50; }
+    /* Footer (index.html style) */
+    .site-footer {
+        flex-shrink: 0; margin-top: auto;
+        background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.2);
+        padding: 60px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D;
+    }
+    .footer-logo-img { width: 40%; height: auto; display: inline-block; filter: contrast(0.95); opacity: 0.7; }
 
     /* Loading */
     #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
@@ -153,7 +159,8 @@
 
 <div id="loading-overlay">
   <div class="spinner"></div>
-  <div id="loading-text" style="color:var(--c-sub-deep-ocean); font-weight:bold;">起動中...</div>
+  <div id="loading-text" style="color:var(--c-sub-deep-ocean); font-weight:bold; margin-bottom:10px;">起動中...</div>
+  <div id="loading-tips" style="font-size:0.85rem; color:var(--c-text-gray); padding:0 20px; text-align:center; min-height:1.2em;"></div>
 </div>
 
 <header>
@@ -273,7 +280,7 @@
             <input type="text" id="voucher-code" placeholder="コードを入力" style="margin-bottom:0;">
             <button class="btn btn-secondary" style="margin-top:0; padding:10px;" onclick="applyVoucher()">適用</button>
         </div>
-        <div id="voucher-msg" style="font-size:0.8rem; color:var(--c-accent-copper); margin-top:5px;"></div>
+        <div id="voucher-result" style="font-size:0.9rem; font-weight:bold; margin-top:5px;"></div>
       </div>
 
       <div style="font-size:1.3rem; font-weight:bold; color:var(--c-sub-deep-ocean); text-align:right; margin-top:10px;">
@@ -337,7 +344,15 @@
             <span style="font-size:0.8rem; font-weight:bold;">CVC (3桁)</span>
             <input type="tel" id="cvc-input" maxlength="4" placeholder="123" style="width:80px; text-align:center; display:inline-block; margin-left:10px;" oninput="checkCVC()">
           </div>
-          <button class="btn btn-secondary" style="font-size:0.8rem; margin-top:15px;">＋ 新しいカードを使う</button>
+          <button class="btn btn-secondary" style="font-size:0.8rem; margin-top:15px;" onclick="toggleNewCardForm()">＋ 新しいカードを使う</button>
+          
+          <div id="new-card-form" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
+              <input type="text" placeholder="カード番号 (Mock)" style="margin-bottom:8px;">
+              <div style="display:flex; gap:10px;">
+                  <input type="text" placeholder="MM/YY">
+                  <input type="text" placeholder="CVC">
+              </div>
+          </div>
         </div>
     </div>
 
@@ -400,7 +415,11 @@
 
 </div>
 
-<footer>&copy; 2025 K9 Harmony</footer>
+<footer class="site-footer">
+    <div class="footer-logo-container"><img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony"></div>
+    <div class="footer-info"><p><strong>K9 Harmony</strong></p><p>〒174-0063 東京都板橋区前野町6-55-1</p><p>070-9043-1109</p></div>
+    <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
+</footer>
 
 <div class="modal-overlay" id="dog-modal-overlay">
   <div class="center-modal" id="dog-modal">
@@ -432,15 +451,27 @@
   const LIFF_ID = '2008546673-MJY7j3ox';
   const OFFICE_POS = { lat: 35.7665, lng: 139.6936 };
 
+  // 1. Tips
+  const DOG_TIPS = [
+    "犬の鼻紋は一頭一頭違います。", "犬は人間の約4倍の聴力を持っています。", 
+    "犬の嗅覚は人間の100万倍以上。", "犬は肉球からしか汗をかけません。", 
+    "あくびはストレスサインかも？", "しっぽが右寄りなら「嬉しい」サイン。",
+    "小型犬は大型犬より長生き傾向。", "犬も夢を見ます。",
+    "ダルメシアンは生まれたては真っ白。", "顔を舐めるのは愛情表現です。"
+  ];
+  let tipsTimer;
+
   let userData = null;
   let userDogs = [];
   let products = [];
   let selectedDog = null;
   let selectedSlot = null; 
   let weekOffset = 0;
-  let voucherData = null; // { discount: 1000 }
-  
+  let voucherData = null; 
+  let weekAvailability = {}; // { "2025-01-01": ["10:00", ...], ... }
+
   window.onload = async () => {
+    startTips();
     try {
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login(); return; }
@@ -450,6 +481,16 @@
       document.getElementById('loading-text').innerText = 'エラー: ' + e.message;
     }
   };
+
+  function startTips() {
+      const el = document.getElementById('loading-tips');
+      let i = Math.floor(Math.random()*DOG_TIPS.length);
+      el.innerText = DOG_TIPS[i];
+      tipsTimer = setInterval(() => {
+          i = (i+1)%DOG_TIPS.length;
+          el.innerText = DOG_TIPS[i];
+      }, 1200);
+  }
 
   async function fetchUserData(userId) {
     try {
@@ -473,22 +514,26 @@
       } else {
         document.getElementById('selected-dog-name').innerText = "未登録 (新規)";
       }
+      clearInterval(tipsTimer);
       document.getElementById('loading-overlay').style.display = 'none';
     } catch(e) {
       alert('通信失敗');
     }
   }
 
+  // 2. Menu Filter
   function renderMenuSelect() {
     const sel = document.getElementById('menu-select');
     sel.innerHTML = '';
     if(products && products.length > 0) {
         products.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = 90; 
-            opt.setAttribute('data-price', p.price);
-            opt.innerText = `${p.name} (¥${p.price.toLocaleString()})`;
-            sel.appendChild(opt);
+            if(p.category === 'トレーニング') { 
+                const opt = document.createElement('option');
+                opt.value = 90; 
+                opt.setAttribute('data-price', p.price);
+                opt.innerText = `${p.name} (¥${p.price.toLocaleString()})`;
+                sel.appendChild(opt);
+            }
         });
     } else {
         const opt = document.createElement('option');
@@ -526,21 +571,27 @@
     document.getElementById('selected-dog-name').innerText = selectedDog.name_disp || selectedDog.name;
   }
 
-  // --- Flow ---
+  // Navigation
   function goToView(step) {
     document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
     document.getElementById(`view-${step}`).classList.add('active');
     updateProgress(step);
     window.scrollTo(0,0);
-    if(step===2) renderCalendar();
+    
+    // Step 2: Load Calendar Availability
+    if(step===2) {
+        renderCalendarStructure(); // Render table first
+        fetchAvailability();       // Fetch & update cells
+    }
     if(step===3) renderConfirm();
     if(step===5) renderFinal();
   }
+  
   function checkUserAndNext() {
       if(userData) {
           document.getElementById('form-existing').style.display = 'block';
           document.getElementById('form-new').style.display = 'none';
-          document.getElementById('btn-final-check').disabled = true; // wait for CVC
+          document.getElementById('btn-final-check').disabled = true; 
           if(document.getElementById('payment-method').value !== 'CARD') {
               document.getElementById('btn-final-check').disabled = false;
           }
@@ -563,12 +614,18 @@
     }
   }
 
-  // --- Calendar ---
-  function shiftWeek(d) { weekOffset += d; renderCalendar(); }
-  function renderCalendar() {
+  // 3. Calendar with Availability
+  function shiftWeek(d) { 
+      weekOffset += d; 
+      renderCalendarStructure(); 
+      fetchAvailability(); 
+  }
+  
+  function renderCalendarStructure() {
     const tbody = document.getElementById('cal-body');
     const thead = document.getElementById('cal-header');
-    tbody.innerHTML = '';
+    tbody.innerHTML = '<tr><td colspan="8">読み込み中...</td></tr>';
+    
     const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
     document.getElementById('cal-range-text').innerText = `${startDt.getMonth()+1}/${startDt.getDate()} 〜`;
 
@@ -581,38 +638,84 @@
       headHtml += `<th style="color:${col}">${d.getMonth()+1}/${d.getDate()}<br>(${['日','月','火','水','木','金','土'][d.getDay()]})</th>`;
     }
     thead.innerHTML = headHtml;
+    // Tbody will be filled after fetch
+  }
 
-    for(let h=10; h<=20; h++){
-      let tr = document.createElement('tr');
-      tr.innerHTML = `<td>${h}:00</td>`;
-      dates.forEach(dt => {
-        let td = document.createElement('td');
-        let isNG = (dt.day === 3 || (dt.day === 4 && h < 13)); 
-        if(isNG) {
-          td.innerHTML = '<span class="sym-ng">×</span>';
-        } else {
-          td.innerHTML = `<span class="sym-ok" onclick="openTimeModal('${dt.date}', ${h}, this)">○</span>`;
-        }
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    }
+  async function fetchAvailability() {
+      const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
+      const sStr = startDt.toISOString().split('T')[0];
+      
+      try {
+          const res = await fetch(GAS_URL, {
+              method: 'POST',
+              body: JSON.stringify({ action: 'get_week_availability', startDate: sStr, menuDuration: 90 })
+          });
+          const json = await res.json();
+          weekAvailability = json.data || {};
+          fillCalendarBody();
+      } catch(e) {
+          document.getElementById('cal-body').innerHTML = '<tr><td colspan="8">エラー</td></tr>';
+      }
+  }
+
+  function fillCalendarBody() {
+      const tbody = document.getElementById('cal-body');
+      tbody.innerHTML = '';
+      const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
+      let dates = [];
+      for(let i=0; i<7; i++){
+          let d = new Date(startDt); d.setDate(startDt.getDate()+i);
+          dates.push({ date: d.toISOString().split('T')[0], day: d.getDay() });
+      }
+
+      for(let h=10; h<=20; h++){
+          let tr = document.createElement('tr');
+          tr.innerHTML = `<td>${h}:00</td>`;
+          dates.forEach(dt => {
+              let td = document.createElement('td');
+              // Check availability from fetched data
+              const slots = weekAvailability[dt.date] || []; // ["10:00", "10:30"...]
+              
+              // 00 or 30 exists?
+              const has00 = slots.includes(`${h}:00`);
+              const has30 = slots.includes(`${h}:30`);
+              
+              // Logic: At least one slot open?
+              // Simple check: if NO slots in this hour, mark NG
+              if (!has00 && !has30) {
+                  td.innerHTML = '<span class="sym-ng">×</span>';
+              } else {
+                  // Pass data for modal
+                  td.innerHTML = `<span class="sym-ok" onclick="openTimeModal('${dt.date}', ${h}, this, ${has00}, ${has30})">○</span>`;
+              }
+              tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+      }
   }
 
   let currentCell = null;
-  function openTimeModal(dateStr, hour, cell) {
+  function openTimeModal(dateStr, hour, cell, has00, has30) {
     currentCell = cell; 
     document.getElementById('time-modal-title').innerText = `${dateStr} ${hour}:00台`;
     const cont = document.getElementById('time-slot-buttons');
     cont.innerHTML = '';
-    ['00','30'].forEach(min => {
+    
+    if(has00) {
         const btn = document.createElement('button');
         btn.className = 'btn btn-outline-brand'; 
-        btn.style.marginTop='0';
-        btn.innerText = `${hour}:${min} 開始`;
-        btn.onclick = () => chooseTime(dateStr, `${hour}:${min}`);
+        btn.innerText = `${hour}:00 開始`;
+        btn.onclick = () => chooseTime(dateStr, `${hour}:00`);
         cont.appendChild(btn);
-    });
+    }
+    if(has30) {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-outline-brand'; 
+        btn.innerText = `${hour}:30 開始`;
+        btn.onclick = () => chooseTime(dateStr, `${hour}:30`);
+        cont.appendChild(btn);
+    }
+    
     document.getElementById('time-modal-overlay').classList.add('open');
     document.getElementById('time-modal').classList.add('open');
   }
@@ -623,12 +726,21 @@
   function chooseTime(d, t) {
     selectedSlot = { date: d, time: t };
     closeTimeModal();
+    
     document.querySelectorAll('.selected-cell').forEach(el => el.classList.remove('selected-cell'));
-    if(currentCell) currentCell.classList.add('selected-cell'); 
+    if(currentCell) {
+        currentCell.classList.add('selected-cell'); 
+    }
     document.getElementById('btn-to-step3').disabled = false;
   }
 
-  // --- Confirm ---
+  // Address
+  function toggleAltAddress() {
+      const chk = document.getElementById('alt-address-check').checked;
+      document.getElementById('alt-address-area').style.display = chk ? 'block' : 'none';
+  }
+
+  // 4. Voucher & Confirm
   function renderConfirm() {
     const isMulti = document.getElementById('multi-dog-check').checked;
     const menuEl = document.getElementById('menu-select');
@@ -659,10 +771,30 @@
         document.getElementById('conf-travel-fee').innerText = feeStr;
         
         let total = price + (isMulti?2000:0) + travelFee;
-        if(voucherData) total -= voucherData.discount_value; // 仮
+        if(voucherData) total -= voucherData.discount_value;
+        if(total < 0) total = 0;
         
         document.getElementById('conf-total').innerText = `¥${total.toLocaleString()}`;
     }, 800);
+  }
+
+  async function applyVoucher() {
+      const code = document.getElementById('voucher-code').value;
+      if(!code) return;
+      const res = await fetch(`${GAS_URL}?type=check_voucher&code=${code}&userId=DUMMY`); 
+      const json = await res.json();
+      const resDiv = document.getElementById('voucher-result');
+      if(json.valid) {
+          resDiv.style.color = 'var(--c-main-turquoise)';
+          resDiv.innerText = `適用: ${json.name} (-${json.discount_value}円)`;
+          voucherData = json;
+          renderConfirm();
+      } else {
+          resDiv.style.color = 'red';
+          resDiv.innerText = json.message;
+          voucherData = null;
+          renderConfirm();
+      }
   }
 
   function calcDistance(lat1, lon1, lat2, lon2) {
@@ -681,7 +813,6 @@
     return 1500 + Math.ceil(km - 15) * 100;
   }
 
-  // Terms Check
   function toggleAllTerms() {
       const chk = document.getElementById('chk-all').checked;
       document.querySelectorAll('.term-check').forEach(c => c.checked = chk);
@@ -691,30 +822,14 @@
       const all = document.querySelectorAll('.term-check');
       const checked = document.querySelectorAll('.term-check:checked');
       document.getElementById('btn-confirm-next').disabled = (all.length !== checked.length);
-      // 連動
       document.getElementById('chk-all').checked = (all.length === checked.length);
   }
 
-  // Voucher
-  async function applyVoucher() {
-      const code = document.getElementById('voucher-code').value;
-      if(!code) return;
-      const res = await fetch(`${GAS_URL}?type=check_voucher&code=${code}&userId=DUMMY`); // GET
-      const json = await res.json();
-      const msg = document.getElementById('voucher-msg');
-      if(json.valid) {
-          msg.style.color = 'green';
-          msg.innerText = `適用: ${json.name} (-${json.discount_value})`;
-          voucherData = json;
-          renderConfirm(); // Recalc
-      } else {
-          msg.style.color = 'red';
-          msg.innerText = json.message;
-          voucherData = null;
-      }
+  // 5. Card Button Logic
+  function toggleNewCardForm() {
+      const f = document.getElementById('new-card-form');
+      f.style.display = (f.style.display === 'none') ? 'block' : 'none';
   }
-
-  // CVC Check
   function checkCVC() {
       const val = document.getElementById('cvc-input').value;
       document.getElementById('btn-final-check').disabled = (val.length < 3);
@@ -751,18 +866,12 @@
     finally { document.getElementById('loading-overlay').style.display='none'; }
   }
 
-  // Actions
   function shareLine() {
     if (liff.isInClient()) {
         liff.sendMessages([{ type: 'text', text: 'レッスン予約しました！' }])
         .then(()=>alert('送信しました'))
-        .catch(e=> {
-            // Fallback
-            window.location.href = "https://line.me/R/msg/text/?レッスン予約しました！";
-        });
-    } else {
-        window.open("https://line.me/R/msg/text/?レッスン予約しました！");
-    }
+        .catch(e=> { window.location.href = "https://line.me/R/msg/text/?レッスン予約しました！"; });
+    } else { window.open("https://line.me/R/msg/text/?レッスン予約しました！"); }
   }
   function addToGoogleCalendar() {
     const title = 'K9レッスン';
@@ -775,7 +884,6 @@
     if(navigator.share) navigator.share({ title: 'K9 Harmony', text: '予約完了', url: 'https://liff.line.me/'+LIFF_ID });
   }
 
-  // Terms
   const TERMS = { 'policy':'...','privacy':'...','terms':'...','law':'...' };
   function openTerms(k) {
     document.getElementById('terms-content').innerText = TERMS[k];
@@ -785,10 +893,6 @@
   function closeTerms() {
     document.getElementById('terms-overlay').classList.remove('open');
     document.getElementById('terms-sheet').classList.remove('open');
-  }
-  function toggleAltAddress() {
-      const chk = document.getElementById('alt-address-check').checked;
-      document.getElementById('alt-address-area').style.display = chk ? 'block' : 'none';
   }
 </script>
 </body>
