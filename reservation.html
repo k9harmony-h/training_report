@@ -10,7 +10,7 @@
 
   <style>
     /* =========================================
-       K9 Harmony Design System (Ver 15.0 - Diagnostic Mode)
+       K9 Harmony Design System (Ver 16.0 - Debug Usability Fix)
        ========================================= */
     :root {
       --c-main-turquoise: #57C3C2;
@@ -29,22 +29,30 @@
       background-color: var(--c-base-washi);
       color: var(--c-text-sumi);
       margin: 0; padding: 0;
-      padding-bottom: 200px; /* Space for console */
+      /* padding-bottom removed to allow console to sit naturally */
     }
 
-    /* DEBUG CONSOLE (Force Visible) */
+    /* DEBUG STAMP (Fixed Top-Right, High Z-Index) */
+    #version-stamp {
+        position: fixed; top: 0; right: 0;
+        background: #000; color: #ff0;
+        font-size: 10px; padding: 4px;
+        z-index: 2147483647; /* Max Z-Index */
+        opacity: 0.8; pointer-events: none;
+        font-family: monospace;
+    }
+
+    /* DEBUG CONSOLE (Static at bottom, not fixed) */
     #debug-console {
-        position: fixed; bottom: 0; left: 0;
-        width: 100%; height: 180px;
-        background: rgba(0,0,0,0.9); color: #00ff00;
+        display: block; /* Always visible for debug */
+        width: 100%; height: 200px;
+        background: #111; color: #0f0;
         font-family: monospace; font-size: 11px;
         overflow-y: scroll; padding: 10px; box-sizing: border-box;
-        z-index: 10000; display: block !important; border-top: 2px solid #555;
-        pointer-events: none; /* Allow clicks through if needed, but here we want to scroll */
-        pointer-events: auto; 
+        border-top: 2px solid #555;
+        margin-top: 20px;
     }
     .log-line { border-bottom: 1px solid #333; padding: 2px 0; word-break: break-all; }
-    .log-err { color: #ff4444; font-weight: bold; }
 
     header {
       background: white; padding: 15px 0; text-align: center;
@@ -166,6 +174,8 @@
 </head>
 <body>
 
+<div id="version-stamp">v2025.12.27-Debug-Fixed</div>
+
 <div id="loading-overlay">
   <div class="spinner"></div>
   <div id="loading-text" style="color:var(--c-sub-deep-ocean); font-weight:bold; margin-bottom:10px;">起動中...</div>
@@ -227,7 +237,6 @@
             <div class="spinner" style="width:30px; height:30px; border-width:3px;"></div>
             <div style="font-size:0.8rem; color:var(--c-text-gray); margin-top:5px;">スケジュール確認中...</div>
         </div>
-        
         <table class="cal-table">
           <thead><tr id="cal-header"><th>時間</th></tr></thead>
           <tbody id="cal-body"></tbody>
