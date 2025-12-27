@@ -10,7 +10,7 @@
 
   <style>
     /* =========================================
-       K9 Harmony Design System (Ver 11.0)
+       K9 Harmony Design System (Ver 12.0 - Final Optimized)
        ========================================= */
     :root {
       --c-main-turquoise: #57C3C2;
@@ -93,6 +93,15 @@
     /* Calendar */
     .cal-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .cal-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #eee; position: relative; min-height: 200px; }
+    
+    /* Overlay Loader for Calendar */
+    #cal-overlay-loader {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(255,255,255,0.8); z-index: 10;
+        display: none; flex-direction: column; justify-content: center; align-items: center;
+        border-radius: 8px;
+    }
+
     .cal-table { width: 100%; border-collapse: collapse; min-width: 400px; table-layout: fixed; }
     .cal-table th { background: #f8f8f8; color: var(--c-sub-deep-ocean); padding: 8px 2px; font-size: 0.75rem; border-bottom: 2px solid #ddd; border-right: 1px solid #eee; text-align: center; }
     .cal-table th:first-child { width: 50px; position: sticky; left: 0; background: #f8f8f8; z-index: 2; border-right: 2px solid #ddd; }
@@ -107,14 +116,6 @@
     td.selected-cell .sym-ok, td.selected-cell .sym-tri { color: white !important; }
 
     .cal-legend { display: flex; justify-content: center; gap: 15px; font-size: 0.8rem; margin-top: 10px; color: var(--c-text-gray); }
-
-    /* Calendar Overlay Loader */
-    #cal-overlay-loader {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(255,255,255,0.8); z-index: 10;
-        display: none; flex-direction: column; justify-content: center; align-items: center;
-        border-radius: 8px;
-    }
 
     /* Modals */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; display: none; opacity: 0; transition: opacity 0.3s; }
@@ -233,7 +234,7 @@
         </label>
         <div id="alt-address-area" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
             <label>郵便番号 <span style="color:red">*</span></label>
-            <input type="tel" id="alt-zip" placeholder="123-4567" inputmode="numeric" pattern="\d*" maxlength="8" oninput="formatZip(this)">
+            <input type="tel" id="alt-zip" placeholder="123-4567" inputmode="numeric" pattern="\d*" maxlength="8" oninput="formatZipAndFetch(this)">
             <label>住所 <span style="color:red">*</span></label>
             <input type="text" id="alt-addr" placeholder="東京都...">
             <label>施設名</label>
@@ -344,6 +345,7 @@
             <input type="tel" id="cvc-input" maxlength="4" placeholder="123" inputmode="numeric" pattern="\d*" style="width:80px; text-align:center; display:inline-block; margin-left:10px;" oninput="checkCVC()">
           </div>
           <button class="btn btn-secondary" style="font-size:0.8rem; margin-top:15px;" onclick="toggleNewCardForm()">＋ 新しいカードを使う</button>
+          
           <div id="new-card-form" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
               <input type="text" placeholder="カード番号 (Mock)" style="margin-bottom:8px;">
               <div style="display:flex; gap:10px;">
@@ -405,7 +407,7 @@
       </p>
     </div>
     <button class="btn btn-primary" onclick="submitReservation()">上記に同意して予約を確定する</button>
-    <button class="btn btn-secondary" onclick="goToView(4)">修正する</button>
+    <button class="btn btn-secondary" onclick="goBackFromFinal()">修正する</button>
   </div>
 
   <div id="view-6" class="view-section" style="text-align:center; padding-top:30px;">
@@ -468,6 +470,7 @@
   const LIFF_ID = '2008546673-MJY7j3ox';
   const OFFICE_POS = { lat: 35.7665, lng: 139.6936 };
 
+  // Tips
   const DOG_TIPS = [
     "犬の鼻紋は一頭一頭違います。", "犬は人間の約4倍の聴力を持っています。", 
     "犬の嗅覚は人間の100万倍以上。", "犬は肉球からしか汗をかけません。", 
@@ -484,15 +487,19 @@
   let selectedSlot = null; 
   let weekOffset = 0;
   let voucherData = null; 
-  let weekAvailability = {};
+  let weekAvailability = {}; // Cache
 
   window.onload = async () => {
     startTips();
-    fetchAvailability(0); 
+    // [PREFETCH] Fetch current week immediately
+    fetchAvailability(0).then(() => {
+        // [PREFETCH] Fetch next/prev weeks in background
+        fetchAvailability(1);
+        fetchAvailability(-1);
+    });
 
     try {
       await liff.init({ liffId: LIFF_ID });
-      // Redirect Fix
       if (!liff.isLoggedIn()) {
           liff.login({ redirectUri: window.location.href });
           return;
@@ -592,20 +599,26 @@
     document.getElementById('selected-dog-name').innerText = selectedDog.name_disp || selectedDog.name;
   }
 
+  // --- Navigation & Flow ---
   function goToView(step) {
     document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
     document.getElementById(`view-${step}`).classList.add('active');
     updateProgress(step);
     window.scrollTo(0,0);
-    if(step===2) { renderCalendarStructure(); fetchAvailability(weekOffset); }
+    if(step===2) {
+        renderCalendarStructure();
+        // Check cache
+        const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
+        const sStr = startDt.toISOString().split('T')[0];
+        if(!weekAvailability[sStr]) fetchAvailability(weekOffset);
+    }
     if(step===3) renderConfirm();
     if(step===5) renderFinal();
   }
   
-  // [Modified] Skip Payment if existing & !card
+  // [MODIFIED] Check Payment & Skip logic
   function checkUserAndNext() {
       const paymentMethod = document.getElementById('payment-method').value;
-      
       if(userData) {
           // Existing User
           if(paymentMethod === 'CARD') {
@@ -621,12 +634,25 @@
           // New User (Always go to form)
           document.getElementById('form-existing').style.display = 'none';
           document.getElementById('form-new').style.display = 'block';
-          // Check inputs validity if needed, for now enable default
           document.getElementById('btn-final-check').disabled = false;
           goToView(4);
       }
   }
   
+  // [NEW] Back Button from Final View
+  function goBackFromFinal() {
+      const paymentMethod = document.getElementById('payment-method').value;
+      if(userData) {
+          if(paymentMethod === 'CARD') {
+              goToView(4); // Back to Card Input
+          } else {
+              goToView(3); // Back to Confirm (Skip Card Input)
+          }
+      } else {
+          goToView(4); // Back to Register Form
+      }
+  }
+
   function updateProgress(step) {
     if(step>5) return;
     const pct = ((step-1)/4)*100;
@@ -643,7 +669,11 @@
   function shiftWeek(d) { 
       weekOffset += d; 
       renderCalendarStructure(); 
-      fetchAvailability(weekOffset); 
+      // Check Cache
+      const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
+      const sStr = startDt.toISOString().split('T')[0];
+      if(!weekAvailability[sStr]) fetchAvailability(weekOffset);
+      else renderCalendarStructure(); // Re-render from cache
   }
   
   async function fetchAvailability(offset) {
@@ -656,7 +686,10 @@
               body: JSON.stringify({ action: 'get_week_availability', startDate: sStr, menuDuration: 90 })
           });
           const json = await res.json();
-          weekAvailability = json.data || {};
+          // Merge to cache (key: dateStr, value: slots array)
+          if(json.data) {
+              Object.assign(weekAvailability, json.data);
+          }
           renderCalendarStructure(); 
       } catch(e) {}
       document.getElementById('cal-overlay-loader').style.display = 'none';
@@ -680,7 +713,7 @@
     }
     thead.innerHTML = headHtml;
 
-    // Loop 10:00 to 18:00 (18:30 last slot) -> Delete 19, 20
+    // Loop 10:00 - 18:00 (End 18:30)
     for(let h=10; h<=18; h++){
       let tr = document.createElement('tr');
       tr.innerHTML = `<td>${h}:00</td>`;
@@ -688,9 +721,10 @@
         let td = document.createElement('td');
         
         let isStaticNG = false;
-        if (dt.day === 3) isStaticNG = true; // Wed
-        if (dt.day === 4 && h < 13) isStaticNG = true; // Thu < 13
+        if (dt.day === 3) isStaticNG = true; 
+        if (dt.day === 4 && h < 13) isStaticNG = true; 
         
+        // Cache lookup
         const slots = weekAvailability[dt.date] || [];
         const has00 = slots.includes(`${h}:00`);
         const has30 = slots.includes(`${h}:30`);
@@ -755,7 +789,7 @@
       document.getElementById('alt-address-area').style.display = chk ? 'block' : 'none';
   }
 
-  // --- Address Logic ---
+  // Address
   function formatPhone(input) {
       let val = input.value.replace(/\D/g, '');
       if (val.length > 10) val = val.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
@@ -784,18 +818,15 @@
           }
       } catch(e) {}
   }
-  function calcNewUserDistance() {
-      // Mock calc trigger
-  }
+  function calcNewUserDistance() {}
 
-  // --- Confirm ---
+  // Confirm
   function renderConfirm() {
     const isMulti = document.getElementById('multi-dog-check').checked;
     const menuEl = document.getElementById('menu-select');
     const price = parseInt(menuEl.options[menuEl.selectedIndex].getAttribute('data-price'));
     
     let place = "";
-    // Priority: Alt Address > User Address > New User Input
     if (document.getElementById('alt-address-check').checked) {
         place = document.getElementById('alt-addr').value || "指定住所";
     } else if (userData) {
@@ -818,14 +849,12 @@
             const dist = calcDistance(OFFICE_POS.lat, OFFICE_POS.lng, userData.base_lat, userData.base_lng);
             travelFee = calcTravelFee(dist);
         }
-        
         const feeStr = travelFee === 0 ? "無料" : `¥${travelFee.toLocaleString()}`;
         document.getElementById('conf-travel-fee').innerText = feeStr;
         
         let total = price + (isMulti?2000:0) + travelFee;
         if(voucherData) total -= voucherData.discount_value;
         if(total < 0) total = 0;
-        
         document.getElementById('conf-total').innerText = `¥${total.toLocaleString()}`;
     }, 800);
   }
@@ -932,9 +961,8 @@
     finally { document.getElementById('loading-overlay').style.display='none'; }
   }
 
-  // --- Line Sharing (Ritz Style, SendMessage) ---
   function shareLine() {
-    // 1. Build Message
+    // Ritz Style
     const dogName = selectedDog ? selectedDog.name_disp : (document.getElementById('reg-dog-name').value + 'ちゃん');
     const custName = userData ? userData.name : document.getElementById('reg-name').value;
     const place = document.getElementById('conf-place').innerText;
@@ -982,18 +1010,8 @@ ${dogName} の健康と安全を最優先とさせていただきたく存じま
 ご不安な点や、事前に伝えておきたいことがございましたら、このLINEにていつでもお申し付けください。
 当日、皆様にお会いできる日を心待ちにしております。`;
 
-    // 2. Send Message via LIFF SDK
-    if (liff.isInClient()) {
-        liff.sendMessages([{ type: 'text', text: msgText }])
-        .then(() => alert('トークルームに送信しました'))
-        .catch(e => { 
-            // Fallback (Friend Share if sendMessages fails)
-            alert('メッセージ送信に失敗しました。シェア画面を開きます。');
-            window.location.href = "https://line.me/R/msg/text/?" + encodeURIComponent(msgText); 
-        });
-    } else {
-        alert('LINEアプリ内で開いてください');
-    }
+    // [FIX] URL Scheme for 100% Success
+    window.location.href = "https://line.me/R/msg/text/?" + encodeURIComponent(msgText);
   }
 
   function addToGoogleCalendar() {
