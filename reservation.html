@@ -10,7 +10,7 @@
 
   <style>
     /* =========================================
-       K9 Harmony Design System (Ver 14.0 - Debug Restored)
+       K9 Harmony Design System (Ver 15.0 - Diagnostic Mode)
        ========================================= */
     :root {
       --c-main-turquoise: #57C3C2;
@@ -29,23 +29,22 @@
       background-color: var(--c-base-washi);
       color: var(--c-text-sumi);
       margin: 0; padding: 0;
-      padding-bottom: 120px;
+      padding-bottom: 200px; /* Space for console */
     }
 
-    /* Debug Elements (Restored) */
-    #version-stamp {
-        position: fixed; top: 0; right: 0;
-        background: black; color: white;
-        font-size: 9px; padding: 2px;
-        z-index: 9999; opacity: 0.5; pointer-events: none;
-    }
+    /* DEBUG CONSOLE (Force Visible) */
     #debug-console {
         position: fixed; bottom: 0; left: 0;
-        width: 100%; height: 150px;
-        background: rgba(0,0,0,0.8); color: #0f0;
-        font-size: 10px; overflow-y: scroll;
-        z-index: 9999; display: none; 
+        width: 100%; height: 180px;
+        background: rgba(0,0,0,0.9); color: #00ff00;
+        font-family: monospace; font-size: 11px;
+        overflow-y: scroll; padding: 10px; box-sizing: border-box;
+        z-index: 10000; display: block !important; border-top: 2px solid #555;
+        pointer-events: none; /* Allow clicks through if needed, but here we want to scroll */
+        pointer-events: auto; 
     }
+    .log-line { border-bottom: 1px solid #333; padding: 2px 0; word-break: break-all; }
+    .log-err { color: #ff4444; font-weight: bold; }
 
     header {
       background: white; padding: 15px 0; text-align: center;
@@ -167,8 +166,6 @@
 </head>
 <body>
 
-<div id="version-stamp">v2025.12.27-Final-Debug</div>
-
 <div id="loading-overlay">
   <div class="spinner"></div>
   <div id="loading-text" style="color:var(--c-sub-deep-ocean); font-weight:bold; margin-bottom:10px;">起動中...</div>
@@ -230,6 +227,7 @@
             <div class="spinner" style="width:30px; height:30px; border-width:3px;"></div>
             <div style="font-size:0.8rem; color:var(--c-text-gray); margin-top:5px;">スケジュール確認中...</div>
         </div>
+        
         <table class="cal-table">
           <thead><tr id="cal-header"><th>時間</th></tr></thead>
           <tbody id="cal-body"></tbody>
@@ -484,6 +482,22 @@
 </div>
 
 <script>
+  // DEBUG LOGGER
+  function log(msg) {
+      const c = document.getElementById('debug-console');
+      if(c) {
+          const div = document.createElement('div');
+          div.className = 'log-line';
+          div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+          c.appendChild(div);
+          c.scrollTop = c.scrollHeight;
+      }
+      console.log(msg);
+  }
+  window.onerror = function(msg, url, line) {
+      log(`[ERR] ${msg} (${line})`);
+  };
+
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
   const LIFF_ID = '2008546673-MJY7j3ox';
   const OFFICE_POS = { lat: 35.7665, lng: 139.6936 };
@@ -507,6 +521,7 @@
   let weekAvailability = {};
 
   window.onload = async () => {
+    log("App Start");
     startTips();
     fetchAvailability(0).then(() => {
         fetchAvailability(1);
@@ -515,15 +530,17 @@
 
     try {
       await liff.init({ liffId: LIFF_ID });
-      // Redirect Fix
       if (!liff.isLoggedIn()) {
+          log("Not logged in. Redirecting...");
           liff.login({ redirectUri: window.location.href });
           return;
       }
+      log("LIFF Init OK");
       const profile = await liff.getProfile();
       fetchUserData(profile.userId);
     } catch (e) {
       document.getElementById('loading-text').innerText = 'エラー: ' + e.message;
+      log("LIFF Error: " + e.message);
     }
   };
 
@@ -539,15 +556,18 @@
 
   async function fetchUserData(userId) {
     try {
+      log("Fetching User Data...");
       const res = await fetch(`${GAS_URL}?userId=${userId}&type=data&t=${Date.now()}`);
       const json = await res.json();
       
       if (json.customer) {
           userData = json.customer;
           userDogs = json.all_dogs || [json.dog];
+          log("User Found: " + userData.name);
       } else {
           userData = null; 
           userDogs = [];
+          log("New User");
       }
       if(json.products) products = json.products;
       renderMenuSelect();
@@ -562,6 +582,7 @@
       clearInterval(tipsTimer);
       document.getElementById('loading-overlay').style.display = 'none';
     } catch(e) {
+      log("Fetch Error: " + e.message);
       alert('通信失敗');
     }
   }
@@ -623,7 +644,6 @@
     if(step===2) {
         const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
         const sStr = startDt.toISOString().split('T')[0];
-        
         renderCalendarStructure(); 
         if(!weekAvailability[sStr]) {
             fetchAvailability(weekOffset); 
@@ -635,22 +655,18 @@
     if(step===5) renderFinal();
   }
   
-  // [MODIFIED] Payment Skip Logic
   function checkUserAndNext() {
       const paymentMethod = document.getElementById('payment-method').value;
       if(userData) {
-          // Existing User
           if(paymentMethod === 'CARD') {
               document.getElementById('form-existing').style.display = 'block';
               document.getElementById('form-new').style.display = 'none';
               document.getElementById('btn-final-check').disabled = true; 
-              goToView(4); // Go to input
+              goToView(4); 
           } else {
-              // Skip input, go to final
               goToView(5);
           }
       } else {
-          // New User (Always go to form)
           document.getElementById('form-existing').style.display = 'none';
           document.getElementById('form-new').style.display = 'block';
           document.getElementById('btn-final-check').disabled = false;
@@ -658,17 +674,16 @@
       }
   }
   
-  // [NEW] Back Navigation Logic
   function goBackFromFinal() {
       const paymentMethod = document.getElementById('payment-method').value;
       if(userData) {
           if(paymentMethod === 'CARD') {
-              goToView(4); // Back to Card Input
+              goToView(4); 
           } else {
-              goToView(3); // Back to Confirm (Skip Card Input)
+              goToView(3); 
           }
       } else {
-          goToView(4); // Back to Register Form
+          goToView(4); 
       }
   }
 
@@ -684,14 +699,11 @@
     }
   }
 
-  // --- Calendar ---
   function shiftWeek(d) { 
       weekOffset += d; 
       renderCalendarStructure(); 
-      // Check cache
       const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
       const sStr = startDt.toISOString().split('T')[0];
-      
       if(!weekAvailability[sStr]) fetchAvailability(weekOffset);
       else fillCalendarBody();
   }
@@ -718,10 +730,8 @@
 
   function renderCalendarStructure() {
     const thead = document.getElementById('cal-header');
-    
     const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
     document.getElementById('cal-range-text').innerText = `${startDt.getMonth()+1}/${startDt.getDate()} 〜`;
-
     let headHtml = '<th>時間</th>';
     for(let i=0; i<7; i++){
       let d = new Date(startDt); d.setDate(startDt.getDate()+i);
@@ -747,10 +757,9 @@
       tr.innerHTML = `<td>${h}:00</td>`;
       dates.forEach(dt => {
         let td = document.createElement('td');
-        
         let isStaticNG = false;
-        if (dt.day === 3) isStaticNG = true; // Wed
-        if (dt.day === 4 && h < 13) isStaticNG = true; // Thu < 13
+        if (dt.day === 3) isStaticNG = true; 
+        if (dt.day === 4 && h < 13) isStaticNG = true; 
         
         const slots = weekAvailability[dt.date] || [];
         const has00 = slots.includes(`${h}:00`);
@@ -775,7 +784,6 @@
     document.getElementById('time-modal-title').innerText = `${dateStr} ${hour}:00台`;
     const cont = document.getElementById('time-slot-buttons');
     cont.innerHTML = '';
-    
     if(has00) {
         const btn = document.createElement('button');
         btn.className = 'btn btn-outline-brand'; 
@@ -800,12 +808,10 @@
   function chooseTime(d, t) {
     selectedSlot = { date: d, time: t };
     closeTimeModal();
-    
     document.querySelectorAll('.selected-cell').forEach(el => el.classList.remove('selected-cell'));
     if(currentCell) {
         currentCell.parentElement.classList.add('selected-cell'); 
     }
-    
     const btn = document.getElementById('btn-to-step3');
     btn.disabled = false;
     btn.innerText = `${d.substring(5)} ${t} で進む`;
@@ -816,7 +822,6 @@
       document.getElementById('alt-address-area').style.display = chk ? 'block' : 'none';
   }
 
-  // Address Logic
   function formatPhone(input) {
       let val = input.value.replace(/\D/g, '');
       if (val.length > 10) val = val.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
@@ -847,7 +852,6 @@
   }
   function calcNewUserDistance() {}
 
-  // Confirm
   function renderConfirm() {
     const isMulti = document.getElementById('multi-dog-check').checked;
     const menuEl = document.getElementById('menu-select');
@@ -988,19 +992,26 @@
     finally { document.getElementById('loading-overlay').style.display='none'; }
   }
 
-  // --- Line Sharing (Final Fix) ---
+  // --- LINE SHARE (DIAGNOSTIC MODE) ---
   function shareLine() {
-    const dogName = selectedDog ? selectedDog.name_disp : (document.getElementById('reg-dog-name').value + 'ちゃん');
-    const custName = userData ? userData.name : document.getElementById('reg-name').value;
-    const place = document.getElementById('conf-place').innerText;
-    const course = document.getElementById('conf-course').innerText;
-    const fee = document.getElementById('conf-travel-fee').innerText;
-    const total = document.getElementById('conf-total').innerText;
-    const pay = document.getElementById('payment-method').options[document.getElementById('payment-method').selectedIndex].text;
-    const voucherInfo = voucherData ? `・割引： ${voucherData.name} (-${voucherData.discount_value}円)\n` : '';
-    const remarks = (!userData ? document.getElementById('reg-remarks').value : '特になし');
+    log("Starting shareLine...");
+    
+    // 1. Build Message Safely
+    try {
+        const dogName = selectedDog ? (selectedDog.name_disp || "") : ((document.getElementById('reg-dog-name').value || "") + 'ちゃん');
+        const custName = userData ? (userData.name || "") : (document.getElementById('reg-name').value || "");
+        const place = document.getElementById('conf-place').innerText || "";
+        const course = document.getElementById('conf-course').innerText || "";
+        const fee = document.getElementById('conf-travel-fee').innerText || "";
+        const total = document.getElementById('conf-total').innerText || "";
+        const payEl = document.getElementById('payment-method');
+        const pay = payEl.options[payEl.selectedIndex].text || "";
+        const voucherInfo = voucherData ? `・割引： ${voucherData.name} (-${voucherData.discount_value}円)\n` : '';
+        const remarks = (!userData ? (document.getElementById('reg-remarks').value || "") : '特になし');
 
-    const msgText = 
+        log("Msg Vars: " + JSON.stringify({dogName, custName, place}));
+
+        const msgText = 
 `K9 Harmony 代表の平田でございます。
 この度は、大切なパートナーのトレーニングをお任せいただき、心より感謝申し上げます。
 
@@ -1037,16 +1048,27 @@ ${dogName} の健康と安全を最優先とさせていただきたく存じま
 ご不安な点や、事前に伝えておきたいことがございましたら、このLINEにていつでもお申し付けください。
 当日、皆様にお会いできる日を心待ちにしております。`;
 
-    if (liff.isInClient()) {
-        liff.sendMessages([{ type: 'text', text: msgText }])
-        .then(() => alert('トークルームに送信しました'))
-        .catch(e => { 
-            // [FIX] Error Alert First
-            alert("送信に失敗しました: " + e.message + "\nシェア画面を開きます。");
-            window.location.href = "https://line.me/R/msg/text/?" + encodeURIComponent(msgText); 
-        });
-    } else {
-        alert('LINEアプリ内で開いてください');
+        log("Message Built OK");
+
+        if (liff.isInClient()) {
+            log("In Client. Sending...");
+            liff.sendMessages([{ type: 'text', text: msgText }])
+            .then(() => {
+                log("Send Success!");
+                alert('トークルームに送信しました');
+            })
+            .catch(e => {
+                log("Send Error: " + JSON.stringify(e));
+                alert("送信エラー: " + JSON.stringify(e) + "\n(救済措置は一時停止中)");
+                // window.location.href = "https://line.me/R/msg/text/?" + encodeURIComponent(msgText);
+            });
+        } else {
+            log("Not in Client");
+            alert('LINEアプリ内で開いてください');
+        }
+    } catch(err) {
+        log("Build Error: " + err);
+        alert("内部エラー: " + err);
     }
   }
 
