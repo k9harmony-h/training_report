@@ -10,7 +10,7 @@
 
   <style>
     /* =========================================
-       K9 Harmony Design System (Ver 16.0 - Debug Usability Fix)
+       K9 Harmony Design System (Ver 17.0 - Backend Send)
        ========================================= */
     :root {
       --c-main-turquoise: #57C3C2;
@@ -29,22 +29,21 @@
       background-color: var(--c-base-washi);
       color: var(--c-text-sumi);
       margin: 0; padding: 0;
-      /* padding-bottom removed to allow console to sit naturally */
     }
 
-    /* DEBUG STAMP (Fixed Top-Right, High Z-Index) */
+    /* DEBUG STAMP */
     #version-stamp {
         position: fixed; top: 0; right: 0;
         background: #000; color: #ff0;
         font-size: 10px; padding: 4px;
-        z-index: 2147483647; /* Max Z-Index */
+        z-index: 2147483647; 
         opacity: 0.8; pointer-events: none;
         font-family: monospace;
     }
 
-    /* DEBUG CONSOLE (Static at bottom, not fixed) */
+    /* DEBUG CONSOLE (Static bottom) */
     #debug-console {
-        display: block; /* Always visible for debug */
+        display: block; 
         width: 100%; height: 200px;
         background: #111; color: #0f0;
         font-family: monospace; font-size: 11px;
@@ -174,7 +173,7 @@
 </head>
 <body>
 
-<div id="version-stamp">v2025.12.27-Debug-Fixed</div>
+<div id="version-stamp">v2025.12.27-Backend-Send</div>
 
 <div id="loading-overlay">
   <div class="spinner"></div>
@@ -528,6 +527,9 @@
   let weekOffset = 0;
   let voucherData = null; 
   let weekAvailability = {};
+  
+  // [NEW] Global var for Push ID
+  let currentLineUserId = null;
 
   window.onload = async () => {
     log("App Start");
@@ -546,6 +548,9 @@
       }
       log("LIFF Init OK");
       const profile = await liff.getProfile();
+      // [NEW] Store User ID for Backend Push
+      currentLineUserId = profile.userId;
+      
       fetchUserData(profile.userId);
     } catch (e) {
       document.getElementById('loading-text').innerText = 'エラー: ' + e.message;
@@ -1001,11 +1006,11 @@
     finally { document.getElementById('loading-overlay').style.display='none'; }
   }
 
-  // --- LINE SHARE (DIAGNOSTIC MODE) ---
-  function shareLine() {
+  // --- LINE SHARE (Backend Push + Fallback) ---
+  async function shareLine() {
     log("Starting shareLine...");
     
-    // 1. Build Message Safely
+    // 1. Build Message
     try {
         const dogName = selectedDog ? (selectedDog.name_disp || "") : ((document.getElementById('reg-dog-name').value || "") + 'ちゃん');
         const custName = userData ? (userData.name || "") : (document.getElementById('reg-name').value || "");
@@ -1017,8 +1022,6 @@
         const pay = payEl.options[payEl.selectedIndex].text || "";
         const voucherInfo = voucherData ? `・割引： ${voucherData.name} (-${voucherData.discount_value}円)\n` : '';
         const remarks = (!userData ? (document.getElementById('reg-remarks').value || "") : '特になし');
-
-        log("Msg Vars: " + JSON.stringify({dogName, custName, place}));
 
         const msgText = 
 `K9 Harmony 代表の平田でございます。
@@ -1057,27 +1060,51 @@ ${dogName} の健康と安全を最優先とさせていただきたく存じま
 ご不安な点や、事前に伝えておきたいことがございましたら、このLINEにていつでもお申し付けください。
 当日、皆様にお会いできる日を心待ちにしております。`;
 
-        log("Message Built OK");
+        // 2. Try Backend Push First (Most Reliable for 1:1)
+        log("Trying Backend Push...");
+        try {
+            const res = await fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'send_line_msg',
+                    userId: currentLineUserId, // Captured in onload
+                    message: msgText
+                })
+            });
+            const json = await res.json();
+            
+            if (json.status === 'success') {
+                log("Backend Push Success");
+                alert('トークルームに送信しました');
+                return; // Stop here if success
+            } else {
+                log("Backend Push Failed: " + json.message);
+            }
+        } catch (e) {
+            log("Backend Fetch Error: " + e);
+        }
 
+        // 3. Fallback to LIFF SDK (If backend failed)
         if (liff.isInClient()) {
-            log("In Client. Sending...");
+            log("Fallback to LIFF SDK...");
             liff.sendMessages([{ type: 'text', text: msgText }])
             .then(() => {
-                log("Send Success!");
                 alert('トークルームに送信しました');
             })
             .catch(e => {
-                log("Send Error: " + JSON.stringify(e));
-                alert("送信エラー: " + JSON.stringify(e) + "\n(救済措置は一時停止中)");
-                // window.location.href = "https://line.me/R/msg/text/?" + encodeURIComponent(msgText);
+                log("LIFF SDK Error: " + JSON.stringify(e));
+                // 4. Final Fallback (URL Scheme)
+                window.location.href = "https://line.me/R/msg/text/?" + encodeURIComponent(msgText);
             });
         } else {
-            log("Not in Client");
-            alert('LINEアプリ内で開いてください');
+            // Not in client, backend failed -> URL Scheme
+            log("Fallback to URL Scheme...");
+            window.location.href = "https://line.me/R/msg/text/?" + encodeURIComponent(msgText);
         }
+
     } catch(err) {
-        log("Build Error: " + err);
-        alert("内部エラー: " + err);
+        log("Fatal Build Error: " + err);
+        alert("エラーが発生しました: " + err);
     }
   }
 
