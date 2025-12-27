@@ -10,7 +10,7 @@
 
   <style>
     /* =========================================
-       K9 Harmony Design System (Ver 9.0 - Final)
+       K9 Harmony Design System (Ver 10.0)
        ========================================= */
     :root {
       --c-main-turquoise: #57C3C2;
@@ -32,7 +32,6 @@
       padding-bottom: 120px;
     }
 
-    /* Header */
     header {
       background: white; padding: 15px 0; text-align: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 50;
@@ -66,13 +65,14 @@
       font-family: var(--font-serif);
     }
     .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    
     label { display: block; font-weight: bold; font-size: 0.9rem; color: var(--c-sub-deep-ocean); margin-bottom: 8px; }
     
-    select, input[type="text"], input[type="tel"], input[type="number"], input[type="date"] {
+    input[type="text"], input[type="tel"], input[type="number"], input[type="date"], select, textarea {
       width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;
       margin-bottom: 15px; box-sizing: border-box; font-family: inherit;
     }
-    select:focus, input:focus { border-color: var(--c-main-turquoise); outline: none; background: #fff; }
+    select:focus, input:focus, textarea:focus { border-color: var(--c-main-turquoise); outline: none; background: #fff; }
 
     /* Buttons */
     .btn {
@@ -86,16 +86,14 @@
     .btn-secondary { background: white; border: 1px solid #ccc; color: var(--c-text-gray); }
     .btn-outline-brand { background: white; border: 2px solid var(--c-main-turquoise); color: var(--c-main-turquoise); margin-top: 10px; }
     .btn-outline-brand:active { background: var(--c-bg-mist); }
-    .btn-outline-brand:disabled { border-color: #eee; color: #ccc; background: #fafafa; pointer-events: none; }
-
+    
     .btn-cancel-rsv { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; font-size: 0.9rem; margin-top: 30px; }
     .btn-row { display: flex; gap: 10px; } .btn-row .btn { margin-top: 0; }
 
-    /* --- Calendar Matrix --- */
+    /* Calendar */
     .cal-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .cal-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #eee; }
     .cal-table { width: 100%; border-collapse: collapse; min-width: 400px; table-layout: fixed; }
-    
     .cal-table th { background: #f8f8f8; color: var(--c-sub-deep-ocean); padding: 8px 2px; font-size: 0.75rem; border-bottom: 2px solid #ddd; border-right: 1px solid #eee; text-align: center; }
     .cal-table th:first-child { width: 50px; position: sticky; left: 0; background: #f8f8f8; z-index: 2; border-right: 2px solid #ddd; }
     .cal-table td { height: 50px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center; vertical-align: middle; padding: 0; position: relative; }
@@ -103,35 +101,27 @@
 
     /* Symbols */
     .sym-ok { color: var(--c-main-turquoise); font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
-    .sym-tri { color: #fbc02d; font-size: 1.0rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; } /* △ */
+    .sym-tri { color: #fbc02d; font-size: 1.0rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
     .sym-ng { background: #f0f0f0; color: #ccc; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; cursor: default; }
     
-    /* Highlight Selected (Brand Fill, White Text) */
+    /* Highlight: !important to override everything */
     td.selected-cell { background-color: var(--c-main-turquoise) !important; transition: background 0.2s; }
     td.selected-cell .sym-ok, td.selected-cell .sym-tri { color: white !important; }
 
     .cal-legend { display: flex; justify-content: center; gap: 15px; font-size: 0.8rem; margin-top: 10px; color: var(--c-text-gray); }
 
-    /* --- Modals --- */
+    /* Modals */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; display: none; opacity: 0; transition: opacity 0.3s; }
     .modal-overlay.open { display: block; opacity: 1; }
 
-    .center-modal {
-      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 90%; max-width: 350px; background: white; border-radius: 12px; padding: 25px;
-      z-index: 301; display: none; text-align: center;
-    }
+    .center-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 350px; background: white; border-radius: 12px; padding: 25px; z-index: 301; display: none; text-align: center; }
     .center-modal.open { display: block; animation: popIn 0.3s ease-out; }
     @keyframes popIn { from { transform: translate(-50%, -40%); opacity: 0; } to { transform: translate(-50%, -50%); opacity: 1; } }
 
     .time-modal { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; z-index: 302; transform: translateY(100%); transition: transform 0.3s; }
     .time-modal.open { transform: translateY(0); }
 
-    .top-sheet {
-      position: fixed; top: 0; left: 0; width: 100%; height: 80%;
-      background: white; border-radius: 0 0 20px 20px; z-index: 302;
-      transform: translateY(-100%); transition: transform 0.3s; display: flex; flex-direction: column;
-    }
+    .top-sheet { position: fixed; top: 0; left: 0; width: 100%; height: 80%; background: white; border-radius: 0 0 20px 20px; z-index: 302; transform: translateY(-100%); transition: transform 0.3s; display: flex; flex-direction: column; }
     .top-sheet.open { transform: translateY(0); }
     .top-sheet-content { flex: 1; overflow-y: auto; padding: 20px; font-size: 0.9rem; line-height: 1.6; }
     .top-sheet-close-area { position: fixed; top: 80%; left: 0; width: 100%; height: 20%; z-index: 301; }
@@ -232,7 +222,7 @@
         </label>
         <div id="alt-address-area" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
             <label>郵便番号 <span style="color:red">*</span></label>
-            <input type="tel" id="alt-zip" placeholder="123-4567" inputmode="numeric" pattern="\d*">
+            <input type="tel" id="alt-zip" placeholder="123-4567" inputmode="numeric" pattern="\d*" maxlength="8" oninput="formatZip(this)">
             <label>住所 <span style="color:red">*</span></label>
             <input type="text" id="alt-addr" placeholder="東京都...">
             <label>施設名</label>
@@ -324,7 +314,7 @@
 
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="goToView(2)">戻る</button>
-      <button class="btn btn-primary" id="btn-confirm-next" disabled onclick="checkUserAndNext()">お支払いへ</button>
+      <button class="btn btn-primary" id="btn-confirm-next" disabled onclick="checkUserAndNext()">次へ</button>
     </div>
   </div>
 
@@ -335,7 +325,7 @@
         <div class="card">
           <label>クレジットカード情報</label>
           <div style="background:#eee; padding:15px; border-radius:8px; margin-bottom:15px;">
-            <div style="font-size:0.8rem; margin-bottom:5px;">TARO YAMADA</div>
+            <div style="font-size:0.8rem; margin-bottom:5px;">登録済みカード</div>
             <div style="font-family:monospace; font-size:1.1rem; letter-spacing:2px;">**** **** **** 1234</div>
           </div>
           <div style="text-align:right;">
@@ -356,13 +346,43 @@
 
     <div id="form-new" style="display:none;">
         <div class="card">
-            <h3 style="margin-top:0; color:var(--c-main-turquoise); font-size:1rem;">会員登録</h3>
-            <label>お名前 <span style="color:red">*</span></label>
+            <h3 style="margin-top:0; color:var(--c-main-turquoise); font-size:1rem; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">顧客情報</h3>
+            
+            <label>氏名 <span style="color:red">*</span></label>
             <input type="text" id="reg-name" placeholder="山田 太郎">
+            
             <label>電話番号 <span style="color:red">*</span></label>
-            <input type="tel" id="reg-phone" placeholder="090-1234-5678" inputmode="numeric">
-            <label>愛犬のお名前 <span style="color:red">*</span></label>
+            <input type="tel" id="reg-phone" placeholder="090-1234-5678" inputmode="numeric" oninput="formatPhone(this)">
+            
+            <label>郵便番号 <span style="color:red">*</span></label>
+            <input type="tel" id="reg-zip" placeholder="123-4567" inputmode="numeric" maxlength="8" oninput="formatZipAndFetch(this)">
+            
+            <label>住所 <span style="color:red">*</span></label>
+            <input type="text" id="reg-addr" placeholder="自動入力..." onchange="calcNewUserDistance()">
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0; color:var(--c-main-turquoise); font-size:1rem; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">愛犬情報</h3>
+            
+            <label>名前 <span style="color:red">*</span></label>
             <input type="text" id="reg-dog-name" placeholder="ポチ">
+            
+            <label>犬種</label>
+            <input type="text" id="reg-dog-breed" placeholder="トイプードル">
+            
+            <label>年齢 (歳)</label>
+            <input type="number" id="reg-dog-age" placeholder="3">
+            
+            <label style="display:flex; align-items:center; margin-top:10px;">
+                <input type="checkbox" id="reg-dog-neutered" style="width:20px; height:20px; margin-right:10px;">
+                去勢・避妊済み
+            </label>
+            
+            <label style="margin-top:15px;">お困りごと</label>
+            <textarea id="reg-concerns" rows="3" placeholder="吠え癖、噛み癖など"></textarea>
+            
+            <label style="margin-top:15px;">備考</label>
+            <textarea id="reg-remarks" rows="2" placeholder="その他連絡事項"></textarea>
         </div>
     </div>
 
@@ -466,21 +486,19 @@
   let selectedSlot = null; 
   let weekOffset = 0;
   let voucherData = null; 
-  let weekAvailability = {}; // cache
+  let weekAvailability = {};
 
   window.onload = async () => {
     startTips();
-    fetchAvailability(0); // Prefetch
+    fetchAvailability(0); 
 
     try {
       await liff.init({ liffId: LIFF_ID });
-      
-      // [FIX] Redirect
+      // Redirect Fix
       if (!liff.isLoggedIn()) {
           liff.login({ redirectUri: window.location.href });
           return;
       }
-      
       const profile = await liff.getProfile();
       fetchUserData(profile.userId);
     } catch (e) {
@@ -596,6 +614,7 @@
       } else {
           document.getElementById('form-existing').style.display = 'none';
           document.getElementById('form-new').style.display = 'block';
+          // 新規: 全て入力で活性化させるロジック（今回は簡易的にデフォルト非活性解除）
           document.getElementById('btn-final-check').disabled = false;
       }
       goToView(4);
@@ -657,12 +676,10 @@
       dates.forEach(dt => {
         let td = document.createElement('td');
         
-        // [FIX] Static Rules (Wed/Thu) Logic
         let isStaticNG = false;
         if (dt.day === 3) isStaticNG = true; // Wed
         if (dt.day === 4 && h < 13) isStaticNG = true; // Thu < 13
         
-        // Dynamic
         const slots = weekAvailability[dt.date] || [];
         const has00 = slots.includes(`${h}:00`);
         const has30 = slots.includes(`${h}:30`);
@@ -670,7 +687,6 @@
         if(isStaticNG || (!has00 && !has30)) {
             td.innerHTML = '<span class="sym-ng">×</span>';
         } else {
-            // [FIX] Symbol Logic
             let sym = (has00 && has30) ? '○' : '△';
             let cls = (has00 && has30) ? 'sym-ok' : 'sym-tri';
             td.innerHTML = `<span class="${cls}" onclick="openTimeModal('${dt.date}', ${h}, this, ${has00}, ${has30})">${sym}</span>`;
@@ -713,10 +729,9 @@
     selectedSlot = { date: d, time: t };
     closeTimeModal();
     
-    // [FIX] Highlight Logic: Parent TD gets class
+    // Parent TD Highlighting
     document.querySelectorAll('.selected-cell').forEach(el => el.classList.remove('selected-cell'));
     if(currentCell) {
-        // currentCell is span, parent is td
         currentCell.parentElement.classList.add('selected-cell'); 
     }
     
@@ -730,19 +745,60 @@
       document.getElementById('alt-address-area').style.display = chk ? 'block' : 'none';
   }
 
+  // --- Address Logic (New User / Alt) ---
+  function formatPhone(input) {
+      let val = input.value.replace(/\D/g, '');
+      if (val.length > 10) val = val.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+      else if (val.length > 6) val = val.replace(/(\d{3})(\d{4})/, '$1-$2');
+      input.value = val;
+  }
+  function formatZip(input) {
+      let val = input.value.replace(/\D/g, '');
+      if (val.length > 3) val = val.replace(/(\d{3})(\d{0,4})/, '$1-$2');
+      input.value = val;
+  }
+  function formatZipAndFetch(input) {
+      formatZip(input);
+      const raw = input.value.replace(/-/g,'');
+      if(raw.length === 7) fetchAddress(raw, 'reg-addr');
+  }
+  async function fetchAddress(zip, targetId) {
+      try {
+          const res = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${zip}`);
+          const json = await res.json();
+          if(json.results) {
+              const r = json.results[0];
+              const addr = r.address1 + r.address2 + r.address3;
+              document.getElementById(targetId).value = addr;
+              // Calc Distance for new user (mock or try lat/lng if API supported)
+              // For now, trigger calc logic
+              calcNewUserDistance(); 
+          }
+      } catch(e) {}
+  }
+  function calcNewUserDistance() {
+      // 本来はGeocoding必要だが、今回は計算中...→0 or 要見積もりとする
+      // 既存顧客以外は一旦0
+  }
+
+  // --- Confirm ---
   function renderConfirm() {
     const isMulti = document.getElementById('multi-dog-check').checked;
     const menuEl = document.getElementById('menu-select');
     const price = parseInt(menuEl.options[menuEl.selectedIndex].getAttribute('data-price'));
     
-    let place = userData ? (userData.address || "未登録") : "新規登録住所";
-    if(document.getElementById('alt-address-check').checked) {
+    let place = "";
+    if (document.getElementById('alt-address-check').checked) {
         place = document.getElementById('alt-addr').value || "指定住所";
+    } else if (userData) {
+        place = userData.address || "未登録";
+    } else {
+        place = document.getElementById('reg-addr').value || "新規登録住所";
     }
 
     document.getElementById('conf-datetime').innerText = `${selectedSlot.date} ${selectedSlot.time}`;
     document.getElementById('conf-place').innerText = place;
-    document.getElementById('conf-dog').innerText = selectedDog ? selectedDog.name_disp : '新規登録犬';
+    document.getElementById('conf-dog').innerText = selectedDog ? selectedDog.name_disp : (document.getElementById('reg-dog-name').value || '新規登録犬');
     document.getElementById('conf-course').innerText = menuEl.options[menuEl.selectedIndex].text + (isMulti?" (+2頭目)":"");
 
     document.getElementById('conf-travel-fee').innerText = "計算中...";
@@ -751,6 +807,7 @@
     
     setTimeout(() => {
         let travelFee = 0;
+        // Calc only if registered address matches & coords exist & no alt address
         if (userData && userData.base_lat && !document.getElementById('alt-address-check').checked) {
             const dist = calcDistance(OFFICE_POS.lat, OFFICE_POS.lng, userData.base_lat, userData.base_lng);
             travelFee = calcTravelFee(dist);
@@ -837,14 +894,31 @@
 
   async function submitReservation() {
     document.getElementById('loading-overlay').style.display = 'flex';
+    
+    // Collect Data
+    const regData = !userData ? {
+        name: document.getElementById('reg-name').value,
+        phone: document.getElementById('reg-phone').value,
+        zip: document.getElementById('reg-zip').value,
+        address: document.getElementById('reg-addr').value,
+        dogName: document.getElementById('reg-dog-name').value,
+        dogBreed: document.getElementById('reg-dog-breed').value,
+        dogAge: document.getElementById('reg-dog-age').value,
+        neutered: document.getElementById('reg-dog-neutered').checked,
+        concerns: document.getElementById('reg-concerns').value,
+        remarks: document.getElementById('reg-remarks').value
+    } : null;
+
     const payload = {
       action: 'add_reservation',
       userId: userData ? userData.unique_key : 'NEW_USER',
       date: selectedSlot.date,
       time: selectedSlot.time,
       dogId: selectedDog ? selectedDog.id : null,
-      voucher: voucherData ? voucherData.name : null
+      voucher: voucherData ? voucherData.name : null,
+      regData: regData
     };
+
     try {
       const res = await fetch(GAS_URL, { method:'POST', body:JSON.stringify(payload) });
       const json = await res.json();
@@ -854,13 +928,69 @@
     finally { document.getElementById('loading-overlay').style.display='none'; }
   }
 
+  // --- Line Sharing (Ritz Style) ---
   function shareLine() {
+    // 1. Build Message
+    const dogName = selectedDog ? selectedDog.name_disp : (document.getElementById('reg-dog-name').value + 'ちゃん');
+    const custName = userData ? userData.name : document.getElementById('reg-name').value;
+    const place = document.getElementById('conf-place').innerText;
+    const course = document.getElementById('conf-course').innerText;
+    const fee = document.getElementById('conf-travel-fee').innerText;
+    const total = document.getElementById('conf-total').innerText;
+    const pay = document.getElementById('payment-method').options[document.getElementById('payment-method').selectedIndex].text;
+    const voucherInfo = voucherData ? `・割引： ${voucherData.name} (-${voucherData.discount_value}円)\n` : '';
+    const remarks = (!userData ? document.getElementById('reg-remarks').value : '特になし');
+
+    const msgText = 
+`K9 Harmony 代表の平田でございます。
+この度は、大切なパートナーのトレーニングをお任せいただき、心より感謝申し上げます。
+
+当日は ${dogName}、${custName}様にお目にかかれますことを、楽しみにしております。
+
+ご予約内容を以下の通り承りました。
+
+◻︎ご予約内容
+・愛犬名： ${dogName}
+・日時　： ${selectedSlot.date} ${selectedSlot.time}
+・場所　： ${place}
+・コース： ${course}
+・出張費： ${fee}
+${voucherInfo}・合計　： ${total}
+・お支払： ${pay}
+・備考　： ${remarks}
+
+【当日のご準備について】
+・狂犬病・混合ワクチンの証明書（初回のみ）
+・大好きなおやつやおもちゃ
+・首輪とリード（普段お使いのもの）
+
+【日程の変更・キャンセルについて】
+私どもは ${dogName} との時間を大切にするため、万全の準備を整えてお待ちしております。
+もし体調不良や急なご事情で変更が必要な際は、遠慮なくお知らせくださいませ。
+
+${dogName} の健康と安全を最優先とさせていただきたく存じます。
+恐れ入りますが、以下の規定に基づき調整料を頂戴する場合もございますので、予めご了承ください。
+
+・4日前まで：無料
+・3日前〜2日前：50%
+・前日〜当日：100%
+
+ご不安な点や、事前に伝えておきたいことがございましたら、このLINEにていつでもお申し付けください。
+当日、皆様にお会いできる日を心待ちにしております。`;
+
     if (liff.isInClient()) {
-        liff.sendMessages([{ type: 'text', text: 'レッスン予約しました！' }])
-        .then(()=>alert('送信しました'))
-        .catch(e=> { window.location.href = "https://line.me/R/msg/text/?レッスン予約しました！"; });
-    } else { window.open("https://line.me/R/msg/text/?レッスン予約しました！"); }
+        liff.sendMessages([{ type: 'text', text: msgText }])
+        .then(() => alert('トークルームに送信しました'))
+        .catch(e => { 
+            // Fallback (Friend Share)
+            window.location.href = "https://line.me/R/msg/text/?" + encodeURIComponent(msgText); 
+        });
+    } else {
+        // Fallback
+        alert('LINEアプリ内で開いてください');
+    }
   }
+
   function addToGoogleCalendar() {
     const title = 'K9レッスン';
     const d = selectedSlot.date.replace(/-/g,'');
