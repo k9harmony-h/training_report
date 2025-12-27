@@ -10,7 +10,7 @@
 
   <style>
     /* =========================================
-       K9 Harmony Design System (Ver 8.0 - Strict Fix)
+       K9 Harmony Design System (Ver 9.0 - Final)
        ========================================= */
     :root {
       --c-main-turquoise: #57C3C2;
@@ -32,6 +32,7 @@
       padding-bottom: 120px;
     }
 
+    /* Header */
     header {
       background: white; padding: 15px 0; text-align: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 50;
@@ -58,7 +59,7 @@
     .view-section.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* UI Elements */
+    /* Elements */
     h2 {
       font-size: 1.1rem; color: var(--c-sub-deep-ocean);
       border-left: 4px solid var(--c-main-turquoise); padding-left: 10px; margin-bottom: 20px;
@@ -85,28 +86,29 @@
     .btn-secondary { background: white; border: 1px solid #ccc; color: var(--c-text-gray); }
     .btn-outline-brand { background: white; border: 2px solid var(--c-main-turquoise); color: var(--c-main-turquoise); margin-top: 10px; }
     .btn-outline-brand:active { background: var(--c-bg-mist); }
+    .btn-outline-brand:disabled { border-color: #eee; color: #ccc; background: #fafafa; pointer-events: none; }
+
     .btn-cancel-rsv { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; font-size: 0.9rem; margin-top: 30px; }
     .btn-row { display: flex; gap: 10px; } .btn-row .btn { margin-top: 0; }
 
-    /* --- Calendar --- */
+    /* --- Calendar Matrix --- */
     .cal-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .cal-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #eee; }
     .cal-table { width: 100%; border-collapse: collapse; min-width: 400px; table-layout: fixed; }
     
     .cal-table th { background: #f8f8f8; color: var(--c-sub-deep-ocean); padding: 8px 2px; font-size: 0.75rem; border-bottom: 2px solid #ddd; border-right: 1px solid #eee; text-align: center; }
     .cal-table th:first-child { width: 50px; position: sticky; left: 0; background: #f8f8f8; z-index: 2; border-right: 2px solid #ddd; }
-    
     .cal-table td { height: 50px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center; vertical-align: middle; padding: 0; position: relative; }
     .cal-table td:first-child { position: sticky; left: 0; background: white; font-weight: bold; color: var(--c-sub-deep-ocean); font-size: 0.8rem; z-index: 1; border-right: 2px solid #ddd; }
 
     /* Symbols */
     .sym-ok { color: var(--c-main-turquoise); font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
-    .sym-lim { color: #fbc02d; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+    .sym-tri { color: #fbc02d; font-size: 1.0rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; } /* △ */
     .sym-ng { background: #f0f0f0; color: #ccc; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; cursor: default; }
     
-    /* Highlight Logic: Brand Fill, White Text - !important for Override */
-    td.selected-cell { background-color: var(--c-main-turquoise) !important; color: white !important; transition: background 0.2s; }
-    td.selected-cell .sym-ok, td.selected-cell .sym-lim { color: white !important; }
+    /* Highlight Selected (Brand Fill, White Text) */
+    td.selected-cell { background-color: var(--c-main-turquoise) !important; transition: background 0.2s; }
+    td.selected-cell .sym-ok, td.selected-cell .sym-tri { color: white !important; }
 
     .cal-legend { display: flex; justify-content: center; gap: 15px; font-size: 0.8rem; margin-top: 10px; color: var(--c-text-gray); }
 
@@ -125,7 +127,6 @@
     .time-modal { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; z-index: 302; transform: translateY(100%); transition: transform 0.3s; }
     .time-modal.open { transform: translateY(0); }
 
-    /* Top Sheet (Terms) - 80% */
     .top-sheet {
       position: fixed; top: 0; left: 0; width: 100%; height: 80%;
       background: white; border-radius: 0 0 20px 20px; z-index: 302;
@@ -219,7 +220,7 @@
 
       <div class="cal-legend">
         <span><span style="color:var(--c-main-turquoise); font-weight:bold;">○</span> 可能</span>
-        <span><span style="color:#fbc02d; font-weight:bold;">▲</span> わずか</span>
+        <span><span style="color:#fbc02d; font-weight:bold;">△</span> わずか</span>
         <span><span style="background:#f0f0f0; padding:0 4px; color:#ccc;">×</span> 不可</span>
       </div>
     </div>
@@ -231,7 +232,7 @@
         </label>
         <div id="alt-address-area" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
             <label>郵便番号 <span style="color:red">*</span></label>
-            <input type="text" id="alt-zip" placeholder="123-4567">
+            <input type="tel" id="alt-zip" placeholder="123-4567" inputmode="numeric" pattern="\d*">
             <label>住所 <span style="color:red">*</span></label>
             <input type="text" id="alt-addr" placeholder="東京都...">
             <label>施設名</label>
@@ -339,7 +340,7 @@
           </div>
           <div style="text-align:right;">
             <span style="font-size:0.8rem; font-weight:bold;">CVC (3桁)</span>
-            <input type="tel" id="cvc-input" maxlength="4" placeholder="123" style="width:80px; text-align:center; display:inline-block; margin-left:10px;" oninput="checkCVC()">
+            <input type="tel" id="cvc-input" maxlength="4" placeholder="123" inputmode="numeric" pattern="\d*" style="width:80px; text-align:center; display:inline-block; margin-left:10px;" oninput="checkCVC()">
           </div>
           <button class="btn btn-secondary" style="font-size:0.8rem; margin-top:15px;" onclick="toggleNewCardForm()">＋ 新しいカードを使う</button>
           
@@ -359,7 +360,7 @@
             <label>お名前 <span style="color:red">*</span></label>
             <input type="text" id="reg-name" placeholder="山田 太郎">
             <label>電話番号 <span style="color:red">*</span></label>
-            <input type="tel" id="reg-phone" placeholder="090-1234-5678">
+            <input type="tel" id="reg-phone" placeholder="090-1234-5678" inputmode="numeric">
             <label>愛犬のお名前 <span style="color:red">*</span></label>
             <input type="text" id="reg-dog-name" placeholder="ポチ">
         </div>
@@ -469,12 +470,17 @@
 
   window.onload = async () => {
     startTips();
-    // [PREFETCH] カレンダーデータを裏で先行取得
-    fetchAvailability(0); 
+    fetchAvailability(0); // Prefetch
 
     try {
       await liff.init({ liffId: LIFF_ID });
-      if (!liff.isLoggedIn()) { liff.login(); return; }
+      
+      // [FIX] Redirect
+      if (!liff.isLoggedIn()) {
+          liff.login({ redirectUri: window.location.href });
+          return;
+      }
+      
       const profile = await liff.getProfile();
       fetchUserData(profile.userId);
     } catch (e) {
@@ -575,7 +581,7 @@
     document.getElementById(`view-${step}`).classList.add('active');
     updateProgress(step);
     window.scrollTo(0,0);
-    if(step===2) renderCalendarStructure(); // Render with pre-fetched data
+    if(step===2) { renderCalendarStructure(); fetchAvailability(weekOffset); }
     if(step===3) renderConfirm();
     if(step===5) renderFinal();
   }
@@ -609,16 +615,13 @@
   // --- Calendar ---
   function shiftWeek(d) { 
       weekOffset += d; 
-      fetchAvailability(weekOffset); // Re-fetch for new week
-      renderCalendarStructure();
+      renderCalendarStructure(); 
+      fetchAvailability(weekOffset); 
   }
   
-  // Data Fetch for Calendar
   async function fetchAvailability(offset) {
-      const startDt = new Date(); 
-      startDt.setDate(startDt.getDate() + (offset*7));
+      const startDt = new Date(); startDt.setDate(startDt.getDate() + (offset*7));
       const sStr = startDt.toISOString().split('T')[0];
-      
       try {
           const res = await fetch(GAS_URL, {
               method: 'POST',
@@ -626,7 +629,7 @@
           });
           const json = await res.json();
           weekAvailability = json.data || {};
-          renderCalendarStructure(); // Re-render when data arrives
+          renderCalendarStructure(); 
       } catch(e) {}
   }
 
@@ -634,6 +637,7 @@
     const tbody = document.getElementById('cal-body');
     const thead = document.getElementById('cal-header');
     tbody.innerHTML = '';
+    
     const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
     document.getElementById('cal-range-text').innerText = `${startDt.getMonth()+1}/${startDt.getDate()} 〜`;
 
@@ -653,21 +657,23 @@
       dates.forEach(dt => {
         let td = document.createElement('td');
         
-        // 1. Static Rules (Wed/Thu)
+        // [FIX] Static Rules (Wed/Thu) Logic
         let isStaticNG = false;
         if (dt.day === 3) isStaticNG = true; // Wed
         if (dt.day === 4 && h < 13) isStaticNG = true; // Thu < 13
         
-        // 2. Dynamic Rules (Availability)
-        const slots = weekAvailability[dt.date] || []; 
+        // Dynamic
+        const slots = weekAvailability[dt.date] || [];
         const has00 = slots.includes(`${h}:00`);
         const has30 = slots.includes(`${h}:30`);
         
-        if (isStaticNG || (!has00 && !has30)) {
-          td.innerHTML = '<span class="sym-ng">×</span>';
+        if(isStaticNG || (!has00 && !has30)) {
+            td.innerHTML = '<span class="sym-ng">×</span>';
         } else {
-          // OK
-          td.innerHTML = `<span class="sym-ok" onclick="openTimeModal('${dt.date}', ${h}, this, ${has00}, ${has30})">○</span>`;
+            // [FIX] Symbol Logic
+            let sym = (has00 && has30) ? '○' : '△';
+            let cls = (has00 && has30) ? 'sym-ok' : 'sym-tri';
+            td.innerHTML = `<span class="${cls}" onclick="openTimeModal('${dt.date}', ${h}, this, ${has00}, ${has30})">${sym}</span>`;
         }
         tr.appendChild(td);
       });
@@ -707,15 +713,16 @@
     selectedSlot = { date: d, time: t };
     closeTimeModal();
     
-    // Highlight logic
+    // [FIX] Highlight Logic: Parent TD gets class
     document.querySelectorAll('.selected-cell').forEach(el => el.classList.remove('selected-cell'));
     if(currentCell) {
-        currentCell.classList.add('selected-cell'); // Add class to TD
+        // currentCell is span, parent is td
+        currentCell.parentElement.classList.add('selected-cell'); 
     }
     
     const btn = document.getElementById('btn-to-step3');
     btn.disabled = false;
-    btn.innerText = `${d.substring(5)} ${t} で進む`; // Change Text
+    btn.innerText = `${d.substring(5)} ${t} で進む`;
   }
 
   function toggleAltAddress() {
