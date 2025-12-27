@@ -10,7 +10,7 @@
 
   <style>
     /* =========================================
-       K9 Harmony Design System (Ver 10.0)
+       K9 Harmony Design System (Ver 11.0)
        ========================================= */
     :root {
       --c-main-turquoise: #57C3C2;
@@ -64,11 +64,11 @@
       border-left: 4px solid var(--c-main-turquoise); padding-left: 10px; margin-bottom: 20px;
       font-family: var(--font-serif);
     }
-    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; position: relative; }
     
     label { display: block; font-weight: bold; font-size: 0.9rem; color: var(--c-sub-deep-ocean); margin-bottom: 8px; }
     
-    input[type="text"], input[type="tel"], input[type="number"], input[type="date"], select, textarea {
+    input, select, textarea {
       width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;
       margin-bottom: 15px; box-sizing: border-box; font-family: inherit;
     }
@@ -92,23 +92,29 @@
 
     /* Calendar */
     .cal-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .cal-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #eee; }
+    .cal-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #eee; position: relative; min-height: 200px; }
     .cal-table { width: 100%; border-collapse: collapse; min-width: 400px; table-layout: fixed; }
     .cal-table th { background: #f8f8f8; color: var(--c-sub-deep-ocean); padding: 8px 2px; font-size: 0.75rem; border-bottom: 2px solid #ddd; border-right: 1px solid #eee; text-align: center; }
     .cal-table th:first-child { width: 50px; position: sticky; left: 0; background: #f8f8f8; z-index: 2; border-right: 2px solid #ddd; }
     .cal-table td { height: 50px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center; vertical-align: middle; padding: 0; position: relative; }
     .cal-table td:first-child { position: sticky; left: 0; background: white; font-weight: bold; color: var(--c-sub-deep-ocean); font-size: 0.8rem; z-index: 1; border-right: 2px solid #ddd; }
 
-    /* Symbols */
     .sym-ok { color: var(--c-main-turquoise); font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
     .sym-tri { color: #fbc02d; font-size: 1.0rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
     .sym-ng { background: #f0f0f0; color: #ccc; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; cursor: default; }
     
-    /* Highlight: !important to override everything */
     td.selected-cell { background-color: var(--c-main-turquoise) !important; transition: background 0.2s; }
     td.selected-cell .sym-ok, td.selected-cell .sym-tri { color: white !important; }
 
     .cal-legend { display: flex; justify-content: center; gap: 15px; font-size: 0.8rem; margin-top: 10px; color: var(--c-text-gray); }
+
+    /* Calendar Overlay Loader */
+    #cal-overlay-loader {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(255,255,255,0.8); z-index: 10;
+        display: none; flex-direction: column; justify-content: center; align-items: center;
+        border-radius: 8px;
+    }
 
     /* Modals */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; display: none; opacity: 0; transition: opacity 0.3s; }
@@ -134,7 +140,7 @@
     }
     .footer-logo-img { width: 40%; height: auto; display: inline-block; filter: contrast(0.95); opacity: 0.7; }
 
-    /* Loading */
+    /* Main Loading */
     #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--c-main-turquoise); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -194,7 +200,7 @@
 
   <div id="view-2" class="view-section">
     <h2>日時の選択</h2>
-    <div class="card" style="padding:15px 5px;">
+    <div class="card" style="padding:15px 5px; position:relative;">
       <div class="cal-controls" style="padding:0 10px;">
         <button class="btn btn-secondary" style="width:auto; padding:5px 10px; font-size:0.8rem;" onclick="shiftWeek(-1)">&lt; 前週</button>
         <span id="cal-range-text" style="font-weight:bold; font-size:0.9rem;">--/-- 〜</span>
@@ -202,6 +208,11 @@
       </div>
 
       <div class="cal-wrapper">
+        <div id="cal-overlay-loader">
+            <div class="spinner" style="width:30px; height:30px; border-width:3px;"></div>
+            <div style="font-size:0.8rem; color:var(--c-text-gray); margin-top:5px;">スケジュール確認中...</div>
+        </div>
+        
         <table class="cal-table">
           <thead><tr id="cal-header"><th>時間</th></tr></thead>
           <tbody id="cal-body"></tbody>
@@ -333,7 +344,6 @@
             <input type="tel" id="cvc-input" maxlength="4" placeholder="123" inputmode="numeric" pattern="\d*" style="width:80px; text-align:center; display:inline-block; margin-left:10px;" oninput="checkCVC()">
           </div>
           <button class="btn btn-secondary" style="font-size:0.8rem; margin-top:15px;" onclick="toggleNewCardForm()">＋ 新しいカードを使う</button>
-          
           <div id="new-card-form" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
               <input type="text" placeholder="カード番号 (Mock)" style="margin-bottom:8px;">
               <div style="display:flex; gap:10px;">
@@ -347,40 +357,29 @@
     <div id="form-new" style="display:none;">
         <div class="card">
             <h3 style="margin-top:0; color:var(--c-main-turquoise); font-size:1rem; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">顧客情報</h3>
-            
             <label>氏名 <span style="color:red">*</span></label>
             <input type="text" id="reg-name" placeholder="山田 太郎">
-            
             <label>電話番号 <span style="color:red">*</span></label>
             <input type="tel" id="reg-phone" placeholder="090-1234-5678" inputmode="numeric" oninput="formatPhone(this)">
-            
             <label>郵便番号 <span style="color:red">*</span></label>
             <input type="tel" id="reg-zip" placeholder="123-4567" inputmode="numeric" maxlength="8" oninput="formatZipAndFetch(this)">
-            
             <label>住所 <span style="color:red">*</span></label>
             <input type="text" id="reg-addr" placeholder="自動入力..." onchange="calcNewUserDistance()">
         </div>
-
         <div class="card">
             <h3 style="margin-top:0; color:var(--c-main-turquoise); font-size:1rem; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">愛犬情報</h3>
-            
             <label>名前 <span style="color:red">*</span></label>
             <input type="text" id="reg-dog-name" placeholder="ポチ">
-            
             <label>犬種</label>
             <input type="text" id="reg-dog-breed" placeholder="トイプードル">
-            
             <label>年齢 (歳)</label>
-            <input type="number" id="reg-dog-age" placeholder="3">
-            
+            <input type="number" id="reg-dog-age" placeholder="3" inputmode="numeric">
             <label style="display:flex; align-items:center; margin-top:10px;">
                 <input type="checkbox" id="reg-dog-neutered" style="width:20px; height:20px; margin-right:10px;">
                 去勢・避妊済み
             </label>
-            
             <label style="margin-top:15px;">お困りごと</label>
             <textarea id="reg-concerns" rows="3" placeholder="吠え癖、噛み癖など"></textarea>
-            
             <label style="margin-top:15px;">備考</label>
             <textarea id="reg-remarks" rows="2" placeholder="その他連絡事項"></textarea>
         </div>
@@ -469,7 +468,6 @@
   const LIFF_ID = '2008546673-MJY7j3ox';
   const OFFICE_POS = { lat: 35.7665, lng: 139.6936 };
 
-  // Tips
   const DOG_TIPS = [
     "犬の鼻紋は一頭一頭違います。", "犬は人間の約4倍の聴力を持っています。", 
     "犬の嗅覚は人間の100万倍以上。", "犬は肉球からしか汗をかけません。", 
@@ -603,22 +601,32 @@
     if(step===3) renderConfirm();
     if(step===5) renderFinal();
   }
+  
+  // [Modified] Skip Payment if existing & !card
   function checkUserAndNext() {
+      const paymentMethod = document.getElementById('payment-method').value;
+      
       if(userData) {
-          document.getElementById('form-existing').style.display = 'block';
-          document.getElementById('form-new').style.display = 'none';
-          document.getElementById('btn-final-check').disabled = true; 
-          if(document.getElementById('payment-method').value !== 'CARD') {
-              document.getElementById('btn-final-check').disabled = false;
+          // Existing User
+          if(paymentMethod === 'CARD') {
+              document.getElementById('form-existing').style.display = 'block';
+              document.getElementById('form-new').style.display = 'none';
+              document.getElementById('btn-final-check').disabled = true; 
+              goToView(4); // Go to input
+          } else {
+              // Skip input, go to final
+              goToView(5);
           }
       } else {
+          // New User (Always go to form)
           document.getElementById('form-existing').style.display = 'none';
           document.getElementById('form-new').style.display = 'block';
-          // 新規: 全て入力で活性化させるロジック（今回は簡易的にデフォルト非活性解除）
+          // Check inputs validity if needed, for now enable default
           document.getElementById('btn-final-check').disabled = false;
+          goToView(4);
       }
-      goToView(4);
   }
+  
   function updateProgress(step) {
     if(step>5) return;
     const pct = ((step-1)/4)*100;
@@ -639,6 +647,7 @@
   }
   
   async function fetchAvailability(offset) {
+      document.getElementById('cal-overlay-loader').style.display = 'flex';
       const startDt = new Date(); startDt.setDate(startDt.getDate() + (offset*7));
       const sStr = startDt.toISOString().split('T')[0];
       try {
@@ -650,6 +659,7 @@
           weekAvailability = json.data || {};
           renderCalendarStructure(); 
       } catch(e) {}
+      document.getElementById('cal-overlay-loader').style.display = 'none';
   }
 
   function renderCalendarStructure() {
@@ -670,7 +680,8 @@
     }
     thead.innerHTML = headHtml;
 
-    for(let h=10; h<=20; h++){
+    // Loop 10:00 to 18:00 (18:30 last slot) -> Delete 19, 20
+    for(let h=10; h<=18; h++){
       let tr = document.createElement('tr');
       tr.innerHTML = `<td>${h}:00</td>`;
       dates.forEach(dt => {
@@ -729,7 +740,6 @@
     selectedSlot = { date: d, time: t };
     closeTimeModal();
     
-    // Parent TD Highlighting
     document.querySelectorAll('.selected-cell').forEach(el => el.classList.remove('selected-cell'));
     if(currentCell) {
         currentCell.parentElement.classList.add('selected-cell'); 
@@ -745,7 +755,7 @@
       document.getElementById('alt-address-area').style.display = chk ? 'block' : 'none';
   }
 
-  // --- Address Logic (New User / Alt) ---
+  // --- Address Logic ---
   function formatPhone(input) {
       let val = input.value.replace(/\D/g, '');
       if (val.length > 10) val = val.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
@@ -770,15 +780,12 @@
               const r = json.results[0];
               const addr = r.address1 + r.address2 + r.address3;
               document.getElementById(targetId).value = addr;
-              // Calc Distance for new user (mock or try lat/lng if API supported)
-              // For now, trigger calc logic
               calcNewUserDistance(); 
           }
       } catch(e) {}
   }
   function calcNewUserDistance() {
-      // 本来はGeocoding必要だが、今回は計算中...→0 or 要見積もりとする
-      // 既存顧客以外は一旦0
+      // Mock calc trigger
   }
 
   // --- Confirm ---
@@ -788,6 +795,7 @@
     const price = parseInt(menuEl.options[menuEl.selectedIndex].getAttribute('data-price'));
     
     let place = "";
+    // Priority: Alt Address > User Address > New User Input
     if (document.getElementById('alt-address-check').checked) {
         place = document.getElementById('alt-addr').value || "指定住所";
     } else if (userData) {
@@ -802,12 +810,10 @@
     document.getElementById('conf-course').innerText = menuEl.options[menuEl.selectedIndex].text + (isMulti?" (+2頭目)":"");
 
     document.getElementById('conf-travel-fee').innerText = "計算中...";
-    document.getElementById('conf-travel-msg').innerText = "正確な出張費を計算しております。最終確認画面にて正式な交通費をお知らせいたします。";
     document.getElementById('conf-total').innerText = "---";
     
     setTimeout(() => {
         let travelFee = 0;
-        // Calc only if registered address matches & coords exist & no alt address
         if (userData && userData.base_lat && !document.getElementById('alt-address-check').checked) {
             const dist = calcDistance(OFFICE_POS.lat, OFFICE_POS.lng, userData.base_lat, userData.base_lng);
             travelFee = calcTravelFee(dist);
@@ -894,8 +900,6 @@
 
   async function submitReservation() {
     document.getElementById('loading-overlay').style.display = 'flex';
-    
-    // Collect Data
     const regData = !userData ? {
         name: document.getElementById('reg-name').value,
         phone: document.getElementById('reg-phone').value,
@@ -928,7 +932,7 @@
     finally { document.getElementById('loading-overlay').style.display='none'; }
   }
 
-  // --- Line Sharing (Ritz Style) ---
+  // --- Line Sharing (Ritz Style, SendMessage) ---
   function shareLine() {
     // 1. Build Message
     const dogName = selectedDog ? selectedDog.name_disp : (document.getElementById('reg-dog-name').value + 'ちゃん');
@@ -978,15 +982,16 @@ ${dogName} の健康と安全を最優先とさせていただきたく存じま
 ご不安な点や、事前に伝えておきたいことがございましたら、このLINEにていつでもお申し付けください。
 当日、皆様にお会いできる日を心待ちにしております。`;
 
+    // 2. Send Message via LIFF SDK
     if (liff.isInClient()) {
         liff.sendMessages([{ type: 'text', text: msgText }])
         .then(() => alert('トークルームに送信しました'))
         .catch(e => { 
-            // Fallback (Friend Share)
+            // Fallback (Friend Share if sendMessages fails)
+            alert('メッセージ送信に失敗しました。シェア画面を開きます。');
             window.location.href = "https://line.me/R/msg/text/?" + encodeURIComponent(msgText); 
         });
     } else {
-        // Fallback
         alert('LINEアプリ内で開いてください');
     }
   }
