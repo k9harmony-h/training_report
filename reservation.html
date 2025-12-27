@@ -10,7 +10,7 @@
 
   <style>
     /* =========================================
-       K9 Harmony Design System (Ver 17.0 - Backend Send)
+       K9 Harmony Design System (Ver 18.0 - Hospitality & Logic)
        ========================================= */
     :root {
       --c-main-turquoise: #57C3C2;
@@ -36,20 +36,16 @@
         position: fixed; top: 0; right: 0;
         background: #000; color: #ff0;
         font-size: 10px; padding: 4px;
-        z-index: 2147483647; 
-        opacity: 0.8; pointer-events: none;
+        z-index: 2147483647; opacity: 0.8; pointer-events: none;
         font-family: monospace;
     }
-
-    /* DEBUG CONSOLE (Static bottom) */
+    /* DEBUG CONSOLE */
     #debug-console {
-        display: block; 
-        width: 100%; height: 200px;
+        display: block; width: 100%; height: 200px;
         background: #111; color: #0f0;
         font-family: monospace; font-size: 11px;
         overflow-y: scroll; padding: 10px; box-sizing: border-box;
-        border-top: 2px solid #555;
-        margin-top: 20px;
+        border-top: 2px solid #555; margin-top: 20px;
     }
     .log-line { border-bottom: 1px solid #333; padding: 2px 0; word-break: break-all; }
 
@@ -86,9 +82,7 @@
       font-family: var(--font-serif);
     }
     .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; position: relative; }
-    
     label { display: block; font-weight: bold; font-size: 0.9rem; color: var(--c-sub-deep-ocean); margin-bottom: 8px; }
-    
     input, select, textarea {
       width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;
       margin-bottom: 15px; box-sizing: border-box; font-family: inherit;
@@ -103,63 +97,48 @@
     .btn-primary { background: var(--c-main-turquoise); color: white; box-shadow: 0 4px 10px rgba(87, 195, 194, 0.3); }
     .btn-primary:active { transform: scale(0.98); }
     .btn-primary:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
-
     .btn-secondary { background: white; border: 1px solid #ccc; color: var(--c-text-gray); }
     .btn-outline-brand { background: white; border: 2px solid var(--c-main-turquoise); color: var(--c-main-turquoise); margin-top: 10px; }
     .btn-outline-brand:active { background: var(--c-bg-mist); }
-    
     .btn-cancel-rsv { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; font-size: 0.9rem; margin-top: 30px; }
     .btn-row { display: flex; gap: 10px; } .btn-row .btn { margin-top: 0; }
 
     /* Calendar */
     .cal-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .cal-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #eee; position: relative; min-height: 200px; }
-    
-    /* Overlay Loader */
     #cal-overlay-loader {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(255,255,255,0.8); z-index: 10;
         display: none; flex-direction: column; justify-content: center; align-items: center;
         border-radius: 8px;
     }
-
     .cal-table { width: 100%; border-collapse: collapse; min-width: 400px; table-layout: fixed; }
     .cal-table th { background: #f8f8f8; color: var(--c-sub-deep-ocean); padding: 8px 2px; font-size: 0.75rem; border-bottom: 2px solid #ddd; border-right: 1px solid #eee; text-align: center; }
     .cal-table th:first-child { width: 50px; position: sticky; left: 0; background: #f8f8f8; z-index: 2; border-right: 2px solid #ddd; }
     .cal-table td { height: 50px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center; vertical-align: middle; padding: 0; position: relative; }
     .cal-table td:first-child { position: sticky; left: 0; background: white; font-weight: bold; color: var(--c-sub-deep-ocean); font-size: 0.8rem; z-index: 1; border-right: 2px solid #ddd; }
-
     .sym-ok { color: var(--c-main-turquoise); font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
     .sym-tri { color: #fbc02d; font-size: 1.0rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
     .sym-ng { background: #f0f0f0; color: #ccc; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; cursor: default; }
-    
     td.selected-cell { background-color: var(--c-main-turquoise) !important; transition: background 0.2s; }
     td.selected-cell .sym-ok, td.selected-cell .sym-tri { color: white !important; }
-
     .cal-legend { display: flex; justify-content: center; gap: 15px; font-size: 0.8rem; margin-top: 10px; color: var(--c-text-gray); }
 
     /* Modals */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; display: none; opacity: 0; transition: opacity 0.3s; }
     .modal-overlay.open { display: block; opacity: 1; }
-
     .center-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 350px; background: white; border-radius: 12px; padding: 25px; z-index: 301; display: none; text-align: center; }
     .center-modal.open { display: block; animation: popIn 0.3s ease-out; }
     @keyframes popIn { from { transform: translate(-50%, -40%); opacity: 0; } to { transform: translate(-50%, -50%); opacity: 1; } }
-
     .time-modal { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; z-index: 302; transform: translateY(100%); transition: transform 0.3s; }
     .time-modal.open { transform: translateY(0); }
-
     .top-sheet { position: fixed; top: 0; left: 0; width: 100%; height: 80%; background: white; border-radius: 0 0 20px 20px; z-index: 302; transform: translateY(-100%); transition: transform 0.3s; display: flex; flex-direction: column; }
     .top-sheet.open { transform: translateY(0); }
     .top-sheet-content { flex: 1; overflow-y: auto; padding: 20px; font-size: 0.9rem; line-height: 1.6; }
     .top-sheet-close-area { position: fixed; top: 80%; left: 0; width: 100%; height: 20%; z-index: 301; }
 
     /* Footer */
-    .site-footer {
-        flex-shrink: 0; margin-top: auto;
-        background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.2);
-        padding: 60px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D;
-    }
+    .site-footer { flex-shrink: 0; margin-top: auto; background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.2); padding: 60px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D; }
     .footer-logo-img { width: 40%; height: auto; display: inline-block; filter: contrast(0.95); opacity: 0.7; }
 
     /* Main Loading */
@@ -169,11 +148,14 @@
     
     .checkbox-row { display: flex; align-items: flex-start; margin-bottom: 10px; font-size: 0.9rem; color: var(--c-text-sumi); }
     .checkbox-row input { width: 18px; height: 18px; margin-right: 10px; margin-top: 3px; accent-color: var(--c-main-turquoise); }
+
+    /* Link Style */
+    .text-link { color: var(--c-sub-deep-ocean); text-decoration: underline; font-size: 0.85rem; cursor: pointer; display: inline-block; margin-top: 10px; }
   </style>
 </head>
 <body>
 
-<div id="version-stamp">v2025.12.27-Backend-Send</div>
+<div id="version-stamp">v2025.12.27-Ritz-Fix</div>
 
 <div id="loading-overlay">
   <div class="spinner"></div>
@@ -203,7 +185,7 @@
     <div class="card" id="dog-info-card">
       <label>選択中のワンちゃん</label>
       <div id="selected-dog-name" style="font-size:1.2rem; font-weight:bold; color:var(--c-main-turquoise); margin-bottom:10px;">---</div>
-      <button class="btn btn-secondary" style="padding:8px 15px; font-size:0.8rem; width:auto; display:inline-block;" onclick="showDogSelectModal(true)">変更する</button>
+      <button class="btn btn-secondary" id="btn-change-dog" style="padding:8px 15px; font-size:0.8rem; width:auto; display:inline-block;" onclick="showDogSelectModal(true)">変更する</button>
 
       <div style="background:var(--c-bg-mist); padding:10px; border-radius:8px; margin-top:15px;">
         <label style="display:flex; align-items:center; margin:0; cursor:pointer;">
@@ -211,6 +193,10 @@
           2頭目の追加 (+2,000円 / +30分)
         </label>
       </div>
+    </div>
+
+    <div id="existing-customer-link-area" style="text-align:right; display:none; margin-bottom:20px;">
+        <span class="text-link" onclick="openUidModal()">すでにご契約中のお客様はこちら</span>
     </div>
 
     <div class="card">
@@ -249,14 +235,14 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="alt-address-card">
         <label style="display:flex; align-items:center; cursor:pointer; margin-bottom:0;">
             <input type="checkbox" id="alt-address-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);" onchange="toggleAltAddress()">
             申込住所と異なる場所で実施
         </label>
         <div id="alt-address-area" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
             <label>郵便番号 <span style="color:red">*</span></label>
-            <input type="tel" id="alt-zip" placeholder="123-4567" inputmode="numeric" pattern="\d*" maxlength="8" oninput="formatZipAndFetch(this)">
+            <input type="tel" id="alt-zip" placeholder="123-4567" inputmode="numeric" pattern="\d*" maxlength="8" oninput="formatZipAndFetch(this, 'alt-addr')">
             <label>住所 <span style="color:red">*</span></label>
             <input type="text" id="alt-addr" placeholder="東京都...">
             <label>施設名</label>
@@ -297,10 +283,15 @@
       </div>
 
       <div style="border-top:1px solid #eee; margin:15px 0; padding-top:15px;">
+        <label>備考</label>
+        <textarea id="conf-remarks" rows="2" placeholder="ご質問や連絡事項がございましたらご記入ください"></textarea>
+      </div>
+
+      <div style="border-top:1px solid #eee; margin:15px 0; padding-top:15px;">
         <label>Voucher / 紹介コード</label>
         <div style="display:flex; gap:10px;">
             <input type="text" id="voucher-code" placeholder="コードを入力" style="margin-bottom:0;">
-            <button class="btn btn-secondary" style="margin-top:0; padding:10px;" onclick="applyVoucher()">適用</button>
+            <button class="btn btn-secondary" style="margin-top:0; padding:10px;" id="btn-apply-voucher" onclick="applyVoucher()">適用</button>
         </div>
         <div id="voucher-result" style="font-size:0.9rem; font-weight:bold; margin-top:5px;"></div>
       </div>
@@ -376,6 +367,10 @@
               </div>
           </div>
         </div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="goToView(3)">戻る</button>
+            <button class="btn btn-primary" id="btn-final-check" disabled onclick="goToView(5)">最終確認へ</button>
+        </div>
     </div>
 
     <div id="form-new" style="display:none;">
@@ -386,9 +381,11 @@
             <label>電話番号 <span style="color:red">*</span></label>
             <input type="tel" id="reg-phone" placeholder="090-1234-5678" inputmode="numeric" oninput="formatPhone(this)">
             <label>郵便番号 <span style="color:red">*</span></label>
-            <input type="tel" id="reg-zip" placeholder="123-4567" inputmode="numeric" maxlength="8" oninput="formatZipAndFetch(this)">
+            <input type="tel" id="reg-zip" placeholder="123-4567" inputmode="numeric" maxlength="8" oninput="formatZipAndFetch(this, 'reg-addr')">
             <label>住所 <span style="color:red">*</span></label>
             <input type="text" id="reg-addr" placeholder="自動入力..." onchange="calcNewUserDistance()">
+            <label>目印 (任意)</label>
+            <input type="text" id="reg-landmark" placeholder="近くの公園など">
         </div>
         <div class="card">
             <h3 style="margin-top:0; color:var(--c-main-turquoise); font-size:1rem; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">愛犬情報</h3>
@@ -407,11 +404,25 @@
             <label style="margin-top:15px;">備考</label>
             <textarea id="reg-remarks" rows="2" placeholder="その他連絡事項"></textarea>
         </div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="goToView(3)">戻る</button>
+            <button class="btn btn-primary" onclick="handleNewUserNext()">次へ</button>
+        </div>
     </div>
-
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="goToView(3)">戻る</button>
-      <button class="btn btn-primary" id="btn-final-check" disabled onclick="goToView(5)">最終確認へ</button>
+    
+    <div id="form-new-card-only" style="display:none;">
+        <div class="card">
+            <label>クレジットカード登録</label>
+            <input type="text" placeholder="カード番号 (Mock)" style="margin-bottom:8px;">
+            <div style="display:flex; gap:10px;">
+                <input type="text" placeholder="MM/YY">
+                <input type="text" placeholder="CVC">
+            </div>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="backToForm()">戻る</button>
+            <button class="btn btn-primary" onclick="goToView(5)">最終確認へ</button>
+        </div>
     </div>
   </div>
 
@@ -479,6 +490,20 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="uid-modal-overlay">
+  <div class="center-modal" style="text-align:center;">
+    <h3 style="color:var(--c-sub-deep-ocean); font-size:1rem; margin-bottom:15px;">お客様IDの確認</h3>
+    <p style="font-size:0.85rem; color:#555; text-align:left; line-height:1.6; margin-bottom:15px;">
+        恐れ入りますが、データの安全な連携のため、以下のIDを担当トレーナーへご提示いただけますでしょうか。
+    </p>
+    <div style="background:#f0f0f0; padding:10px; border-radius:5px; font-family:monospace; margin-bottom:15px; word-break:break-all;" id="uid-display-area">
+        ---
+    </div>
+    <button class="btn btn-primary" onclick="copyUid()">IDをコピー</button>
+    <button class="btn btn-secondary" onclick="closeUidModal()">閉じる</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="terms-overlay" onclick="closeTerms()"></div>
 <div class="top-sheet" id="terms-sheet">
   <div style="padding:15px; border-bottom:1px solid #eee; text-align:center; font-weight:bold; display:flex; justify-content:space-between;">
@@ -527,8 +552,6 @@
   let weekOffset = 0;
   let voucherData = null; 
   let weekAvailability = {};
-  
-  // [NEW] Global var for Push ID
   let currentLineUserId = null;
 
   window.onload = async () => {
@@ -542,15 +565,12 @@
     try {
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) {
-          log("Not logged in. Redirecting...");
           liff.login({ redirectUri: window.location.href });
           return;
       }
       log("LIFF Init OK");
       const profile = await liff.getProfile();
-      // [NEW] Store User ID for Backend Push
       currentLineUserId = profile.userId;
-      
       fetchUserData(profile.userId);
     } catch (e) {
       document.getElementById('loading-text').innerText = 'エラー: ' + e.message;
@@ -578,10 +598,15 @@
           userData = json.customer;
           userDogs = json.all_dogs || [json.dog];
           log("User Found: " + userData.name);
+          document.getElementById('alt-address-card').style.display = 'block';
       } else {
           userData = null; 
           userDogs = [];
           log("New User");
+          document.getElementById('selected-dog-name').innerText = "ご新規の予約";
+          document.getElementById('btn-change-dog').style.display = 'none';
+          document.getElementById('existing-customer-link-area').style.display = 'block';
+          document.getElementById('alt-address-card').style.display = 'none'; // Hide Alt Address for new
       }
       if(json.products) products = json.products;
       renderMenuSelect();
@@ -590,8 +615,6 @@
         showDogSelectModal(false);
       } else if (userDogs.length === 1) {
         selectDog(0);
-      } else {
-        document.getElementById('selected-dog-name').innerText = "未登録 (新規)";
       }
       clearInterval(tipsTimer);
       document.getElementById('loading-overlay').style.display = 'none';
@@ -621,6 +644,20 @@
     }
   }
 
+  // --- UID Modal ---
+  function openUidModal() {
+      document.getElementById('uid-display-area').innerText = currentLineUserId || "読み込み中...";
+      document.getElementById('uid-modal-overlay').classList.add('open');
+  }
+  function closeUidModal() {
+      document.getElementById('uid-modal-overlay').classList.remove('open');
+  }
+  function copyUid() {
+      const text = document.getElementById('uid-display-area').innerText;
+      navigator.clipboard.writeText(text).then(()=>alert('コピーしました'));
+  }
+
+  // --- Dog Select ---
   function showDogSelectModal(canClose) {
     const cont = document.getElementById('dog-list-container');
     cont.innerHTML = '';
@@ -650,6 +687,7 @@
     document.getElementById('selected-dog-name').innerText = selectedDog.name_disp || selectedDog.name;
   }
 
+  // --- Navigation ---
   function goToView(step) {
     document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
     document.getElementById(`view-${step}`).classList.add('active');
@@ -659,11 +697,7 @@
         const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
         const sStr = startDt.toISOString().split('T')[0];
         renderCalendarStructure(); 
-        if(!weekAvailability[sStr]) {
-            fetchAvailability(weekOffset); 
-        } else {
-            fillCalendarBody(); 
-        }
+        if(!weekAvailability[sStr]) fetchAvailability(weekOffset); else fillCalendarBody();
     }
     if(step===3) renderConfirm();
     if(step===5) renderFinal();
@@ -675,6 +709,7 @@
           if(paymentMethod === 'CARD') {
               document.getElementById('form-existing').style.display = 'block';
               document.getElementById('form-new').style.display = 'none';
+              document.getElementById('form-new-card-only').style.display = 'none';
               document.getElementById('btn-final-check').disabled = true; 
               goToView(4); 
           } else {
@@ -683,21 +718,42 @@
       } else {
           document.getElementById('form-existing').style.display = 'none';
           document.getElementById('form-new').style.display = 'block';
-          document.getElementById('btn-final-check').disabled = false;
+          document.getElementById('form-new-card-only').style.display = 'none';
           goToView(4);
       }
+  }
+  
+  // New User Form Flow
+  function handleNewUserNext() {
+      const paymentMethod = document.getElementById('payment-method').value;
+      if(paymentMethod === 'CARD') {
+          // Show Card Input for New User
+          document.getElementById('form-new').style.display = 'none';
+          document.getElementById('form-new-card-only').style.display = 'block';
+      } else {
+          goToView(5);
+      }
+  }
+  function backToForm() {
+      document.getElementById('form-new').style.display = 'block';
+      document.getElementById('form-new-card-only').style.display = 'none';
   }
   
   function goBackFromFinal() {
       const paymentMethod = document.getElementById('payment-method').value;
       if(userData) {
-          if(paymentMethod === 'CARD') {
-              goToView(4); 
-          } else {
-              goToView(3); 
-          }
+          if(paymentMethod === 'CARD') goToView(4); 
+          else goToView(3); 
       } else {
-          goToView(4); 
+          if(paymentMethod === 'CARD') {
+              goToView(4); // Back to Card Input, then user can hit back to form
+              document.getElementById('form-new').style.display = 'none';
+              document.getElementById('form-new-card-only').style.display = 'block';
+          } else {
+              goToView(4); // Back to Form
+              document.getElementById('form-new').style.display = 'block';
+              document.getElementById('form-new-card-only').style.display = 'none';
+          }
       }
   }
 
@@ -713,6 +769,7 @@
     }
   }
 
+  // --- Calendar ---
   function shiftWeek(d) { 
       weekOffset += d; 
       renderCalendarStructure(); 
@@ -735,9 +792,7 @@
           if(json.data) Object.assign(weekAvailability, json.data);
           
           const currentViewStart = new Date(); currentViewStart.setDate(currentViewStart.getDate() + (weekOffset*7));
-          if(currentViewStart.toISOString().split('T')[0] === sStr) {
-              fillCalendarBody();
-          }
+          if(currentViewStart.toISOString().split('T')[0] === sStr) fillCalendarBody();
       } catch(e) {}
       document.getElementById('cal-overlay-loader').style.display = 'none';
   }
@@ -842,15 +897,13 @@
       else if (val.length > 6) val = val.replace(/(\d{3})(\d{4})/, '$1-$2');
       input.value = val;
   }
-  function formatZip(input) {
+  function formatZipAndFetch(input, targetId) {
       let val = input.value.replace(/\D/g, '');
       if (val.length > 3) val = val.replace(/(\d{3})(\d{0,4})/, '$1-$2');
       input.value = val;
-  }
-  function formatZipAndFetch(input) {
-      formatZip(input);
+      
       const raw = input.value.replace(/-/g,'');
-      if(raw.length === 7) fetchAddress(raw, 'reg-addr');
+      if(raw.length === 7) fetchAddress(raw, targetId);
   }
   async function fetchAddress(zip, targetId) {
       try {
@@ -907,9 +960,21 @@
   async function applyVoucher() {
       const code = document.getElementById('voucher-code').value;
       if(!code) return;
+      const btn = document.getElementById('btn-apply-voucher');
+      const resDiv = document.getElementById('voucher-result');
+      
+      // Ritz Style Waiting
+      btn.disabled = true;
+      btn.innerText = "確認中...";
+      resDiv.style.color = 'var(--c-text-gray)';
+      resDiv.innerText = "特典の適用状況を確認しております。少々お待ちください…";
+
       const res = await fetch(`${GAS_URL}?type=check_voucher&code=${code}&userId=DUMMY`); 
       const json = await res.json();
-      const resDiv = document.getElementById('voucher-result');
+      
+      btn.disabled = false;
+      btn.innerText = "適用";
+
       if(json.valid) {
           resDiv.style.color = 'var(--c-main-turquoise)';
           resDiv.innerText = `適用: ${json.name} (-${json.discount_value}円)`;
@@ -979,6 +1044,7 @@
         phone: document.getElementById('reg-phone').value,
         zip: document.getElementById('reg-zip').value,
         address: document.getElementById('reg-addr').value,
+        landmark: document.getElementById('reg-landmark').value,
         dogName: document.getElementById('reg-dog-name').value,
         dogBreed: document.getElementById('reg-dog-breed').value,
         dogAge: document.getElementById('reg-dog-age').value,
@@ -1006,22 +1072,40 @@
     finally { document.getElementById('loading-overlay').style.display='none'; }
   }
 
-  // --- LINE SHARE (Backend Push + Fallback) ---
   async function shareLine() {
     log("Starting shareLine...");
-    
-    // 1. Build Message
     try {
         const dogName = selectedDog ? (selectedDog.name_disp || "") : ((document.getElementById('reg-dog-name').value || "") + 'ちゃん');
         const custName = userData ? (userData.name || "") : (document.getElementById('reg-name').value || "");
-        const place = document.getElementById('conf-place').innerText || "";
+        
+        let place = document.getElementById('conf-place').innerText || "";
+        
+        // Add Landmark info if available
+        let landmarkInfo = "";
+        if (document.getElementById('alt-address-check').checked) {
+            const b = document.getElementById('alt-building').value;
+            const l = document.getElementById('alt-note').value;
+            if(b) landmarkInfo += ` (${b})`;
+            if(l) landmarkInfo += ` ※目印:${l}`;
+        } else if (!userData) {
+            const l = document.getElementById('reg-landmark').value;
+            if(l) landmarkInfo += ` ※目印:${l}`;
+        }
+        place += landmarkInfo;
+
         const course = document.getElementById('conf-course').innerText || "";
         const fee = document.getElementById('conf-travel-fee').innerText || "";
         const total = document.getElementById('conf-total').innerText || "";
         const payEl = document.getElementById('payment-method');
         const pay = payEl.options[payEl.selectedIndex].text || "";
         const voucherInfo = voucherData ? `・割引： ${voucherData.name} (-${voucherData.discount_value}円)\n` : '';
-        const remarks = (!userData ? (document.getElementById('reg-remarks').value || "") : '特になし');
+        
+        let remarks = document.getElementById('conf-remarks').value;
+        if(!userData) {
+            const regRem = document.getElementById('reg-remarks').value;
+            if(regRem) remarks += (remarks ? "\n" : "") + "登録時備考: " + regRem;
+        }
+        if(!remarks) remarks = "特になし";
 
         const msgText = 
 `K9 Harmony 代表の平田でございます。
@@ -1060,14 +1144,13 @@ ${dogName} の健康と安全を最優先とさせていただきたく存じま
 ご不安な点や、事前に伝えておきたいことがございましたら、このLINEにていつでもお申し付けください。
 当日、皆様にお会いできる日を心待ちにしております。`;
 
-        // 2. Try Backend Push First (Most Reliable for 1:1)
         log("Trying Backend Push...");
         try {
             const res = await fetch(GAS_URL, {
                 method: 'POST',
                 body: JSON.stringify({
                     action: 'send_line_msg',
-                    userId: currentLineUserId, // Captured in onload
+                    userId: currentLineUserId, 
                     message: msgText
                 })
             });
@@ -1076,7 +1159,7 @@ ${dogName} の健康と安全を最優先とさせていただきたく存じま
             if (json.status === 'success') {
                 log("Backend Push Success");
                 alert('トークルームに送信しました');
-                return; // Stop here if success
+                return; 
             } else {
                 log("Backend Push Failed: " + json.message);
             }
@@ -1084,7 +1167,6 @@ ${dogName} の健康と安全を最優先とさせていただきたく存じま
             log("Backend Fetch Error: " + e);
         }
 
-        // 3. Fallback to LIFF SDK (If backend failed)
         if (liff.isInClient()) {
             log("Fallback to LIFF SDK...");
             liff.sendMessages([{ type: 'text', text: msgText }])
@@ -1093,11 +1175,9 @@ ${dogName} の健康と安全を最優先とさせていただきたく存じま
             })
             .catch(e => {
                 log("LIFF SDK Error: " + JSON.stringify(e));
-                // 4. Final Fallback (URL Scheme)
                 window.location.href = "https://line.me/R/msg/text/?" + encodeURIComponent(msgText);
             });
         } else {
-            // Not in client, backend failed -> URL Scheme
             log("Fallback to URL Scheme...");
             window.location.href = "https://line.me/R/msg/text/?" + encodeURIComponent(msgText);
         }
