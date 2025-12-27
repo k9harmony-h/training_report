@@ -2,339 +2,235 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>レッスンの予約 | K9 Harmony</title>
-  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>K9 Harmony Admin Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    /* =========================================
-       K9 Harmony Design System (Ver 20.0)
-       ========================================= */
     :root {
       --c-main-turquoise: #57C3C2;
       --c-sub-deep-ocean: #2F5D62;
       --c-accent-copper: #C87A56;
-      --c-base-washi: #FAFAFA;
       --c-bg-mist: #F4F7F7;
-      --c-text-sumi: #333333;
-      --c-text-gray: #666666;
-      --font-main: 'Noto Sans JP', sans-serif;
-      --font-serif: 'Noto Serif JP', serif;
     }
-
-    body {
-      font-family: var(--font-main);
-      background-color: var(--c-base-washi);
-      color: var(--c-text-sumi);
-      margin: 0; padding: 0;
-    }
-
-    /* DEBUG STAMP */
-    #version-stamp {
-        position: fixed; top: 0; right: 0;
-        background: #000; color: #ff0;
-        font-size: 10px; padding: 4px;
-        z-index: 2147483647; opacity: 0.8; pointer-events: none;
-        font-family: monospace;
-    }
-    /* DEBUG CONSOLE */
-    #debug-console {
-        display: block; width: 100%; height: 200px;
-        background: #111; color: #0f0;
-        font-family: monospace; font-size: 11px;
-        overflow-y: scroll; padding: 10px; box-sizing: border-box;
-        border-top: 2px solid #555; margin-top: 20px;
-    }
-    .log-line { border-bottom: 1px solid #333; padding: 2px 0; word-break: break-all; }
-
-    header {
-      background: white; padding: 15px 0; text-align: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 50;
-    }
-    .logo-img { width: 40%; max-width: 180px; height: auto; }
-
-    /* Progress */
-    .progress-container {
-      display: flex; justify-content: space-between; padding: 20px 30px; position: relative;
-      max-width: 600px; margin: 0 auto;
-    }
-    .progress-bg { position: absolute; top: 30px; left: 40px; right: 40px; height: 2px; background: #e0e0e0; z-index: 0; }
-    .progress-bar-fill { position: absolute; top: 30px; left: 40px; height: 2px; background: var(--c-main-turquoise); z-index: 0; width: 0%; transition: width 0.3s; }
-    .step-dot {
-      width: 20px; height: 20px; border-radius: 50%; background: #e0e0e0; z-index: 1; position: relative;
-      border: 2px solid var(--c-base-washi); transition: background 0.3s;
-    }
-    .step-dot.active { background: var(--c-main-turquoise); transform: scale(1.2); }
-    .step-dot.done { background: var(--c-main-turquoise); }
-
-    /* Container */
-    #app-container { padding: 20px; max-width: 600px; margin: 0 auto; }
-    .view-section { display: none; animation: fadeIn 0.4s ease-out; }
-    .view-section.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* Elements */
-    h2 {
-      font-size: 1.1rem; color: var(--c-sub-deep-ocean);
-      border-left: 4px solid var(--c-main-turquoise); padding-left: 10px; margin-bottom: 20px;
-      font-family: var(--font-serif);
-    }
-    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; position: relative; }
-    label { display: block; font-weight: bold; font-size: 0.9rem; color: var(--c-sub-deep-ocean); margin-bottom: 8px; }
-    input, select, textarea {
-      width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;
-      margin-bottom: 15px; box-sizing: border-box; font-family: inherit;
-    }
-    select:focus, input:focus, textarea:focus { border-color: var(--c-main-turquoise); outline: none; background: #fff; }
-
-    /* Buttons */
-    .btn {
-      display: block; width: 100%; padding: 16px; border-radius: 50px; border: none;
-      font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; margin-top: 15px; transition: all 0.2s;
-    }
-    .btn-primary { background: var(--c-main-turquoise); color: white; box-shadow: 0 4px 10px rgba(87, 195, 194, 0.3); }
-    .btn-primary:active { transform: scale(0.98); }
-    .btn-primary:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
-    .btn-secondary { background: white; border: 1px solid #ccc; color: var(--c-text-gray); }
-    .btn-outline-brand { background: white; border: 2px solid var(--c-main-turquoise); color: var(--c-main-turquoise); margin-top: 10px; }
-    .btn-outline-brand:active { background: var(--c-bg-mist); }
-    .btn-cancel-rsv { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; font-size: 0.9rem; margin-top: 30px; }
-    .btn-row { display: flex; gap: 10px; } .btn-row .btn { margin-top: 0; }
-
-    /* Calendar */
-    .cal-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .cal-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #eee; position: relative; min-height: 200px; }
-    #cal-overlay-loader {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(255,255,255,0.8); z-index: 10;
-        display: none; flex-direction: column; justify-content: center; align-items: center;
-        border-radius: 8px;
-    }
-    .cal-table { width: 100%; border-collapse: collapse; min-width: 400px; table-layout: fixed; }
-    .cal-table th { background: #f8f8f8; color: var(--c-sub-deep-ocean); padding: 8px 2px; font-size: 0.75rem; border-bottom: 2px solid #ddd; border-right: 1px solid #eee; text-align: center; }
-    .cal-table th:first-child { width: 50px; position: sticky; left: 0; background: #f8f8f8; z-index: 2; border-right: 2px solid #ddd; }
-    .cal-table td { height: 50px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center; vertical-align: middle; padding: 0; position: relative; }
-    .cal-table td:first-child { position: sticky; left: 0; background: white; font-weight: bold; color: var(--c-sub-deep-ocean); font-size: 0.8rem; z-index: 1; border-right: 2px solid #ddd; }
-    .sym-ok { color: var(--c-main-turquoise); font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
-    .sym-tri { color: #fbc02d; font-size: 1.0rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
-    .sym-ng { background: #f0f0f0; color: #ccc; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; cursor: default; }
-    td.selected-cell { background-color: var(--c-main-turquoise) !important; transition: background 0.2s; }
-    td.selected-cell .sym-ok, td.selected-cell .sym-tri { color: white !important; }
-    .cal-legend { display: flex; justify-content: center; gap: 15px; font-size: 0.8rem; margin-top: 10px; color: var(--c-text-gray); }
-
-    /* Modals */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; display: none; opacity: 0; transition: opacity 0.3s; }
-    .modal-overlay.open { display: block; opacity: 1; }
-    .center-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 350px; background: white; border-radius: 12px; padding: 25px; z-index: 3001; display: none; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); pointer-events: auto; }
-    .center-modal.open { display: block; animation: popIn 0.3s ease-out; }
-    @keyframes popIn { from { transform: translate(-50%, -40%); opacity: 0; } to { transform: translate(-50%, -50%); opacity: 1; } }
-    .time-modal { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; z-index: 302; transform: translateY(100%); transition: transform 0.3s; }
-    .time-modal.open { transform: translateY(0); }
-    .top-sheet { position: fixed; top: 0; left: 0; width: 100%; height: 80%; background: white; border-radius: 0 0 20px 20px; z-index: 302; transform: translateY(-100%); transition: transform 0.3s; display: flex; flex-direction: column; }
-    .top-sheet.open { transform: translateY(0); }
-    .top-sheet-content { flex: 1; overflow-y: auto; padding: 20px; font-size: 0.9rem; line-height: 1.6; }
-    .top-sheet-close-area { position: fixed; top: 80%; left: 0; width: 100%; height: 20%; z-index: 301; }
-
-    /* Footer */
-    .site-footer { flex-shrink: 0; margin-top: auto; background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.2); padding: 60px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D; }
-    .footer-logo-img { width: 40%; height: auto; display: inline-block; filter: contrast(0.95); opacity: 0.7; }
-
-    /* Main Loading */
-    #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--c-main-turquoise); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    body { font-family: 'Noto Sans JP', sans-serif; background: var(--c-bg-mist); color: #333; margin: 0; padding: 20px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    h1 { color: var(--c-sub-deep-ocean); margin: 0; font-size: 1.5rem; }
     
-    .checkbox-row { display: flex; align-items: flex-start; margin-bottom: 10px; font-size: 0.9rem; color: var(--c-text-sumi); }
-    .checkbox-row input { width: 18px; height: 18px; margin-right: 10px; margin-top: 3px; accent-color: var(--c-main-turquoise); }
-
-    /* Link Style */
-    .text-link { color: var(--c-sub-deep-ocean); text-decoration: underline; font-size: 0.85rem; cursor: pointer; display: inline-block; margin-top: 10px; }
+    .alert-box {
+      background: #ff4444; color: white; padding: 15px; border-radius: 8px;
+      margin-bottom: 20px; font-weight: bold; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { text-align: left; padding: 10px; border-bottom: 2px solid #eee; color: var(--c-sub-deep-ocean); white-space: nowrap; }
+    td { padding: 10px; border-bottom: 1px solid #eee; }
+    
+    .tag { padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; display: inline-block; }
+    .tag-ticket { background: #e0f7fa; color: #006064; }
+    .tag-pending { background: #fff3e0; color: #e65100; }
+    .tag-confirmed { background: #e8f5e9; color: #2e7d32; }
+    
+    .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.8; }
+    .btn-stop { background: var(--c-accent-copper); color: white; }
+    .btn-live { background: var(--c-main-turquoise); color: white; }
+    
+    .icon-check { color: var(--c-main-turquoise); font-weight: bold; }
+    .loading { text-align: center; color: #666; padding: 20px; }
   </style>
 </head>
 <body>
 
-<div id="version-stamp">v2025.12.28-Phase3-Complete</div>
-
-<div id="loading-overlay">
-  <div class="spinner"></div>
-  <div id="loading-text" style="color:var(--c-sub-deep-ocean); font-weight:bold; margin-bottom:10px;">起動中...</div>
-  <div id="loading-tips" style="font-size:0.85rem; color:var(--c-text-gray); padding:0 20px; text-align:center; min-height:1.2em;"></div>
-</div>
-
-<header>
-  <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="logo-img" alt="K9 Harmony">
-</header>
-
-<div class="progress-container">
-  <div class="progress-bg"></div>
-  <div class="progress-bar-fill" id="progress-fill"></div>
-  <div class="step-dot active" id="dot-1"></div>
-  <div class="step-dot" id="dot-2"></div>
-  <div class="step-dot" id="dot-3"></div>
-  <div class="step-dot" id="dot-4"></div>
-  <div class="step-dot" id="dot-5"></div>
-</div>
-
-<div id="app-container">
-
-  <div id="view-1" class="view-section active">
-    <h2>予約内容</h2>
-    
-    <div class="card" id="dog-info-card">
-      <label>選択中のワンちゃん</label>
-      <div id="selected-dog-name" style="font-size:1.2rem; font-weight:bold; color:var(--c-main-turquoise); margin-bottom:10px;">---</div>
-      <button class="btn btn-secondary" id="btn-change-dog" style="padding:8px 15px; font-size:0.8rem; width:auto; display:inline-block;" onclick="showDogSelectModal(true)">変更する</button>
-
-      <div style="background:var(--c-bg-mist); padding:10px; border-radius:8px; margin-top:15px;">
-        <label style="display:flex; align-items:center; margin:0; cursor:pointer;">
-          <input type="checkbox" id="multi-dog-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);">
-          2頭目の追加 (+2,000円 / +30分)
-        </label>
-      </div>
-    </div>
-
-    <div id="existing-customer-link-area" style="text-align:right; display:none; margin-bottom:20px;">
-        <span class="text-link" onclick="openUidModal()">すでにご契約中のお客様はこちら</span>
-    </div>
-
-    <div class="card">
-      <label>メニュー</label>
-      <select id="menu-select"><option>読み込み中...</option></select>
-    </div>
-
-    <button class="btn btn-primary" onclick="goToView(2)">次へ (日時選択)</button>
-    <button class="btn btn-cancel-rsv" onclick="alert('キャンセル機能実装予定')">予約のキャンセルはこちら</button>
+  <div id="backup-alert" class="alert-box">
+    ⚠ 【週次メンテ】火曜日です。DBバックアップをDLし、Driveを整理してください。
   </div>
 
-  <div id="view-2" class="view-section">
-    <h2>日時の選択</h2>
-    <div class="card" style="padding:15px 5px; position:relative;">
-      <div class="cal-controls" style="padding:0 10px;">
-        <button class="btn btn-secondary" style="width:auto; padding:5px 10px; font-size:0.8rem;" onclick="shiftWeek(-1)">&lt; 前週</button>
-        <span id="cal-range-text" style="font-weight:bold; font-size:0.9rem;">--/-- 〜</span>
-        <button class="btn btn-secondary" style="width:auto; padding:5px 10px; font-size:0.8rem;" onclick="shiftWeek(1)">次週 &gt;</button>
-      </div>
-
-      <div class="cal-wrapper">
-        <div id="cal-overlay-loader">
-            <div class="spinner" style="width:30px; height:30px; border-width:3px;"></div>
-            <div style="font-size:0.8rem; color:var(--c-text-gray); margin-top:5px;">スケジュール確認中...</div>
-        </div>
-        <table class="cal-table">
-          <thead><tr id="cal-header"><th>時間</th></tr></thead>
-          <tbody id="cal-body"></tbody>
-        </table>
-      </div>
-
-      <div class="cal-legend">
-        <span><span style="color:var(--c-main-turquoise); font-weight:bold;">○</span> 可能</span>
-        <span><span style="color:#fbc02d; font-weight:bold;">△</span> わずか</span>
-        <span><span style="background:#f0f0f0; padding:0 4px; color:#ccc;">×</span> 不可</span>
-      </div>
+  <header>
+    <h1>K9 Harmony Admin</h1>
+    <div id="status-area">
+      <span id="status-text" style="margin-right:10px; font-weight:bold;">通信中...</span>
+      <button id="toggle-btn" class="btn" onclick="toggleSystem()" disabled>---</button>
     </div>
+  </header>
 
-    <div class="card" id="alt-address-card">
-        <label style="display:flex; align-items:center; cursor:pointer; margin-bottom:0;">
-            <input type="checkbox" id="alt-address-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);" onchange="toggleAltAddress()">
-            申込住所と異なる場所で実施
-        </label>
-        <div id="alt-address-area" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
-            <label>郵便番号 <span style="color:red">*</span></label>
-            <input type="tel" id="alt-zip" placeholder="123-4567" inputmode="numeric" pattern="\d*" maxlength="8" oninput="formatZipAndFetch(this, 'alt-addr')">
-            <label>住所 <span style="color:red">*</span></label>
-            <input type="text" id="alt-addr" placeholder="東京都...">
-            <label>施設名</label>
-            <input type="text" id="alt-building">
-            <label>目印</label>
-            <input type="text" id="alt-note">
-        </div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="goToView(1)">戻る</button>
-      <button class="btn btn-primary" id="btn-to-step3" disabled onclick="goToView(3)">次へ</button>
+  <div class="card">
+    <h3>直近の予約 (Latest 50)</h3>
+    <div id="loading-spinner" class="loading">データを取得しています...</div>
+    <div style="overflow-x: auto;">
+      <table id="res-table" style="display:none;">
+        <thead>
+          <tr>
+            <th>日時</th>
+            <th>ID</th>
+            <th>多頭</th>
+            <th>領収書</th>
+            <th>支払</th>
+            <th>メモ</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
   </div>
+  
+  <div class="card">
+    <h3>代理操作</h3>
+    <p style="font-size:0.9rem;">※管理者が自身のLINEでログインし、代理入力を行ってください。</p>
+    <a href="https://liff.line.me/2008546673-MJY7j3ox" target="_blank" class="btn btn-live" style="text-decoration:none; display:inline-block;">
+      LINE予約画面を開く
+    </a>
+  </div>
 
-  <div id="view-3" class="view-section">
-    <h2>確認と規約</h2>
-    <div class="card">
-      <label>ご予約内容</label>
-      <div style="line-height:1.8; font-size:0.95rem;">
-        <div><strong>日時:</strong> <span id="conf-datetime">---</span></div>
-        <div><strong>場所:</strong> <span id="conf-place">---</span></div>
-        <div><strong>犬名:</strong> <span id="conf-dog">---</span></div>
-        <div><strong>コース:</strong> <span id="conf-course">---</span></div>
+  <script>
+    // ▼▼▼ ここにGASのウェブアプリURLを貼り付けてください ▼▼▼
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    // 認証キー (systemConfig.gs の ADMIN.API_KEY と一致させる)
+    const API_KEY = 'k9_secret_key_2025';
+
+    // 初期化
+    window.onload = function() {
+      fetchDashboard();
+    };
+
+    /**
+     * ダッシュボードデータ取得 (Fetch API)
+     */
+    async function fetchDashboard() {
+      try {
+        // PostData構築
+        const payload = {
+          action: 'get_admin_dashboard',
+          apiKey: API_KEY
+        };
+
+        const response = await fetch(GAS_API_URL, {
+          method: 'POST',
+          // GASはリダイレクトでJSONを返すため follow が必須
+          redirect: 'follow', 
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8' 
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
         
-        <div style="margin-top:10px;"><strong>お支払い:</strong> <span id="conf-payment-display">---</span></div>
-      </div>
+        if (result.status === 'success') {
+          renderDashboard(result.data);
+        } else {
+          showError('認証エラーまたはシステムエラー: ' + result.message);
+        }
+
+      } catch (e) {
+        console.error(e);
+        showError('通信エラー: サーバーに接続できませんでした。URLを確認してください。');
+      }
+    }
+
+    /**
+     * 緊急停止切り替え
+     */
+    async function toggleSystem() {
+      const txt = document.getElementById('status-text');
+      const isStop = txt.textContent.includes('停止中');
+      const nextState = !isStop; // trueなら停止にする
       
-      <label style="margin-top:15px;">お支払い方法を選択</label>
-      <select id="payment-method" onchange="updatePaymentDisplay()">
-        <option value="CARD">クレジットカード</option>
-        <option value="QUICPAY">QUICPay</option>
-        <option value="ID">iD</option>
-        <option value="IC">交通系IC</option>
-        <option value="CASH">当日現金払い</option>
-      </select>
-
-      <div style="border-top:1px solid #eee; margin-top:15px; padding-top:10px;">
-        <div style="display:flex; justify-content:space-between;">
-            <span>出張費</span>
-            <span id="conf-travel-fee" style="color:var(--c-accent-copper);">計算中...</span>
-        </div>
-        <div id="conf-travel-msg" style="font-size:0.75rem; color:#888; margin-top:5px;">
-            正確な出張費を計算しております。最終確認画面にて正式な交通費をお知らせいたします。
-        </div>
-      </div>
-
-      <div style="border-top:1px solid #eee; margin:15px 0; padding-top:15px;">
-        <label>Voucher / 紹介コード</label>
-        <div style="display:flex; gap:10px;">
-            <input type="text" id="voucher-code" placeholder="コードを入力" style="margin-bottom:0;">
-            <button class="btn btn-secondary" style="margin-top:0; padding:10px;" id="btn-apply-voucher" onclick="applyVoucher()">適用</button>
-        </div>
-        <div id="voucher-result" style="font-size:0.9rem; font-weight:bold; margin-top:5px;"></div>
-      </div>
-
-      <div style="font-size:1.3rem; font-weight:bold; color:var(--c-sub-deep-ocean); text-align:right; margin-top:10px;">
-        合計: <span id="conf-total">¥---</span>
-      </div>
+      if (!confirm(nextState ? '【危険】本当にシステムを緊急停止しますか？\n予約受付が完全に停止します。' : 'システムを稼働再開しますか？')) return;
       
-      <div style="border-top:1px solid #eee; margin-top:15px; padding-top:15px;">
-        <label>備考</label>
-        <textarea id="conf-remarks" rows="2" placeholder="ご質問や連絡事項がございましたらご記入ください"></textarea>
-      </div>
-    </div>
+      // UIを一旦ロック
+      const btn = document.getElementById('toggle-btn');
+      btn.disabled = true;
+      btn.textContent = '処理中...';
 
-    <div class="card">
-      <label>規約等の確認</label>
-      <div class="checkbox-row">
-        <input type="checkbox" class="term-check" id="chk-policy" onchange="checkAllTerms()">
-        <span onclick="openTerms('policy')" style="cursor:pointer; text-decoration:underline; flex:1;">キャンセルポリシーに同意</span>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" class="term-check" id="chk-privacy" onchange="checkAllTerms()">
-        <span onclick="openTerms('privacy')" style="cursor:pointer; text-decoration:underline; flex:1;">個人情報の取扱に同意</span>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" class="term-check" id="chk-terms" onchange="checkAllTerms()">
-        <span onclick="openTerms('terms')" style="cursor:pointer; text-decoration:underline; flex:1;">利用規約に同意</span>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" class="term-check" id="chk-law" onchange="checkAllTerms()">
-        <span onclick="openTerms('law')" style="cursor:pointer; text-decoration:underline; flex:1;">特定商取引法に基づく表記を確認</span>
-      </div>
-      
-      <div style="border-top:1px solid #eee; margin-top:10px; padding-top:10px; font-weight:bold;">
-        <label style="display:flex; align-items:center; cursor:pointer;">
-            <input type="checkbox" id="chk-all" style="width:20px; height:20px; accent-color:var(--c-main-turquoise);" onchange="toggleAllTerms()">
-            全てに同意する
-        </label>
-      </div>
-    </div>
+      try {
+        const payload = {
+          action: 'admin_toggle_maintenance',
+          apiKey: API_KEY,
+          isActive: nextState
+        };
 
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick
+        const response = await fetch(GAS_API_URL, {
+          method: 'POST',
+          redirect: 'follow',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if (result.status === 'success') {
+          // 成功したら画面再取得
+          fetchDashboard(); 
+        } else {
+          alert('エラー: ' + result.message);
+          btn.disabled = false;
+        }
+      } catch (e) {
+        alert('通信エラー');
+        btn.disabled = false;
+      }
+    }
+
+    /**
+     * 画面描画
+     */
+    function renderDashboard(data) {
+      // ローディング消去
+      document.getElementById('loading-spinner').style.display = 'none';
+      document.getElementById('res-table').style.display = 'table';
+
+      // 1. 火曜アラート
+      if (data.isTuesday) {
+        document.getElementById('backup-alert').style.display = 'block';
+      }
+
+      // 2. ステータスボタン
+      const txt = document.getElementById('status-text');
+      const btn = document.getElementById('toggle-btn');
+      btn.disabled = false;
+
+      if (data.isMaintenance) {
+        txt.textContent = '⛔ 現在停止中';
+        txt.style.color = 'red';
+        btn.textContent = '稼働再開する';
+        btn.className = 'btn btn-live';
+      } else {
+        txt.textContent = '✅ 正常稼働中';
+        txt.style.color = 'green';
+        btn.textContent = '緊急停止する';
+        btn.className = 'btn btn-stop';
+      }
+
+      // 3. テーブル描画
+      const tbody = document.querySelector('#res-table tbody');
+      tbody.innerHTML = ''; // クリア
+
+      if (!data.reservations || data.reservations.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">予約データがありません</td></tr>';
+        return;
+      }
+
+      data.reservations.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.startTime}</td>
+          <td><small style="color:#999;">${r.resId}</small></td>
+          <td>${r.isMultiDog ? '<span class="icon-check">✔</span>' : '-'}</td>
+          <td>${r.receipt ? '<span class="icon-check">✔</span>' : '-'}</td>
+          <td><span class="tag ${r.payment === 'TICKET' ? 'tag-ticket' : r.payment === 'CONFIRMED' ? 'tag-confirmed' : 'tag-pending'}">${r.payment}</span></td>
+          <td>${r.memo || ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function showError(msg) {
+      document.getElementById('loading-spinner').textContent = '❌ ' + msg;
+      document.getElementById('loading-spinner').style.color = 'red';
+    }
+  </script>
+</body>
+</html>
