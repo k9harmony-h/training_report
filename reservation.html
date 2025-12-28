@@ -11,7 +11,7 @@
 
   <style>
     /* =========================================
-       K9 Harmony Design System (Ver 18.2)
+       K9 Harmony Design System (Ver 18.0)
        ========================================= */
     :root {
       --c-main-turquoise: #57C3C2;
@@ -90,17 +90,6 @@
     }
     select:focus, input:focus, textarea:focus { border-color: var(--c-main-turquoise); outline: none; background: #fff; }
 
-    /* Receipt Section */
-    #receipt-area {
-        margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; display: none;
-        animation: fadeIn 0.3s ease-out;
-    }
-    .receipt-note {
-        font-family: var(--font-serif); font-size: 0.85rem; color: var(--c-sub-deep-ocean);
-        background-color: var(--c-bg-mist); padding: 20px; border-radius: 8px; margin-top: 10px;
-        line-height: 1.8; border-left: 3px solid var(--c-accent-copper); letter-spacing: 0.03em;
-    }
-
     /* Square Container */
     #sq-card-div {
         min-height: 100px;
@@ -176,7 +165,7 @@
 </head>
 <body>
 
-<div id="version-stamp">v2025.12.28-P1S1.1-ReceiptDraft</div>
+<div id="version-stamp">v2025.12.28-Square-Impl</div>
 
 <div id="loading-overlay">
   <div class="spinner"></div>
@@ -210,7 +199,7 @@
 
       <div style="background:var(--c-bg-mist); padding:10px; border-radius:8px; margin-top:15px;">
         <label style="display:flex; align-items:center; margin:0; cursor:pointer;">
-          <input type="checkbox" id="multi-dog-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);" onchange="saveDraft()">
+          <input type="checkbox" id="multi-dog-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);">
           2頭目の追加 (+2,000円 / +30分)
         </label>
       </div>
@@ -222,7 +211,7 @@
 
     <div class="card">
       <label>メニュー</label>
-      <select id="menu-select" onchange="saveDraft()"><option>読み込み中...</option></select>
+      <select id="menu-select"><option>読み込み中...</option></select>
     </div>
 
     <button class="btn btn-primary" onclick="goToView(2)">次へ (日時選択)</button>
@@ -258,18 +247,18 @@
 
     <div class="card" id="alt-address-card">
         <label style="display:flex; align-items:center; cursor:pointer; margin-bottom:0;">
-            <input type="checkbox" id="alt-address-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);" onchange="toggleAltAddress(); saveDraft();">
+            <input type="checkbox" id="alt-address-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);" onchange="toggleAltAddress()">
             申込住所と異なる場所で実施
         </label>
         <div id="alt-address-area" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
             <label>郵便番号 <span style="color:red">*</span></label>
-            <input type="tel" id="alt-zip" placeholder="123-4567" inputmode="numeric" pattern="\d*" maxlength="8" oninput="formatZipAndFetch(this, 'alt-addr'); saveDraft();">
+            <input type="tel" id="alt-zip" placeholder="123-4567" inputmode="numeric" pattern="\d*" maxlength="8" oninput="formatZipAndFetch(this, 'alt-addr')">
             <label>住所 <span style="color:red">*</span></label>
-            <input type="text" id="alt-addr" placeholder="東京都..." onchange="saveDraft()">
+            <input type="text" id="alt-addr" placeholder="東京都...">
             <label>施設名</label>
-            <input type="text" id="alt-building" onchange="saveDraft()">
+            <input type="text" id="alt-building">
             <label>目印</label>
-            <input type="text" id="alt-note" onchange="saveDraft()">
+            <input type="text" id="alt-note">
         </div>
     </div>
 
@@ -305,13 +294,13 @@
 
       <div style="border-top:1px solid #eee; margin:15px 0; padding-top:15px;">
         <label>備考</label>
-        <textarea id="conf-remarks" rows="2" placeholder="ご質問や連絡事項がございましたらご記入ください" onchange="saveDraft()"></textarea>
+        <textarea id="conf-remarks" rows="2" placeholder="ご質問や連絡事項がございましたらご記入ください"></textarea>
       </div>
 
       <div style="border-top:1px solid #eee; margin:15px 0; padding-top:15px;">
         <label>Voucher / 紹介コード</label>
         <div style="display:flex; gap:10px;">
-            <input type="text" id="voucher-code" placeholder="コードを入力" style="margin-bottom:0;" onchange="saveDraft()">
+            <input type="text" id="voucher-code" placeholder="コードを入力" style="margin-bottom:0;">
             <button class="btn btn-secondary" style="margin-top:0; padding:10px;" id="btn-apply-voucher" onclick="applyVoucher()">適用</button>
         </div>
         <div id="voucher-result" style="font-size:0.9rem; font-weight:bold; margin-top:5px;"></div>
@@ -322,54 +311,37 @@
       </div>
       
       <label style="margin-top:15px;">お支払い方法</label>
-      <select id="payment-method" onchange="saveDraft()">
+      <select id="payment-method">
         <option value="CARD">クレジットカード</option>
         <option value="QUICPAY">QUICPay</option>
         <option value="ID">iD</option>
         <option value="IC">交通系IC</option>
         <option value="CASH">当日現金払い</option>
       </select>
-
-      <div style="margin-top:20px;">
-        <label style="display:flex; align-items:center; cursor:pointer;">
-            <input type="checkbox" id="chk-receipt" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);" onchange="toggleReceipt(); saveDraft();">
-            紙の領収書を希望する
-        </label>
-        <div id="receipt-area">
-            <label>宛名</label>
-            <input type="text" id="txt-receipt-name" placeholder="例：株式会社K9" onchange="saveDraft()">
-            <div class="receipt-note">
-                <strong>領収書の発行につきまして</strong><br><br>
-                私共K9 Harmonyでは、環境への配慮および利便性の観点より、原則として電子領収書（メール送付）にて対応させていただいております。<br>
-                紙の領収書をご希望のお客様には、当日担当トレーナーが心を込めてご用意し、直接お渡しいたします。ご入用の際は、お手数ですがチェックをお入れいただき、宛名をお知らせくださいませ。
-            </div>
-        </div>
-      </div>
-
     </div>
 
     <div class="card">
       <label>規約等の確認</label>
       <div class="checkbox-row">
-        <input type="checkbox" class="term-check" id="chk-policy" onchange="checkAllTerms(); saveDraft();">
+        <input type="checkbox" class="term-check" id="chk-policy" onchange="checkAllTerms()">
         <span onclick="openTerms('policy')" style="cursor:pointer; text-decoration:underline; flex:1;">キャンセルポリシーに同意</span>
       </div>
       <div class="checkbox-row">
-        <input type="checkbox" class="term-check" id="chk-privacy" onchange="checkAllTerms(); saveDraft();">
+        <input type="checkbox" class="term-check" id="chk-privacy" onchange="checkAllTerms()">
         <span onclick="openTerms('privacy')" style="cursor:pointer; text-decoration:underline; flex:1;">個人情報の取扱に同意</span>
       </div>
       <div class="checkbox-row">
-        <input type="checkbox" class="term-check" id="chk-terms" onchange="checkAllTerms(); saveDraft();">
+        <input type="checkbox" class="term-check" id="chk-terms" onchange="checkAllTerms()">
         <span onclick="openTerms('terms')" style="cursor:pointer; text-decoration:underline; flex:1;">利用規約に同意</span>
       </div>
       <div class="checkbox-row">
-        <input type="checkbox" class="term-check" id="chk-law" onchange="checkAllTerms(); saveDraft();">
+        <input type="checkbox" class="term-check" id="chk-law" onchange="checkAllTerms()">
         <span onclick="openTerms('law')" style="cursor:pointer; text-decoration:underline; flex:1;">特定商取引法に基づく表記を確認</span>
       </div>
       
       <div style="border-top:1px solid #eee; margin-top:10px; padding-top:10px; font-weight:bold;">
         <label style="display:flex; align-items:center; cursor:pointer;">
-            <input type="checkbox" id="chk-all" style="width:20px; height:20px; accent-color:var(--c-main-turquoise);" onchange="toggleAllTerms(); saveDraft();">
+            <input type="checkbox" id="chk-all" style="width:20px; height:20px; accent-color:var(--c-main-turquoise);" onchange="toggleAllTerms()">
             全てに同意する
         </label>
       </div>
@@ -406,32 +378,32 @@
         <div class="card">
             <h3 style="margin-top:0; color:var(--c-main-turquoise); font-size:1rem; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">顧客情報</h3>
             <label>氏名 <span style="color:red">*</span></label>
-            <input type="text" id="reg-name" placeholder="山田 太郎" onchange="saveDraft()">
+            <input type="text" id="reg-name" placeholder="山田 太郎">
             <label>電話番号 <span style="color:red">*</span></label>
-            <input type="tel" id="reg-phone" placeholder="090-1234-5678" inputmode="numeric" oninput="formatPhone(this); saveDraft();">
+            <input type="tel" id="reg-phone" placeholder="090-1234-5678" inputmode="numeric" oninput="formatPhone(this)">
             <label>郵便番号 <span style="color:red">*</span></label>
-            <input type="tel" id="reg-zip" placeholder="123-4567" inputmode="numeric" maxlength="8" oninput="formatZipAndFetch(this, 'reg-addr'); saveDraft();">
+            <input type="tel" id="reg-zip" placeholder="123-4567" inputmode="numeric" maxlength="8" oninput="formatZipAndFetch(this, 'reg-addr')">
             <label>住所 <span style="color:red">*</span></label>
-            <input type="text" id="reg-addr" placeholder="自動入力..." onchange="calcNewUserDistance(); saveDraft();">
+            <input type="text" id="reg-addr" placeholder="自動入力..." onchange="calcNewUserDistance()">
             <label>目印 (任意)</label>
-            <input type="text" id="reg-landmark" placeholder="近くの公園など" onchange="saveDraft()">
+            <input type="text" id="reg-landmark" placeholder="近くの公園など">
         </div>
         <div class="card">
             <h3 style="margin-top:0; color:var(--c-main-turquoise); font-size:1rem; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">愛犬情報</h3>
             <label>名前 <span style="color:red">*</span></label>
-            <input type="text" id="reg-dog-name" placeholder="ポチ" onchange="saveDraft()">
+            <input type="text" id="reg-dog-name" placeholder="ポチ">
             <label>犬種</label>
-            <input type="text" id="reg-dog-breed" placeholder="トイプードル" onchange="saveDraft()">
+            <input type="text" id="reg-dog-breed" placeholder="トイプードル">
             <label>年齢 (歳)</label>
-            <input type="number" id="reg-dog-age" placeholder="3" inputmode="numeric" onchange="saveDraft()">
+            <input type="number" id="reg-dog-age" placeholder="3" inputmode="numeric">
             <label style="display:flex; align-items:center; margin-top:10px;">
-                <input type="checkbox" id="reg-dog-neutered" style="width:20px; height:20px; margin-right:10px;" onchange="saveDraft()">
+                <input type="checkbox" id="reg-dog-neutered" style="width:20px; height:20px; margin-right:10px;">
                 去勢・避妊済み
             </label>
             <label style="margin-top:15px;">お困りごと</label>
-            <textarea id="reg-concerns" rows="3" placeholder="吠え癖、噛み癖など" onchange="saveDraft()"></textarea>
+            <textarea id="reg-concerns" rows="3" placeholder="吠え癖、噛み癖など"></textarea>
             <label style="margin-top:15px;">備考</label>
-            <textarea id="reg-remarks" rows="2" placeholder="その他連絡事項" onchange="saveDraft()"></textarea>
+            <textarea id="reg-remarks" rows="2" placeholder="その他連絡事項"></textarea>
         </div>
         <div class="btn-row">
             <button class="btn btn-secondary" onclick="goToView(3)">戻る</button>
@@ -485,7 +457,7 @@
             <i class="fa-solid fa-share-nodes"></i> シェア
         </button>
         <div style="margin-top:20px;">
-            <button class="btn btn-primary" onclick="sessionStorage.clear(); location.reload()">続けて登録</button>
+            <button class="btn btn-primary" onclick="location.reload()">続けて登録</button>
         </div>
     </div>
     <button class="btn btn-secondary" style="border:none; margin-top:20px;" onclick="liff.closeWindow()">閉じる</button>
@@ -590,111 +562,6 @@
   let weekAvailability = {};
   let currentLineUserId = null;
 
-  // --- Session Storage for Draft ---
-  const DRAFT_KEY = 'k9_rsv_draft';
-
-  function saveDraft() {
-    const draft = {
-        multiDog: document.getElementById('multi-dog-check').checked,
-        menuIdx: document.getElementById('menu-select').selectedIndex,
-        altAddrCheck: document.getElementById('alt-address-check').checked,
-        altZip: document.getElementById('alt-zip').value,
-        altAddr: document.getElementById('alt-addr').value,
-        altBldg: document.getElementById('alt-building').value,
-        altNote: document.getElementById('alt-note').value,
-        remarks: document.getElementById('conf-remarks').value,
-        voucher: document.getElementById('voucher-code').value,
-        payment: document.getElementById('payment-method').value,
-        receipt: document.getElementById('chk-receipt').checked,
-        receiptName: document.getElementById('txt-receipt-name').value,
-        terms: {
-            policy: document.getElementById('chk-policy').checked,
-            privacy: document.getElementById('chk-privacy').checked,
-            terms: document.getElementById('chk-terms').checked,
-            law: document.getElementById('chk-law').checked,
-            all: document.getElementById('chk-all').checked
-        },
-        reg: {
-            name: document.getElementById('reg-name').value,
-            phone: document.getElementById('reg-phone').value,
-            zip: document.getElementById('reg-zip').value,
-            addr: document.getElementById('reg-addr').value,
-            mark: document.getElementById('reg-landmark').value,
-            dName: document.getElementById('reg-dog-name').value,
-            dBreed: document.getElementById('reg-dog-breed').value,
-            dAge: document.getElementById('reg-dog-age').value,
-            dNeut: document.getElementById('reg-dog-neutered').checked,
-            concerns: document.getElementById('reg-concerns').value,
-            rem: document.getElementById('reg-remarks').value
-        },
-        selectedSlot: selectedSlot
-    };
-    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-  }
-
-  function restoreDraft() {
-    try {
-        const json = sessionStorage.getItem(DRAFT_KEY);
-        if(!json) return;
-        const d = JSON.parse(json);
-
-        if(d.multiDog) document.getElementById('multi-dog-check').checked = true;
-        
-        if(d.altAddrCheck) {
-            document.getElementById('alt-address-check').checked = true;
-            toggleAltAddress();
-        }
-        document.getElementById('alt-zip').value = d.altZip || '';
-        document.getElementById('alt-addr').value = d.altAddr || '';
-        document.getElementById('alt-building').value = d.altBldg || '';
-        document.getElementById('alt-note').value = d.altNote || '';
-        
-        document.getElementById('conf-remarks').value = d.remarks || '';
-        document.getElementById('voucher-code').value = d.voucher || '';
-        document.getElementById('payment-method').value = d.payment || 'CARD';
-        
-        if(d.receipt) {
-            document.getElementById('chk-receipt').checked = true;
-            toggleReceipt();
-        }
-        document.getElementById('txt-receipt-name').value = d.receiptName || '';
-
-        // Terms
-        if(d.terms) {
-            document.getElementById('chk-policy').checked = d.terms.policy;
-            document.getElementById('chk-privacy').checked = d.terms.privacy;
-            document.getElementById('chk-terms').checked = d.terms.terms;
-            document.getElementById('chk-law').checked = d.terms.law;
-            document.getElementById('chk-all').checked = d.terms.all;
-            checkAllTerms();
-        }
-
-        // Reg Data
-        if(d.reg) {
-            document.getElementById('reg-name').value = d.reg.name || '';
-            document.getElementById('reg-phone').value = d.reg.phone || '';
-            document.getElementById('reg-zip').value = d.reg.zip || '';
-            document.getElementById('reg-addr').value = d.reg.addr || '';
-            document.getElementById('reg-landmark').value = d.reg.mark || '';
-            document.getElementById('reg-dog-name').value = d.reg.dName || '';
-            document.getElementById('reg-dog-breed').value = d.reg.dBreed || '';
-            document.getElementById('reg-dog-age').value = d.reg.dAge || '';
-            document.getElementById('reg-dog-neutered').checked = d.reg.dNeut || false;
-            document.getElementById('reg-concerns').value = d.reg.concerns || '';
-            document.getElementById('reg-remarks').value = d.reg.rem || '';
-        }
-        
-        if(d.selectedSlot) {
-            selectedSlot = d.selectedSlot;
-            const btn = document.getElementById('btn-to-step3');
-            btn.disabled = false;
-            btn.innerText = `${selectedSlot.date.substring(5)} ${selectedSlot.time} で進む`;
-        }
-
-    } catch(e) { console.error('Draft restore failed', e); }
-  }
-
-
   window.onload = async () => {
     log("App Start");
     startTips();
@@ -738,7 +605,7 @@
       if (json.customer) {
           userData = json.customer;
           userDogs = json.all_dogs || [json.dog];
-          log("User Found: " + userData.customer_name);
+          log("User Found: " + userData.name);
           document.getElementById('alt-address-card').style.display = 'block';
       } else {
           userData = null; 
@@ -757,10 +624,6 @@
       } else if (userDogs.length === 1) {
         selectDog(0);
       }
-      
-      // Restore Draft after Data Load
-      restoreDraft();
-      
       clearInterval(tipsTimer);
       document.getElementById('loading-overlay').style.display = 'none';
     } catch(e) {
@@ -774,11 +637,11 @@
     sel.innerHTML = '';
     if(products && products.length > 0) {
         products.forEach(p => {
-            if(p.product_category === 'トレーニング' || p.category === 'トレーニング') { 
+            if(p.category === 'トレーニング') { 
                 const opt = document.createElement('option');
                 opt.value = 90; 
-                opt.setAttribute('data-price', p.product_price || p.price);
-                opt.innerText = `${p.product_name || p.name} (¥${(p.product_price || p.price).toLocaleString()})`;
+                opt.setAttribute('data-price', p.price);
+                opt.innerText = `${p.name} (¥${p.price.toLocaleString()})`;
                 sel.appendChild(opt);
             }
         });
@@ -787,15 +650,6 @@
         opt.value = 90; opt.setAttribute('data-price', 4900); opt.innerText = "単発レッスン (¥4,900)";
         sel.appendChild(opt);
     }
-    
-    // Restore Menu Selection from Draft
-    try {
-        const json = sessionStorage.getItem(DRAFT_KEY);
-        if(json) {
-            const d = JSON.parse(json);
-            if(d.menuIdx >= 0 && d.menuIdx < sel.options.length) sel.selectedIndex = d.menuIdx;
-        }
-    } catch(e){}
   }
 
   function openUidModal() {
@@ -816,7 +670,7 @@
     userDogs.forEach((d, idx) => {
       const btn = document.createElement('button');
       btn.className = 'btn btn-outline-brand'; 
-      btn.innerText = d.dog_name || d.name_disp || d.name;
+      btn.innerText = d.name_disp || d.name;
       btn.onclick = () => { selectDog(idx); closeDogModal(); };
       cont.appendChild(btn);
     });
@@ -836,13 +690,7 @@
   }
   function selectDog(idx) {
     selectedDog = userDogs[idx];
-    document.getElementById('selected-dog-name').innerText = selectedDog.dog_name || selectedDog.name_disp || selectedDog.name;
-  }
-  
-  function toggleReceipt() {
-      const chk = document.getElementById('chk-receipt').checked;
-      const area = document.getElementById('receipt-area');
-      area.style.display = chk ? 'block' : 'none';
+    document.getElementById('selected-dog-name').innerText = selectedDog.name_disp || selectedDog.name;
   }
 
   // --- SQUARE LOGIC ---
@@ -925,8 +773,6 @@
     }
 
     if(step===5) renderFinal();
-    
-    saveDraft(); // Auto save on navigation
   }
   
   function checkUserAndNext() {
@@ -1111,7 +957,6 @@
     const btn = document.getElementById('btn-to-step3');
     btn.disabled = false;
     btn.innerText = `${d.substring(5)} ${t} で進む`;
-    saveDraft();
   }
 
   function toggleAltAddress() {
@@ -1153,7 +998,6 @@
               const addr = r.address1 + r.address2 + r.address3;
               document.getElementById(targetId).value = addr;
               calcNewUserDistance(); 
-              saveDraft();
           }
       } catch(e) {}
   }
@@ -1168,14 +1012,14 @@
     if (document.getElementById('alt-address-check').checked) {
         place = document.getElementById('alt-addr').value || "指定住所";
     } else if (userData) {
-        place = userData.customer_address_1 + userData.customer_address_2 || "未登録";
+        place = userData.address || "未登録";
     } else {
         place = document.getElementById('reg-addr').value || "新規登録住所";
     }
 
     document.getElementById('conf-datetime').innerText = `${selectedSlot.date} ${selectedSlot.time}`;
     document.getElementById('conf-place').innerText = place;
-    document.getElementById('conf-dog').innerText = selectedDog ? (selectedDog.dog_name || selectedDog.name_disp) : (document.getElementById('reg-dog-name').value || '新規登録犬');
+    document.getElementById('conf-dog').innerText = selectedDog ? selectedDog.name_disp : (document.getElementById('reg-dog-name').value || '新規登録犬');
     document.getElementById('conf-course').innerText = menuEl.options[menuEl.selectedIndex].text + (isMulti?" (+2頭目)":"");
 
     document.getElementById('conf-travel-fee').innerText = "計算中...";
@@ -1225,7 +1069,6 @@
           voucherData = null;
           renderConfirm();
       }
-      saveDraft();
   }
 
   function calcDistance(lat1, lon1, lat2, lon2) {
@@ -1312,29 +1155,7 @@
 
     // 2. RESERVATION SUBMISSION
     document.getElementById('loading-text').innerText = "予約を確定中...";
-    
-    // Construct the payload with separation of variable vs static data
-    const payload = {
-      action: 'add_reservation',
-      // Keys aligned with DB Schema provided
-      userId: userData ? userData.customer_unique_key : 'NEW_USER', 
-      date: selectedSlot.date,
-      time: selectedSlot.time,
-      dogId: selectedDog ? selectedDog.dog_unique_key : null,
-      voucher: voucherData ? voucherData.coupon_code : null,
-
-      // Variable Data (Must always be sent)
-      multiDog: document.getElementById('multi-dog-check').checked,
-      receiptRequired: document.getElementById('chk-receipt').checked,
-      receiptAddressee: document.getElementById('txt-receipt-name').value,
-      referralCode: document.getElementById('voucher-code').value,
-      userNotes: document.getElementById('conf-remarks').value,
-      
-      paymentMethod: document.getElementById('payment-method').value,
-      paymentStatus: (document.getElementById('payment-method').value === 'CARD') ? 'PAID' : 'UNPAID',
-
-      // Static Data (New User Only)
-      regData: !userData ? {
+    const regData = !userData ? {
         name: document.getElementById('reg-name').value,
         phone: document.getElementById('reg-phone').value,
         zip: document.getElementById('reg-zip').value,
@@ -1346,16 +1167,25 @@
         neutered: document.getElementById('reg-dog-neutered').checked,
         concerns: document.getElementById('reg-concerns').value,
         remarks: document.getElementById('reg-remarks').value
-      } : null
+    } : null;
+
+    const payload = {
+      action: 'add_reservation',
+      userId: userData ? userData.unique_key : 'NEW_USER',
+      date: selectedSlot.date,
+      time: selectedSlot.time,
+      dogId: selectedDog ? selectedDog.id : null,
+      voucher: voucherData ? voucherData.name : null,
+      regData: regData,
+      // Add payment status info
+      paymentMethod: document.getElementById('payment-method').value,
+      paymentStatus: (document.getElementById('payment-method').value === 'CARD') ? 'PAID' : 'UNPAID'
     };
 
     try {
       const res = await fetch(GAS_URL, { method:'POST', body:JSON.stringify(payload) });
       const json = await res.json();
-      if(json.status==='success') {
-          sessionStorage.removeItem(DRAFT_KEY); // Clear draft on success
-          goToView(6);
-      }
+      if(json.status==='success') goToView(6);
       else alert(json.message);
     } catch(e){ alert('Error'); }
     finally { document.getElementById('loading-overlay').style.display='none'; }
@@ -1366,8 +1196,8 @@
       // (Original logic kept as is)
       log("Starting shareLine...");
     try {
-        const dogName = selectedDog ? (selectedDog.dog_name || selectedDog.name_disp || "") : ((document.getElementById('reg-dog-name').value || "") + 'ちゃん');
-        const custName = userData ? (userData.customer_name || "") : (document.getElementById('reg-name').value || "");
+        const dogName = selectedDog ? (selectedDog.name_disp || "") : ((document.getElementById('reg-dog-name').value || "") + 'ちゃん');
+        const custName = userData ? (userData.name || "") : (document.getElementById('reg-name').value || "");
         
         let place = document.getElementById('conf-place').innerText || "";
         
@@ -1389,7 +1219,7 @@
         const total = document.getElementById('conf-total').innerText || "";
         const payEl = document.getElementById('payment-method');
         const pay = payEl.options[payEl.selectedIndex].text || "";
-        const voucherInfo = voucherData ? `・割引： ${voucherData.coupon_name} (-${voucherData.discount_value}円)\n` : '';
+        const voucherInfo = voucherData ? `・割引： ${voucherData.name} (-${voucherData.discount_value}円)\n` : '';
         
         let remarks = document.getElementById('conf-remarks').value;
         if(!userData) {
