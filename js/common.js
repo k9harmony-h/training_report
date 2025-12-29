@@ -1,20 +1,119 @@
 /**
  * js/common.js
- * 共通関数・LIFF初期化ロジック
+ * 共通関数・LIFF初期化ロジック + 【緊急デバッグモード】
+ * 最終更新: 2025-12-29 Debug
  */
 
-// グローバル変数
-let currentUserId = null;
+// ==========================================
+// 1. 緊急デバッグ機能 (画面へのログ出力)
+// ==========================================
+const DEBUG_VERSION = "v18.1-DEBUG"; // 更新されたか確認するためのスタンプ
 
-// ページ読み込み時の共通処理
+// ログ保存用バッファ (画面描画前に発生したログを溜める)
+const logBuffer = [];
+
+function appendLogToScreen(type, msg) {
+    const consoleDiv = document.getElementById('floating-console-output');
+    if (consoleDiv) {
+        const line = document.createElement('div');
+        line.style.borderBottom = "1px solid #333";
+        line.style.padding = "2px 0";
+        line.style.color = type === 'error' ? '#ff4444' : '#00ff00';
+        line.style.fontSize = "11px";
+        line.style.fontFamily = "monospace";
+        line.style.wordBreak = "break-all";
+        
+        const time = new Date().toLocaleTimeString();
+        line.innerText = `[${time}] ${msg}`;
+        
+        consoleDiv.prepend(line); // 新しいものを上に
+    } else {
+        logBuffer.push({ type, msg });
+    }
+}
+
+// コンソール関数のオーバーライド (標準のコンソールにも出しつつ、画面にも出す)
+const originalLog = console.log;
+const originalError = console.error;
+
+console.log = function(...args) {
+    originalLog.apply(console, args);
+    // オブジェクトの場合はJSON文字列化を試みる
+    const msg = args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)).join(' ');
+    appendLogToScreen('log', msg);
+};
+
+console.error = function(...args) {
+    originalError.apply(console, args);
+    const msg = args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)).join(' ');
+    appendLogToScreen('error', msg);
+};
+
+// 予期せぬエラーの捕捉
+window.onerror = function(message, source, lineno, colno, error) {
+    appendLogToScreen('error', `Global Error: ${message} (${source}:${lineno})`);
+};
+
+// 画面構築 (DOMが準備できたらコンソールを表示)
 document.addEventListener('DOMContentLoaded', () => {
-    // Tipsスライダーの開始 (もし要素があれば)
+    // 1. スタイルの注入
+    const style = document.createElement('style');
+    style.innerHTML = `
+        #floating-debug-wrapper {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 30vh;
+            background: rgba(0,0,0,0.85); color: #0f0; z-index: 2147483647;
+            display: flex; flex-direction: column; border-top: 2px solid #00ff00;
+            transition: height 0.3s;
+        }
+        #floating-debug-wrapper.minimized { height: 30px; }
+        #floating-header {
+            background: #004400; color: #fff; padding: 5px 10px; cursor: pointer;
+            font-size: 12px; font-weight: bold; display: flex; justify-content: space-between;
+        }
+        #floating-console-output {
+            flex: 1; overflow-y: scroll; padding: 10px;
+        }
+        #version-stamp-fixed {
+            position: fixed; top: 0; left: 0; background: #ff0000; color: #fff;
+            padding: 2px 5px; font-size: 10px; z-index: 2147483647; pointer-events: none;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // 2. スタンプ表示
+    const stamp = document.createElement('div');
+    stamp.id = 'version-stamp-fixed';
+    stamp.innerText = DEBUG_VERSION;
+    document.body.appendChild(stamp);
+
+    // 3. コンソール画面表示
+    const wrapper = document.createElement('div');
+    wrapper.id = 'floating-debug-wrapper';
+    wrapper.innerHTML = `
+        <div id="floating-header" onclick="document.getElementById('floating-debug-wrapper').classList.toggle('minimized')">
+            <span>▼ Debug Console (Tap to toggle)</span>
+            <span onclick="document.getElementById('floating-console-output').innerHTML=''">Clear</span>
+        </div>
+        <div id="floating-console-output"></div>
+    `;
+    document.body.appendChild(wrapper);
+
+    // 4. バッファに溜まっていたログを吐き出す
+    logBuffer.forEach(item => appendLogToScreen(item.type, item.msg));
+    
+    // 5. Tipsスライダー開始 (既存機能)
     startTipsSlider();
 });
 
+
+// ==========================================
+// 2. 既存の共通ロジック (そのまま維持)
+// ==========================================
+
+let currentUserId = null;
+
 /**
  * LIFF初期化ラッパー
- * @param {Function} successCallback - ログイン成功時に実行する関数
  */
 async function initLiff(successCallback) {
     if (typeof liff === 'undefined') {
@@ -22,33 +121,33 @@ async function initLiff(successCallback) {
         return;
     }
     try {
+        console.log('LIFF Init Start...'); // ログ確認用
         await liff.init({ liffId: Config.LIFF_ID });
-        
-        // ログインしていない場合はログイン画面へ
+        console.log('LIFF Init Success. LoggedIn: ' + liff.isLoggedIn());
+
         if (!liff.isLoggedIn()) {
+            console.log('Not logged in. Redirecting...');
             liff.login({ redirectUri: window.location.href });
             return;
         }
 
         const profile = await liff.getProfile();
         currentUserId = profile.userId;
-        log(`User: ${currentUserId}`);
+        console.log(`User ID Acquired: ${currentUserId}`);
 
-        // コールバック実行
         if (successCallback) successCallback(currentUserId);
 
     } catch (err) {
+        console.error('LIFF Init Error: ' + err.message);
         showError('LIFF Init Error', err.message);
     }
 }
 
 /**
- * 簡易ログ出力 (デバッグ用)
+ * 簡易ログ出力ラッパー (後方互換性のため残すが、実態はconsole.log)
  */
 function log(msg) {
-    console.log(msg);
-    const el = document.getElementById('debug-console');
-    if(el) el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}<br>` + el.innerHTML;
+    console.log(msg); 
 }
 
 /**
@@ -56,6 +155,8 @@ function log(msg) {
  */
 function showError(title, msg, userId) {
     hideLoading();
+    console.error(`[UI Error] ${title}: ${msg}`);
+    
     const main = document.getElementById('mainContent') || document.getElementById('mainWrapper');
     if(main) main.style.display = 'none';
     
@@ -75,7 +176,8 @@ function showError(title, msg, userId) {
             }
         }
     } else {
-        alert(`${title}: ${msg}`);
+        // エラー画面要素がないページ用
+        alert(`【Error】${title}\n${msg}`);
     }
 }
 
@@ -100,7 +202,7 @@ function hideLoading() {
 }
 
 /**
- * Tipsスライダー (ローディング中の豆知識)
+ * Tipsスライダー
  */
 function startTipsSlider() {
     const tipsText = document.getElementById('tipsText');
