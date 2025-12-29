@@ -1,0 +1,43 @@
+/* css/admin.css */
+/* Admin Dashboard Styles */
+
+:root {
+    --c-main-turquoise: #57C3C2;
+    --c-sub-deep-ocean: #2F5D62;
+    --c-accent-copper: #C87A56;
+    --c-bg-mist: #F4F7F7;
+}
+
+body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--c-bg-mist);
+    color: #333;
+    margin: 0; padding: 20px;
+}
+
+header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+h1 { color: var(--c-sub-deep-ocean); margin: 0; font-size: 1.5rem; }
+
+.alert-box {
+    background: #ff4444; color: white; padding: 15px; border-radius: 8px;
+    margin-bottom: 20px; font-weight: bold; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th { text-align: left; padding: 10px; border-bottom: 2px solid #eee; color: var(--c-sub-deep-ocean); white-space: nowrap; }
+td { padding: 10px; border-bottom: 1px solid #eee; }
+
+/* Status Tags */
+.tag { padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; display: inline-block; }
+.tag-ticket { background: #e0f7fa; color: #006064; }
+.tag-pending { background: #fff3e0; color: #e65100; }
+.tag-confirmed { background: #e8f5e9; color: #2e7d32; }
+
+.btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+.btn:hover { opacity: 0.8; }
+.btn-stop { background: var(--c-accent-copper); color: white; }
+.btn-live { background: var(--c-main-turquoise); color: white; }
+
+.loading { text-align: center; color: #666; padding: 20px; }
