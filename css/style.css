@@ -160,7 +160,7 @@ body.loaded #loadingOverlay { opacity: 0; visibility: hidden; pointer-events: no
 
 /* Charts & Feedback */
 .chart-section { margin-top: 30px; padding: 0 10px; display: flex; justify-content: space-between; }
-.chart-box { width: 48%; text-align: center; }
+.chart-box { position: relative; width: 48%; height: 250px; text-align: center; }
 .chart-caption {
     font-size: 0.8rem; color: var(--c-sub-deep-ocean); margin-top: 10px;
     font-weight: 600; font-family: var(--font-serif-jp); letter-spacing: 0.05em;
