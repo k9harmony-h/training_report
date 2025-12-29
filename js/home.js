@@ -27,12 +27,34 @@ function fetchHomeData(userId, dogId = null) {
     let url = `${Config.GAS_URL}?userId=${userId}&t=${new Date().getTime()}`;
     if (dogId) url += `&dogId=${dogId}`;
 
-    log('Fetching data...');
+    log('1. Fetching data from GAS...'); // ログ：開始
+    
     fetch(url)
-        .then(res => res.json())
+        .then(async res => {
+            log(`2. Response received. Status: ${res.status}`); // ログ：ステータスコード
+            
+            // いきなり json() せず、一度テキストとして受け取る
+            const text = await res.text();
+            
+            // ログ：返ってきた生データを確認（先頭100文字）
+            log(`3. Raw Response: ${text.substring(0, 100)}...`);
+
+            if (!res.ok) {
+                throw new Error(`HTTP Error: ${res.status} ${res.statusText}`);
+            }
+
+            try {
+                return JSON.parse(text); // ここでJSON変換
+            } catch (e) {
+                // GASがエラーページ(HTML)を返している場合はここで落ちる
+                throw new Error(`JSON Parse Failed. Received: ${text.substring(0, 50)}...`);
+            }
+        })
         .then(data => {
-            // エラー判定
+            log('4. JSON Parse Success'); // ログ：パース成功
+
             if (data.error) {
+                log('5. API returned Error: ' + data.error); // ログ：APIエラー
                 if (data.error === 'Unregistered') {
                     showError('未登録のユーザーです', 'IDをトレーナーにお伝えください', userId);
                 } else {
@@ -41,39 +63,49 @@ function fetchHomeData(userId, dogId = null) {
                 return;
             }
 
-            // 1. テキストデータの描画
+            log('6. Rendering Home...');
             renderHome(data);
             
-            // 2. データセット (犬IDなど)
+            log('7. Setting Data...');
             currentDogId = data.dog ? data.dog.id : null;
+            
             if (data.all_dogs && data.all_dogs.length > 1) {
                 globalDogList = data.all_dogs;
                 document.getElementById('btnSwitchDog').style.display = 'block';
                 document.getElementById('btnSwitchDog').onclick = () => showDogSelectModal(globalDogList);
             }
 
-            // 3. 画像読み込み (ここがエラーの原因でした)
-            fetchProfileImage(userId, currentDogId);
+            log('8. Fetching Images...');
+            // 画像読み込み
+            if (typeof fetchProfileImage === 'function') {
+                fetchProfileImage(userId, currentDogId);
+            } else {
+                log('Error: fetchProfileImage func missing');
+            }
             
             if (data.latest && data.latest.has_photos) {
-                fetchLessonImages(userId, currentDogId);
+                if (typeof fetchLessonImages === 'function') fetchLessonImages(userId, currentDogId);
             } else {
-                document.getElementById('photoArea').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
+                const photoArea = document.getElementById('photoArea');
+                if(photoArea) photoArea.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
             }
 
-            // 4. マイルストーン読み込み
-            if (currentDogId) {
+            if (currentDogId && typeof fetchMilestones === 'function') {
                 fetchMilestones(userId, currentDogId);
             }
             
-            // 5. 履歴リンク更新
             const histLink = document.getElementById('historyLinkBtn');
             if(histLink) histLink.href = currentDogId ? `history.html?dogId=${currentDogId}` : `history.html`;
 
-            // ローディング解除
             hideLoading();
+            log('9. Complete.');
         })
-        .catch(err => showError('通信エラー', err.message));
+        .catch(err => {
+            // エラーの詳細を画面に出す
+            log(`[FATAL ERROR] ${err.message}`);
+            console.error(err);
+            showError('通信・処理エラー', err.message + '<br>詳細はコンソールを確認');
+        });
 }
 
 // 画面描画 (テキスト部分)
