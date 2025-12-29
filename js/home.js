@@ -1,6 +1,6 @@
 /**
  * js/home.js
- * ホーム画面ロジック (Fix: Missing functions added)
+ * ホーム画面ロジック (完全版)
  */
 
 let currentDogId = null;
@@ -9,8 +9,12 @@ let chartInstance2 = null;
 let cachedMilestones = [];
 let globalDogList = [];
 
-// 初期化
+// 初期化処理
 window.onload = function() {
+    // common.js の Tipsスライダーを開始
+    if (typeof startTipsSlider === 'function') startTipsSlider();
+
+    // LIFF初期化 (common.js)
     initLiff((userId) => {
         const urlParams = new URLSearchParams(window.location.search);
         const urlDogId = urlParams.get('dogId');
@@ -18,6 +22,7 @@ window.onload = function() {
     });
 };
 
+// メインデータ取得
 function fetchHomeData(userId, dogId = null) {
     let url = `${Config.GAS_URL}?userId=${userId}&t=${new Date().getTime()}`;
     if (dogId) url += `&dogId=${dogId}`;
@@ -26,6 +31,7 @@ function fetchHomeData(userId, dogId = null) {
     fetch(url)
         .then(res => res.json())
         .then(data => {
+            // エラー判定
             if (data.error) {
                 if (data.error === 'Unregistered') {
                     showError('未登録のユーザーです', 'IDをトレーナーにお伝えください', userId);
@@ -35,10 +41,10 @@ function fetchHomeData(userId, dogId = null) {
                 return;
             }
 
-            // メインデータ描画
+            // 1. テキストデータの描画
             renderHome(data);
             
-            // データセット
+            // 2. データセット (犬IDなど)
             currentDogId = data.dog ? data.dog.id : null;
             if (data.all_dogs && data.all_dogs.length > 1) {
                 globalDogList = data.all_dogs;
@@ -46,7 +52,7 @@ function fetchHomeData(userId, dogId = null) {
                 document.getElementById('btnSwitchDog').onclick = () => showDogSelectModal(globalDogList);
             }
 
-            // 画像読み込み (ここが前回のエラー箇所)
+            // 3. 画像読み込み (ここがエラーの原因でした)
             fetchProfileImage(userId, currentDogId);
             
             if (data.latest && data.latest.has_photos) {
@@ -55,20 +61,22 @@ function fetchHomeData(userId, dogId = null) {
                 document.getElementById('photoArea').innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
             }
 
-            // マイルストーン
+            // 4. マイルストーン読み込み
             if (currentDogId) {
                 fetchMilestones(userId, currentDogId);
             }
             
-            // 履歴リンク更新
+            // 5. 履歴リンク更新
             const histLink = document.getElementById('historyLinkBtn');
             if(histLink) histLink.href = currentDogId ? `history.html?dogId=${currentDogId}` : `history.html`;
 
+            // ローディング解除
             hideLoading();
         })
         .catch(err => showError('通信エラー', err.message));
 }
 
+// 画面描画 (テキスト部分)
 function renderHome(data) {
     const c = data.customer || {};
     const d = data.dog || {};
@@ -78,6 +86,10 @@ function renderHome(data) {
     if(document.getElementById('ticketCount')) {
         document.getElementById('ticketCount').innerText = data.ticket_count || '-';
     }
+
+    // 誕生日メッセージ
+    checkBirthday(c.birth_date, 'custBirthdayMsg');
+    checkBirthday(d.birth_date, 'dogBirthdayMsg');
 
     const l = data.latest;
     if (l) {
@@ -89,7 +101,7 @@ function renderHome(data) {
         document.getElementById('trainerComment').innerText = l.comment || '---';
         document.getElementById('nextGoalText').innerText = l.next_goal || 'トレーナーと相談しましょう';
 
-        // 詳細
+        // 詳細項目
         let d1 = '', d2 = '';
         if(l.details) {
             for(let i=0; i<5; i++) { d1 += `[${i+1}] ${l.details[i] || 'なし'}\n`; }
@@ -110,7 +122,13 @@ function renderHome(data) {
     }
 }
 
-// --- 追加: 画像取得関数 ---
+// ------------------------------------------------
+// ここから下：不足していた関数群
+// ------------------------------------------------
+
+/**
+ * プロフィール画像の取得
+ */
 function fetchProfileImage(userId, dogId) {
     let url = `${Config.GAS_URL}?userId=${userId}&type=img_profile`;
     if(dogId) url += `&dogId=${dogId}`;
@@ -125,6 +143,7 @@ function fetchProfileImage(userId, dogId) {
              img.onload = () => {
                  container.innerHTML = '';
                  container.appendChild(img);
+                 // アニメーション用にクラス付与
                  setTimeout(() => img.classList.add('loaded'), 10);
              };
              img.src = data.image;
@@ -135,6 +154,9 @@ function fetchProfileImage(userId, dogId) {
       .catch(e => console.log('Profile Image Error', e));
 }
 
+/**
+ * レッスン画像の取得
+ */
 function fetchLessonImages(userId, dogId) {
     let url = `${Config.GAS_URL}?userId=${userId}&type=img_latest`;
     if(dogId) url += `&dogId=${dogId}`;
@@ -152,6 +174,7 @@ function fetchLessonImages(userId, dogId) {
              img.src = b64;
              pArea.appendChild(img);
            });
+           // medium-zoom適用
            try { mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.8)' }); } catch(e){}
          } else {
            pArea.innerHTML = '<div class="text-muted small ms-3">写真はありません</div>';
@@ -160,7 +183,9 @@ function fetchLessonImages(userId, dogId) {
       .catch(e => console.log('Lesson Image Error', e));
 }
 
-// --- チャート描画 ---
+/**
+ * レーダーチャート描画
+ */
 function renderChart(id, data, labels, bgColor, borderColor) {
     const ctx = document.getElementById(id);
     if(!ctx) return null;
@@ -180,7 +205,9 @@ function renderChart(id, data, labels, bgColor, borderColor) {
     });
 }
 
-// --- マイルストーン ---
+/**
+ * マイルストーン取得
+ */
 function fetchMilestones(userId, dogId) {
     let url = `${Config.GAS_URL}?userId=${userId}&dogId=${dogId}&type=milestone`;
     fetch(url)
@@ -199,16 +226,19 @@ function fetchMilestones(userId, dogId) {
         });
 }
 
+/**
+ * マイルストーン描画
+ */
 function renderMilestones(badges) {
     const container = document.getElementById('tier-scroll');
     const header = document.getElementById('tier-header');
     container.innerHTML = '';
     
-    // (簡易ロジック: 獲得済みと未獲得を表示)
-    // 実装簡略化のため、すべてのバッジを表示します
+    // バッジ生成
     badges.forEach(badge => {
         const isLocked = !badge.is_acquired;
-        const colorClass = isLocked ? 'locked' : 'bg-trust'; // 簡易色
+        // 未獲得ならグレー、獲得済みなら緑(trust)
+        const colorClass = isLocked ? 'locked' : 'bg-trust'; 
         const iconHtml = isLocked ? '<i class="fa-solid fa-lock"></i>' : '<i class="fa-solid fa-paw"></i>';
         
         const html = `
@@ -224,6 +254,9 @@ function renderMilestones(badges) {
     header.innerText = 'コレクション';
 }
 
+/**
+ * 犬選択モーダル表示
+ */
 function showDogSelectModal(dogs) {
     const body = document.getElementById('dogSelectBody');
     body.innerHTML = '';
@@ -232,13 +265,34 @@ function showDogSelectModal(dogs) {
         btn.className = 'dog-select-btn';
         btn.innerText = dog.name_disp;
         btn.onclick = () => {
-            // モーダル閉じてリロード
-            const modal = bootstrap.Modal.getInstance(document.getElementById('dogSelectModal'));
-            modal.hide();
-            showLoading();
+            // モーダルを閉じてリロード
+            const modalEl = document.getElementById('dogSelectModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if(modal) modal.hide();
+            
+            showLoading(); // common.js
             fetchHomeData(currentUserId, dog.id);
         };
         body.appendChild(btn);
     });
     new bootstrap.Modal(document.getElementById('dogSelectModal')).show();
+}
+
+/**
+ * 誕生日チェック
+ */
+function checkBirthday(dateStr, elementId) {
+    if (!dateStr) return;
+    const today = new Date();
+    const bDate = new Date(dateStr);
+    bDate.setFullYear(today.getFullYear());
+    
+    const diffTime = bDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // 前後2週間以内なら表示
+    if (Math.abs(diffDays) <= 14 || Math.abs(diffDays - 365) <= 14 || Math.abs(diffDays + 365) <= 14) {
+        const el = document.getElementById(elementId);
+        if(el) el.style.display = 'block';
+    }
 }
