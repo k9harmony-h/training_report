@@ -4,1106 +4,302 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>レッスンの予約 | K9 Harmony</title>
+  
   <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
 
-  <style>
-    /* =========================================
-       K9 Harmony Design System (Ver 18.0)
-       ========================================= */
-    :root {
-      --c-main-turquoise: #57C3C2;
-      --c-sub-deep-ocean: #2F5D62;
-      --c-accent-copper: #C87A56;
-      --c-base-washi: #FAFAFA;
-      --c-bg-mist: #F4F7F7;
-      --c-text-sumi: #333333;
-      --c-text-gray: #666666;
-      --font-main: 'Noto Sans JP', sans-serif;
-      --font-serif: 'Noto Serif JP', serif;
-    }
-
-    body {
-      font-family: var(--font-main);
-      background-color: var(--c-base-washi);
-      color: var(--c-text-sumi);
-      margin: 0; padding: 0;
-    }
-
-    /* DEBUG STAMP */
-    #version-stamp {
-        position: fixed; top: 0; right: 0;
-        background: #000; color: #ff0;
-        font-size: 10px; padding: 4px;
-        z-index: 2147483647; opacity: 0.8; pointer-events: none;
-        font-family: monospace;
-    }
-    /* DEBUG CONSOLE */
-    #debug-console {
-        display: block; width: 100%; height: 200px;
-        background: #111; color: #0f0;
-        font-family: monospace; font-size: 11px;
-        overflow-y: scroll; padding: 10px; box-sizing: border-box;
-        border-top: 2px solid #555; margin-top: 20px;
-    }
-    .log-line { border-bottom: 1px solid #333; padding: 2px 0; word-break: break-all; }
-
-    header {
-      background: white; padding: 15px 0; text-align: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 50;
-    }
-    .logo-img { width: 40%; max-width: 180px; height: auto; }
-
-    /* Progress */
-    .progress-container {
-      display: flex; justify-content: space-between; padding: 20px 30px; position: relative;
-      max-width: 600px; margin: 0 auto;
-    }
-    .progress-bg { position: absolute; top: 30px; left: 40px; right: 40px; height: 2px; background: #e0e0e0; z-index: 0; }
-    .progress-bar-fill { position: absolute; top: 30px; left: 40px; height: 2px; background: var(--c-main-turquoise); z-index: 0; width: 0%; transition: width 0.3s; }
-    .step-dot {
-      width: 20px; height: 20px; border-radius: 50%; background: #e0e0e0; z-index: 1; position: relative;
-      border: 2px solid var(--c-base-washi); transition: background 0.3s;
-    }
-    .step-dot.active { background: var(--c-main-turquoise); transform: scale(1.2); }
-    .step-dot.done { background: var(--c-main-turquoise); }
-
-    /* Container */
-    #app-container { padding: 20px; max-width: 600px; margin: 0 auto; }
-    .view-section { display: none; animation: fadeIn 0.4s ease-out; }
-    .view-section.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* Elements */
-    h2 {
-      font-size: 1.1rem; color: var(--c-sub-deep-ocean);
-      border-left: 4px solid var(--c-main-turquoise); padding-left: 10px; margin-bottom: 20px;
-      font-family: var(--font-serif);
-    }
-    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; position: relative; }
-    label { display: block; font-weight: bold; font-size: 0.9rem; color: var(--c-sub-deep-ocean); margin-bottom: 8px; }
-    input, select, textarea {
-      width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;
-      margin-bottom: 15px; box-sizing: border-box; font-family: inherit;
-    }
-    select:focus, input:focus, textarea:focus { border-color: var(--c-main-turquoise); outline: none; background: #fff; }
-
-    /* Square Container */
-    #sq-card-div {
-        min-height: 100px;
-        background: #fafafa;
-        border-radius: 8px;
-        padding: 10px;
-        border: 1px solid #eee;
-    }
-    .saved-card-item {
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 10px;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-    }
-    .saved-card-item.selected {
-        border-color: var(--c-main-turquoise);
-        background-color: #e0f2f1;
-    }
-    .card-icon { font-size: 1.5rem; margin-right: 15px; color: var(--c-sub-deep-ocean); }
-
-    /* Buttons */
-    .btn {
-      display: block; width: 100%; padding: 16px; border-radius: 50px; border: none;
-      font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; margin-top: 15px; transition: all 0.2s;
-    }
-    .btn-primary { background: var(--c-main-turquoise); color: white; box-shadow: 0 4px 10px rgba(87, 195, 194, 0.3); }
-    .btn-primary:active { transform: scale(0.98); }
-    .btn-primary:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
-    .btn-secondary { background: white; border: 1px solid #ccc; color: var(--c-text-gray); }
-    .btn-outline-brand { background: white; border: 2px solid var(--c-main-turquoise); color: var(--c-main-turquoise); margin-top: 10px; }
-    .btn-outline-brand:active { background: var(--c-bg-mist); }
-    .btn-cancel-rsv { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; font-size: 0.9rem; margin-top: 30px; }
-    .btn-row { display: flex; gap: 10px; } .btn-row .btn { margin-top: 0; }
-
-    /* Calendar */
-    .cal-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .cal-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #eee; position: relative; min-height: 200px; }
-    #cal-overlay-loader {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(255,255,255,0.8); z-index: 10;
-        display: none; flex-direction: column; justify-content: center; align-items: center;
-        border-radius: 8px;
-    }
-    .cal-table { width: 100%; border-collapse: collapse; min-width: 400px; table-layout: fixed; }
-    .cal-table th { background: #f8f8f8; color: var(--c-sub-deep-ocean); padding: 8px 2px; font-size: 0.75rem; border-bottom: 2px solid #ddd; border-right: 1px solid #eee; text-align: center; }
-    .cal-table th:first-child { width: 50px; position: sticky; left: 0; background: #f8f8f8; z-index: 2; border-right: 2px solid #ddd; }
-    .cal-table td { height: 50px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center; vertical-align: middle; padding: 0; position: relative; }
-    .cal-table td:first-child { position: sticky; left: 0; background: white; font-weight: bold; color: var(--c-sub-deep-ocean); font-size: 0.8rem; z-index: 1; border-right: 2px solid #ddd; }
-    .sym-ok { color: var(--c-main-turquoise); font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
-    .sym-tri { color: #fbc02d; font-size: 1.0rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
-    .sym-ng { background: #f0f0f0; color: #ccc; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; cursor: default; }
-    td.selected-cell { background-color: var(--c-main-turquoise) !important; transition: background 0.2s; }
-    td.selected-cell .sym-ok, td.selected-cell .sym-tri { color: white !important; }
-    .cal-legend { display: flex; justify-content: center; gap: 15px; font-size: 0.8rem; margin-top: 10px; color: var(--c-text-gray); }
-
-    /* Modals */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; display: none; opacity: 0; transition: opacity 0.3s; }
-    .modal-overlay.open { display: block; opacity: 1; }
-    .center-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 350px; background: white; border-radius: 12px; padding: 25px; z-index: 301; display: none; text-align: center; }
-    .center-modal.open { display: block; animation: popIn 0.3s ease-out; }
-    @keyframes popIn { from { transform: translate(-50%, -40%); opacity: 0; } to { transform: translate(-50%, -50%); opacity: 1; } }
-    .time-modal { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; z-index: 302; transform: translateY(100%); transition: transform 0.3s; }
-    .time-modal.open { transform: translateY(0); }
-    .top-sheet { position: fixed; top: 0; left: 0; width: 100%; height: 80%; background: white; border-radius: 0 0 20px 20px; z-index: 302; transform: translateY(-100%); transition: transform 0.3s; display: flex; flex-direction: column; }
-    .top-sheet.open { transform: translateY(0); }
-    .top-sheet-content { flex: 1; overflow-y: auto; padding: 20px; font-size: 0.9rem; line-height: 1.6; }
-    .top-sheet-close-area { position: fixed; top: 80%; left: 0; width: 100%; height: 20%; z-index: 301; }
-
-    /* Footer */
-    .site-footer { flex-shrink: 0; margin-top: auto; background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.2); padding: 60px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D; }
-    .footer-logo-img { width: 40%; height: auto; display: inline-block; filter: contrast(0.95); opacity: 0.7; }
-
-    /* Main Loading */
-    #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--c-main-turquoise); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    
-    .checkbox-row { display: flex; align-items: flex-start; margin-bottom: 10px; font-size: 0.9rem; color: var(--c-text-sumi); }
-    .checkbox-row input { width: 18px; height: 18px; margin-right: 10px; margin-top: 3px; accent-color: var(--c-main-turquoise); }
-
-    /* Link Style */
-    .text-link { color: var(--c-sub-deep-ocean); text-decoration: underline; font-size: 0.85rem; cursor: pointer; display: inline-block; margin-top: 10px; }
-  </style>
-</head>
+  <link rel="stylesheet" href="css/style.css"> <link rel="stylesheet" href="css/reservation.css"> </head>
 <body>
 
-<div id="version-stamp">v2025.12.29-Square-Implemented</div>
-
-<div id="loading-overlay">
-  <div class="spinner"></div>
-  <div id="loading-text" style="color:var(--c-sub-deep-ocean); font-weight:bold; margin-bottom:10px;">起動中...</div>
-  <div id="loading-tips" style="font-size:0.85rem; color:var(--c-text-gray); padding:0 20px; text-align:center; min-height:1.2em;"></div>
-</div>
-
-<header>
-  <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="logo-img" alt="K9 Harmony">
-</header>
-
-<div class="progress-container">
-  <div class="progress-bg"></div>
-  <div class="progress-bar-fill" id="progress-fill"></div>
-  <div class="step-dot active" id="dot-1"></div>
-  <div class="step-dot" id="dot-2"></div>
-  <div class="step-dot" id="dot-3"></div>
-  <div class="step-dot" id="dot-4"></div>
-  <div class="step-dot" id="dot-5"></div>
-</div>
-
-<div id="app-container">
-
-  <div id="view-1" class="view-section active">
-    <h2>予約内容</h2>
-    
-    <div class="card" id="dog-info-card">
-      <label>選択中のワンちゃん</label>
-      <div id="selected-dog-name" style="font-size:1.2rem; font-weight:bold; color:var(--c-main-turquoise); margin-bottom:10px;">---</div>
-      <button class="btn btn-secondary" id="btn-change-dog" style="padding:8px 15px; font-size:0.8rem; width:auto; display:inline-block;" onclick="showDogSelectModal(true)">変更する</button>
-
-      <div style="background:var(--c-bg-mist); padding:10px; border-radius:8px; margin-top:15px;">
-        <label style="display:flex; align-items:center; margin:0; cursor:pointer;">
-          <input type="checkbox" id="multi-dog-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);" onchange="handleMultiDogChange()">
-          2頭目の追加 (+2,000円 / +30分)
-        </label>
-      </div>
-    </div>
-
-    <div id="existing-customer-link-area" style="text-align:right; display:none; margin-bottom:20px;">
-        <span class="text-link" onclick="openUidModal()">すでにご契約中のお客様はこちら</span>
-    </div>
-
-    <div class="card">
-      <label>メニュー</label>
-      <select id="menu-select"><option>読み込み中...</option></select>
-    </div>
-
-    <button class="btn btn-primary" onclick="goToView(2)">次へ (日時選択)</button>
-    <button class="btn btn-cancel-rsv" onclick="alert('キャンセル機能実装予定')">予約のキャンセルはこちら</button>
-  </div>
-
-  <div id="view-2" class="view-section">
-    <h2>日時の選択</h2>
-    <div class="card" style="padding:15px 5px; position:relative;">
-      <div class="cal-controls" style="padding:0 10px;">
-        <button class="btn btn-secondary" style="width:auto; padding:5px 10px; font-size:0.8rem;" onclick="shiftWeek(-1)">&lt; 前週</button>
-        <span id="cal-range-text" style="font-weight:bold; font-size:0.9rem;">--/-- 〜</span>
-        <button class="btn btn-secondary" style="width:auto; padding:5px 10px; font-size:0.8rem;" onclick="shiftWeek(1)">次週 &gt;</button>
-      </div>
-
-      <div class="cal-wrapper">
-        <div id="cal-overlay-loader">
-            <div class="spinner" style="width:30px; height:30px; border-width:3px;"></div>
-            <div style="font-size:0.8rem; color:var(--c-text-gray); margin-top:5px;">スケジュール確認中...</div>
-        </div>
-        <table class="cal-table">
-          <thead><tr id="cal-header"><th>時間</th></tr></thead>
-          <tbody id="cal-body"></tbody>
-        </table>
-      </div>
-
-      <div class="cal-legend">
-        <span><span style="color:var(--c-main-turquoise); font-weight:bold;">○</span> 可能</span>
-        <span><span style="color:#fbc02d; font-weight:bold;">△</span> わずか</span>
-        <span><span style="background:#f0f0f0; padding:0 4px; color:#ccc;">×</span> 不可</span>
-      </div>
-    </div>
-
-    <div class="card" id="alt-address-card">
-        <label style="display:flex; align-items:center; cursor:pointer; margin-bottom:0;">
-            <input type="checkbox" id="alt-address-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);" onchange="toggleAltAddress()">
-            申込住所と異なる場所で実施
-        </label>
-        <div id="alt-address-area" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
-            <label>郵便番号 <span style="color:red">*</span></label>
-            <input type="tel" id="alt-zip" placeholder="123-4567" inputmode="numeric" pattern="\d*" maxlength="8" oninput="formatZipAndFetch(this, 'alt-addr')">
-            <label>住所 <span style="color:red">*</span></label>
-            <input type="text" id="alt-addr" placeholder="東京都...">
-            <label>施設名</label>
-            <input type="text" id="alt-building">
-            <label>目印</label>
-            <input type="text" id="alt-note">
-        </div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="goToView(1)">戻る</button>
-      <button class="btn btn-primary" id="btn-to-step3" disabled onclick="goToView(3)">次へ</button>
+  <div id="loadingOverlay">
+    <div class="loading-content">
+        <div class="spinner-border spinner-border-brand" role="status"></div>
+        <p id="tipsText">Loading...</p>
     </div>
   </div>
 
-  <div id="view-3" class="view-section">
-    <h2>確認と規約</h2>
-    <div class="card">
-      <label>ご予約内容</label>
-      <div style="line-height:1.8; font-size:0.95rem;">
-        <div><strong>日時:</strong> <span id="conf-datetime">---</span></div>
-        <div><strong>場所:</strong> <span id="conf-place">---</span></div>
-        <div><strong>犬名:</strong> <span id="conf-dog">---</span></div>
-        <div><strong>コース:</strong> <span id="conf-course">---</span></div>
-      </div>
-      
-      <div style="border-top:1px solid #eee; margin:15px 0; padding-top:10px;">
-        <div style="display:flex; justify-content:space-between;">
-            <span>出張費</span>
-            <span id="conf-travel-fee" style="color:var(--c-accent-copper);">計算中...</span>
-        </div>
-        <div id="conf-travel-msg" style="font-size:0.75rem; color:#888; margin-top:5px;">
-            正確な出張費を計算しております。最終確認画面にて正式な交通費をお知らせいたします。
-        </div>
-        <div style="font-size:0.7rem; color:#999; margin-top:3px;">
-            ※距離算出は弊社事務所からの直線距離で算出しております。
-        </div>
-      </div>
+  <header class="header-area">
+      <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="header-logo" alt="K9 Harmony">
+  </header>
 
-      <div style="border-top:1px solid #eee; margin:15px 0; padding-top:15px;">
-        <label>備考</label>
-        <textarea id="conf-remarks" rows="2" placeholder="ご質問や連絡事項がございましたらご記入ください"></textarea>
-      </div>
-
-      <div style="border-top:1px solid #eee; margin:15px 0; padding-top:15px;">
-        <label>Voucher / 紹介コード</label>
-        <div style="display:flex; gap:10px;">
-            <input type="text" id="voucher-code" placeholder="コードを入力" style="margin-bottom:0;">
-            <button class="btn btn-secondary" style="margin-top:0; padding:10px;" id="btn-apply-voucher" onclick="applyVoucher()">適用</button>
-        </div>
-        <div id="voucher-result" style="font-size:0.9rem; font-weight:bold; margin-top:5px;"></div>
-      </div>
-
-      <div style="font-size:1.3rem; font-weight:bold; color:var(--c-sub-deep-ocean); text-align:right; margin-top:10px;">
-        合計: <span id="conf-total">¥---</span>
-      </div>
-      
-      <label style="margin-top:15px;">お支払い方法</label>
-      <select id="payment-method">
-        <option value="CARD">クレジットカード</option>
-        <option value="QUICPAY">QUICPay</option>
-        <option value="ID">iD</option>
-        <option value="IC">交通系IC</option>
-        <option value="CASH">当日現金払い</option>
-      </select>
-
-      <div style="margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
-        <label style="display:flex; align-items:center; cursor:pointer;">
-            <input type="checkbox" id="receipt-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);" onchange="toggleReceiptInput()">
-            領収書の発行を希望する
-        </label>
-        <div id="receipt-input-area" style="display:none; margin-top:10px;">
-            <label>宛名 <span style="color:red">*</span></label>
-            <input type="text" id="receipt-name" placeholder="例：山田 太郎 / (株)K9">
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <label>規約等の確認</label>
-      <div class="checkbox-row">
-        <input type="checkbox" class="term-check" id="chk-policy" onchange="checkAllTerms()">
-        <span onclick="openTerms('policy')" style="cursor:pointer; text-decoration:underline; flex:1;">キャンセルポリシーに同意</span>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" class="term-check" id="chk-privacy" onchange="checkAllTerms()">
-        <span onclick="openTerms('privacy')" style="cursor:pointer; text-decoration:underline; flex:1;">個人情報の取扱に同意</span>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" class="term-check" id="chk-terms" onchange="checkAllTerms()">
-        <span onclick="openTerms('terms')" style="cursor:pointer; text-decoration:underline; flex:1;">利用規約に同意</span>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" class="term-check" id="chk-law" onchange="checkAllTerms()">
-        <span onclick="openTerms('law')" style="cursor:pointer; text-decoration:underline; flex:1;">特定商取引法に基づく表記を確認</span>
-      </div>
-      
-      <div style="border-top:1px solid #eee; margin-top:10px; padding-top:10px; font-weight:bold;">
-        <label style="display:flex; align-items:center; cursor:pointer;">
-            <input type="checkbox" id="chk-all" style="width:20px; height:20px; accent-color:var(--c-main-turquoise);" onchange="toggleAllTerms()">
-            全てに同意する
-        </label>
-      </div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="goToView(2)">戻る</button>
-      <button class="btn btn-primary" id="btn-confirm-next" disabled onclick="checkUserAndNext()">次へ</button>
-    </div>
+  <div class="progress-container">
+    <div class="progress-bg"></div>
+    <div class="progress-bar-fill" id="progress-fill"></div>
+    <div class="step-dot active" id="dot-1"></div>
+    <div class="step-dot" id="dot-2"></div>
+    <div class="step-dot" id="dot-3"></div>
+    <div class="step-dot" id="dot-4"></div>
+    <div class="step-dot" id="dot-5"></div>
   </div>
 
-  <div id="view-4" class="view-section">
-    <h2>情報入力</h2>
-    
-    <div id="form-existing">
-        <div class="card">
-          <label>クレジットカード情報</label>
-          
-          <div id="saved-card-area" style="display:none;">
-              <div style="margin-bottom:10px; font-size:0.9rem; color:#666;">登録済みのカードを選択してください</div>
-              <div id="saved-card-list"></div>
-              
-              <div class="saved-card-item" id="opt-new-card" onclick="selectCard('NEW')">
-                  <div style="flex:1;">
-                      <div style="font-weight:bold;">新しいカードを使う</div>
-                  </div>
-                  <div id="check-new" class="check-mark" style="display:none;"><i class="fa-solid fa-check" style="color:var(--c-main-turquoise);"></i></div>
+  <div id="app-container">
+
+    <div id="view-1" class="view-section active">
+      <h2>予約内容</h2>
+      
+      <div class="card" id="dog-info-card">
+        <label>選択中のワンちゃん</label>
+        <div id="selected-dog-name" style="font-size:1.2rem; font-weight:bold; color:var(--c-main-turquoise); margin-bottom:10px;">---</div>
+        <button class="btn btn-secondary" id="btn-change-dog" style="padding:8px 15px; font-size:0.8rem; width:auto; display:inline-block;" onclick="showDogSelectModal(true)">変更する</button>
+
+        <div style="background:var(--c-bg-mist); padding:10px; border-radius:8px; margin-top:15px;">
+          <label style="display:flex; align-items:center; margin:0; cursor:pointer;">
+            <input type="checkbox" id="multi-dog-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);" onchange="handleMultiDogChange()">
+            2頭目の追加 (+2,000円 / +30分)
+          </label>
+        </div>
+      </div>
+
+      <div id="existing-customer-link-area" style="text-align:right; display:none; margin-bottom:20px;">
+          <span class="text-link" onclick="openUidModal()">すでにご契約中のお客様はこちら</span>
+      </div>
+
+      <div class="card">
+        <label>メニュー</label>
+        <select id="menu-select"><option>読み込み中...</option></select>
+      </div>
+
+      <button class="btn btn-primary" onclick="goToView(2)">次へ (日時選択)</button>
+      <button class="btn btn-cancel-rsv" onclick="alert('キャンセル機能実装予定')">予約のキャンセルはこちら</button>
+    </div>
+
+    <div id="view-2" class="view-section">
+      <h2>日時の選択</h2>
+      <div class="card" style="padding:15px 5px; position:relative;">
+        <div class="cal-controls" style="padding:0 10px;">
+          <button class="btn btn-secondary" style="width:auto; padding:5px 10px; font-size:0.8rem;" onclick="shiftWeek(-1)">&lt; 前週</button>
+          <span id="cal-range-text" style="font-weight:bold; font-size:0.9rem;">--/-- 〜</span>
+          <button class="btn btn-secondary" style="width:auto; padding:5px 10px; font-size:0.8rem;" onclick="shiftWeek(1)">次週 &gt;</button>
+        </div>
+
+        <div class="cal-wrapper">
+          <div id="cal-overlay-loader">
+              <div class="spinner" style="width:30px; height:30px; border-width:3px;"></div>
+              <div style="font-size:0.8rem; color:var(--c-text-gray); margin-top:5px;">スケジュール確認中...</div>
+          </div>
+          <table class="cal-table">
+            <thead><tr id="cal-header"><th>時間</th></tr></thead>
+            <tbody id="cal-body"></tbody>
+          </table>
+        </div>
+
+        <div class="cal-legend">
+          <span><span style="color:var(--c-main-turquoise); font-weight:bold;">○</span> 可能</span>
+          <span><span style="color:#fbc02d; font-weight:bold;">△</span> わずか</span>
+          <span><span style="background:#f0f0f0; padding:0 4px; color:#ccc;">×</span> 不可</span>
+        </div>
+      </div>
+
+      <div class="card" id="alt-address-card">
+          <label style="display:flex; align-items:center; cursor:pointer; margin-bottom:0;">
+              <input type="checkbox" id="alt-address-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);" onchange="toggleAltAddress()">
+              申込住所と異なる場所で実施
+          </label>
+          <div id="alt-address-area" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
+              <label>郵便番号 <span style="color:red">*</span></label>
+              <input type="tel" id="alt-zip" placeholder="123-4567" inputmode="numeric" pattern="\d*" maxlength="8" oninput="formatZipAndFetch(this, 'alt-addr')">
+              <label>住所 <span style="color:red">*</span></label>
+              <input type="text" id="alt-addr" placeholder="東京都...">
+              <label>施設名</label>
+              <input type="text" id="alt-building">
+              <label>目印</label>
+              <input type="text" id="alt-note">
+          </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goToView(1)">戻る</button>
+        <button class="btn btn-primary" id="btn-to-step3" disabled onclick="goToView(3)">次へ</button>
+      </div>
+    </div>
+
+    <div id="view-3" class="view-section">
+      <h2>確認と規約</h2>
+      <div class="card">
+        <label>ご予約内容</label>
+        <div style="line-height:1.8; font-size:0.95rem;">
+          <div><strong>日時:</strong> <span id="conf-datetime">---</span></div>
+          <div><strong>場所:</strong> <span id="conf-place">---</span></div>
+          <div><strong>犬名:</strong> <span id="conf-dog">---</span></div>
+          <div><strong>コース:</strong> <span id="conf-course">---</span></div>
+        </div>
+        
+        <div style="border-top:1px solid #eee; margin:15px 0; padding-top:10px;">
+          <div style="display:flex; justify-content:space-between;">
+              <span>出張費</span>
+              <span id="conf-travel-fee" style="color:var(--c-accent-copper);">計算中...</span>
+          </div>
+          <div id="conf-travel-msg" style="font-size:0.75rem; color:#888; margin-top:5px;">
+              正確な出張費を計算しております。最終確認画面にて正式な交通費をお知らせいたします。
+          </div>
+        </div>
+
+        <div style="border-top:1px solid #eee; margin:15px 0; padding-top:15px;">
+          <label>備考</label>
+          <textarea id="conf-remarks" rows="2" placeholder="ご質問や連絡事項がございましたらご記入ください"></textarea>
+        </div>
+
+        <div style="border-top:1px solid #eee; margin:15px 0; padding-top:15px;">
+          <label>Voucher / 紹介コード</label>
+          <div style="display:flex; gap:10px;">
+              <input type="text" id="voucher-code" placeholder="コードを入力" style="margin-bottom:0;">
+              <button class="btn btn-secondary" style="margin-top:0; padding:10px;" id="btn-apply-voucher" onclick="applyVoucher()">適用</button>
+          </div>
+          <div id="voucher-result" style="font-size:0.9rem; font-weight:bold; margin-top:5px;"></div>
+        </div>
+
+        <div style="font-size:1.3rem; font-weight:bold; color:var(--c-sub-deep-ocean); text-align:right; margin-top:10px;">
+          合計: <span id="conf-total">¥---</span>
+        </div>
+        
+        <label style="margin-top:15px;">お支払い方法</label>
+        <select id="payment-method">
+          <option value="CARD">クレジットカード</option>
+          <option value="QUICPAY">QUICPay</option>
+          <option value="ID">iD</option>
+          <option value="IC">交通系IC</option>
+          <option value="CASH">当日現金払い</option>
+        </select>
+
+        <div style="margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
+          <label style="display:flex; align-items:center; cursor:pointer;">
+              <input type="checkbox" id="receipt-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);" onchange="toggleReceiptInput()">
+              領収書の発行を希望する
+          </label>
+          <div id="receipt-input-area" style="display:none; margin-top:10px;">
+              <label>宛名 <span style="color:red">*</span></label>
+              <input type="text" id="receipt-name" placeholder="例：山田 太郎 / (株)K9">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>規約等の確認</label>
+        <div class="checkbox-row">
+          <input type="checkbox" class="term-check" id="chk-policy" onchange="checkAllTerms()">
+          <span onclick="openTerms('policy')" style="cursor:pointer; text-decoration:underline; flex:1;">キャンセルポリシーに同意</span>
+        </div>
+        <div style="border-top:1px solid #eee; margin-top:10px; padding-top:10px; font-weight:bold;">
+          <label style="display:flex; align-items:center; cursor:pointer;">
+              <input type="checkbox" id="chk-all" style="width:20px; height:20px; accent-color:var(--c-main-turquoise);" onchange="toggleAllTerms()">
+              全てに同意する
+          </label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goToView(2)">戻る</button>
+        <button class="btn btn-primary" id="btn-confirm-next" disabled onclick="checkUserAndNext()">次へ</button>
+      </div>
+    </div>
+
+    <div id="view-4" class="view-section">
+      <h2>情報入力</h2>
+      
+      <div id="form-existing">
+          <div class="card">
+            <label>クレジットカード情報</label>
+            <div id="saved-card-area" style="display:none;">
+                <div style="margin-bottom:10px; font-size:0.9rem; color:#666;">登録済みのカードを選択してください</div>
+                <div id="saved-card-list"></div>
+                <div class="saved-card-item" id="opt-new-card" onclick="selectCard('NEW')">
+                    <div style="flex:1;"><div style="font-weight:bold;">新しいカードを使う</div></div>
+                    <div id="check-new" class="check-mark" style="display:none;"><i class="fa-solid fa-check" style="color:var(--c-main-turquoise);"></i></div>
+                </div>
+            </div>
+            
+            <div id="new-card-form" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
+                <div id="sq-card-div-existing"></div> 
+                <label style="display:flex; align-items:center; margin-top:15px; cursor:pointer;">
+                    <input type="checkbox" id="save-card-check-existing" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);">
+                    次回のためにカード情報を保存する
+                </label>
+            </div>
+          </div>
+          <div class="btn-row">
+              <button class="btn btn-secondary" onclick="goToView(3)">戻る</button>
+              <button class="btn btn-primary" id="btn-final-check-existing" onclick="handleCardTokenize()">最終確認へ</button>
+          </div>
+      </div>
+
+      <div id="form-new" style="display:none;">
+          <div class="card">
+              <h3>顧客情報</h3>
+              <label>氏名 <span style="color:red">*</span></label><input type="text" id="reg-name">
               </div>
           </div>
-
-          <div id="no-saved-card-msg" style="background:#eee; padding:15px; border-radius:8px; margin-bottom:15px; display:none;">
-            <div style="font-size:0.8rem;">登録済みカードはありません</div>
+      
+      <div id="form-new-card-only" style="display:none;">
+          <div class="card">
+              <label>クレジットカード入力</label>
+              <div id="sq-container-holder"></div>
           </div>
-          
-          <div id="new-card-form" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
-              <div id="sq-card-div-existing"></div> <label style="display:flex; align-items:center; margin-top:15px; cursor:pointer;">
-                  <input type="checkbox" id="save-card-check-existing" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);">
-                  次回のためにカード情報を保存する
-              </label>
+          <div class="btn-row">
+              <button class="btn btn-secondary" onclick="backToForm()">戻る</button>
+              <button class="btn btn-primary" id="btn-final-check-new" onclick="handleCardTokenize()">最終確認へ</button>
           </div>
-        </div>
-        <div class="btn-row">
-            <button class="btn btn-secondary" onclick="goToView(3)">戻る</button>
-            <button class="btn btn-primary" id="btn-final-check-existing" onclick="handleCardTokenize()">最終確認へ</button>
-        </div>
+      </div>
     </div>
 
-    <div id="form-new" style="display:none;">
-        <div class="card">
-            <h3 style="margin-top:0; color:var(--c-main-turquoise); font-size:1rem; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">顧客情報</h3>
-            <label>氏名 <span style="color:red">*</span></label>
-            <input type="text" id="reg-name" placeholder="山田 太郎">
-            <label>電話番号 <span style="color:red">*</span></label>
-            <input type="tel" id="reg-phone" placeholder="090-1234-5678" inputmode="numeric" oninput="formatPhone(this)">
-            <label>郵便番号 <span style="color:red">*</span></label>
-            <input type="tel" id="reg-zip" placeholder="123-4567" inputmode="numeric" maxlength="8" oninput="formatZipAndFetch(this, 'reg-addr')">
-            <label>住所 <span style="color:red">*</span></label>
-            <input type="text" id="reg-addr" placeholder="自動入力..." onchange="calcNewUserDistance()">
-            <label>目印 (任意)</label>
-            <input type="text" id="reg-landmark" placeholder="近くの公園など">
-        </div>
-        <div class="card">
-            <h3 style="margin-top:0; color:var(--c-main-turquoise); font-size:1rem; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">愛犬情報</h3>
-            <label>名前 <span style="color:red">*</span></label>
-            <input type="text" id="reg-dog-name" placeholder="ポチ">
-            <label>犬種</label>
-            <input type="text" id="reg-dog-breed" placeholder="トイプードル">
-            <label>年齢 (歳)</label>
-            <input type="number" id="reg-dog-age" placeholder="3" inputmode="numeric">
-            <label style="display:flex; align-items:center; margin-top:10px;">
-                <input type="checkbox" id="reg-dog-neutered" style="width:20px; height:20px; margin-right:10px;">
-                去勢・避妊済み
-            </label>
-            <label style="margin-top:15px;">お困りごと</label>
-            <textarea id="reg-concerns" rows="3" placeholder="吠え癖、噛み癖など"></textarea>
-            <label style="margin-top:15px;">備考</label>
-            <textarea id="reg-remarks" rows="2" placeholder="その他連絡事項"></textarea>
-        </div>
-        <div class="btn-row">
-            <button class="btn btn-secondary" onclick="goToView(3)">戻る</button>
-            <button class="btn btn-primary" onclick="handleNewUserNext()">次へ</button>
-        </div>
+    <div id="view-5" class="view-section">
+      <h2>最終確認</h2>
+      <div class="card">
+        <label>内容確認</label>
+        <div id="final-summary" style="white-space:pre-wrap; font-size:0.9rem; line-height:1.6;"></div>
+      </div>
+      <div class="card" style="background:#fff3e0; border:1px solid #ffe0b2; color:#e65100;">
+        <label style="color:#e65100;"><i class="fa-solid fa-triangle-exclamation"></i> キャンセル規定</label>
+        <p style="font-size:0.85rem; margin:0;">受付締切: 前日18:00<br>前日: 50% / 当日: 100% のキャンセル料が発生します。</p>
+      </div>
+      <button class="btn btn-primary" onclick="submitReservation()">上記に同意して予約を確定する</button>
+      <button class="btn btn-secondary" onclick="goBackFromFinal()">修正する</button>
     </div>
-    
-    <div id="form-new-card-only" style="display:none;">
-        <div class="card">
-            <label>クレジットカード入力</label>
-            <div id="sq-container-holder"></div>
-            
-            <label style="display:flex; align-items:center; margin-top:15px; cursor:pointer;">
-                <input type="checkbox" id="save-card-check-new" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);" checked>
-                次回のためにカード情報を保存する
-            </label>
-        </div>
-        <div class="btn-row">
-            <button class="btn btn-secondary" onclick="backToForm()">戻る</button>
-            <button class="btn btn-primary" id="btn-final-check-new" onclick="handleCardTokenize()">最終確認へ</button>
-        </div>
+
+    <div id="view-6" class="view-section" style="text-align:center; padding-top:30px;">
+      <i class="fa-regular fa-circle-check" style="font-size:4rem; color:var(--c-main-turquoise); margin-bottom:20px;"></i>
+      <h2>予約完了</h2>
+      <p>ご予約ありがとうございます。</p>
+      
+      <div class="card">
+          <button class="btn btn-primary" style="background:#06C755; box-shadow:none;" onclick="shareLine()">
+              <i class="fa-brands fa-line"></i> LINEに送信
+          </button>
+          <div style="margin-top:20px;">
+              <button class="btn btn-primary" onclick="location.reload()">続けて登録</button>
+          </div>
+      </div>
+      <button class="btn btn-secondary" style="border:none; margin-top:20px;" onclick="liff.closeWindow()">閉じる</button>
+    </div>
+
+  </div>
+
+  <div id="sq-card-source" style="display:none;">
+      <div id="sq-card-div"></div>
+  </div>
+
+  <footer class="site-footer">
+      <div class="footer-logo-container">
+          <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony">
+      </div>
+      <div class="footer-info">
+          <p><strong>K9 Harmony</strong></p>
+          <p>東京都板橋区</p>
+      </div>
+      <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
+  </footer>
+
+  <div class="modal-overlay" id="dog-modal-overlay">
+    <div class="center-modal" id="dog-modal">
+      <h3 style="text-align:center; color:var(--c-sub-deep-ocean); margin-bottom:15px;">ワンちゃんを選択</h3>
+      <div id="dog-list-container"></div>
     </div>
   </div>
-
-  <div id="view-5" class="view-section">
-    <h2>最終確認</h2>
-    <div class="card">
-      <label>内容確認</label>
-      <div id="final-summary" style="white-space:pre-wrap; font-size:0.9rem; line-height:1.6;"></div>
-    </div>
-    <div class="card" style="background:#fff3e0; border:1px solid #ffe0b2; color:#e65100;">
-      <label style="color:#e65100;"><i class="fa-solid fa-triangle-exclamation"></i> キャンセル規定</label>
-      <p style="font-size:0.85rem; margin:0;">
-        受付締切: 前日18:00<br>
-        前日: 50% / 当日: 100% のキャンセル料が発生します。
-      </p>
-    </div>
-    <button class="btn btn-primary" onclick="submitReservation()">上記に同意して予約を確定する</button>
-    <button class="btn btn-secondary" onclick="goBackFromFinal()">修正する</button>
-  </div>
-
-  <div id="view-6" class="view-section" style="text-align:center; padding-top:30px;">
-    <i class="fa-regular fa-circle-check" style="font-size:4rem; color:var(--c-main-turquoise); margin-bottom:20px;"></i>
-    <h2>予約完了</h2>
-    <p>ご予約ありがとうございます。</p>
-    
-    <div class="card">
-        <button class="btn btn-primary" style="background:#06C755; box-shadow:none;" onclick="shareLine()">
-            <i class="fa-brands fa-line"></i> LINEに送信
-        </button>
-        <button class="btn btn-secondary" onclick="addToGoogleCalendar()">
-            <i class="fa-regular fa-calendar"></i> Googleカレンダー登録
-        </button>
-        <button class="btn btn-secondary" onclick="shareNative()">
-            <i class="fa-solid fa-share-nodes"></i> シェア
-        </button>
-        <div style="margin-top:20px;">
-            <button class="btn btn-primary" onclick="location.reload()">続けて登録</button>
-        </div>
-    </div>
-    <button class="btn btn-secondary" style="border:none; margin-top:20px;" onclick="liff.closeWindow()">閉じる</button>
-  </div>
-
-</div>
-
-<div id="sq-card-source" style="display:none;">
-    <div id="sq-card-div"></div>
-</div>
-
-<div class="modal-overlay" id="dog-modal-overlay">
-  <div class="center-modal" id="dog-modal">
-    <h3 style="text-align:center; color:var(--c-sub-deep-ocean); margin-bottom:15px;">ワンちゃんを選択</h3>
-    <div id="dog-list-container"></div>
-  </div>
-</div>
-<div class="modal-overlay" id="time-modal-overlay" onclick="closeTimeModal()">
-  <div class="time-modal" id="time-modal">
-    <h3 id="time-modal-title" style="font-size:1.1rem; text-align:center; margin-bottom:20px;">時間の選択</h3>
-    <div id="time-slot-buttons" style="display:grid; gap:10px;"></div>
-    <button class="btn btn-secondary" onclick="closeTimeModal()">閉じる</button>
-  </div>
-</div>
-<div class="modal-overlay" id="uid-modal-overlay">
-  <div class="center-modal" style="text-align:center;">
-    <h3 style="color:var(--c-sub-deep-ocean); font-size:1rem; margin-bottom:15px;">お客様IDの確認</h3>
-    <div style="background:#f0f0f0; padding:10px; border-radius:5px; font-family:monospace; margin-bottom:15px; word-break:break-all;" id="uid-display-area">---</div>
-    <button class="btn btn-primary" onclick="copyUid()">IDをコピー</button>
-    <button class="btn btn-secondary" onclick="closeUidModal()">閉じる</button>
-  </div>
-</div>
-<div class="modal-overlay" id="terms-overlay" onclick="closeTerms()"></div>
-<div class="top-sheet" id="terms-sheet">
-  <div style="padding:15px; border-bottom:1px solid #eee; text-align:center; font-weight:bold; display:flex; justify-content:space-between;">
-    <span id="terms-title">規約</span>
-    <span onclick="closeTerms()" style="cursor:pointer; font-size:1.2rem;">&times;</span>
-  </div>
-  <div class="top-sheet-content" id="terms-content"></div>
-  <div class="top-sheet-close-area" onclick="closeTerms()"></div>
-</div>
-
-<script>
-  // =========================================
-  // LOGIC & UTILS
-  // =========================================
-  function log(msg) { console.log(msg); } // 簡易ログ
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
-  const LIFF_ID = '2008546673-MJY7j3ox';
-  const OFFICE_POS = { lat: 35.7665, lng: 139.6936 };
-  const SQ_APP_ID = 'sandbox-sq0idb-gCSIUTwd9ZQ7QtByBHz7uQ';
-  const SQ_LOC_ID = 'L9DXQ4GQKFNZV';
-  
-  let sqCard = null;
-  let paymentToken = null;
-  let userData = null;
-  let userDogs = [];
-  let userSavedCards = []; // 保存済みカードリスト
-  let selectedCardId = null; // 選択中のカードID (NEWの場合はnull)
-  
-  let products = [];
-  let selectedDog = null;
-  let selectedSlot = null; 
-  let weekOffset = 0;
-  let voucherData = null; 
-  let weekAvailability = {};
-  let currentLineUserId = null;
-
-  // --- Initialize ---
-  window.onload = async () => {
-    restoreSessionData();
-    bindInputListeners();
-    fetchAvailability(0).then(() => { fetchAvailability(1); fetchAvailability(-1); });
-
-    try {
-      await liff.init({ liffId: LIFF_ID });
-      if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
-      const profile = await liff.getProfile();
-      currentLineUserId = profile.userId;
-      fetchUserData(profile.userId);
-    } catch (e) { alert('LIFF Init Error: ' + e.message); }
-  };
-
-  // --- Session Data ---
-  function saveSessionData() {
-      const data = {
-          multiDog: document.getElementById('multi-dog-check').checked,
-          // ... (他フィールドは省略せず実装推奨だが今回は主要項目のみ)
-          receiptCheck: document.getElementById('receipt-check').checked,
-          receiptName: document.getElementById('receipt-name').value
-      };
-      sessionStorage.setItem('k9_rsv_form', JSON.stringify(data));
-  }
-  function restoreSessionData() {
-      const raw = sessionStorage.getItem('k9_rsv_form');
-      if(raw) {
-          const data = JSON.parse(raw);
-          if(data.multiDog) document.getElementById('multi-dog-check').checked = true;
-          if(data.receiptCheck) {
-              document.getElementById('receipt-check').checked = true;
-              toggleReceiptInput();
-          }
-          if(data.receiptName) document.getElementById('receipt-name').value = data.receiptName;
-      }
-  }
-  function bindInputListeners() {
-      // Input変更監視
-      const ids = ['multi-dog-check', 'receipt-check', 'receipt-name'];
-      ids.forEach(id => {
-          const el = document.getElementById(id);
-          if(el) el.addEventListener('change', saveSessionData);
-      });
-  }
-
-  // --- User Data & Saved Cards ---
-  async function fetchUserData(userId) {
-    try {
-      document.getElementById('loading-overlay').style.display = 'flex';
-      const res = await fetch(`${GAS_URL}?userId=${userId}&type=data&t=${Date.now()}`);
-      const json = await res.json();
-      
-      if (json.customer) {
-          userData = json.customer;
-          userDogs = json.all_dogs || [json.dog];
-          userSavedCards = json.saved_cards || []; // 保存カード取得
-          document.getElementById('alt-address-card').style.display = 'block';
-      } else {
-          userData = null; userDogs = []; userSavedCards = [];
-          document.getElementById('selected-dog-name').innerText = "ご新規の予約";
-          document.getElementById('btn-change-dog').style.display = 'none';
-          document.getElementById('existing-customer-link-area').style.display = 'block';
-          document.getElementById('alt-address-card').style.display = 'none';
-      }
-      if(json.products) products = json.products;
-      renderMenuSelect();
-      if (userDogs.length > 0) selectDog(0);
-      document.getElementById('loading-overlay').style.display = 'none';
-    } catch(e) { alert('通信失敗'); }
-  }
-
-  // --- Square UI Logic ---
-  async function initSquare(targetContainerId) {
-    try {
-        if(!sqCard) {
-            const payments = Square.payments(SQ_APP_ID, SQ_LOC_ID);
-            sqCard = await payments.card();
-            await sqCard.attach('#sq-card-div');
-        }
-        // Move container
-        const container = document.getElementById('sq-card-div');
-        const target = document.getElementById(targetContainerId);
-        target.innerHTML = '';
-        target.appendChild(container);
-    } catch(e) { alert("決済システム起動失敗"); }
-  }
-
-  // 既存会員向けカードリスト表示
-  function renderSavedCards() {
-      const container = document.getElementById('saved-card-list');
-      container.innerHTML = '';
-      
-      if (userSavedCards.length > 0) {
-          document.getElementById('saved-card-area').style.display = 'block';
-          document.getElementById('no-saved-card-msg').style.display = 'none';
-          
-          userSavedCards.forEach(card => {
-              const div = document.createElement('div');
-              div.className = 'saved-card-item';
-              div.onclick = () => selectCard(card.id);
-              div.id = `card-${card.id}`;
-              div.innerHTML = `
-                  <div class="card-icon"><i class="fa-regular fa-credit-card"></i></div>
-                  <div style="flex:1;">
-                      <div style="font-weight:bold;">${card.brand} &bull;&bull;&bull;&bull; ${card.last4}</div>
-                      <div style="font-size:0.8rem; color:#666;">有効期限: ${card.exp_month}/${card.exp_year}</div>
-                  </div>
-                  <div class="check-mark" style="display:none;"><i class="fa-solid fa-check" style="color:var(--c-main-turquoise);"></i></div>
-              `;
-              container.appendChild(div);
-          });
-          
-          // デフォルトで最初のカードを選択
-          selectCard(userSavedCards[0].id);
-      } else {
-          document.getElementById('saved-card-area').style.display = 'none';
-          document.getElementById('no-saved-card-msg').style.display = 'block';
-          selectCard('NEW'); // 強制的に新規入力へ
-      }
-  }
-
-  function selectCard(cardId) {
-      selectedCardId = cardId;
-      
-      // UI更新
-      document.querySelectorAll('.saved-card-item').forEach(el => {
-          el.classList.remove('selected');
-          el.querySelector('.check-mark').style.display = 'none';
-      });
-      
-      if (cardId === 'NEW') {
-          document.getElementById('opt-new-card').classList.add('selected');
-          document.getElementById('opt-new-card').querySelector('.check-mark').style.display = 'block';
-          document.getElementById('new-card-form').style.display = 'block'; // 入力フォーム表示
-          initSquare('sq-card-div-existing');
-      } else {
-          const el = document.getElementById(`card-${cardId}`);
-          if(el) {
-              el.classList.add('selected');
-              el.querySelector('.check-mark').style.display = 'block';
-          }
-          document.getElementById('new-card-form').style.display = 'none'; // 入力フォーム非表示
-      }
-  }
-
-  // --- Action Handlers ---
-  
-  async function handleCardTokenize() {
-      const isCardPayment = document.getElementById('payment-method').value === 'CARD';
-      if(!isCardPayment) { goToView(5); return; }
-
-      // 既存会員で、保存済みカードを選択している場合 -> Tokenize不要
-      if (userData && selectedCardId && selectedCardId !== 'NEW') {
-          paymentToken = null; // Tokenは使わない
-          goToView(5);
-          return;
-      }
-
-      // それ以外 (新規入力) -> Tokenize実行
-      if(!sqCard) { alert("決済準備未完了"); return; }
-      
-      const btnId = userData ? 'btn-final-check-existing' : 'btn-final-check-new';
-      document.getElementById(btnId).disabled = true;
-
-      try {
-          const result = await sqCard.tokenize();
-          if (result.status === 'OK') {
-              paymentToken = result.token;
-              goToView(5);
-          } else {
-              alert("カード情報エラー");
-          }
-      } catch(e) { alert("エラー: " + e.message); }
-      finally { document.getElementById(btnId).disabled = false; }
-  }
-
-  function goToView(step) {
-    document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
-    document.getElementById(`view-${step}`).classList.add('active');
-    window.scrollTo(0,0);
-    updateProgress(step);
-
-    if (step === 2) { /* Calendar Init (省略) */ }
-    if (step === 3) { renderConfirm(); }
-    
-    // View 4: 決済情報入力
-    if (step === 4) {
-        const payMethod = document.getElementById('payment-method').value;
-        if(payMethod === 'CARD') {
-            if(userData) {
-                // 既存会員: カードリスト表示
-                document.getElementById('form-existing').style.display = 'block';
-                document.getElementById('form-new').style.display = 'none';
-                document.getElementById('form-new-card-only').style.display = 'none';
-                renderSavedCards();
-            } else {
-                // 新規会員: 入力フォーム表示
-                document.getElementById('form-existing').style.display = 'none';
-                document.getElementById('form-new').style.display = 'none'; // 詳細情報は入力済前提
-                document.getElementById('form-new-card-only').style.display = 'block';
-                initSquare('sq-container-holder');
-            }
-        }
-    }
-    if (step === 5) renderFinal();
-  }
-
-  function submitReservation() {
-      document.getElementById('loading-overlay').style.display = 'flex';
-      
-      // Payment Logic
-      const isCard = document.getElementById('payment-method').value === 'CARD';
-      const useSaved = (userData && selectedCardId && selectedCardId !== 'NEW');
-      const saveNew = userData 
-          ? document.getElementById('save-card-check-existing').checked 
-          : document.getElementById('save-card-check-new').checked;
-
-      // Construct Payload
-      const totalStr = document.getElementById('conf-total').innerText;
-      const amount = parseInt(totalStr.replace(/[^0-9]/g, ''));
-
-      // 予約データ構築
-      const regData = !userData ? {
-          name: document.getElementById('reg-name').value,
-          phone: document.getElementById('reg-phone').value,
-          // ... (他フィールド)
-      } : null;
-
-      const payload = {
-          action: isCard ? 'execute_payment' : 'add_reservation', // カードなら決済アクションへ
-          // Common Params
-          userId: userData ? userData.unique_key : 'NEW_USER',
-          lineUserId: currentLineUserId, // For User Lookup in backend
-          date: selectedSlot.date,
-          time: selectedSlot.time,
-          dogId: selectedDog ? selectedDog.id : null,
-          menuDuration: (document.getElementById('multi-dog-check').checked) ? 120 : 90,
-          multiDog: document.getElementById('multi-dog-check').checked,
-          receiptRequired: document.getElementById('receipt-check').checked,
-          receiptAddressee: document.getElementById('receipt-name').value,
-          referralCode: document.getElementById('voucher-code').value,
-          
-          // Payment Params
-          amount: amount,
-          token: paymentToken,
-          saveCard: saveNew,
-          useSavedCard: useSaved,
-          cardId: useSaved ? selectedCardId : null,
-          
-          // Reg Data
-          regData: regData,
-          paymentMethod: isCard ? 'CARD' : 'CASH',
-          paymentStatus: isCard ? 'PAID' : 'UNPAID'
-      };
-
-      // 1. 決済が必要な場合
-      if (isCard) {
-          fetch(GAS_URL, { method:'POST', body:JSON.stringify(payload) })
-          .then(res => res.json())
-          .then(json => {
-              if(json.status === 'success') {
-                  // 決済成功 -> 予約登録へ (※Backendで一括処理に変更したため完了)
-                  // ただし現状のBackend実装(execute_payment)では予約登録まで内包していない可能性があるため
-                  // Backendの execute_payment 内で _createReservation を呼ぶように修正済みであればこれでOK。
-                  // 今回のBackend修正では execute_payment は決済のみ担当しているため、
-                  // 決済成功後に改めて add_reservation を呼ぶ必要がある。
-                  
-                  // ★修正: Backendのexecute_paymentは決済のみ。予約は別途コールが必要。
-                  const resPayload = { ...payload, action: 'add_reservation', paymentStatus: 'PAID' };
-                  return fetch(GAS_URL, { method:'POST', body:JSON.stringify(resPayload) });
-              } else {
-                  throw new Error(json.message);
-              }
-          })
-          .then(res => res.json())
-          .then(json => {
-              if(json.status === 'success') goToView(6);
-              else alert('予約登録失敗: ' + json.message);
-          })
-          .catch(e => { alert('エラー: ' + e.message); })
-          .finally(() => document.getElementById('loading-overlay').style.display='none');
-          
-          return;
-      } 
-      
-      // 2. 現金/その他決済の場合
-      fetch(GAS_URL, { method:'POST', body:JSON.stringify(payload) })
-      .then(res => res.json())
-      .then(json => {
-          if(json.status === 'success') goToView(6);
-          else alert(json.message);
-      })
-      .catch(e => alert('Error'))
-      .finally(() => document.getElementById('loading-overlay').style.display='none');
-  }
-
-  // (Helper functions: checkUserAndNext, handleNewUserNext, backToForm, etc. は前回のまま維持)
-  function checkUserAndNext() {
-      const paymentMethod = document.getElementById('payment-method').value;
-      if(userData) {
-          if(paymentMethod === 'CARD') {
-              document.getElementById('form-existing').style.display = 'block';
-              document.getElementById('form-new').style.display = 'none';
-              document.getElementById('form-new-card-only').style.display = 'none';
-              goToView(4);
-          } else goToView(5);
-      } else {
-          document.getElementById('form-existing').style.display = 'none';
-          document.getElementById('form-new').style.display = 'block';
-          document.getElementById('form-new-card-only').style.display = 'none';
-          goToView(4);
-      }
-  }
-  function handleNewUserNext() {
-      const paymentMethod = document.getElementById('payment-method').value;
-      if(paymentMethod === 'CARD') {
-          document.getElementById('form-new').style.display = 'none';
-          document.getElementById('form-new-card-only').style.display = 'block';
-          initSquare('sq-container-holder');
-      } else goToView(5);
-  }
-  function backToForm() {
-      document.getElementById('form-new').style.display = 'block';
-      document.getElementById('form-new-card-only').style.display = 'none';
-  }
-  function goBackFromFinal() {
-      const paymentMethod = document.getElementById('payment-method').value;
-      if(userData) {
-          if(paymentMethod === 'CARD') goToView(4); else goToView(3);
-      } else {
-          if(paymentMethod === 'CARD') {
-              goToView(4);
-              document.getElementById('form-new').style.display = 'none';
-              document.getElementById('form-new-card-only').style.display = 'block';
-              initSquare('sq-container-holder');
-          } else {
-              goToView(4);
-              document.getElementById('form-new').style.display = 'block';
-              document.getElementById('form-new-card-only').style.display = 'none';
-          }
-      }
-  }
-  function updateProgress(step) {
-    const pct = ((step-1)/4)*100;
-    document.getElementById('progress-fill').style.width = pct+'%';
-    for(let i=1; i<=5; i++){
-      const d = document.getElementById(`dot-${i}`);
-      d.classList.remove('active','done');
-      if(i<step) d.classList.add('done');
-      if(i===step) d.classList.add('active');
-    }
-  }
-  function handleMultiDogChange() {
-      weekAvailability = {};
-      const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
-      renderCalendarStructure();
-      fetchAvailability(weekOffset);
-      saveSessionData();
-  }
-  function shiftWeek(d) { 
-      weekOffset += d; 
-      renderCalendarStructure(); 
-      const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
-      const sStr = startDt.toISOString().split('T')[0];
-      if(!weekAvailability[sStr]) fetchAvailability(weekOffset); else fillCalendarBody();
-  }
-  async function fetchAvailability(offset) {
-      document.getElementById('cal-overlay-loader').style.display = 'flex';
-      const startDt = new Date(); startDt.setDate(startDt.getDate() + (offset*7));
-      const sStr = startDt.toISOString().split('T')[0];
-      const isMulti = document.getElementById('multi-dog-check').checked;
-      try {
-          const res = await fetch(GAS_URL, {
-              method: 'POST',
-              body: JSON.stringify({ action: 'get_week_availability', startDate: sStr, menuDuration: isMulti?120:90 })
-          });
-          const json = await res.json();
-          if(json.data) Object.assign(weekAvailability, json.data);
-          fillCalendarBody();
-      } catch(e) {}
-      document.getElementById('cal-overlay-loader').style.display = 'none';
-  }
-  function renderCalendarStructure() {
-    const thead = document.getElementById('cal-header');
-    const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
-    document.getElementById('cal-range-text').innerText = `${startDt.getMonth()+1}/${startDt.getDate()} 〜`;
-    let headHtml = '<th>時間</th>';
-    for(let i=0; i<7; i++){
-      let d = new Date(startDt); d.setDate(startDt.getDate()+i);
-      let col = (d.getDay()===0)?'red':(d.getDay()===6)?'blue':'#333';
-      headHtml += `<th style="color:${col}">${d.getMonth()+1}/${d.getDate()}<br>(${['日','月','火','水','木','金','土'][d.getDay()]})</th>`;
-    }
-    thead.innerHTML = headHtml;
-    fillCalendarBody();
-  }
-  function fillCalendarBody() {
-    const tbody = document.getElementById('cal-body');
-    tbody.innerHTML = '';
-    const startDt = new Date(); startDt.setDate(startDt.getDate() + (weekOffset*7));
-    let dates = [];
-    for(let i=0; i<7; i++){
-        let d = new Date(startDt); d.setDate(startDt.getDate()+i);
-        dates.push({ date: d.toISOString().split('T')[0], day: d.getDay() });
-    }
-    for(let h=10; h<=18; h++){
-      let tr = document.createElement('tr');
-      tr.innerHTML = `<td>${h}:00</td>`;
-      dates.forEach(dt => {
-        let td = document.createElement('td');
-        let isStaticNG = false;
-        if (dt.day === 3) isStaticNG = true; 
-        if (dt.day === 4 && h < 13) isStaticNG = true; 
-        const slots = weekAvailability[dt.date] || [];
-        const has00 = slots.includes(`${h}:00`);
-        const has30 = slots.includes(`${h}:30`);
-        if(isStaticNG || (!has00 && !has30)) td.innerHTML = '<span class="sym-ng">×</span>';
-        else {
-            let cls = (has00 && has30) ? 'sym-ok' : 'sym-tri';
-            td.innerHTML = `<span class="${cls}" onclick="openTimeModal('${dt.date}', ${h}, this, ${has00}, ${has30})">${(has00&&has30)?'○':'△'}</span>`;
-        }
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    }
-  }
-  function openTimeModal(dateStr, hour, cell, has00, has30) {
-    selectedSlot = { date: dateStr }; // Temp
-    document.getElementById('time-modal-title').innerText = `${dateStr} ${hour}:00台`;
-    const cont = document.getElementById('time-slot-buttons');
-    cont.innerHTML = '';
-    if(has00) {
-        const btn = document.createElement('button');
-        btn.className = 'btn btn-outline-brand'; 
-        btn.innerText = `${hour}:00 開始`;
-        btn.onclick = () => chooseTime(dateStr, `${hour}:00`);
-        cont.appendChild(btn);
-    }
-    if(has30) {
-        const btn = document.createElement('button');
-        btn.className = 'btn btn-outline-brand'; 
-        btn.innerText = `${hour}:30 開始`;
-        btn.onclick = () => chooseTime(dateStr, `${hour}:30`);
-        cont.appendChild(btn);
-    }
-    document.getElementById('time-modal-overlay').classList.add('open');
-    document.getElementById('time-modal').classList.add('open');
-  }
-  function closeTimeModal() {
-    document.getElementById('time-modal-overlay').classList.remove('open');
-    document.getElementById('time-modal').classList.remove('open');
-  }
-  function chooseTime(d, t) {
-    selectedSlot = { date: d, time: t };
-    closeTimeModal();
-    const btn = document.getElementById('btn-to-step3');
-    btn.disabled = false;
-    btn.innerText = `${d.substring(5)} ${t} で進む`;
-  }
-  function toggleAltAddress() {
-      const chk = document.getElementById('alt-address-check').checked;
-      document.getElementById('alt-address-area').style.display = chk ? 'block' : 'none';
-  }
-  function toggleReceiptInput() {
-      const chk = document.getElementById('receipt-check').checked;
-      document.getElementById('receipt-input-area').style.display = chk ? 'block' : 'none';
-  }
-  function formatPhone(input) { input.value = input.value.replace(/\D/g, ''); }
-  function formatZipAndFetch(input, targetId) { /* Zip Logic */ }
-  function calcNewUserDistance() {}
-  function renderConfirm() {
-    const isMulti = document.getElementById('multi-dog-check').checked;
-    const menuEl = document.getElementById('menu-select');
-    const price = parseInt(menuEl.options[menuEl.selectedIndex].getAttribute('data-price'));
-    const feeStr = "計算中..."; // 簡易
-    
-    document.getElementById('conf-datetime').innerText = `${selectedSlot.date} ${selectedSlot.time}`;
-    document.getElementById('conf-course').innerText = menuEl.options[menuEl.selectedIndex].text + (isMulti?" (+2頭目)":"");
-    document.getElementById('conf-travel-fee').innerText = "0"; // Mock
-    document.getElementById('conf-total').innerText = `¥${(price + (isMulti?2000:0)).toLocaleString()}`;
-  }
-  async function applyVoucher() { /* Voucher Logic */ }
-  function renderFinal() {
-    const t = document.getElementById('conf-total').innerText;
-    document.getElementById('final-summary').innerText = `日時: ${selectedSlot.date} ${selectedSlot.time}\n合計: ${t}`;
-  }
-  function selectDog(idx) {
-    selectedDog = userDogs[idx];
-    document.getElementById('selected-dog-name').innerText = selectedDog.name_disp || selectedDog.name;
-  }
-  function showDogSelectModal(canClose) {
-    const cont = document.getElementById('dog-list-container');
-    cont.innerHTML = '';
-    userDogs.forEach((d, idx) => {
-      const btn = document.createElement('button');
-      btn.className = 'btn btn-outline-brand'; 
-      btn.innerText = d.name_disp || d.name;
-      btn.onclick = () => { selectDog(idx); closeDogModal(); };
-      cont.appendChild(btn);
-    });
-    if(userDogs.length===0 || canClose) {
-        const close = document.createElement('button');
-        close.className = 'btn btn-secondary';
-        close.innerText = '閉じる';
-        close.onclick = closeDogModal;
-        cont.appendChild(close);
-    }
-    document.getElementById('dog-modal-overlay').classList.add('open');
-    document.getElementById('dog-modal').classList.add('open');
-  }
-  function closeDogModal() {
-    document.getElementById('dog-modal-overlay').classList.remove('open');
-    document.getElementById('dog-modal').classList.remove('open');
-  }
-  // Terms & Copy functions
-  function openTerms(k) {
-    document.getElementById('terms-content').innerText = "規約内容...";
-    document.getElementById('terms-overlay').classList.add('open');
-    document.getElementById('terms-sheet').classList.add('open');
-  }
-  function closeTerms() {
-    document.getElementById('terms-overlay').classList.remove('open');
-    document.getElementById('terms-sheet').classList.remove('open');
-  }
-  function openUidModal() {
-      document.getElementById('uid-display-area').innerText = currentLineUserId || "...";
-      document.getElementById('uid-modal-overlay').classList.add('open');
-  }
-  function closeUidModal() { document.getElementById('uid-modal-overlay').classList.remove('open'); }
-  function copyUid() { navigator.clipboard.writeText(currentLineUserId).then(()=>alert('コピーしました')); }
-  function addToGoogleCalendar() { /* ... */ }
-  function shareNative() { /* ... */ }
-  function shareLine() { /* ... */ }
-</script>
+  <script src="js/config.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/reservation.js"></script>
 </body>
 </html>
