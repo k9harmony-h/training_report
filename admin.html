@@ -5,8 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>K9 Harmony Admin Portal</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="css/admin.css"> </head>
+  <style>
+    :root {
+      --c-main-turquoise: #57C3C2;
+      --c-sub-deep-ocean: #2F5D62;
+      --c-accent-copper: #C87A56;
+      --c-bg-mist: #F4F7F7;
+    }
+    body { font-family: 'Noto Sans JP', sans-serif; background: var(--c-bg-mist); color: #333; margin: 0; padding: 20px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    h1 { color: var(--c-sub-deep-ocean); margin: 0; font-size: 1.5rem; }
+    
+    .alert-box {
+      background: #ff4444; color: white; padding: 15px; border-radius: 8px;
+      margin-bottom: 20px; font-weight: bold; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { text-align: left; padding: 10px; border-bottom: 2px solid #eee; color: var(--c-sub-deep-ocean); white-space: nowrap; }
+    td { padding: 10px; border-bottom: 1px solid #eee; }
+    
+    .tag { padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; display: inline-block; }
+    .tag-ticket { background: #e0f7fa; color: #006064; }
+    .tag-pending { background: #fff3e0; color: #e65100; }
+    .tag-confirmed { background: #e8f5e9; color: #2e7d32; }
+    
+    .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.8; }
+    .btn-stop { background: var(--c-accent-copper); color: white; }
+    .btn-live { background: var(--c-main-turquoise); color: white; }
+    
+    .icon-check { color: var(--c-main-turquoise); font-weight: bold; }
+    .loading { text-align: center; color: #666; padding: 20px; }
+  </style>
+</head>
 <body>
 
   <div id="backup-alert" class="alert-box">
@@ -49,7 +83,154 @@
     </a>
   </div>
 
-  <script src="js/config.js"></script>
-  <script src="js/admin.js"></script>
+  <script>
+    // ▼▼▼ ここにGASのウェブアプリURLを貼り付けてください ▼▼▼
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    // 認証キー (systemConfig.gs の ADMIN.API_KEY と一致させる)
+    const API_KEY = 'k9_secret_key_2025';
+
+    // 初期化
+    window.onload = function() {
+      fetchDashboard();
+    };
+
+    /**
+     * ダッシュボードデータ取得 (Fetch API)
+     */
+    async function fetchDashboard() {
+      try {
+        // PostData構築
+        const payload = {
+          action: 'get_admin_dashboard',
+          apiKey: API_KEY
+        };
+
+        const response = await fetch(GAS_API_URL, {
+          method: 'POST',
+          // GASはリダイレクトでJSONを返すため follow が必須
+          redirect: 'follow', 
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8' 
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+          renderDashboard(result.data);
+        } else {
+          showError('認証エラーまたはシステムエラー: ' + result.message);
+        }
+
+      } catch (e) {
+        console.error(e);
+        showError('通信エラー: サーバーに接続できませんでした。URLを確認してください。');
+      }
+    }
+
+    /**
+     * 緊急停止切り替え
+     */
+    async function toggleSystem() {
+      const txt = document.getElementById('status-text');
+      const isStop = txt.textContent.includes('停止中');
+      const nextState = !isStop; // trueなら停止にする
+      
+      if (!confirm(nextState ? '【危険】本当にシステムを緊急停止しますか？\n予約受付が完全に停止します。' : 'システムを稼働再開しますか？')) return;
+      
+      // UIを一旦ロック
+      const btn = document.getElementById('toggle-btn');
+      btn.disabled = true;
+      btn.textContent = '処理中...';
+
+      try {
+        const payload = {
+          action: 'admin_toggle_maintenance',
+          apiKey: API_KEY,
+          isActive: nextState
+        };
+
+        const response = await fetch(GAS_API_URL, {
+          method: 'POST',
+          redirect: 'follow',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if (result.status === 'success') {
+          // 成功したら画面再取得
+          fetchDashboard(); 
+        } else {
+          alert('エラー: ' + result.message);
+          btn.disabled = false;
+        }
+      } catch (e) {
+        alert('通信エラー');
+        btn.disabled = false;
+      }
+    }
+
+    /**
+     * 画面描画
+     */
+    function renderDashboard(data) {
+      // ローディング消去
+      document.getElementById('loading-spinner').style.display = 'none';
+      document.getElementById('res-table').style.display = 'table';
+
+      // 1. 火曜アラート
+      if (data.isTuesday) {
+        document.getElementById('backup-alert').style.display = 'block';
+      }
+
+      // 2. ステータスボタン
+      const txt = document.getElementById('status-text');
+      const btn = document.getElementById('toggle-btn');
+      btn.disabled = false;
+
+      if (data.isMaintenance) {
+        txt.textContent = '⛔ 現在停止中';
+        txt.style.color = 'red';
+        btn.textContent = '稼働再開する';
+        btn.className = 'btn btn-live';
+      } else {
+        txt.textContent = '✅ 正常稼働中';
+        txt.style.color = 'green';
+        btn.textContent = '緊急停止する';
+        btn.className = 'btn btn-stop';
+      }
+
+      // 3. テーブル描画
+      const tbody = document.querySelector('#res-table tbody');
+      tbody.innerHTML = ''; // クリア
+
+      if (!data.reservations || data.reservations.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">予約データがありません</td></tr>';
+        return;
+      }
+
+      data.reservations.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.startTime}</td>
+          <td><small style="color:#999;">${r.resId}</small></td>
+          <td>${r.isMultiDog ? '<span class="icon-check">✔</span>' : '-'}</td>
+          <td>${r.receipt ? '<span class="icon-check">✔</span>' : '-'}</td>
+          <td><span class="tag ${r.payment === 'TICKET' ? 'tag-ticket' : r.payment === 'CONFIRMED' ? 'tag-confirmed' : 'tag-pending'}">${r.payment}</span></td>
+          <td>${r.memo || ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function showError(msg) {
+      document.getElementById('loading-spinner').textContent = '❌ ' + msg;
+      document.getElementById('loading-spinner').style.color = 'red';
+    }
+  </script>
 </body>
 </html>
