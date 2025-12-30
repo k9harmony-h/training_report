@@ -4,27 +4,145 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>K9 Heritage</title>
-  
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Shippori+Mincho&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="css/heritage.css">
+  <style>
+    /* --- 基本設定 --- */
+    body {
+      margin: 0; padding: 0; background-color: #000;
+      font-family: 'Shippori Mincho', serif; overflow-x: hidden; color: #fff;
+    }
+    /* シーン7追加に伴い、長さを 700vh に延長 */
+    #scroll-track { height: 700vh; width: 100%; position: relative; z-index: 1; }
+    #stage {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      overflow: hidden; z-index: 2; pointer-events: none; perspective: 1000px;
+    }
+
+    /* --- Scene 1: 表紙 --- */
+    #cover-layer {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(135deg, #4a3b2a, #2e2315);
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      transform-origin: left center; transition: transform 0.1s ease-out; z-index: 50;
+    }
+    .title-gold {
+      font-family: 'Dancing Script', cursive; font-size: 3.5rem;
+      background: linear-gradient(to bottom, #cfc09f 0%, #ffecb3 50%, #a38956 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin-bottom: 20px;
+      opacity: 0; animation: floatIn 2s ease forwards;
+    }
+    .scroll-hint {
+      position: absolute; bottom: 50px; font-size: 0.9rem; color: #ccc;
+      opacity: 0; animation: floatIn 2s ease 1s forwards;
+    }
+
+    /* --- Scene 2: 背景 (紙) --- */
+    #bg-paper {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: #f5f1e6; z-index: 1;
+    }
+
+    /* --- Scene 3 & 7: 背景 (空) --- */
+    /* 夕焼け (Orange) */
+    #bg-sky-sunset {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(to top, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+      z-index: 2; opacity: 0; transition: opacity 0.1s;
+    }
+    /* 夜空 (Purple -> Navy) */
+    #bg-sky-night {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(to top, #0f2027 0%, #203a43 50%, #2c5364 100%);
+      z-index: 3; opacity: 0; transition: opacity 0.1s;
+    }
+
+    /* --- Scene 3: 街並み --- */
+    #bg-city {
+      position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
+      z-index: 4; opacity: 0; pointer-events: none;
+      display: flex; align-items: flex-end; overflow: hidden;
+    }
+    .city-block {
+      background-color: #111; position: relative; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      margin-right: 2px; border-top-left-radius: 2px; border-top-right-radius: 2px;
+    }
+    .city-block::after {
+      content: ''; position: absolute; top: 10px; left: 20%; width: 60%; height: 20%;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* --- Scene 4 & 5: 白い人形 (Actor) --- */
+    .actor-wrapper {
+      position: absolute; bottom: 0; z-index: 20;
+      opacity: 0; transform: translateY(20px);
+    }
+    .actor-body {
+      filter: drop-shadow(0 0 8px rgba(255,255,255,0.6)); /* 白い発光 */
+      animation: sway 3s infinite ease-in-out; /* ゆらゆら揺れる */
+      transform-origin: bottom center;
+    }
+    .actor-body path { fill: #fff; }
+
+    @keyframes sway {
+      0% { transform: rotate(-3deg); }
+      50% { transform: rotate(3deg); }
+      100% { transform: rotate(-3deg); }
+    }
+
+    #human-wrapper { left: 15%; width: 18vh; height: auto; }
+    #dog-wrapper { left: 30%; width: 12vh; height: auto; }
+    #dog-wrapper .actor-body { animation-delay: 0.5s; }
+
+    /* --- Main Object: パラコード --- */
+    #cord-base {
+      position: absolute; top: -100px; right: 40px; width: 30px; height: 120%;
+      background: repeating-linear-gradient(45deg, #f0f0f0, #f0f0f0 10px, #e0e0e0 10px, #e0e0e0 20px);
+      box-shadow: 5px 0 10px rgba(0,0,0,0.5); border-radius: 15px;
+      z-index: 25; transform: translateY(0);
+    }
+    #cord-color-mask {
+      position: absolute; top: 0; left: 0; width: 100%; height: 0%; overflow: hidden;
+    }
+    #cord-color-content {
+      width: 100%; height: 100vh;
+      background: repeating-linear-gradient(45deg, #ff99cc, #ff99cc 10px, #ff6699 10px, #ff6699 20px);
+      mix-blend-mode: multiply;
+    }
+    .milestone-stitch {
+      position: absolute; top: 40%; left: 50%; transform: translateX(-50%);
+      width: 80%; height: 4px; background-color: gold; box-shadow: 0 0 5px gold;
+      z-index: 26; opacity: 0;
+    }
+
+    /* --- Texts --- */
+    .story-text {
+      position: absolute; left: 30px; color: #333; font-size: 1.2rem; line-height: 2;
+      opacity: 0; transform: translateX(-20px); z-index: 30; width: 60%;
+      text-shadow: 0 0 10px rgba(255,255,255,0.8);
+    }
+    #text-1 { top: 20%; }
+    #text-2 { top: 60%; color: #fff; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
+    #text-3 { top: 40%; left: 45%; color: #fff; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
+    #text-4 { top: 70%; left: 10%; color: #fff; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
+
+    @keyframes floatIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  </style>
 </head>
 <body>
 
   <div id="scroll-track"></div>
 
   <div id="stage">
-    
     <div id="cover-layer">
       <div class="title-gold">K9 Heritage</div>
       <div class="scroll-hint">↓ Scroll to Open</div>
     </div>
 
     <div id="bg-paper"></div>
-    
     <div id="bg-sky-sunset"></div>
     <div id="bg-sky-night"></div>
-    
     <div id="bg-city"></div>
 
     <div id="human-wrapper" class="actor-wrapper">
@@ -48,14 +166,109 @@
     <div id="text-1" class="story-text">それは、<br>小さな一歩から<br>始まった。</div>
     <div id="text-2" class="story-text">信頼の色が、<br>少しずつ<br>重なっていく。</div>
     <div id="text-3" class="story-text">
-      <span id="owner-name-placeholder">オーナー様</span>さんとだから、<br>ここまで来れた。
+      <?= ownerName ?>さんとだから、<br>ここまで来れた。
     </div>
     <div id="text-4" class="story-text">
-      これからも、<br>ずっと<br>
-      <span id="dog-name-placeholder">愛犬</span>と隣で。
+      これからも、<br>ずっと
+      <?= dogName ?>と隣で。
     </div>
   </div>
 
-  <script src="js/heritage.js"></script>
+  <script>
+    // --- 1. 街並み生成 ---
+    function buildCity() {
+      const cityContainer = document.getElementById('bg-city');
+      const windowWidth = window.innerWidth;
+      let currentWidth = 0;
+      while (currentWidth < windowWidth) {
+        const block = document.createElement('div');
+        block.classList.add('city-block');
+        const w = Math.floor(Math.random() * 50) + 40;
+        const hPercent = Math.floor(Math.random() * 45) + 35; 
+        block.style.width = `${w}px`; block.style.height = `${hPercent}%`;
+        if (Math.random() > 0.9) block.style.zIndex = '5';
+        cityContainer.appendChild(block); currentWidth += w;
+      }
+    }
+
+    // --- 2. スクロール連動ロジック ---
+    window.addEventListener('scroll', () => {
+      const scrollY = window.scrollY;
+      const docH = document.getElementById('scroll-track').offsetHeight;
+      
+      const cover = document.getElementById('cover-layer');
+      const text1 = document.getElementById('text-1');
+      const text2 = document.getElementById('text-2');
+      const text3 = document.getElementById('text-3');
+      const text4 = document.getElementById('text-4');
+      const cordBase = document.getElementById('cord-base');
+      const colorMask = document.getElementById('cord-color-mask');
+      const bgCity = document.getElementById('bg-city');
+      const bgSunset = document.getElementById('bg-sky-sunset');
+      const bgNight = document.getElementById('bg-sky-night');
+      const stitch = document.getElementById('ms-gold');
+      
+      const humanWrapper = document.getElementById('human-wrapper');
+      const dogWrapper = document.getElementById('dog-wrapper');
+
+      // 1. 表紙 & 2. パラコード
+      cover.style.transform = `rotateY(-${Math.min(scrollY / 4, 100)}deg)`;
+      cover.style.opacity = scrollY > 300 ? 0 : 1;
+      cordBase.style.transform = `translateY(${Math.min(Math.max((scrollY - 100) / 4, 0), 100)}px)`;
+
+      // 3. テキスト1
+      if (scrollY > 200 && scrollY < 700) {
+        let t1 = (scrollY - 200) / 300;
+        text1.style.opacity = Math.min(Math.max(t1, 0), 1);
+        text1.style.transform = `translateX(${-20 + (t1 * 20)}px)`;
+      } else if (scrollY >= 700) text1.style.opacity = Math.max(0, 1 - (scrollY - 700) / 200);
+
+      // --- 4. 中盤: 街と夕焼け (Orange) ---
+      if (scrollY > 800) {
+        let cityProg = Math.min((scrollY - 800) / 400, 1);
+        bgCity.style.opacity = cityProg;
+        bgSunset.style.opacity = cityProg; 
+      }
+
+      // 紐の色づき
+      if (scrollY > 600) colorMask.style.height = `${Math.min((scrollY - 600) / 1200 * 100, 100)}%`;
+
+      // テキスト2
+      if (scrollY > 900 && scrollY < 1600) {
+        let t2 = (scrollY - 900) / 300;
+        text2.style.opacity = stitch.style.opacity = Math.min(Math.max(t2, 0), 1);
+        text2.style.transform = `translateX(${-20 + (t2 * 20)}px)`;
+      } else if (scrollY >= 1600) text2.style.opacity = Math.max(0, 1 - (scrollY - 1600) / 200);
+
+      // --- 5. 終盤: 人間出現 ---
+      if (scrollY > 1600) {
+        let hProg = Math.min(Math.max((scrollY - 1600) / 400, 0), 1);
+        humanWrapper.style.opacity = text3.style.opacity = hProg;
+        humanWrapper.style.transform = `translateY(${20 - (hProg * 20)}px)`;
+      }
+      
+      if (scrollY >= 2300) {
+         text3.style.opacity = Math.max(0, 1 - (scrollY - 2300) / 300);
+      }
+
+      // --- 6. ラストシーン: 犬出現 (2200px〜) ---
+      // ここではまだ空は夕焼けのまま
+      if (scrollY > 2200) {
+        let dProg = Math.min(Math.max((scrollY - 2200) / 500, 0), 1);
+        dogWrapper.style.opacity = dProg;
+        dogWrapper.style.transform = `translateY(${20 - (dProg * 20)}px)`;
+        text4.style.opacity = dProg;
+      }
+
+      // --- 7. エピローグ: 夜空へ変化 (2800px〜) ---
+      // 犬が現れて、さらにスクロールしてから夜になる
+      if (scrollY > 2800) {
+        let nProg = Math.min(Math.max((scrollY - 2800) / 500, 0), 1);
+        bgNight.style.opacity = nProg;
+      }
+    });
+
+    buildCity();
+  </script>
 </body>
 </html>
