@@ -1,104 +1,600 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>K9 Harmony | 愛犬の性格診断</title>
-  
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ES72ND3BPP"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-ES72ND3BPP');
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>K9 Harmony | 愛犬の性格診断</title>
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ES72ND3BPP"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-ES72ND3BPP');
+    </script>
 
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Zen+Kurenaido&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Zen+Kurenaido&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/diagnosis.css"> </head>
-<body>
-  <div id="logOverlay">Initializing...</div>
-  <div id="washiBg"></div>
+    <style>
+        :root {
+            --active-highlight: #57C3C2;
+            --neutral-border: #C7B299;
+            --progress-track: #2F5D62;
+            --mist-background: #FDFBF8;
+            --text-main: #2C3E50;
+            --text-black: #000000;
+            --luxury-transition: 0.8s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+            --global-radius: 5px;
+            --group-margin: 40px;
+        }
 
-  <div class="container">
-    <header class="header reveal-item" id="reveal-1">
-        <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" alt="K9 Harmony" class="logo-main">
-    </header>
+        html, body { height: 100%; margin: 0; padding: 0; }
+        body {
+            font-family: 'Noto Serif JP', serif;
+            background-color: #fafafa;
+            color: var(--text-main);
+            display: flex; flex-direction: column;
+            min-height: 100vh; overflow-x: hidden; position: relative;
+        }
 
-    <main id="sectionWrap">
-        <section class="page-section active" id="page-home">
-            <div class="main-title-area reveal-item" id="reveal-2">
-                <h1 class="main-title">愛犬の性格診断</h1>
-                <span class="sub-title-badge">〈K9 Harmony ドッグトレーナー監修〉</span>
-                <p class="description-text" style="text-align:center;">愛犬の行動から、潜在的な悩みと<br>最適な絆の深め方を可視化します。</p>
-            </div>
-            <div class="home-card reveal-item" id="reveal-3">
-                <div class="input-group"><label>愛犬の名前</label><input type="text" id="dogName" placeholder="例：ポチ" maxlength="10"></div>
-            </div>
-            <div class="btn-container reveal-item" id="reveal-4">
-                <button class="btn btn-ready" id="startBtn" disabled>準備中...</button>
-                <p style="margin-top:25px;"><span id="openPrivacy" style="text-decoration:underline; font-size:0.75rem; cursor:pointer; color:var(--neutral-border);">個人情報保護方針</span></p>
-            </div>
-        </section>
+        #logOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; background: rgba(47, 93, 98, 0.85);
+            color: #FFF; font-size: 10px; padding: 4px 10px; z-index: 9999; pointer-events: none;
+            font-family: monospace; line-height: 1.5;
+        }
+
+        /* [Background] */
+        #washiBg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--mist-background);
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.2'/%3E%3C/svg%3E");
+            opacity: 0; z-index: -1;
+            transition: opacity 1.2s ease;
+        }
+
+        .container { 
+            width: 100%; max-width: 600px; margin: 0 auto; padding: 40px 20px; 
+            box-sizing: border-box; position: relative; flex: 1 0 auto;
+        }
+
+        .reveal-item { opacity: 0; transform: translateY(15px); }
+        .reveal-active { animation: revealEffect 0.8s forwards cubic-bezier(0.25, 0.1, 0.25, 1.0); }
+        @keyframes revealEffect { to { opacity: 1; transform: translateY(0); } }
+
+        .header { text-align: center; margin-bottom: 50px; }
+        .logo-main { width: 180px; }
+
+        .main-title-area { text-align: center; margin-bottom: var(--group-margin); }
+        .main-title { 
+            font-size: 1.8rem; font-weight: 700; margin: 0; 
+            color: var(--progress-track); letter-spacing: 0.08em; 
+            font-family: 'Noto Serif JP', serif;
+        }
+        .sub-title-badge { font-size: 0.75rem; color: var(--neutral-border); display: block; margin-top: 5px; margin-bottom: 40px; }
+        .description-text { font-size: 0.9rem; line-height: 2; color: var(--text-main); margin-bottom: 30px; }
+
+        .home-card, .q-unit {
+            background: rgba(255, 255, 255, 0.6); border: 1px solid var(--neutral-border);
+            padding: 35px; border-radius: var(--global-radius); margin-bottom: var(--group-margin);
+            backdrop-filter: blur(2px); width: 100%; box-sizing: border-box;
+        }
+        .q-text { font-size: 0.9rem; font-weight: bold; margin-bottom: 15px; color: var(--progress-track); }
+
+        .input-group label { display: block; font-size: 0.8rem; font-weight: bold; color: var(--progress-track); margin-bottom: 15px; }
+        .input-group input { 
+            width: 100%; padding: 12px 0; border: none; border-bottom: 1px solid var(--neutral-border); 
+            background: transparent; font-size: 1.4rem; outline: none; transition: 0.4s; font-family: inherit;
+        }
+        .input-group input::placeholder { color: var(--neutral-border); opacity: 0.1; }
+
+        .opt-group { display: flex; gap: 8px; justify-content: space-between; }
+        .opt-btn {
+            flex: 1; padding: 12px 2px; border: 1px solid var(--neutral-border); background: transparent;
+            border-radius: var(--global-radius); cursor: pointer; font-size: 0.8rem; text-align: center; 
+            transition: color 0.4s ease, border-color 0.4s ease; 
+            position: relative; overflow: hidden; z-index: 1;
+        }
+        .opt-btn::before {
+            content: ''; position: absolute; 
+            top: 50%; left: 50%; width: 20px; height: 20px;
+            background: var(--active-highlight);
+            border-radius: 50%; 
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0; z-index: -1; filter: blur(8px);
+            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s, filter 0.6s;
+            will-change: transform, opacity, filter;
+        }
+        .opt-btn.selected { color: #FFF; border-color: var(--active-highlight); }
+        .opt-btn.selected::before {
+            transform: translate(-50%, -50%) scale(25);
+            opacity: 1; filter: blur(0px);
+        }
+
+        .btn-container { text-align: center; margin-top: 20px; width: 100%; }
+        .btn {
+            display: block; margin: 0 auto; width: 75%; padding: 20px; 
+            background: rgba(199, 178, 153, 0.2); color: var(--neutral-border);
+            border: 1px solid var(--neutral-border); border-radius: var(--global-radius); 
+            font-size: 1rem; cursor: pointer; transition: all 0.6s ease; 
+            font-family: inherit; font-weight: 700; letter-spacing: 0.1em;
+        }
+        .btn.btn-ready { background: var(--active-highlight); color: #FFF; border: none; box-shadow: 0 4px 15px rgba(87, 195, 194, 0.2); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .page-section { 
+            position: absolute; top: 0; left: 0; width: 100%; 
+            opacity: 0; pointer-events: none; transition: var(--luxury-transition); 
+        }
+        .page-section.active { opacity: 1; pointer-events: auto; position: relative; }
+        .exit-left { transform: translateX(-50px); opacity: 0; }
+        .exit-right { transform: translateX(50px); opacity: 0; }
+        .enter-down { animation: enterDown var(--luxury-transition) forwards; }
+        @keyframes enterDown { 0% { transform: translateY(-30px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+
+        .result-logo { width: 40%; margin: 0 auto 20px; display: block; }
+        .result-title-main { font-size: 1.5rem; color: var(--progress-track); margin-top: 0; line-height: 1.4; }
+        .save-guide { font-size: 12px; color: var(--neutral-border); margin: 10px 0; font-family: 'Noto Serif JP'; }
         
-        <section class="page-section" id="page-groupA"><div id="groupA-list"></div><div class="btn-container"><button class="btn" id="toGroupB" disabled style="width:75%;">次へ進む</button></div></section>
-        <section class="page-section" id="page-groupB"><div id="groupB-list"></div><div style="display:flex; justify-content:space-between; align-items:center; width:85%; margin:40px auto 0;"><span id="backToA" style="cursor:pointer; font-size:0.8rem; color:var(--neutral-border); text-decoration:underline;">戻る</span><button class="btn" id="toGroupC" disabled style="width:75%;">次へ進む</button></div></section>
-        <section class="page-section" id="page-groupC"><div id="groupC-list"></div><div style="display:flex; justify-content:space-between; align-items:center; width:85%; margin:40px auto 0;"><span id="backToB" style="cursor:pointer; font-size:0.8rem; color:var(--neutral-border); text-decoration:underline;">戻る</span><button class="btn" id="finishBtn" disabled style="width:75%;">結果を見る</button></div></section>
+        /* [Android Fix: Enable Long Press] */
+        #generatedImageOutput {
+            width: 100%; border: 1px solid var(--neutral-border);
+            /* Android長押し対策 */
+            pointer-events: auto !important;
+            user-select: auto !important;
+            -webkit-user-select: auto !important;
+            -webkit-touch-callout: default !important;
+            position: relative; z-index: 10;
+        }
+        
+        .share-group { display: flex; flex-direction: row; gap: 10px; margin-top: 30px; width: 100%; justify-content: center; }
+        .btn-side { flex: 1; font-size: 0.9rem; margin: 0; padding: 15px; }
 
-        <section class="page-section hidden" id="page-result">
-            <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" alt="K9 Harmony" class="result-logo">
-            <div class="q-unit" style="text-align:center; opacity:1;">
-                <h2 class="result-title-main">診断結果<br><span id="resultTypeTitle">---</span></h2>
-                <div id="imgOutWrap" style="position:relative; margin:20px 0;">
-                    <img id="generatedImageOutput" style="width:100%; border:1px solid var(--neutral-border);" alt="結果画像">
-                    <div class="save-guide">※画像を長押しして保存</div>
+        #chekiWrapper { position: absolute; left: -9999px; }
+        #chekiTemplate { 
+            width: 500px; background: #FFF; 
+            padding: 40px 40px 40px 40px; 
+            border: 1px solid #EEE; text-align: center; position: relative; overflow: visible;
+        }
+        .cheki-photo-area { width: 100%; aspect-ratio: 1/1; background: #F8F8F8; position: relative; overflow: visible; border: 1px solid #EAEAEA; }
+        
+        .cheki-result-badge { 
+            position: absolute; top: 60px; left: -40px; 
+            background: rgba(87, 195, 194, 0.95);
+            color: #FFF; padding: 15px 45px; font-size: 36px; font-weight: bold; 
+            transform: rotate(-9deg); transform-origin: top left; z-index: 2000;
+            clip-path: polygon(
+                2% 0%, 5% 5%, 8% 0%, 92% 2%, 95% 7%, 100% 0%, 
+                98% 95%, 95% 100%, 92% 95%, 8% 98%, 5% 90%, 2% 98%, 0% 10%
+            );
+            filter: drop-shadow(4px 4px 6px rgba(0,0,0,0.3));
+            white-space: nowrap; max-width: 70%;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
+        }
+        .cheki-hashtag { position: absolute; bottom: 15px; right: 20px; font-size: 18px; color: var(--neutral-border); font-family: sans-serif; font-weight: normal; }
+        .cheki-name-area { margin-top: 60px; font-family: 'Zen Kurenaido', sans-serif; font-size: 68px; color: var(--text-black); line-height: 1; font-weight: 700; }
+        .cheki-description-area { margin: 20px auto 0; width: 80%; font-family: 'Noto Serif JP', serif; font-size: 20px; line-height: 1.8; color: var(--text-main); text-align: left; }
+
+        .site-footer { 
+            flex-shrink: 0; margin-top: auto; 
+            background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(199, 178, 153, 0.2); 
+            padding: 60px 20px; text-align: center; font-size: 0.8rem; color: #7F8C8D; 
+        }
+        .footer-logo-img { width: 120px; margin-bottom: 25px; opacity: 0.7; }
+        
+        .hidden { display: none !important; }
+        
+        /* [Privacy Modal] */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.4); display: none; z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content { background: #FFF; width: 90%; max-width: 500px; max-height: 80vh; border-radius: var(--global-radius); padding: 30px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--neutral-border); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .policy-body { flex: 1; overflow-y: auto; font-size: 0.85rem; line-height: 1.8; color: #555; text-align: left; padding-right: 10px; }
+        .policy-body h3 { color: var(--progress-track); margin-top: 0; border-bottom: 1px solid var(--neutral-border); padding-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div id="logOverlay">Initializing...</div>
+    <div id="washiBg"></div>
+
+    <div class="container">
+        <header class="header reveal-item" id="reveal-1">
+            <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" alt="K9 Harmony" class="logo-main">
+        </header>
+
+        <main id="sectionWrap">
+            <section class="page-section active" id="page-home">
+                <div class="main-title-area reveal-item" id="reveal-2">
+                    <h1 class="main-title">愛犬の性格診断</h1>
+                    <span class="sub-title-badge">〈K9 Harmony ドッグトレーナー監修〉</span>
+                    <p class="description-text" style="text-align:center;">愛犬の行動から、潜在的な悩みと<br>最適な絆の深め方を可視化します。</p>
                 </div>
-                <div class="share-group">
-                    <button class="btn btn-ready btn-side" id="sendLiffBtn">LINEに送信</button>
-                    <button class="btn btn-side" id="shareTargetBtn" style="background:#FFF; color:var(--progress-track);">シェア</button>
+                <div class="home-card reveal-item" id="reveal-3">
+                    <div class="input-group"><label>愛犬の名前</label><input type="text" id="dogName" placeholder="例：ポチ" maxlength="10"></div>
                 </div>
-                <p id="backToReload" style="margin-top:20px; cursor:pointer; font-size:0.85rem; color:var(--neutral-border); text-decoration:underline;">最初からやり直す</p>
+                <div class="btn-container reveal-item" id="reveal-4">
+                    <button class="btn btn-ready" id="startBtn" disabled>準備中...</button>
+                    <p style="margin-top:25px;"><span id="openPrivacy" style="text-decoration:underline; font-size:0.75rem; cursor:pointer; color:var(--neutral-border);">個人情報保護方針</span></p>
+                </div>
+            </section>
+            
+            <section class="page-section" id="page-groupA"><div id="groupA-list"></div><div class="btn-container"><button class="btn" id="toGroupB" disabled style="width:75%;">次へ進む</button></div></section>
+            <section class="page-section" id="page-groupB"><div id="groupB-list"></div><div style="display:flex; justify-content:space-between; align-items:center; width:85%; margin:40px auto 0;"><span id="backToA" style="cursor:pointer; font-size:0.8rem; color:var(--neutral-border); text-decoration:underline;">戻る</span><button class="btn" id="toGroupC" disabled style="width:75%;">次へ進む</button></div></section>
+            <section class="page-section" id="page-groupC"><div id="groupC-list"></div><div style="display:flex; justify-content:space-between; align-items:center; width:85%; margin:40px auto 0;"><span id="backToB" style="cursor:pointer; font-size:0.8rem; color:var(--neutral-border); text-decoration:underline;">戻る</span><button class="btn" id="finishBtn" disabled style="width:75%;">結果を見る</button></div></section>
+
+            <section class="page-section hidden" id="page-result">
+                <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" alt="K9 Harmony" class="result-logo">
+                <div class="q-unit" style="text-align:center; opacity:1;">
+                    <h2 class="result-title-main">診断結果<br><span id="resultTypeTitle">---</span></h2>
+                    <div id="imgOutWrap" style="position:relative; margin:20px 0;">
+                        <img id="generatedImageOutput" style="width:100%; border:1px solid var(--neutral-border);" alt="結果画像">
+                        <div class="save-guide">※画像を長押しして保存</div>
+                    </div>
+                    <div class="share-group">
+                        <button class="btn btn-ready btn-side" id="sendLiffBtn">LINEに送信</button>
+                        <button class="btn btn-side" id="shareTargetBtn" style="background:#FFF; color:var(--progress-track);">シェア</button>
+                    </div>
+                    <p id="backToReload" style="margin-top:20px; cursor:pointer; font-size:0.85rem; color:var(--neutral-border); text-decoration:underline;">最初からやり直す</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <footer class="site-footer reveal-item" id="reveal-5">
+        <div class="footer-logo-container"><img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony"></div>
+        <div class="footer-info"><p><strong>K9 Harmony</strong></p><p>〒174-0063 東京都板橋区前野町6-55-1</p><p>070-9043-1109</p></div>
+        <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
+    </footer>
+
+    <div id="chekiWrapper">
+        <div id="chekiTemplate">
+            <div class="cheki-photo-area">
+                <div class="cheki-result-badge" id="tmpl_type">タイプ名</div>
+                <div style="font-size:100px; margin-top:60px;">🐾</div>
+                <div class="cheki-hashtag" id="tmpl_hash">#K9Harmony #愛犬の性格診断</div>
             </div>
-        </section>
-    </main>
-  </div>
-
-  <footer class="site-footer reveal-item" id="reveal-5">
-    <div class="footer-logo-container"><img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony"></div>
-    <div class="footer-info"><p><strong>K9 Harmony</strong></p><p>東京都板橋区</p></div>
-    <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
-  </footer>
-
-  <div id="chekiWrapper">
-    <div id="chekiTemplate">
-        <div class="cheki-photo-area">
-            <div class="cheki-result-badge" id="tmpl_type">タイプ名</div>
-            <div style="font-size:100px; margin-top:60px;">🐾</div>
-            <div class="cheki-hashtag" id="tmpl_hash">#K9Harmony #愛犬の性格診断</div>
+            <div class="cheki-name-area" id="tmpl_name">名前</div>
+            <div class="cheki-description-area" id="tmpl_desc">説明文</div>
         </div>
-        <div class="cheki-name-area" id="tmpl_name">名前</div>
-        <div class="cheki-description-area" id="tmpl_desc">説明文</div>
     </div>
-  </div>
 
-  <div class="modal" id="privacyModal">
-    <div class="modal-content">
-        <div id="policyContent" class="policy-body">
-            <h3>個人情報保護方針</h3>
-            <p><strong>1. 事業者情報</strong><br>K9 Harmony<br>代表: 根岸 亮太<br>住所: 〒174-0063 東京都板橋区前野町6-55-1</p>
-            <p><strong>2. 個人情報の取得方法</strong><br>当社は、お客様が診断サービスを利用する際に、LINEのユーザーID、愛犬の名前等の情報を自動または手動で取得します。</p>
-            <p><strong>3. 利用目的</strong><br>取得した情報は、診断結果の提供、サービス向上、およびお問い合わせ対応のために利用します。</p>
-            <p><strong>4. 第三者提供</strong><br>法令に基づく場合を除き、同意なく第三者に個人情報を提供することはありません。</p>
-            <p><strong>5. お問い合わせ</strong><br>個人情報の取り扱いに関するご質問は、公式LINEまでご連絡ください。</p>
+    <div class="modal" id="privacyModal">
+        <div class="modal-content">
+            <div id="policyContent" class="policy-body">
+                <h3>個人情報保護方針</h3>
+                <p><strong>1. 事業者情報</strong><br>K9 Harmony<br>代表: 根岸 亮太<br>住所: 〒174-0063 東京都板橋区前野町6-55-1</p>
+                <p><strong>2. 個人情報の取得方法</strong><br>当社は、お客様が診断サービスを利用する際に、LINEのユーザーID、愛犬の名前等の情報を自動または手動で取得します。</p>
+                <p><strong>3. 利用目的</strong><br>取得した情報は、診断結果の提供、サービス向上、およびお問い合わせ対応のために利用します。</p>
+                <p><strong>4. 第三者提供</strong><br>法令に基づく場合を除き、同意なく第三者に個人情報を提供することはありません。</p>
+                <p><strong>5. お問い合わせ</strong><br>個人情報の取り扱いに関するご質問は、公式LINEまでご連絡ください。</p>
+            </div>
+            <div id="closePrivacy" style="margin-top:20px; text-align:center; padding:15px; background:var(--mist-background); cursor:pointer;">閉じる</div>
         </div>
-        <div id="closePrivacy" style="margin-top:20px; text-align:center; padding:15px; background:var(--mist-background); cursor:pointer;">閉じる</div>
     </div>
-  </div>
 
-  <script src="js/config.js"></script>
-  <script src="js/diagnosis.js"></script>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script>
+// ==========================================
+// CONFIG: GAS URLを必ず更新してください
+// ==========================================
+const CONFIG = {
+    LIFF_ID: "2008546673-MJY7j3ox",
+    GAS_URL: "https://script.google.com/macros/s/AKfycbwyzFB78jRF4skpjakJrlozJJyTUOJqUtzmnF0aQVE89_rROwwwup6bVKhkNpvK6wqPrg/exec"
+};
+
+// [問題点E 対応] 状態管理用キー
+const STORAGE_KEY = 'k9_progress_state';
+const RETRY_KEY = 'k9_auth_retry';
+
+let MASTER_QUESTIONS = [];
+let MASTER_RESULTS = [];
+let state = { userId: null, dogName: "", answers: {}, typeName: "" };
+
+function log(msg) {
+    const ts = new Date().toLocaleTimeString();
+    const overlay = document.getElementById('logOverlay');
+    if(overlay) overlay.innerText = `[${ts}] ${msg}`;
+}
+
+// [問題点E 対応] 状態保存・復元
+function saveState() {
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+}
+function loadState() {
+    try {
+        const saved = sessionStorage.getItem(STORAGE_KEY);
+        if(saved) {
+            const parsed = JSON.parse(saved);
+            state = { ...state, ...parsed }; // Merge
+            // 名前が復元されたらUIにも反映
+            if(state.dogName) document.getElementById('dogName').value = state.dogName;
+        }
+    } catch(e){}
+}
+
+// [問題点G 対応] 入力値サニタイズ
+function sanitizeInput(str) {
+    if(!str) return "";
+    return str.replace(/[<>&"'`]/g, ""); // 簡易無害化
+}
+
+async function fetchMasterData() {
+    log("Loading...");
+    try {
+        const res = await fetch(`${CONFIG.GAS_URL}?action=fetchMaster`);
+        const data = await res.json();
+        MASTER_QUESTIONS = data.questions;
+        MASTER_RESULTS = data.results;
+        log("Ready.");
+        const btn = document.getElementById('startBtn');
+        if(btn) { btn.disabled = false; btn.innerText = "診断を始める"; }
+    } catch (e) { log("Data Error."); }
+}
+
+async function startOpeningSequence() {
+    document.getElementById('washiBg').style.opacity = 1;
+    const timeline = [1,2,3,4,5].map(n => new Promise(r => {
+        setTimeout(() => {
+            const el = document.getElementById(`reveal-${n}`);
+            if(el) el.classList.add('reveal-active');
+            r();
+        }, 200 * n);
+    }));
+    await Promise.all([...timeline, initLiff()]);
+}
+
+async function initLiff() {
+    // [問題点E 対応] 起動時に状態復元
+    loadState();
+
+    try {
+        await liff.init({ liffId: CONFIG.LIFF_ID });
+        
+        if (!liff.isLoggedIn()) {
+            liff.login({ redirectUri: window.location.href });
+            return;
+        }
+        
+        const accessToken = liff.getAccessToken();
+        if (!accessToken) {
+            console.log("No Token. Checking retry...");
+            
+            // [問題点H 対応] 無限リロード防止 (サーキットブレーカー)
+            let retries = parseInt(sessionStorage.getItem(RETRY_KEY) || "0");
+            if (retries >= 3) {
+                alert("認証エラーが続いています。ブラウザのキャッシュをクリアするか、時間をおいて再度お試しください。");
+                sessionStorage.removeItem(RETRY_KEY);
+                return; // リロード停止
+            }
+            sessionStorage.setItem(RETRY_KEY, retries + 1);
+
+            liff.logout(); 
+            liff.login({ redirectUri: window.location.href });
+            return;
+        }
+
+        // 成功したらリトライカウントリセット
+        sessionStorage.removeItem(RETRY_KEY);
+        state.userId = liff.getDecodedIDToken().sub;
+        saveState(); // ID保存
+        log("LIFF OK.");
+    } catch (e) { log("LIFF Fail."); }
+}
+
+function buildSection(group, targetId) {
+    const container = document.getElementById(targetId);
+    if(!container) return;
+    container.innerHTML = '';
+    
+    if(MASTER_QUESTIONS.length === 0) return alert("通信エラー");
+
+    MASTER_QUESTIONS.filter(q => q.Section === group).forEach(q => {
+        const div = document.createElement('div');
+        div.className = 'q-unit';
+        div.style.opacity = 1;
+        div.innerHTML = `<div class="q-text">${q.Text}</div>`;
+        const optGroup = document.createElement('div');
+        optGroup.className = 'opt-group';
+        
+        [{t:q.OptA_Text,s:q.OptA_Score},{t:q.OptB_Text,s:q.OptB_Score},{t:q.OptC_Text,s:q.OptC_Score}].forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn'; btn.innerText = opt.t;
+            btn.onclick = () => {
+                optGroup.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                state.answers[q.QuestionID] = opt.s;
+                saveState(); // [問題点E 対応] 回答ごとに保存
+                checkReady(group);
+            };
+            optGroup.appendChild(btn);
+        });
+        div.appendChild(optGroup); container.appendChild(div);
+    });
+}
+
+function checkReady(group) {
+    const qCount = MASTER_QUESTIONS.filter(q => q.Section === group).length;
+    const answered = MASTER_QUESTIONS.filter(q => q.Section === group && state.answers[q.QuestionID] !== undefined).length;
+    if (qCount === answered) {
+        const btnId = group==='A'?'toGroupB':group==='B'?'toGroupC':'finishBtn';
+        const btn = document.getElementById(btnId);
+        if(btn) { btn.disabled = false; btn.classList.add('btn-ready'); }
+    }
+}
+
+function navigate(fromId, toId, direction) {
+    const fromEl = document.getElementById(fromId);
+    const toEl = document.getElementById(toId);
+    if(!fromEl || !toEl) return;
+    fromEl.classList.remove('active');
+    fromEl.classList.add(direction==='next'?'exit-left':'exit-right');
+    
+    setTimeout(() => {
+        fromEl.classList.add('hidden'); 
+        fromEl.classList.remove('exit-left','exit-right');
+        toEl.classList.remove('hidden'); 
+        void toEl.offsetWidth; 
+        toEl.classList.add('active','enter-down');
+        
+        if (toId === 'page-result') {
+            document.querySelector('.header').style.display = 'none';
+        }
+    }, 400);
+}
+
+async function processFinal() {
+    log("Processing...");
+    const sX = (state.answers[1]||0) + (state.answers[2]||0) + (state.answers[3]||0);
+    const sY = (state.answers[4]||0) + (state.answers[5]||0) + (state.answers[6]||0);
+    const c = state.answers[7]||0;
+
+    const getR = (s) => (s <= 12 ? 'LOW' : s <= 111 ? 'MID' : 'HIGH');
+    let rX = getR(sX), rY = getR(sY);
+    if ((sX === 12 || sX === 13) && c === 1) rX = 'MID';
+    if ((sX === 12 || sX === 13) && c === -1) rX = 'LOW';
+
+    const resObj = MASTER_RESULTS.find(r => r.TypeKey === `${rX}_${rY}`);
+    state.typeName = resObj ? resObj.TypeName : "Unknown";
+    saveState(); // [問題点E 対応] 結果保存
+
+    navigate('page-groupC', 'page-result', 'next');
+
+    document.getElementById('resultTypeTitle').innerText = state.typeName + "タイプ";
+    document.getElementById('tmpl_type').innerText = state.typeName + "タイプ";
+    document.getElementById('tmpl_name').innerText = state.dogName;
+    document.getElementById('tmpl_desc').innerText = resObj ? resObj.Description : "";
+
+    await document.fonts.ready;
+    html2canvas(document.getElementById('chekiTemplate'), { scale: 2, useCORS: true }).then(canvas => {
+        document.getElementById('generatedImageOutput').src = canvas.toDataURL();
+        log("Rendered.");
+    });
+
+    gtag('event', 'diagnosis_complete', { 'type': state.typeName });
+    
+    // 通常ログ保存 (Validation済みデータを送信)
+    fetch(CONFIG.GAS_URL, { method:'POST', mode:'no-cors', body: JSON.stringify({ uid:state.userId, dogName:state.dogName, scoreX:sX, scoreY:sY, resultType:state.typeName }) });
+}
+
+function init() {
+    fetchMasterData();
+    startOpeningSequence();
+
+    document.getElementById('startBtn').onclick = () => {
+        if(MASTER_QUESTIONS.length === 0) return;
+        
+        const rawName = document.getElementById('dogName').value.trim();
+        state.dogName = sanitizeInput(rawName); // [問題点G 対応] サニタイズ
+        
+        if (!state.dogName) return alert("お名前を教えてください");
+        saveState(); // [問題点E 対応] 保存
+        
+        buildSection('A', 'groupA-list'); navigate('page-home', 'page-groupA', 'next');
+    };
+    document.getElementById('toGroupB').onclick = () => { buildSection('B', 'groupB-list'); navigate('page-groupA', 'page-groupB', 'next'); };
+    document.getElementById('toGroupC').onclick = () => { buildSection('C', 'groupC-list'); navigate('page-groupB', 'page-groupC', 'next'); };
+    document.getElementById('backToA').onclick = () => navigate('page-groupB', 'page-groupA', 'back');
+    document.getElementById('backToB').onclick = () => navigate('page-groupC', 'page-groupB', 'back');
+    document.getElementById('finishBtn').onclick = processFinal;
+    document.getElementById('backToReload').onclick = () => {
+        if(confirm("最初からやり直しますか？")) {
+            sessionStorage.removeItem(STORAGE_KEY); // クリア
+            location.reload();
+        }
+    };
+
+    // [LINE送信] 問題点C/F対応
+    document.getElementById('sendLiffBtn').onclick = async () => {
+        // [問題点C 対応] オフラインチェック
+        if (!navigator.onLine) {
+            alert("通信エラー：インターネットに接続されていません。");
+            return;
+        }
+
+        const btn = document.getElementById('sendLiffBtn');
+        const accessToken = liff.getAccessToken();
+
+        if (!accessToken) {
+            alert("接続エラーが発生しました。ページを再読み込みします。");
+            liff.logout();
+            location.reload();
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "送信中...";
+
+        // [問題点F 対応] セキュリティ警告: 
+        // クライアント側ではURLを隠蔽できないため、accessTokenを送信し
+        // GAS側で必ず `verifyAccessToken` を実施してください。
+        try {
+            await fetch(CONFIG.GAS_URL, { 
+                method: 'POST', 
+                mode: 'no-cors',
+                body: JSON.stringify({ 
+                    action: 'send_line', 
+                    accessToken: accessToken, 
+                    uid: state.userId,
+                    dogName: state.dogName, // サニタイズ済み
+                    resultType: state.typeName
+                }) 
+            });
+            
+            // LIFF送信 (Silent)
+            if (liff.isInClient()) {
+                const text = `${state.dogName}ちゃんは【${state.typeName}タイプ】でした！ #K9Harmony`;
+                const url = "https://liff.line.me/" + CONFIG.LIFF_ID;
+                liff.sendMessages([{
+                    type: "flex",
+                    altText: "診断結果",
+                    contents: {
+                        type: "bubble",
+                        body: {
+                            type: "box", layout: "vertical",
+                            contents: [
+                                { type: "text", text: "🐶 診断結果", weight: "bold", size: "xl", color: "#1DB446" },
+                                { type: "text", text: text, wrap: true, margin: "md", color: "#555555" },
+                                { type: "button", style: "primary", color: "#06C755", action: { type: "uri", label: "結果を見る", uri: url }, margin: "lg" }
+                            ]
+                        }
+                    }
+                }]).catch(e => console.log("Silent Liff Send Error:", e));
+            }
+
+            alert("診断結果を送信しました！\n通知をご確認ください🐾");
+            btn.innerText = "送信完了";
+
+        } catch (err) {
+            log("Fetch Error: " + err);
+            alert("送信に失敗しました。通信環境を確認してください。");
+            btn.disabled = false;
+            btn.innerText = "LINEに送信";
+        }
+    };
+
+    // [シェア] 変更なし (Strict)
+    document.getElementById('shareTargetBtn').onclick = () => {
+        const text = `${state.dogName}の診断結果は${state.typeName}！ #K9Harmony #愛犬の性格診断`;
+        const url = "https://liff.line.me/" + CONFIG.LIFF_ID; 
+
+        if (navigator.share) {
+            navigator.share({
+                title: 'K9 Harmony 愛犬の性格診断',
+                text: text,
+                url: url
+            }).catch((err) => { 
+                log('Share canceled/failed: ' + err);
+            });
+        } else {
+            log("Share API not supported.");
+            alert("お使いのブラウザではシェア機能がサポートされていません。");
+        }
+    };
+    
+    // 個人情報保護方針
+    document.getElementById('openPrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'flex'; };
+    document.getElementById('closePrivacy').onclick = () => { document.getElementById('privacyModal').style.display = 'none'; };
+}
+
+init();
+</script>
 </body>
 </html>
