@@ -1,139 +1,783 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>レッスン履歴 | K9 Harmony</title>
-  
-  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.0.8/dist/medium-zoom.min.js"></script>
-  
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Lato:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>レッスン履歴 | K9 Harmony</title>
+    
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.0.8/dist/medium-zoom.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Lato:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root { 
+            --c-main-turquoise: #57C3C2; 
+            --c-sub-deep-ocean: #2F5D62; 
+            --c-accent-copper: #C87A56;
+            --c-base-washi: #FAFAFA;
+            --c-bg-mist: #F4F7F7;
+            --c-sub-beige: #C7B299;
+            --c-text-sumi: #333333;
+            --c-text-gray: #666666;
+            --font-serif-en: 'Cormorant Garamond', serif;
+            --font-serif-jp: 'Noto Serif JP', serif;
+            --font-sans-jp: 'Noto Sans JP', sans-serif;
+            --font-lato: 'Lato', sans-serif;
+            --font-cinzel: 'Cinzel', serif;
+            --ease-luxury: cubic-bezier(0.25, 0.1, 0.25, 1.0);
+        }
+        
+        body { 
+            font-family: var(--font-sans-jp); 
+            background-color: var(--c-base-washi); 
+            color: var(--c-text-sumi); 
+            padding-bottom: 0; /* Footer追加に伴い調整 */
+            overflow-x: hidden; 
+            line-height: 1.8;
+        }
+
+        /* Loading Overlay */
+        #loadingOverlay { 
+            position: fixed; inset: 0; background-color: var(--c-base-washi); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            color: var(--c-sub-deep-ocean);
+            transition: opacity 0.8s var(--ease-luxury), visibility 0.8s var(--ease-luxury);
+        }
+        
+        @keyframes spinner-border { to { transform: rotate(360deg); } }
+
+        .spinner-border-brand { 
+            border-color: var(--c-main-turquoise); border-right-color: transparent; 
+            width: 3rem; height: 3rem; margin-bottom: 20px; 
+            animation: spinner-border .75s linear infinite; 
+        }
+        #tipsText { 
+            margin-top: 20px; font-weight: 500; font-size: 0.95rem; 
+            font-family: var(--font-serif-jp); letter-spacing: 0.05em; 
+            padding: 0 20px; height: 1.5em; text-align: center;
+        }
+        body.loaded #loadingOverlay { opacity: 0; visibility: hidden; pointer-events: none; }
+
+        /* Header */
+        .header-area { background: #fff; padding: 20px 20px 25px; border-bottom: 1px solid rgba(0,0,0,0.03); position: relative; text-align: center; }
+        
+        .header-logo { width: 40%; max-width: 300px; height: auto; margin: 0 auto 15px; display: block; filter: contrast(0.95); }
+
+        .back-nav-btn { 
+            position: absolute; top: 25px; left: 20px; 
+            color: var(--c-sub-deep-ocean); text-decoration: none; font-weight: 700; 
+            font-family: var(--font-lato); font-size: 1rem; z-index: 10; opacity: 0.8;
+            transition: opacity 0.3s var(--ease-luxury);
+        }
+        .back-nav-btn:active { opacity: 0.5; }
+
+        .profile-img-wrapper {
+            width: 130px; height: 130px; margin: 10px auto 15px;
+            border-radius: 50%; border: 3px solid var(--c-main-turquoise);
+            background: radial-gradient(circle, #fff 0%, #f0f0f0 100%);
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; box-shadow: 0 10px 30px -10px rgba(87, 195, 194, 0.25);
+        }
+        .dog-profile-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.0s var(--ease-luxury); }
+        .dog-profile-img.loaded { opacity: 1; }
+        
+        .page-title { 
+            font-family: var(--font-serif-en); font-weight: 700; letter-spacing: 0.05em;
+            color: var(--c-sub-deep-ocean); margin: 0; font-size: 1.6rem; 
+        }
+
+        .content-container { padding: 0 20px; }
+
+        /* Mastery Seal */
+        .mastery-seal-container {
+            display: inline-flex; align-items: center; justify-content: center;
+            vertical-align: middle; margin-right: 12px;
+        }
+        .mastery-seal {
+            width: 40px; height: 40px; border-radius: 50%; position: relative; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            background: 
+                repeating-radial-gradient(circle at 50% 50%, #bbb 0px, #bbb 0.5px, #f0f0f0 1px, #f0f0f0 1.5px),
+                linear-gradient(135deg, #ccc 0%, #fff 50%, #999 100%);
+            box-shadow: 
+                inset 0 1px 2px rgba(255,255,255,0.9),
+                inset 0 -1px 2px rgba(0,0,0,0.4), 
+                0 4px 8px rgba(0,0,0,0.15);
+            border: 1px solid #aaa;
+        }
+        .mastery-seal::before, .mastery-seal::after { content: ''; position: absolute; inset: -150%; pointer-events: none; z-index: 2; will-change: transform; opacity: 0; transition: opacity 0.5s; }
+        .mastery-seal.active::before, .mastery-seal.active::after { opacity: 1; }
+
+        .mastery-seal::before { 
+            background: linear-gradient(var(--angleA, 115deg), transparent 40%, rgba(255,255,255,0.9) 50%, transparent 60%); 
+            transform: translate(var(--posA, -150%), var(--posA, -150%)); 
+        }
+        .mastery-seal::after { 
+            background: linear-gradient(var(--angleB, 135deg), transparent 45%, rgba(255, 245, 230, 0.6) 50%, transparent 55%); 
+            transform: translate(var(--posB, -150%), var(--posB, -150%)); 
+        }
+        
+        .seal-number {
+            font-family: var(--font-cinzel); 
+            font-style: normal;
+            font-weight: 700; font-size: 1.3rem;
+            position: relative; z-index: 3; color: #555; 
+            text-shadow: 0px 1px 0px rgba(255,255,255,1);
+            -webkit-text-stroke: 0.5px #777; 
+        }
+
+        /* Charts */
+        .chart-card { 
+            background: #fff; border-radius: 12px; margin: 25px 0; padding: 20px; 
+            box-shadow: 0 10px 40px -10px rgba(47, 93, 98, 0.1); 
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+        .chart-header { display: flex; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 10px; }
+        .chart-title { 
+            font-size: 1rem; font-weight: 600; color: var(--c-sub-deep-ocean); margin: 0; 
+            font-family: var(--font-serif-jp); letter-spacing: 0.05em; 
+        }
+        .chart-status { font-size: 0.8rem; font-weight: 700; font-family: var(--font-lato); margin-left: auto; letter-spacing: 0.05em; }
+        .status-great { color: var(--c-accent-copper); } .status-steady { color: #aaa; } 
+
+        /* Gallery */
+        .section-label { 
+            font-family: var(--font-serif-jp); font-size: 1.1rem; font-weight: 600; 
+            color: var(--c-sub-deep-ocean); margin: 50px 0 20px; 
+            border-left: 3px solid var(--c-main-turquoise); padding-left: 12px; letter-spacing: 0.08em;
+        }
+        .gallery-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 20px; -webkit-overflow-scrolling: touch; }
+        .gallery-item { 
+            flex: 0 0 29%; 
+            position: relative; height: 110px; border-radius: 12px; 
+            border: 1px solid rgba(0,0,0,0.05); overflow: hidden; background: var(--c-bg-mist); 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+        .gallery-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.0s var(--ease-luxury); }
+        .gallery-img.loaded { opacity: 1; }
+        
+        .gallery-overlay { 
+            position: absolute; inset: 0; background: rgba(47, 93, 98, 0.85); color: #fff; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            font-size: 0.75rem; font-weight: 700; cursor: pointer; text-align: center; 
+            font-family: var(--font-lato); letter-spacing: 0.05em;
+        }
+
+        /* Logs */
+        .log-item { 
+            border: none; margin-bottom: 12px; border-radius: 12px; background: #fff; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03); padding: 18px 20px; cursor: pointer; 
+            transition: transform 0.2s var(--ease-luxury); border: 1px solid rgba(0,0,0,0.02);
+        }
+        .log-item:active { transform: scale(0.98); background: var(--c-bg-mist); }
+        .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .log-date { font-family: var(--font-lato); font-weight: 700; color: var(--c-main-turquoise); font-size: 1rem; letter-spacing: 0.05em; }
+        .badge-done { 
+            background-color: rgba(87, 195, 194, 0.1); color: var(--c-main-turquoise); 
+            font-size: 0.7rem; padding: 3px 10px; border-radius: 20px; margin-left: 10px; 
+            font-weight: 700; vertical-align: middle; letter-spacing: 0.05em;
+        }
+        .log-avg { font-family: var(--font-sans-jp); font-weight: 700; color: var(--c-sub-deep-ocean); font-size: 1.1rem; }
+        .log-comment { font-size: 0.85rem; color: var(--c-text-gray); line-height: 1.5; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+        /* Footer (Static) */
+        .footer-action-area {
+            background: #fff; margin-top: 30px;
+            border-top: 1px solid rgba(0,0,0,0.05); padding: 30px 20px 40px;
+            display: flex; flex-direction: column; gap: 15px;
+        }
+        .dog-select-btn { 
+            width: 100%; margin-bottom: 12px; padding: 16px; 
+            font-weight: 700; font-size: 1.05rem; border-radius: 12px; background: #fff; 
+            border: 1px solid var(--c-main-turquoise); color: var(--c-main-turquoise); 
+            transition: all 0.3s var(--ease-luxury); box-shadow: 0 4px 10px rgba(87, 195, 194, 0.1);
+            font-family: var(--font-sans-jp); letter-spacing: 0.05em;
+        }
+        .dog-select-btn:active { background: var(--c-bg-mist); transform: scale(0.98); }
+        .btn-back-home {
+            display: block; width: 100%; text-align: center; padding: 16px;
+            background: var(--c-sub-deep-ocean); color: #fff; text-decoration: none;
+            border-radius: 12px; font-weight: 700; font-family: var(--font-lato);
+            letter-spacing: 0.05em; box-shadow: 0 4px 12px rgba(47, 93, 98, 0.3);
+            transition: all 0.3s var(--ease-luxury);
+        }
+        .btn-back-home:active { transform: scale(0.98); box-shadow: 0 2px 6px rgba(47, 93, 98, 0.2); }
+
+        /* [追加] Footer Style */
+        .site-footer {
+            text-align: center; padding: 40px 20px; color: #999; font-size: 0.8rem;
+            background: #f9f9f9; border-top: 1px solid #eee; margin-top: 40px;
+        }
+        .footer-logo-container { margin-bottom: 20px; }
+        .footer-logo-img { width: 40%; height: auto; display: inline-block; filter: contrast(0.95); opacity: 0.7; }
+        .footer-info p { margin-bottom: 5px; }
+
+        /* Modal */
+        .modal-content { border-radius: 12px; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.15); }
+        .modal-header { border-bottom: none; padding-bottom: 0; }
+        .modal-avg-box { display: flex; gap: 15px; margin-bottom: 25px; }
+        .avg-item { flex: 1; background: var(--c-bg-mist); border-radius: 12px; padding: 15px; text-align: center; border: 1px solid rgba(0,0,0,0.03); }
+        .avg-label { font-size: 0.7rem; color: var(--c-text-gray); font-weight: 700; display: block; margin-bottom: 5px; letter-spacing: 0.05em; }
+        .avg-val { font-size: 1.8rem; color: var(--c-main-turquoise); font-weight: 700; font-family: var(--font-serif-en); line-height: 1; }
+        .modal-score-item { margin-bottom: 8px; font-size: 0.95rem; border-bottom: 1px dashed rgba(0,0,0,0.05); padding-bottom: 6px; display: flex; justify-content: space-between; }
+        .modal-score-val { font-family: var(--font-serif-en); font-weight: 700; color: var(--c-sub-deep-ocean); font-size: 1.1rem; }
+        
+        .detail-section-common {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 5px 0 5px 12px; /* 左線からの余白 */
+            margin-bottom: 15px;
+        }
+        .detail-label { font-size: 0.75rem; font-weight: 700; color: var(--c-sub-deep-ocean); margin-bottom: 8px; display: block; }
+        
+        #errorContainer { display: none; padding: 40px 20px; text-align: center; }
+        .error-box { background: #fff; padding: 30px 20px; border-radius: 12px; border: 1px solid #f8d7da; color: #721c24; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+
+        #log-stamp { background: #333; color: #666; text-align: center; font-size: 0.7rem; padding: 2px; }
+        #debug-console { background: #111; color: #0f0; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 0; height: 100px; overflow-y: scroll; margin-top: 20px; display: none; }
+    </style>
 </head>
 <body>
 
-  <div id="loadingOverlay">
-    <div class="loading-content">
+    <div id="log-stamp">v2025.12.18-HISTORY-FOOTER-ADD</div>
+
+    <div id="loadingOverlay">
         <div class="spinner-border spinner-border-brand" role="status"></div>
-        <p id="tipsText">Loading...</p>
-    </div>
-  </div>
-
-  <div id="errorView">
-    <div class="container">
-      <div class="alert alert-warning text-center" style="border-radius:12px; background:#fff3cd; border:1px solid #ffeeba;">
-        <h5 class="fw-bold" id="errorTitle" style="color:#856404; font-family:var(--font-serif-jp);">申し訳ございません</h5>
-        <p class="small" id="errorMessage" style="color:#856404;">処理に失敗しました。</p>
-        <div class="line-id-box" id="dispLineId" style="display:none;"></div>
-        <button class="btn btn-secondary btn-sm w-100 mt-2" onclick="location.reload()">再読み込み</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="mainContent"> <div class="header-area">
-      <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="header-logo" alt="K9 Harmony">
-      
-      <a href="index.html" id="backLink" class="back-nav-btn">&lt; Back</a>
-      
-      <div class="profile-img-wrapper" id="dogImgContainer"></div>
-      
-      <h1 id="pageTitle" class="page-title">Lesson History</h1>
+        <p id="tipsText">ただいま準備しております...</p>
     </div>
 
-    <div class="content-container">
-        <p class="text-muted small text-center mt-4 mb-2" style="font-family:var(--font-serif-jp);">スコア推移 (最新10回)</p>
-        <div id="chartArea"></div>
-
-        <div class="section-label">Gallery</div>
-        <div id="mainGalleryContainer" class="gallery-scroll">
-            <div class="text-muted small ms-3">読み込み中...</div>
+    <div id="errorContainer">
+        <div class="error-box">
+            <h5 class="fw-bold mb-2">申し訳ありません</h5>
+            <p id="errorMsg" class="small mb-3"></p>
+            <button class="btn btn-secondary btn-sm rounded-pill px-4" onclick="location.reload()">再読み込み</button>
         </div>
-
-        <div class="section-label">Logs</div>
-        <div id="lessonList"></div>
-    </div>
-    
-    <div class="footer-action-area">
-        <button id="btnSwitchDog" class="dog-select-btn" style="display:none;">愛犬情報の切替</button>
-        <a href="index.html" id="footerBackLink" class="btn-back-home">Return to Home</a>
     </div>
 
-    <footer class="site-footer">
-        <div class="footer-logo-container">
-            <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony">
-        </div>
-        <div class="footer-info">
-            <p><strong>K9 Harmony</strong></p>
-            <p>東京都板橋区</p>
-        </div>
-        <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
-    </footer>
-  </div>
-
-  <div class="modal fade" id="historyDetailModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" style="font-family:var(--font-lato); color:var(--c-sub-deep-ocean);">Lesson Report</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div id="mainWrapper">
+        <div class="header-area">
+            <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="header-logo" alt="K9 Harmony">
+            
+            <a href="#" id="backLink" class="back-nav-btn">&lt; Back</a>
+            
+            <div class="profile-img-wrapper" id="dogImgContainer"></div>
+            
+            <h1 id="pageTitle" class="page-title">Lesson History</h1>
             </div>
-            <div class="modal-body p-4 pt-2">
-                <div class="text-center mb-4">
-                    <span id="modalDate" style="font-family:var(--font-serif-en); font-weight:700; font-size:1.3rem; color:var(--c-main-turquoise); border-bottom:1px solid var(--c-main-turquoise); padding-bottom:2px;"></span>
+
+        <div class="content-container">
+            <p class="text-muted small text-center mt-4 mb-2" style="font-family:var(--font-serif-jp);">スコア推移 (最新10回)</p>
+            <div id="chartArea"></div>
+
+            <div class="section-label">Gallery</div>
+            <div id="mainGalleryContainer" class="gallery-scroll">
+                <div class="text-muted small ms-3">読み込み中...</div>
+            </div>
+
+            <div class="section-label">Logs</div>
+            <div id="lessonList"></div>
+        </div>
+        
+        <div class="footer-action-area">
+            <button id="btnSwitchDog" class="dog-select-btn" style="display:none;" onclick="openDogSelectModal()">
+                愛犬情報の切替
+            </button>
+            <a href="#" id="footerBackLink" class="btn-back-home">Return to Home</a>
+        </div>
+
+        <footer class="site-footer">
+            <div class="footer-logo-container">
+                <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony">
+            </div>
+            <div class="footer-info">
+                <p><strong>K9 Harmony</strong></p>
+                <p>東京都板橋区 (Dummy Address)</p>
+                <p>03-0000-0000 (Dummy Phone)</p>
+            </div>
+            <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
+        </footer>
+    </div>
+
+    <div class="modal fade" id="historyDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" style="font-family:var(--font-lato); color:var(--c-sub-deep-ocean);">Lesson Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div id="modalAvgArea"></div>
+                <div class="modal-body p-4 pt-2">
+                    <div class="text-center mb-4">
+                        <span id="modalDate" style="font-family:var(--font-serif-en); font-weight:700; font-size:1.3rem; color:var(--c-main-turquoise); border-bottom:1px solid var(--c-main-turquoise); padding-bottom:2px;"></span>
+                    </div>
+                    <div id="modalAvgArea"></div>
+                    
+                    <div style="background:var(--c-bg-mist); border-radius:12px; padding:15px; margin-bottom:15px;">
+                        <span class="detail-label" style="border-left:3px solid var(--c-main-turquoise); padding-left:8px;">SCORE DETAILS</span>
+                        <div id="modalScores"></div>
+                    </div>
+                    
+                    <div class="detail-section-common" style="border-left: 4px solid var(--c-sub-beige);">
+                        <span class="detail-label">ACHIEVEMENTS (Done)</span>
+                        <p id="modalDone" class="small mb-0" style="white-space: pre-wrap; line-height:1.6;"></p>
+                    </div>
+
+                    <div class="detail-section-common" style="border-left: 4px solid var(--c-main-turquoise);">
+                        <span class="detail-label">FEEDBACK</span>
+                        <p id="modalComment" class="small mb-0" style="white-space: pre-wrap; line-height:1.6;"></p>
+                    </div>
+
+                    <div class="detail-section-common" style="border-left: 4px solid var(--c-main-turquoise);">
+                        <span class="detail-label" style="color:var(--c-main-turquoise);">HOMEWORK</span>
+                        <p id="modalHomework" class="small mb-0" style="white-space: pre-wrap; line-height:1.6;"></p>
+                    </div>
+
+                    <div class="text-center mt-3">
+                         <a href="#" id="driveLink" target="_blank" style="display:none; color:var(--c-main-turquoise); font-weight:bold; text-decoration:none; font-size:0.9rem; font-family:var(--font-lato);">View original data on Drive &gt;</a>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-center pb-4">
+                    <button type="button" class="btn btn-secondary rounded-pill px-5" data-bs-dismiss="modal" style="background:var(--c-sub-deep-ocean); border:none; padding:12px;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="dogSelectModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center" style="color:var(--c-sub-deep-ocean); font-family:var(--font-serif-jp);">愛犬情報の切替</h5></div>
+                <div class="modal-body" id="dogSelectBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="debug-console"></div>
+
+    <script>
+        const LIFF_ID = '2008546673-MJY7j3ox'; 
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec'; 
+        
+        const scoreLabels = [ '指示理解', '集中力', '報酬', 'ボディ', 'コンタクト', '指示出し', '対応力', 'リード', 'ボディ', 'コンタクト' ];
+        const dogTips = [
+            "犬の鼻紋は人間の指紋と同じで、一頭一頭違います。", "犬は人間の約4倍の聴力を持っています。", "犬の嗅覚は人間の100万倍〜1億倍とも言われます。", 
+            "犬は汗を肉球からしかかけません。", "犬があくびをするのは、ストレスを感じて落ち着こうとしている時もあります。", 
+            "犬のしっぽの振り方は、右寄りだと「嬉しい」、左寄りだと「不安」な時があります。", "小型犬の方が大型犬よりも長生きする傾向があります。", 
+            "犬は夢を見ます。寝言を言ったり足を動かすのはその証拠です。", "ダルメシアンは生まれた時は真っ白で、後から斑点が出てきます。", 
+            "犬が飼い主の顔を舐めるのは、愛情表現やご飯の催促です。"
+        ];
+
+        let tipsTimer;
+        let allHistoryData = []; 
+        let customerData = {}; 
+        let currentUserId = ''; 
+        let currentDogId = null;
+        let globalDogList = [];
+
+        function log(msg) {
+            console.log(msg);
+            const el = document.getElementById('debug-console');
+            if(el) el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}<br>` + el.innerHTML;
+        }
+
+        function extractFileId(url) {
+            if (!url) return null;
+            const match = url.match(/id=([-\w]{25,})/) || url.match(/\/d\/([-\w]{25,})/) || url.match(/[-\w]{25,}/);
+            return match ? match[1] : null;
+        }
+
+        function startTipsSlider() {
+            const tipsText = document.getElementById('tipsText');
+            if(!tipsText) return;
+            let currentTipIndex = Math.floor(Math.random() * dogTips.length);
+            tipsText.innerText = dogTips[currentTipIndex];
+            tipsTimer = setInterval(() => {
+                currentTipIndex = (currentTipIndex + 1) % dogTips.length;
+                tipsText.innerText = dogTips[currentTipIndex];
+            }, 2500); 
+        }
+
+        function finishLoading() {
+            clearInterval(tipsTimer);
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) { overlay.style.visibility = ''; overlay.style.opacity = ''; }
+            document.body.classList.add('loaded');
+        }
+
+        // --- Mastery Seal Advanced Calculation ---
+        window.addEventListener('scroll', () => {
+            const seals = document.querySelectorAll('.mastery-seal');
+            if (seals.length === 0) return;
+            
+            const vH = window.innerHeight;
+            
+            seals.forEach(seal => {
+                if (seal.dataset.active === 'false') return;
+
+                const rect = seal.getBoundingClientRect();
+                const relY = rect.top / vH;
                 
-                <div style="background:var(--c-bg-mist); border-radius:12px; padding:15px; margin-bottom:15px;">
-                    <span class="detail-label" style="border-left:3px solid var(--c-main-turquoise); padding-left:8px;">SCORE DETAILS</span>
-                    <div id="modalScores"></div>
-                </div>
+                // Retrieve preset offsets from style
+                const offA = parseFloat(seal.style.getPropertyValue('--offA') || 0);
+                const offB = parseFloat(seal.style.getPropertyValue('--offB') || 0);
                 
-                <div class="detail-section-common" style="border-left: 4px solid var(--c-sub-beige);">
-                    <span class="detail-label">ACHIEVEMENTS (Done)</span>
-                    <p id="modalDone" class="small mb-0" style="white-space: pre-wrap; line-height:1.6;"></p>
-                </div>
+                // Move light reflection
+                const posA = (relY * 300) - 150 + offA; 
+                const posB = (relY * 250) - 130 + offB;
+                
+                seal.style.setProperty('--posA', `${posA}%`);
+                seal.style.setProperty('--posB', `${posB}%`);
+            });
+        });
 
-                <div class="detail-section-common" style="border-left: 4px solid var(--c-main-turquoise);">
-                    <span class="detail-label">FEEDBACK</span>
-                    <p id="modalComment" class="small mb-0" style="white-space: pre-wrap; line-height:1.6;"></p>
-                </div>
+        window.onload = function() {
+            startTipsSlider(); 
+            if (typeof liff === 'undefined') { showError('LIFF SDK not loaded.'); return; } 
+            main(); 
+        };
 
-                <div class="detail-section-common" style="border-left: 4px solid var(--c-main-turquoise);">
-                    <span class="detail-label" style="color:var(--c-main-turquoise);">HOMEWORK</span>
-                    <p id="modalHomework" class="small mb-0" style="white-space: pre-wrap; line-height:1.6;"></p>
-                </div>
+        async function main() {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                if (!liff.isLoggedIn()) { liff.login(); return; }
+                const profile = await liff.getProfile();
+                currentUserId = profile.userId;
+                log('User: ' + currentUserId);
 
-                <div class="text-center mt-3">
-                        <a href="#" id="driveLink" target="_blank" style="display:none; color:var(--c-main-turquoise); font-weight:bold; text-decoration:none; font-size:0.9rem; font-family:var(--font-lato);">View original data on Drive &gt;</a>
-                </div>
-            </div>
-            <div class="modal-footer border-0 justify-content-center pb-4">
-                <button type="button" class="btn btn-secondary rounded-pill px-5" data-bs-dismiss="modal" style="background:var(--c-sub-deep-ocean); border:none; padding:12px;">Close</button>
-            </div>
-        </div>
-    </div>
-  </div>
+                const urlParams = new URLSearchParams(window.location.search);
+                currentDogId = urlParams.get('dogId');
+                log('DogID: ' + currentDogId);
 
-  <div class="modal fade" id="dogSelectModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-0"><h5 class="modal-title fw-bold w-100 text-center" style="color:var(--c-sub-deep-ocean); font-family:var(--font-serif-jp);">愛犬情報の切替</h5></div>
-            <div class="modal-body" id="dogSelectBody"></div>
-        </div>
-    </div>
-  </div>
+                fetchTextData(currentUserId, currentDogId);
+            } catch (err) { showError('アプリ起動エラー: ' + err.message); }
+        }
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/common.js"></script>
-  <script src="js/history.js"></script>
+        function fetchTextData(userId, dogId = null) {
+            let url = `${GAS_URL}?userId=${userId}&t=${new Date().getTime()}`;
+            if (dogId) url += `&dogId=${dogId}`;
+
+            fetch(url)
+                .then(res => { if (!res.ok) throw new Error(res.statusText); return res.json(); })
+                .then(data => {
+                    if (data.multiple_dogs) {
+                        globalDogList = data.multiple_dogs;
+                        openDogSelectModal();
+                        return;
+                    }
+
+                    if (data.error) { 
+                        if(data.error === 'Unregistered') showError('未登録ユーザーです。トレーナーにお問い合わせください。');
+                        else showError('データ取得エラー: ' + data.error); 
+                        return; 
+                    }
+                    
+                    allHistoryData = data.score_history || []; 
+                    customerData = data.customer || {};
+                    if(data.dog) currentDogId = data.dog.id;
+                    
+                    if (data.all_dogs && data.all_dogs.length > 1) {
+                        globalDogList = data.all_dogs;
+                        document.getElementById('btnSwitchDog').style.display = 'block';
+                    }
+
+                    updateLinks(); 
+                    
+                    if (data.dog && data.dog.name_disp) {
+                        document.getElementById('pageTitle').innerText = `${data.dog.name_disp}'s History`;
+
+                        // ▼▼▼ 追加: 総トレーニング時間表示 ▼▼▼
+                        if (data.total_training_time !== undefined) {
+                            const existEl = document.getElementById('totalTimeDisplay');
+                            if(existEl) existEl.remove();
+
+                            const timeEl = document.createElement('p');
+                            timeEl.id = 'totalTimeDisplay';
+                            timeEl.style.cssText = "text-align:center; font-family:var(--font-serif-en); color:var(--c-sub-deep-ocean); font-size:0.9rem; margin-top:-5px; margin-bottom:15px; font-weight:600; letter-spacing:0.05em;";
+                            timeEl.innerHTML = `&lt; Total Training Time : ${data.total_training_time}h &gt;`;
+                            
+                            const titleEl = document.getElementById('pageTitle');
+                            titleEl.parentNode.insertBefore(timeEl, titleEl.nextSibling);
+                        }
+                    }
+
+                    fetchProfileImage(userId, currentDogId);
+
+                    renderHistory(data);
+                    
+                    if (allHistoryData.length > 0 || (data.latest && data.latest.has_photos)) {
+                        fetchGalleryImages(userId, currentDogId);
+                    } else { 
+                        document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-muted small ms-3">写真はまだありません</div>'; 
+                    }
+
+                    finishLoading(); 
+                })
+                .catch(err => { 
+                    showError('通信エラー: ' + err.message); 
+                    finishLoading();
+                });
+        }
+
+        function fetchProfileImage(userId, dogId) {
+            let url = `${GAS_URL}?userId=${userId}&type=img_profile`;
+            if(dogId) url += `&dogId=${dogId}`;
+            
+            fetch(url).then(res => res.json()).then(data => {
+                const imgCont = document.getElementById('dogImgContainer');
+                if(data.image) {
+                    imgCont.innerHTML = `<img src="${data.image}" class="dog-profile-img" onload="this.classList.add('loaded')">`;
+                } else {
+                    imgCont.innerHTML = '<span class="text-muted small">No Image</span>';
+                }
+            }).catch(e => log('Profile Image Error: '+e));
+        }
+
+        function fetchGalleryImages(userId, dogId) {
+            let url = `${GAS_URL}?userId=${userId}&type=img_latest`;
+            if(dogId) url += `&dogId=${dogId}`;
+
+            fetch(url).then(res => res.json()).then(d => {
+                const gallery = document.getElementById('mainGalleryContainer'); 
+                gallery.innerHTML = ''; 
+                
+                if (d.images && Array.isArray(d.images) && d.images.length > 0) {
+                    const displayImages = d.images.slice(0, 4);
+                    
+                    displayImages.forEach((b64, idx) => {
+                        let html = '';
+                        if (idx === 3) {
+                            const driveUrl = customerData.shared_folder_url || '#';
+                            html = `
+                                <div class="gallery-item" onclick="window.open('${driveUrl}', '_blank')">
+                                    <img src="${b64}" class="gallery-img" onload="this.classList.add('loaded')">
+                                    <div class="gallery-overlay">
+                                        <i class="fa-solid fa-folder-open mb-1" style="font-size:1.2rem;"></i>
+                                        <span>More<br>on Drive</span>
+                                    </div>
+                                </div>`;
+                        } else {
+                            html = `
+                                <div class="gallery-item">
+                                    <img src="${b64}" class="gallery-img zoomable" onload="this.classList.add('loaded')">
+                                </div>`;
+                        }
+                        gallery.insertAdjacentHTML('beforeend', html);
+                    });
+                    
+                    setTimeout(() => {
+                        mediumZoom('.zoomable', { margin: 24, background: 'rgba(0,0,0,0.85)' });
+                    }, 500);
+
+                } else { gallery.innerHTML = '<div class="text-muted small ms-3">写真はまだありません</div>'; }
+            }).catch(e => {
+                console.error("Gallery Error:", e);
+                document.getElementById('mainGalleryContainer').innerHTML = '<div class="text-muted small ms-3">読み込みエラー</div>'; 
+            });
+        }
+
+        function updateLinks() {
+            const backLink = document.getElementById('backLink');
+            const footerBack = document.getElementById('footerBackLink');
+            const targetUrl = currentDogId ? `index.html?dogId=${currentDogId}` : `index.html`;
+            backLink.href = targetUrl;
+            footerBack.href = targetUrl;
+        }
+
+        function openDogSelectModal() {
+            if(!globalDogList || globalDogList.length === 0) return;
+            const body = document.getElementById('dogSelectBody');
+            body.innerHTML = '';
+            globalDogList.forEach(dog => {
+                const btn = document.createElement('button');
+                btn.className = 'dog-select-btn';
+                btn.innerText = dog.name_disp; 
+                btn.onclick = () => selectDog(dog.id);
+                body.appendChild(btn);
+            });
+            document.getElementById('loadingOverlay').style.opacity = 0;
+            setTimeout(() => { document.getElementById('loadingOverlay').style.visibility = 'hidden'; }, 500);
+            new bootstrap.Modal(document.getElementById('dogSelectModal')).show();
+        }
+
+        function selectDog(dogId) {
+            const modalEl = document.getElementById('dogSelectModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if(modal) modal.hide();
+            
+            document.getElementById('loadingOverlay').style.visibility = 'visible';
+            document.getElementById('loadingOverlay').style.opacity = 1;
+            window.location.href = `history.html?dogId=${dogId}`;
+        }
+
+        function showError(msg) {
+            finishLoading();
+            document.getElementById('mainWrapper').style.display = 'none';
+            document.getElementById('errorContainer').style.display = 'block';
+            document.getElementById('errorMsg').innerText = msg;
+            log('Error: ' + msg);
+        }
+        
+        function renderHistory(data) {
+            const chartArea = document.getElementById('chartArea'); 
+            const lessonList = document.getElementById('lessonList');
+            chartArea.innerHTML = ''; lessonList.innerHTML = ''; 
+
+            if (!allHistoryData || allHistoryData.length < 1) { 
+                chartArea.innerHTML = `<div class="text-center text-muted small mt-4">まだレッスン履歴がありません。<br>これからの成長が楽しみですね。</div>`; 
+                lessonList.innerHTML = `<div class="text-center text-muted small mt-4">履歴なし</div>`; 
+                return; 
+            }
+
+            const listHistory = [...allHistoryData].sort((a,b)=>new Date(b.date)-new Date(a.date));
+            listHistory.forEach(h => {
+                const comment = (h.comment && String(h.comment).trim()) ? h.comment : 'コメントなし';
+                const numScores = h.scores.map(Number);
+                const avg = (numScores.reduce((a,b)=>a+b,0) / numScores.length).toFixed(1);
+                const doneBadge = h.done ? `<span class="badge-done">Done</span>` : '';
+                
+                lessonList.insertAdjacentHTML('beforeend', `
+                    <div class="log-item" onclick="showLessonDetail('${h.id}', '${h.date}')">
+                        <div class="log-header">
+                            <div><span class="log-date">${h.date}</span>${doneBadge}</div>
+                            <span class="log-avg">Avg ${avg}</span>
+                        </div>
+                        <p class="log-comment mb-0">${comment}</p>
+                        <div class="text-end mt-2"><small style="color:var(--c-main-turquoise); font-weight:700; letter-spacing:0.05em;">詳細 &gt;</small></div>
+                    </div>`);
+            });
+
+            const chartHistory = [...allHistoryData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            const recent10Chart = chartHistory.slice(-10);
+            const dates = recent10Chart.map(h => {
+                const d = new Date(h.date);
+                return `${d.getMonth()+1}/${d.getDate()}`;
+            });
+            
+            // Mastery Seal Logic (修正済み: 3回以上5点で表示)
+            const masteryMap = {};
+            for(let i=0; i<10; i++) {
+                const count5 = allHistoryData.filter(h => Number(h.scores[i]) === 5).length;
+                masteryMap[i] = (count5 >= 3);
+            }
+
+            for (let i = 0; i < 10; i++) {
+                const itemLabel = scoreLabels[i]; 
+                const isBasic = i < 5; 
+                const color = isBasic ? '#57C3C2' : '#2F5D62'; 
+                const scores = recent10Chart.map(h => Number(h.scores[i]));
+                
+                const latestScore = scores[scores.length - 1]; 
+                const previousScore = scores.length > 1 ? scores[scores.length - 2] : null;
+                
+                let comparisonText = 'Keep', comparisonClass = 'status-steady';
+                if (previousScore !== null) { 
+                    const diff = latestScore - previousScore; 
+                    if (diff > 0) { comparisonText = 'UP'; comparisonClass = 'status-great'; }
+                    else if (diff < 0) { comparisonText = 'DOWN'; comparisonClass = 'status-steady'; }
+                } else { comparisonText = 'Start'; }
+                
+                // Random Calculation for Seal
+                const isActive = Math.random() < 0.7; // 70% active
+                const angleA = Math.floor(Math.random() * 360) + 'deg';
+                const angleB = Math.floor(Math.random() * 360) + 'deg';
+                const offA = (Math.random() * 100) - 50; 
+                const offB = (Math.random() * 100) - 50;
+
+                const sealHtml = masteryMap[i] ? `
+                    <div class="mastery-seal-container">
+                        <div class="mastery-seal ${isActive ? 'active' : ''}" 
+                             data-active="${isActive}"
+                             style="--angleA:${angleA}; --angleB:${angleB}; --offA:${offA}%; --offB:${offB}%;">
+                            <span class="seal-number">${i+1}</span>
+                        </div>
+                    </div>` : '';
+
+                chartArea.insertAdjacentHTML('beforeend', `
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            ${sealHtml}
+                            <h4 class="chart-title">${itemLabel}</h4>
+                            <span class="chart-status ${comparisonClass}">${comparisonText}</span>
+                        </div>
+                        <div style="height:180px;"><canvas id="chart-${i}"></canvas></div>
+                    </div>`);
+                
+                new Chart(document.getElementById(`chart-${i}`), { 
+                    type: 'line', 
+                    data: { 
+                        labels: dates, 
+                        datasets: [{ 
+                            label: itemLabel, 
+                            data: scores, 
+                            borderColor: color, 
+                            backgroundColor: color + '1A', 
+                            borderWidth: 2, 
+                            pointRadius: 3, 
+                            pointBackgroundColor: '#fff', 
+                            pointBorderColor: color, 
+                            fill: true, 
+                            tension: 0.3 
+                        }] 
+                    }, 
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        scales: { 
+                            y: { min: 0, max: 5, ticks: { stepSize: 1, font:{family:'Lato'} } }, 
+                            x: { ticks: { font:{family:'Lato'} } }
+                        }, 
+                        plugins: { legend: { display: false } } 
+                    } 
+                });
+            }
+        }
+        
+        function showLessonDetail(id, date) {
+            const detail = allHistoryData.find(h => h.id === id) || allHistoryData.find(h => h.date === date); 
+            if (!detail) return;
+            
+            document.getElementById('modalDate').innerText = detail.date;
+            document.getElementById('modalComment').innerText = (detail.comment && String(detail.comment).trim()) ? detail.comment : 'なし';
+            document.getElementById('modalHomework').innerText = (detail.homework && String(detail.homework).trim()) ? detail.homework : 'なし';
+            document.getElementById('modalDone').innerText = (detail.done && String(detail.done).trim()) ? detail.done : '記録なし';
+            
+            const numScores = detail.scores.map(Number);
+            const s1 = numScores.slice(0,5).reduce((a,b)=>a+b,0)/5;
+            const s2 = numScores.slice(5,10).reduce((a,b)=>a+b,0)/5;
+            
+            document.getElementById('modalAvgArea').innerHTML = `
+                <div class="modal-avg-box">
+                    <div class="avg-item"><span class="avg-label">基礎・集中 (1-5)</span><span class="avg-val">${s1.toFixed(1)}</span></div>
+                    <div class="avg-item"><span class="avg-label">応用・対応 (6-10)</span><span class="avg-val">${s2.toFixed(1)}</span></div>
+                </div>`;
+
+            const scoresContainer = document.getElementById('modalScores'); 
+            scoresContainer.innerHTML = '';
+            for (let i = 0; i < 10; i++) { 
+                scoresContainer.insertAdjacentHTML('beforeend', `
+                    <div class="modal-score-item">
+                        <span><span style="font-family:'var(--font-serif-en)'; margin-right:5px; color:#ccc;">${i+1}</span> ${scoreLabels[i]}</span>
+                        <span class="modal-score-val">${numScores[i]}</span>
+                    </div>`); 
+            }
+            
+            const driveLinkBtn = document.getElementById('driveLink');
+            if (customerData.shared_folder_url) { 
+                driveLinkBtn.href = customerData.shared_folder_url; 
+                driveLinkBtn.style.display = 'inline-block'; 
+            } else { 
+                driveLinkBtn.style.display = 'none'; 
+            }
+            
+            new bootstrap.Modal(document.getElementById('historyDetailModal')).show();
+        }
+    </script>
 </body>
 </html>
