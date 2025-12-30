@@ -1,192 +1,681 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>うちの子医療・防災手帳</title>
-  
-  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@600;700&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="css/style.css">   <link rel="stylesheet" href="css/medical.css"> </head>
-<body>
-
-  <div class="container">
-    <div class="header-area no-print-area">
-        <div class="logo-container">
-            <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="logo-img" alt="K9 Harmony Logo">
-        </div>
-        <h1 class="page-title">うちの子医療・防災手帳</h1>
-        
-        <div class="emergency-toggle-wrapper">
-            <div class="emergency-label"><i class="fa-solid fa-triangle-exclamation"></i> 緊急時全開示</div>
-            <div class="form-check form-switch m-0">
-                <input class="form-check-input" type="checkbox" id="emergencyToggle">
-            </div>
-        </div>
-    </div>
-
-    <div id="loading" class="text-center">
-        <div class="spinner-border text-secondary"></div>
-        <p class="mt-2 small text-muted">Loading Data...</p>
-    </div>
-
-    <div id="main-display" style="display:none;">
-        <div class="card-section">
-            <div class="section-title">基本情報</div>
-            <div id="d_photo_container"></div>
-            <div class="text-center mb-3">
-                <h2 id="d_name" class="fw-bold mb-0" style="font-family: var(--font-label); font-size:1.8rem;">-</h2>
-            </div>
-            
-            <div class="row text-center mb-2">
-                <div class="col-6 border-end"><span class="info-label">犬種</span><div id="d_breed" class="info-value">-</div></div>
-                <div class="col-6"><span class="info-label">毛色</span><div id="d_color" class="info-value">-</div></div>
-            </div>
-            <div class="row text-center mb-3">
-                <div class="col-4 border-end"><span class="info-label">年齢</span><div id="d_age" class="info-value">-</div></div>
-                <div class="col-4 border-end"><span class="info-label">性別</span><div id="d_gender" class="info-value">-</div></div>
-                <div class="col-4"><span class="info-label">去勢</span><div id="d_neutered" class="info-value">-</div></div>
-            </div>
-
-            <div class="info-row">
-                <span class="info-label">飼い主名</span>
-                <div id="c_name" class="info-value fw-bold">-</div>
-            </div>
-            <div class="info-row">
-                <span class="info-label">住所</span>
-                <div class="masked-wrapper">
-                    <span id="c_address_masked" class="masked-text">***</span>
-                    <span id="c_address_real" class="real-text">-</span>
-                    <button class="btn-toggle-mask no-print-area" onclick="toggleMask('c_address')">表示</button>
-                </div>
-            </div>
-            <div class="info-row">
-                <span class="info-label">電話番号</span>
-                <div class="masked-wrapper">
-                    <span id="c_phone_masked" class="masked-text">***</span>
-                    <span id="c_phone_real" class="real-text">-</span>
-                    <button class="btn-toggle-mask no-print-area" onclick="toggleMask('c_phone')">表示</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="card-section">
-            <div class="section-title"><i class="fa-solid fa-notes-medical"></i> 医療情報</div>
-            
-            <div class="mb-3 p-3 bg-light rounded border" style="border-color: #ddd;">
-                <h6 class="fw-bold small text-muted mb-2"><i class="fa-solid fa-hospital"></i> かかりつけ医</h6>
-                <div class="info-row"><span class="info-label">病院名</span><div id="d_vet_name" class="info-value fw-bold">-</div></div>
-                <div class="info-row"><span class="info-label">電話</span><div id="d_vet_phone" class="info-value">-</div></div>
-                <div class="info-row"><span class="info-label">住所</span><div id="d_vet_address" class="info-value small">-</div></div>
-            </div>
-
-            <div class="info-row"><span class="info-label">既往歴</span><div id="d_history" class="info-value">-</div></div>
-            <div class="info-row"><span class="info-label">常用薬</span><div id="d_medicine" class="info-value alert-text">-</div></div>
-            <div class="info-row"><span class="info-label">アレルギー</span><div id="d_allergy" class="info-value alert-text">-</div></div>
-            
-            <div class="row mt-3">
-                <div class="col-6"><span class="info-label">鑑札番号</span><div id="d_license" class="info-value small">-</div></div>
-                <div class="col-6"><span class="info-label">マイクロチップ</span><div id="d_chip" class="info-value small">-</div></div>
-            </div>
-        </div>
-
-        <div class="card-section alert-mode">
-            <div class="section-title"><i class="fa-solid fa-triangle-exclamation"></i> 緊急時情報</div>
-            <div class="info-row">
-                <span class="info-label">緊急連絡先 (家族・親族)</span>
-                <div id="c_em_name" class="info-value">-</div>
-                <div class="masked-wrapper">
-                    <span id="c_em_phone_masked" class="masked-text">***</span>
-                    <span id="c_em_phone_real" class="real-text">-</span>
-                    <button class="btn-toggle-mask no-print-area" onclick="toggleMask('c_em_phone')">表示</button>
-                </div>
-            </div>
-            <div class="info-row">
-                <span class="info-label">代理人 (シッター等)</span>
-                <div id="c_proxy_name" class="info-value">-</div>
-                <div id="c_proxy_phone" class="info-value">-</div>
-            </div>
-            <div class="info-row">
-                <span class="info-label">指定避難所</span>
-                <div id="c_evac" class="info-value fw-bold">-</div>
-            </div>
-        </div>
-
-        <div class="card-section">
-            <div class="section-title">ケア・生活情報</div>
-            <div class="info-row"><span class="info-label">フード</span><div id="d_food" class="info-value">-</div></div>
-            <div class="info-row"><span class="info-label">特記事項・注意</span><div id="d_caution" class="info-value alert-text">-</div></div>
-        </div>
-    </div>
-
-    <div id="controls" class="no-print-area mt-4" style="display:none;">
-        <p class="text-muted small mb-2 fw-bold" style="font-family:var(--font-label);">▼ 防災書類をPDFで作成・保存</p>
-        <button id="btn-handbook" onclick="generatePdf('handbook')" class="btn-pdf btn-handbook shadow-sm"><i class="fa-solid fa-book"></i> 防災手帳 (A4横)</button>
-        <button id="btn-crate" onclick="generatePdf('crate')" class="btn-pdf btn-crate shadow-sm"><i class="fa-solid fa-tag"></i> クレートタグ (A4縦)</button>
-        <button id="btn-poster" onclick="generatePdf('poster')" class="btn-pdf btn-poster shadow-sm"><i class="fa-solid fa-bullhorn"></i> 迷子ポスター (A4縦)</button>
-    </div>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>うちの子医療・防災手帳</title>
     
-    <div id="preview-area" class="no-print-area">
-        <h5 class="fw-bold text-center mb-3" style="color:var(--c-deep-sage); font-family:var(--font-label);">作成完了</h5>
-        <div class="text-center">
-            <p class="small text-muted mb-2">画像を長押しで保存できます</p>
-            <img id="preview-img" src="" alt="PDF Preview">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* =========================================
+           1. Sanctuary Palette (Emergency Mode)
+           ========================================= */
+        :root {
+            /* Roles */
+            --c-healing-sage: #88b08b;  /* Background decor, borders */
+            --c-deep-sage:    #557A58;  /* Labels, Headings */
+            --c-value-black:  #1a1a1a;  /* Data values */
+            --c-warm-alert:   #e07a5f;  /* Warning/Alert */
+            --c-pale-mist:    #e8f5e9;  /* Background */
+            --c-white:        #ffffff;
+            
+            /* Typography Rules */
+            --font-label: 'Noto Serif JP', serif;
+            --font-data:  'Lato', 'Noto Sans JP', sans-serif;
+            
+            /* Motion */
+            --speed-emergency: 0.15s;
+            --ease-soft: ease-in-out;
+        }
+
+        body {
+            font-family: var(--font-data);
+            background-color: var(--c-pale-mist);
+            color: var(--c-value-black);
+            padding-bottom: 100px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* =========================================
+           2. UI Structure & Components
+           ========================================= */
+        .container { max-width: 600px; padding: 20px; }
+
+        /* Header Area */
+        .header-area { text-align: center; margin-bottom: 25px; }
+        .logo-container { margin-bottom: 15px; display: flex; justify-content: center; }
+        .logo-img { 
+            width: 40%; 
+            height: auto; 
+            /* Filter removed to respect original brand color */
+        }
+        .page-title {
+            font-family: var(--font-label);
+            color: var(--c-deep-sage);
+            font-weight: 700;
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            letter-spacing: 0.05em;
+        }
+
+        /* Emergency Toggle Switch */
+        .emergency-toggle-wrapper {
+            display: flex; align-items: center; justify-content: center;
+            background: #fff; border: 2px solid var(--c-warm-alert);
+            border-radius: 50px; padding: 10px 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 10px rgba(224, 122, 95, 0.2);
+        }
+        .emergency-label {
+            color: var(--c-warm-alert); font-family: var(--font-label);
+            font-weight: 700; margin-right: 15px; display: flex; align-items: center; gap: 5px;
+        }
+        .form-switch .form-check-input {
+            width: 3em; height: 1.5em; cursor: pointer;
+            background-color: #ddd; border-color: #ccc;
+        }
+        .form-switch .form-check-input:checked {
+            background-color: var(--c-warm-alert); border-color: var(--c-warm-alert);
+        }
+
+        /* Card Layout */
+        .card-section {
+            background: var(--c-white);
+            border: 1px solid var(--c-deep-sage);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(85, 122, 88, 0.05);
+        }
+
+        /* Alert Card Style */
+        .card-section.alert-mode {
+            border: 2px solid var(--c-warm-alert);
+            background: repeating-linear-gradient(
+                135deg,
+                #fff,
+                #fff 10px,
+                #fff5f0 10px,
+                #fff5f0 20px
+            );
+        }
+        .alert-mode .section-title {
+            color: var(--c-warm-alert);
+            border-bottom-color: var(--c-warm-alert);
+        }
+
+        .section-title {
+            font-family: var(--font-label);
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--c-deep-sage);
+            border-bottom: 2px solid var(--c-healing-sage);
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            letter-spacing: 0.05em;
+        }
+
+        /* Data Rows */
+        .info-row {
+            margin-bottom: 12px;
+            border-bottom: 1px dashed rgba(85, 122, 88, 0.2);
+            padding-bottom: 6px;
+        }
+        .info-row:last-child { border-bottom: none; margin-bottom: 0; }
+
+        .info-label {
+            display: block;
+            font-family: var(--font-label);
+            color: var(--c-deep-sage);
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        
+        .info-value {
+            font-family: var(--font-data);
+            color: var(--c-value-black);
+            font-size: 1.05rem;
+            font-weight: 500;
+            word-break: break-all;
+            font-variant-numeric: lining-nums;
+        }
+        .info-value.alert-text { color: var(--c-warm-alert); font-weight: 700; }
+
+        /* Photo Area */
+        #d_photo_container {
+            width: 160px; height: 160px;
+            background: #f0f0f0;
+            border-radius: 12px;
+            border: 2px solid var(--c-deep-sage);
+            margin: 0 auto 20px;
+            overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .dog-profile-img {
+            width: 100%; height: 100%; object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.8s var(--ease-soft);
+        }
+        .dog-profile-img.visible { opacity: 1; }
+
+        /* Masking System */
+        .masked-wrapper { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .masked-text { 
+            letter-spacing: 2px; color: #999; background: #eee; 
+            padding: 2px 8px; border-radius: 4px; font-size: 0.9rem;
+        }
+        .real-text { display: none; font-weight: 700; color: var(--c-value-black); }
+        
+        .btn-toggle-mask {
+            font-size: 0.75rem; padding: 4px 12px;
+            border: 1px solid var(--c-deep-sage);
+            color: var(--c-deep-sage);
+            background: #fff;
+            border-radius: 20px;
+            font-family: var(--font-label);
+            cursor: pointer;
+            transition: all var(--speed-emergency);
+        }
+        .btn-toggle-mask:active {
+            background: var(--c-deep-sage); color: #fff;
+        }
+
+        /* Footer - Corrected */
+        .site-footer {
+            text-align: center; padding: 40px 20px; color: #666; font-size: 0.8rem;
+            background: #fdfdfd; border-top: 1px solid #ddd; margin-top: 40px;
+        }
+        .footer-logo-img { 
+            width: 30%; 
+            margin-bottom: 10px; 
+            /* No filters applied - Original colors maintained */
+        }
+
+        #loading { margin-top: 50px; }
+        #debug-console { display: none; }
+        #log-stamp { background: #333; color: #666; text-align: center; font-size: 0.7rem; padding: 2px; }
+
+        /* PDF Section - New Coloring */
+        #controls { border-top: 2px solid var(--c-healing-sage); padding-top: 20px; }
+        .btn-pdf {
+            width: 100%; padding: 14px; margin-bottom: 12px;
+            font-family: var(--font-label); font-weight: 700;
+            border-radius: 8px; border: none;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: transform var(--speed-emergency), box-shadow 0.2s;
+            color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn-pdf:active { transform: scale(0.98); box-shadow: none; }
+        
+        /* [Updated Colors] */
+        .btn-handbook { background-color: var(--c-deep-sage); } /* Green/Trust */
+        .btn-crate { background-color: #5D99C6; } /* Blue/Info */
+        .btn-poster { background-color: var(--c-warm-alert); } /* Red/Alert */
+
+        /* Preview Area */
+        #preview-area { display: none; background: #fff; border: 2px solid var(--c-deep-sage); border-radius: 12px; padding: 15px; margin-top: 20px; }
+        #preview-img { width: 100%; border: 1px solid #ddd; border-radius: 8px; }
+        
+        /* Modal Button */
+        .dog-select-btn {
+            width: 100%; padding: 15px; margin-bottom: 10px;
+            font-family: var(--font-label); font-weight: 700;
+            border: 2px solid var(--c-deep-sage); color: var(--c-deep-sage);
+            background: #fff; border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="log-stamp">v2025.12.18-Fix-Colors-Masking</div>
+
+    <div class="container">
+        <div class="header-area no-print-area">
+            <div class="logo-container">
+                <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="logo-img" alt="K9 Harmony Logo">
+            </div>
+            <h1 class="page-title">うちの子医療・防災手帳</h1>
+            
+            <div class="emergency-toggle-wrapper">
+                <div class="emergency-label"><i class="fa-solid fa-triangle-exclamation"></i> 緊急時全開示</div>
+                <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" id="emergencyToggle" onchange="toggleEmergencyMode(this.checked)">
+                </div>
+            </div>
         </div>
-        <div class="text-center mt-3">
-            <button class="btn btn-secondary btn-sm rounded-pill px-4" onclick="closePreview()">閉じる</button>
+
+        <div id="loading" class="text-center"><div class="spinner-border text-secondary"></div><p class="mt-2 small text-muted">Loading Data...</p></div>
+
+        <div id="main-display" style="display:none;">
+            <div class="card-section">
+                <div class="section-title">基本情報</div>
+                <div id="d_photo_container">
+                    </div>
+                <div class="text-center mb-3">
+                    <h2 id="d_name" class="fw-bold mb-0" style="font-family: var(--font-label); font-size:1.8rem;">-</h2>
+                </div>
+                
+                <div class="row text-center mb-2">
+                    <div class="col-6 border-end"><span class="info-label">犬種</span><div id="d_breed" class="info-value">-</div></div>
+                    <div class="col-6"><span class="info-label">毛色</span><div id="d_color" class="info-value">-</div></div>
+                </div>
+                <div class="row text-center mb-3">
+                    <div class="col-4 border-end"><span class="info-label">年齢</span><div id="d_age" class="info-value">-</div></div>
+                    <div class="col-4 border-end"><span class="info-label">性別</span><div id="d_gender" class="info-value">-</div></div>
+                    <div class="col-4"><span class="info-label">去勢</span><div id="d_neutered" class="info-value">-</div></div>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">飼い主名</span>
+                    <div id="c_name" class="info-value fw-bold">-</div>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">住所</span>
+                    <div class="masked-wrapper">
+                        <span id="c_address_masked" class="masked-text">***</span>
+                        <span id="c_address_real" class="real-text">-</span>
+                        <button class="btn-toggle-mask no-print-area" onclick="toggleMask('c_address')">表示</button>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">電話番号</span>
+                    <div class="masked-wrapper">
+                        <span id="c_phone_masked" class="masked-text">***</span>
+                        <span id="c_phone_real" class="real-text">-</span>
+                        <button class="btn-toggle-mask no-print-area" onclick="toggleMask('c_phone')">表示</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-section">
+                <div class="section-title"><i class="fa-solid fa-notes-medical"></i> 医療情報</div>
+                
+                <div class="mb-3 p-3 bg-light rounded border" style="border-color: #ddd;">
+                    <h6 class="fw-bold small text-muted mb-2"><i class="fa-solid fa-hospital"></i> かかりつけ医</h6>
+                    <div class="info-row"><span class="info-label">病院名</span><div id="d_vet_name" class="info-value fw-bold">-</div></div>
+                    <div class="info-row"><span class="info-label">電話</span><div id="d_vet_phone" class="info-value">-</div></div>
+                    <div class="info-row"><span class="info-label">住所</span><div id="d_vet_address" class="info-value small">-</div></div>
+                </div>
+
+                <div class="info-row"><span class="info-label">既往歴</span><div id="d_history" class="info-value">-</div></div>
+                <div class="info-row"><span class="info-label">常用薬</span><div id="d_medicine" class="info-value alert-text">-</div></div>
+                <div class="info-row"><span class="info-label">アレルギー</span><div id="d_allergy" class="info-value alert-text">-</div></div>
+                
+                <div class="row mt-3">
+                    <div class="col-6"><span class="info-label">鑑札番号</span><div id="d_license" class="info-value small">-</div></div>
+                    <div class="col-6"><span class="info-label">マイクロチップ</span><div id="d_chip" class="info-value small">-</div></div>
+                </div>
+            </div>
+
+            <div class="card-section alert-mode">
+                <div class="section-title"><i class="fa-solid fa-triangle-exclamation"></i> 緊急時情報</div>
+                <div class="info-row">
+                    <span class="info-label">緊急連絡先 (家族・親族)</span>
+                    <div id="c_em_name" class="info-value">-</div>
+                    <div class="masked-wrapper">
+                        <span id="c_em_phone_masked" class="masked-text">***</span>
+                        <span id="c_em_phone_real" class="real-text">-</span>
+                        <button class="btn-toggle-mask no-print-area" onclick="toggleMask('c_em_phone')">表示</button>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">代理人 (シッター等)</span>
+                    <div id="c_proxy_name" class="info-value">-</div>
+                    <div id="c_proxy_phone" class="info-value">-</div>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">指定避難所</span>
+                    <div id="c_evac" class="info-value fw-bold">-</div>
+                </div>
+            </div>
+
+            <div class="card-section">
+                <div class="section-title">ケア・生活情報</div>
+                <div class="info-row"><span class="info-label">フード</span><div id="d_food" class="info-value">-</div></div>
+                <div class="info-row"><span class="info-label">特記事項・注意</span><div id="d_caution" class="info-value alert-text">-</div></div>
+            </div>
+        </div>
+
+        <div id="controls" class="no-print-area mt-4" style="display:none;">
+            <p class="text-muted small mb-2 fw-bold" style="font-family:var(--font-label);">▼ 防災書類をPDFで作成・保存</p>
+            <button id="btn-handbook" onclick="generatePdf('handbook')" class="btn-pdf btn-handbook shadow-sm"><i class="fa-solid fa-book"></i> 防災手帳 (A4横)</button>
+            <button id="btn-crate" onclick="generatePdf('crate')" class="btn-pdf btn-crate shadow-sm"><i class="fa-solid fa-tag"></i> クレートタグ (A4縦)</button>
+            <button id="btn-poster" onclick="generatePdf('poster')" class="btn-pdf btn-poster shadow-sm"><i class="fa-solid fa-bullhorn"></i> 迷子ポスター (A4縦)</button>
+        </div>
+        
+        <div id="preview-area" class="no-print-area">
+            <h5 class="fw-bold text-center mb-3" style="color:var(--c-deep-sage); font-family:var(--font-label);">作成完了</h5>
+            <div class="text-center">
+                <p class="small text-muted mb-2">画像を長押しで保存できます</p>
+                <img id="preview-img" src="" alt="PDF Preview">
+            </div>
+            <div class="text-center mt-3">
+                <button class="btn btn-secondary btn-sm rounded-pill px-4" onclick="closePreview()">閉じる</button>
+            </div>
+        </div>
+
+        <footer class="site-footer no-print-area">
+            <div class="footer-logo-container">
+                <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony">
+            </div>
+            <div class="footer-info">
+                <p><strong>K9 Harmony</strong></p>
+                <p>東京都板橋区 (Dummy Address)</p>
+                <p>03-0000-0000 (Dummy Phone)</p>
+            </div>
+            <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
+        </footer>
+
+        <div id="debug-console"></div>
+    </div>
+
+    <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold w-100 text-center" style="font-family:var(--font-label); color:var(--c-deep-sage);">わんちゃんを選択</h5>
+                </div>
+                <div class="modal-body" id="dogSelectBody"></div>
+            </div>
         </div>
     </div>
 
-    <footer class="site-footer no-print-area">
-        <div class="footer-logo-container">
-            <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony">
-        </div>
-        <div class="footer-info">
-            <p><strong>K9 Harmony</strong></p>
-            <p>東京都板橋区</p>
-        </div>
-        <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
-    </footer>
-  </div>
-
-  <div class="modal fade" id="dogSelectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold w-100 text-center" style="font-family:var(--font-label); color:var(--c-deep-sage);">わんちゃんを選択</h5>
-            </div>
-            <div class="modal-body" id="dogSelectBody"></div>
-        </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="printModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold" style="font-family:var(--font-label);">保存完了</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>PDFがダウンロードされました。<br>ファイルアプリをご確認ください。</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+    <div class="modal fade" id="printModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" style="font-family:var(--font-label);">保存完了</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>PDFがダウンロードされました。<br>ファイルアプリをご確認ください。</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                </div>
             </div>
         </div>
     </div>
-  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/common.js"></script>
-  <script src="js/medical.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzWkpA6bvAETxV34lE05e5SSW34CvjoxOH6K8V9oSAGMCZbUR7ar6g84FcHihICsK2F/exec';
+        const LIFF_ID = "2008546673-MJY7j3ox";
+
+        let currentUserId = null;
+        let currentDogId = null;
+        let printModal = null; 
+
+        function log(msg) {
+            const el = document.getElementById('debug-console');
+            if(el && el.style.display !== 'none') el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}<br>` + el.innerHTML;
+            console.log(msg);
+        }
+
+        window.onload = async function() {
+            if (typeof liff === 'undefined') {
+                alert('LIFF SDK Load Error'); return;
+            }
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                if (!liff.isLoggedIn()) { liff.login(); return; }
+                const profile = await liff.getProfile();
+                currentUserId = profile.userId;
+                const urlParams = new URLSearchParams(window.location.search);
+                currentDogId = urlParams.get('dogId');
+                
+                printModal = new bootstrap.Modal(document.getElementById('printModal'));
+                fetchData(currentUserId, currentDogId);
+            } catch (err) { console.error(err); }
+        };
+
+        function fetchData(userId, dogId) {
+            let url = `${API_URL}?userId=${userId}`;
+            if(dogId) url += `&dogId=${dogId}`;
+            
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.multiple_dogs) {
+                        showDogSelectModal(data.multiple_dogs);
+                        return;
+                    }
+                    if(data.error) { alert('Error: ' + data.error); return; }
+                    if(data.dog && data.dog.id) currentDogId = data.dog.id;
+                    renderData(data);
+                    if(currentDogId) fetchImage(userId, currentDogId);
+                })
+                .catch(e => {
+                    alert('Data Fetch Error');
+                });
+        }
+
+        function showDogSelectModal(dogs) {
+            const body = document.getElementById('dogSelectBody');
+            body.innerHTML = '';
+            dogs.forEach(dog => {
+                const btn = document.createElement('button');
+                btn.className = 'dog-select-btn';
+                btn.innerText = dog.name_disp; 
+                btn.onclick = () => selectDog(dog.id);
+                body.appendChild(btn);
+            });
+            document.getElementById('loading').style.display = 'none';
+            new bootstrap.Modal(document.getElementById('dogSelectModal')).show();
+        }
+
+        function selectDog(dogId) {
+            const modalEl = document.getElementById('dogSelectModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+            
+            document.getElementById('loading').style.display = 'block';
+            currentDogId = dogId;
+            fetchData(currentUserId, dogId);
+        }
+
+        function renderData(data) {
+            const c = data.customer || {};
+            const d = data.dog || {};
+            
+            setText('d_name', d.name_disp);
+            setText('d_breed', d.breed);
+            setText('d_color', d.color);
+            setText('d_age', d.age);
+            setText('d_gender', d.gender);
+            setText('d_neutered', d.neutered);
+            
+            setText('c_name', c.name);
+            setMaskedText('c_address', c.address, maskAddress(c.address));
+            setMaskedText('c_phone', c.phone, maskPhone(c.phone));
+            
+            setText('d_vet_name', d.vet_name);
+            setText('d_vet_address', d.vet_address);
+            setText('d_vet_phone', d.vet_phone);
+            setText('d_history', d.history);
+            setText('d_medicine', d.medicine);
+            setText('d_allergy', d.allergy);
+            setText('d_license', d.license_no);
+            setText('d_chip', d.microchip);
+            
+            setText('c_em_name', c.em_name);
+            // Updated: Mask Emergency Contact Phone
+            setMaskedText('c_em_phone', c.em_phone, maskPhone(c.em_phone));
+            
+            setText('c_proxy_name', c.proxy_name);
+            setText('c_proxy_phone', c.proxy_phone);
+            setText('c_evac', c.evac_site);
+            
+            setText('d_food', d.food);
+            setText('d_caution', d.caution);
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('controls').style.display = 'block';
+            document.getElementById('main-display').style.display = 'block';
+        }
+
+        function fetchImage(userId, dogId) {
+            let url = `${API_URL}?userId=${userId}&type=img_profile&dogId=${dogId}`;
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    const el = document.getElementById('d_photo_container');
+                    if(data.image) {
+                        el.innerHTML = `<img src="${data.image}" class="dog-profile-img" onload="this.classList.add('visible')">`;
+                        el.style.border = 'none';
+                    } else {
+                        el.innerHTML = '<span class="small text-muted" style="font-family:var(--font-data)">No Photo</span>';
+                    }
+                })
+                .catch(e => console.log('Img Err'));
+        }
+
+        function generatePdf(type) {
+            if(!currentUserId || !currentDogId) return;
+            const btn = document.getElementById(`btn-${type}`);
+            const originalHtml = btn.innerHTML;
+            const allBtns = document.querySelectorAll('#controls button');
+            allBtns.forEach(b => b.disabled = true);
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 作成中...';
+
+            const url = `${API_URL}?userId=${currentUserId}&dogId=${currentDogId}&type=pdf_${type}`;
+            
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if(data.error) {
+                        alert('Error: ' + data.error);
+                    } else if(data.url) {
+                        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                        if (!isMobile) {
+                            try {
+                                const match = data.url.match(/\/d\/(.*?)\//);
+                                const fileId = (match && match[1]) ? match[1] : null;
+                                const dlUrl = fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : data.url;
+                                const a = document.createElement('a');
+                                a.href = dlUrl;
+                                a.download = 'medical_doc.pdf'; 
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                printModal.show();
+                            } catch(e) { window.open(data.url, '_blank'); }
+                        } else {
+                            let fileId = '';
+                            const match = data.url.match(/\/d\/(.*?)\//) || data.url.match(/id=(.*?)$/);
+                            if (match && match[1]) fileId = match[1];
+
+                            if (fileId) {
+                                const previewArea = document.getElementById('preview-area');
+                                const img = document.getElementById('preview-img');
+                                img.src = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+                                img.onclick = () => liff.openWindow({ url: data.url, external: true });
+                                
+                                document.getElementById('controls').style.display = 'none'; 
+                                previewArea.style.display = 'block'; 
+                                previewArea.scrollIntoView({ behavior: 'smooth' });
+                            } else {
+                                liff.openWindow({ url: data.url, external: true });
+                            }
+                        }
+                    }
+                })
+                .catch(e => alert('Error: ' + e.message))
+                .finally(() => {
+                    allBtns.forEach(b => b.disabled = false);
+                    btn.innerHTML = originalHtml;
+                });
+        }
+
+        function closePreview() {
+            document.getElementById('preview-area').style.display = 'none';
+            document.getElementById('controls').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* --- Helper Functions --- */
+        function maskAddress(addr) { 
+            if(!addr) return; 
+            // Matches until prefecture + city/ward
+            const m = addr.match(/(.*?[都道府県].*?[市区町村])/); 
+            return m ? m[0]+' ***' : addr.substring(0,5)+' ***'; 
+        }
+        function maskPhone(tel) { 
+            if(!tel) return; 
+            // Matches 070/080/090 etc (first 3-4 digits)
+            return tel.substring(0,3)+'-****-****'; 
+        }
+        function setText(id, txt) { const el = document.getElementById(id); if(el) el.textContent = txt || '-'; }
+        
+        function setMaskedText(baseId, realVal, maskedVal) { 
+            const rEl = document.getElementById(baseId + '_real'); 
+            const mEl = document.getElementById(baseId + '_masked'); 
+            const btn = rEl ? rEl.parentElement.querySelector('.btn-toggle-mask') : null; 
+            if(!rEl || !mEl) return; 
+            
+            // Reset to masked state
+            rEl.style.display = 'none';
+            mEl.style.display = 'inline';
+            if(btn) btn.style.display = 'inline-block';
+            
+            if(!realVal || realVal === '記載なし') { 
+                rEl.textContent = '記載なし'; mEl.style.display='none'; rEl.style.display='inline'; 
+                if(btn) btn.style.display='none'; 
+            } else { 
+                rEl.textContent = realVal; mEl.textContent = maskedVal; 
+            } 
+        }
+        
+        function toggleMask(baseId) { 
+            const rEl = document.getElementById(baseId + '_real'); 
+            const mEl = document.getElementById(baseId + '_masked'); 
+            if(rEl.style.display === 'none') { 
+                rEl.style.display='inline'; mEl.style.display='none'; 
+            } else { 
+                rEl.style.display='none'; mEl.style.display='inline'; 
+            } 
+        }
+
+        /* --- Emergency Full Disclosure Logic --- */
+        function toggleEmergencyMode(isEmergency) {
+            const wrappers = document.querySelectorAll('.masked-wrapper');
+            wrappers.forEach(wrap => {
+                const rEl = wrap.querySelector('.real-text');
+                const mEl = wrap.querySelector('.masked-text');
+                const btn = wrap.querySelector('.btn-toggle-mask');
+                
+                if(!rEl || rEl.textContent === '記載なし') return;
+
+                if (isEmergency) {
+                    // Unmask All
+                    rEl.style.display = 'inline';
+                    mEl.style.display = 'none';
+                    if(btn) btn.style.display = 'none'; 
+                } else {
+                    // Re-mask
+                    rEl.style.display = 'none';
+                    mEl.style.display = 'inline';
+                    if(btn) btn.style.display = 'inline-block';
+                }
+            });
+            
+            const header = document.querySelector('.header-area');
+            if(isEmergency) {
+                document.body.style.backgroundColor = '#fff0f0';
+            } else {
+                document.body.style.backgroundColor = 'var(--c-pale-mist)';
+            }
+        }
+    </script>
 </body>
 </html>
