@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse # ← 追加
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client, Client
@@ -11,9 +11,7 @@ from dotenv import load_dotenv
 # === 1. 環境変数の読み込み ===
 current_dir = Path(__file__).resolve().parent
 env_path = current_dir / '.env'
-if not env_path.exists():
-    env_path = current_dir.parent / '.env'
-
+# ローカル環境用（Renderでは無視されますがエラーにはなりません）
 if env_path.exists():
     load_dotenv(dotenv_path=env_path)
 
@@ -33,7 +31,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# クライアント初期化 (エラーハンドリング付き)
+# クライアント初期化
 supabase: Client = None
 openai_client = None
 try:
@@ -49,7 +47,7 @@ class ChatRequest(BaseModel):
     user_id: str
     message: str
 
-# === 5. HTMLを表示する機能 (ここが追加部分！) ===
+# === 5. HTMLを表示する機能 ===
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     # frontend/chat.html の場所を探して読み込む
@@ -58,14 +56,17 @@ async def read_root():
         with open(html_path, "r", encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
-        return "<h1>Error: HTML file not found</h1>"
+        return "<h1>Error: HTML file not found on server</h1>"
 
 # === 6. チャット機能 ===
 @app.post("/chat")
 async def chat_endpoint(req: ChatRequest):
     try:
-        if not supabase or not openai_client:
-            raise HTTPException(status_code=500, detail="Server config error")
+        # ★★★ 追加箇所：ID確認用 ★★★
+        # LINE画面で「id」と打つと、自分のユーザーIDが返ってきます
+        if req.message == "id":
+            return {"reply": req.user_id}
+        # ★★★★★★★★★★★★★★★★
 
         # A. ユーザー情報取得
         user_data = supabase.table("profiles").select("*").eq("user_id", req.user_id).execute()
@@ -75,14 +76,13 @@ async def chat_endpoint(req: ChatRequest):
             p = user_data.data[0]
             dog_info = f"犬種:{p.get('dog_breed','?')}, 年齢:{p.get('dog_age','?')}, 悩み:{p.get('issues','?')}"
 
-        # B. プロンプト
+        # B. AI生成
         system_prompt = f"""
         あなたはプロのドッグトレーナーです。以下の犬の情報を前提に回答してください。
         【対象の犬】 {dog_info}
         回答ルール: 300文字以内。共感的に。
         """
 
-        # C. AI生成
         response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
@@ -92,7 +92,8 @@ async def chat_endpoint(req: ChatRequest):
         )
         ai_text = response.choices[0].message.content
 
-        # D. ログ保存
+        # C. ログ保存
+        # プロフィールが存在する場合のみログを保存（エラー回避）
         if user_data.data:
             supabase.table("chat_logs").insert({
                 "user_id": req.user_id,
