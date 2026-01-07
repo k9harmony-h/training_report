@@ -103,6 +103,34 @@ def verify_line_token(id_token: str) -> str:
     except Exception as e:
         print(f"Auth Error: {e}")
         raise HTTPException(status_code=401, detail="Authentication failed")
+        # --- Helper: LINE ID Token検証 (修正版) ---
+def verify_line_token(id_token: str) -> str:
+    try:
+        # デバッグ: 送信前の値を確認
+        # print(f"Debug: Verifying token with Channel ID: {LINE_CHANNEL_ID}") 
+
+        response = requests.post(
+            "https://api.line.me/oauth2/v2.1/verify",
+            data={
+                "id_token": id_token,
+                "client_id": LINE_CHANNEL_ID
+            },
+            timeout=5
+        )
+        
+        if response.status_code != 200:
+            # ★★★ ここが重要: LINEからの本当のエラー理由をログに出す ★★★
+            print(f"LINE Auth Failed! Status: {response.status_code}")
+            print(f"LINE Response: {response.text}") 
+            raise HTTPException(status_code=401, detail=f"LINE Auth Failed: {response.text}")
+            
+        data = response.json()
+        return data["sub"]
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        print(f"System Error in Auth: {e}")
+        raise HTTPException(status_code=401, detail="Authentication failed")
 
 # --- Helper: Gemini ---
 def extract_dog_info(text: str):
