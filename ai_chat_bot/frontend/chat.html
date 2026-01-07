@@ -32,63 +32,74 @@
     </div>
 
     <script>
-        // ★★★ 修正点: Python側から環境変数を注入 ★★★
+        // Pythonから注入されたLIFF ID
         const LIFF_ID = "{{ liff_id }}"; 
-        
         const API_URL = "/chat";
-        let idToken = null; // API送信用のトークン
 
+        // 画面起動時の処理
         window.onload = async function() {
             try {
-                // 1. LIFF初期化
                 await liff.init({ liffId: LIFF_ID });
                 
+                // ログインしていない場合は強制ログイン
                 if (!liff.isLoggedIn()) {
                     liff.login();
                     return;
                 }
 
-                // 2. IDトークンを取得 (これが認証の鍵になります)
-                idToken = liff.getIDToken();
+                // プロフィール取得（表示用）
                 const profile = await liff.getProfile();
 
-                // UI更新
+                // UIの準備完了
                 document.getElementById("status").innerText = "";
                 document.getElementById("message").placeholder = "ワンちゃんの悩みを入力...";
                 document.getElementById("message").disabled = false;
                 document.getElementById("send-btn").disabled = false;
 
+                // 初回メッセージ
                 addMessage(`こんにちは、${profile.displayName}さん。ワンちゃんの様子はいかがですか？`, "ai");
 
             } catch (err) {
-                document.getElementById("status").innerText = "エラー: " + err.message;
+                document.getElementById("status").innerText = "起動エラー: " + err.message;
             }
         };
 
+        // 送信処理
         async function sendMessage() {
             const input = document.getElementById("message");
             const text = input.value.trim();
-            if (!text || !idToken) return;
+            
+            // ★修正点: 送信する瞬間に最新のIDトークンを取得する
+            const freshToken = liff.getIDToken();
 
+            if (!text || !freshToken) return;
+
+            // ユーザーのメッセージを表示
             addMessage(text, "user");
             input.value = "";
 
             try {
-                // ★★★ 修正点: IDトークンを送信 ★★★
                 const response = await fetch(API_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
-                        id_token: idToken, // user_idではなくトークンを送る
+                        id_token: freshToken, // ★ここで最新トークンを送る
                         message: text 
                     })
                 });
 
-                if (response.status === 401) throw new Error("認証エラー: 画面をリロードしてください");
+                // エラーハンドリング
+                if (response.status === 401) {
+                    // トークン期限切れなら、裏で再ログインさせてみる（リロード推奨）
+                    addMessage("認証の有効期限が切れました。画面を更新してください。", "ai");
+                    return;
+                }
+                
                 if (!response.ok) throw new Error("通信エラー");
 
                 const data = await response.json();
                 addMessage(data.reply, "ai");
+
             } catch (error) {
                 addMessage("エラー: " + error.message, "ai");
             }
