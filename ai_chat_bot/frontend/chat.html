@@ -6,22 +6,17 @@
     <title>K9 Harmony AI Chat</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
+        /* スタイルは変更なしのため省略。既存のCSSを使用してください */
         body { font-family: "Helvetica Neue", Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f0f2f5; }
         h2 { text-align: center; color: #333; }
-        /* チャットエリア */
-        .chat-box { height: 60vh; overflow-y: scroll; border: none; background: #7494c0; /* LINE風の背景色 */ padding: 15px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .chat-box { height: 60vh; overflow-y: scroll; border: none; background: #7494c0; padding: 15px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .message { margin: 10px 0; padding: 10px 15px; border-radius: 15px; max-width: 80%; font-size: 16px; line-height: 1.5; word-wrap: break-word; }
-        /* 自分のメッセージ */
         .user { background-color: #95ec69; margin-left: auto; color: black; border-top-right-radius: 0; }
-        /* AIのメッセージ */
         .ai { background-color: white; margin-right: auto; color: black; border-top-left-radius: 0; }
-        
-        /* 入力エリア */
         .input-area { display: flex; gap: 10px; position: fixed; bottom: 20px; left: 20px; right: 20px; max-width: 560px; margin: 0 auto; }
-        input { flex: 1; padding: 15px; border-radius: 25px; border: 1px solid #ddd; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); outline: none; }
-        button { padding: 15px 25px; background-color: #06c755; /* LINEグリーン */ color: white; border: none; border-radius: 25px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        input { flex: 1; padding: 15px; border-radius: 25px; border: 1px solid #ddd; font-size: 16px; outline: none; }
+        button { padding: 15px 25px; background-color: #06c755; color: white; border: none; border-radius: 25px; font-weight: bold; cursor: pointer; }
         button:disabled { background-color: #ccc; }
-        
         #status { text-align: center; font-size: 12px; color: #666; margin-bottom: 10px; }
     </style>
 </head>
@@ -29,8 +24,7 @@
     <h2>🐕 K9 Harmony</h2>
     <div id="status">LINE認証中...</div>
     
-    <div id="chat-box" class="chat-box">
-        </div>
+    <div id="chat-box" class="chat-box"></div>
 
     <div class="input-area">
         <input type="text" id="message" placeholder="準備中..." disabled onkeypress="handleKey(event)">
@@ -38,35 +32,32 @@
     </div>
 
     <script>
-        // ★★★ ここにLIFF IDを貼り付けてください！ ★★★
-        const LIFF_ID = "2008831649-XnH4CQgu"; 
+        // ★★★ 修正点: Python側から環境変数を注入 ★★★
+        const LIFF_ID = "{{ liff_id }}"; 
         
         const API_URL = "/chat";
-        let userLineId = null; // ここに本物のIDが入ります
+        let idToken = null; // API送信用のトークン
 
-        // 画面が開いた瞬間に実行される処理
         window.onload = async function() {
             try {
-                // 1. LIFFの初期化
+                // 1. LIFF初期化
                 await liff.init({ liffId: LIFF_ID });
                 
-                // 2. ログインしていなければログイン画面へ (ブラウザで開いた場合用)
                 if (!liff.isLoggedIn()) {
                     liff.login();
                     return;
                 }
 
-                // 3. プロフィール(ID)を取得
+                // 2. IDトークンを取得 (これが認証の鍵になります)
+                idToken = liff.getIDToken();
                 const profile = await liff.getProfile();
-                userLineId = profile.userId;
 
-                // 準備完了！
-                document.getElementById("status").innerText = ""; // IDは裏で持つので非表示に
+                // UI更新
+                document.getElementById("status").innerText = "";
                 document.getElementById("message").placeholder = "ワンちゃんの悩みを入力...";
                 document.getElementById("message").disabled = false;
                 document.getElementById("send-btn").disabled = false;
 
-                // 最初だけ挨拶
                 addMessage(`こんにちは、${profile.displayName}さん。ワンちゃんの様子はいかがですか？`, "ai");
 
             } catch (err) {
@@ -77,27 +68,29 @@
         async function sendMessage() {
             const input = document.getElementById("message");
             const text = input.value.trim();
-            if (!text || !userLineId) return;
+            if (!text || !idToken) return;
 
-            // 自分のメッセージを表示
             addMessage(text, "user");
             input.value = "";
 
-            // AIに送信
             try {
+                // ★★★ 修正点: IDトークンを送信 ★★★
                 const response = await fetch(API_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    // ここで本物のIDを送ります！
-                    body: JSON.stringify({ user_id: userLineId, message: text })
+                    body: JSON.stringify({ 
+                        id_token: idToken, // user_idではなくトークンを送る
+                        message: text 
+                    })
                 });
 
+                if (response.status === 401) throw new Error("認証エラー: 画面をリロードしてください");
                 if (!response.ok) throw new Error("通信エラー");
 
                 const data = await response.json();
                 addMessage(data.reply, "ai");
             } catch (error) {
-                addMessage("エラーが発生しました: " + error.message, "ai");
+                addMessage("エラー: " + error.message, "ai");
             }
         }
 

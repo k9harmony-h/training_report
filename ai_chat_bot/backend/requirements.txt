@@ -1,9 +1,8 @@
 fastapi
-uvicorn[standard]
-pydantic
-openai
-supabase
+uvicorn
 python-dotenv
-pyjwt
-cryptography
+supabase
+google-generativeai
+python-multipart
+jinja2
 requests

@@ -1,8 +1,10 @@
 import os
 import json
+import requests
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates # テンプレートエンジン
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -10,17 +12,20 @@ from supabase import create_client, Client
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-# --- パス設定 (絶対パス) ---
-# このファイルの親ディレクトリ(backend)を取得
+# --- パス・環境変数設定 ---
 BACKEND_DIR = Path(__file__).resolve().parent
-# プロジェクトルート(ai_chat_bot)を取得
 PROJECT_ROOT = BACKEND_DIR.parent
-# 関連パスの定義
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
 ENV_PATH = PROJECT_ROOT / ".env"
 
-# .envの読み込み
 load_dotenv(dotenv_path=ENV_PATH)
+
+# 設定値の取得
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+LINE_CHANNEL_ID = os.getenv("LINE_CHANNEL_ID") # 検証用
+LIFF_ID = os.getenv("LIFF_ID") # フロントエンド注入用
 
 app = FastAPI()
 
@@ -33,27 +38,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- クライアント初期化 ---
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-
-# Supabase接続
+# --- 初期化 ---
 supabase: Client = create_client(SUPABASE_URL or "", SUPABASE_KEY or "")
 
-# Gemini接続
 if GOOGLE_API_KEY:
     genai.configure(api_key=GOOGLE_API_KEY)
-else:
-    print("CRITICAL: GOOGLE_API_KEY is missing.")
 
-# --- プロンプト ---
+# テンプレートエンジンの設定 (frontendディレクトリを指定)
+templates = Jinja2Templates(directory=str(FRONTEND_DIR))
+
+# --- プロンプト定義 (省略なし) ---
 CONSULTATION_SYSTEM_PROMPT = """
 あなたは犬の行動学に精通したプロのドッグトレーナーです。以下の犬の情報を前提に回答してください。
 【対象の犬】 {dog_info}
 回答ルール: 300文字以内。共感的に。
 """
-
 REGISTRATION_SYSTEM_PROMPT = """
 あなたは「K9 Harmony」の受付アシスタントです。
 ユーザーはまだ犬のプロフィールを登録していません。
@@ -64,12 +63,40 @@ REGISTRATION_SYSTEM_PROMPT = """
 4. 性別
 """
 
+# --- リクエストモデル変更 ---
+# user_idを生で送るのは危険なため、id_tokenを受け取る
 class ChatRequest(BaseModel):
-    user_id: str
+    id_token: str
     message: str
 
-# --- Geminiヘルパー関数 ---
+# --- Helper: LINE ID Token検証 ---
+def verify_line_token(id_token: str) -> str:
+    """
+    LINEプラットフォームにIDトークンを送信し、正当性を検証する。
+    成功すれば user_id (sub) を返す。失敗すればエラー。
+    """
+    try:
+        response = requests.post(
+            "https://api.line.me/oauth2/v2.1/verify",
+            data={
+                "id_token": id_token,
+                "client_id": LINE_CHANNEL_ID
+            },
+            timeout=5
+        )
+        
+        if response.status_code != 200:
+            raise HTTPException(status_code=401, detail="Invalid ID Token")
+            
+        data = response.json()
+        return data["sub"] # これが本物のUser ID
+    except Exception as e:
+        print(f"Auth Error: {e}")
+        raise HTTPException(status_code=401, detail="Authentication failed")
+
+# --- Helper: Gemini ---
 def extract_dog_info(text: str):
+    # (既存ロジックと同じ)
     try:
         model = genai.GenerativeModel("gemini-1.5-flash")
         prompt = f"""
@@ -83,22 +110,37 @@ def extract_dog_info(text: str):
     except:
         return None
 
-# --- APIエンドポイント ---
+# --- API Endpoints ---
+
+# フロントエンド配信 (テンプレートを使用してLIFF_IDを注入)
+@app.get("/", response_class=HTMLResponse)
+async def read_index(request: Request):
+    if not (FRONTEND_DIR / "chat.html").exists():
+        raise HTTPException(404, detail="chat.html not found")
+    
+    # chat.html内の {{ liff_id }} を環境変数の値に置き換えて配信
+    return templates.TemplateResponse("chat.html", {"request": request, "liff_id": LIFF_ID})
+
+
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
-    user_id = request.user_id
+    # 1. セキュリティチェック (IDトークンからUser IDを特定)
+    user_id = verify_line_token(request.id_token)
     user_msg = request.message
     
-    # DB同期
+    # 2. DB処理 (以下、既存ロジックを流用しつつuser_idを使用)
     try:
+        # プロフィールがなければ作成
         supabase.table("profiles").upsert({"user_id": user_id}).execute()
         res = supabase.table("dogs").select("*").eq("user_id", user_id).execute()
         dogs = res.data
-    except:
+    except Exception as e:
+        print(f"DB Error: {e}")
         dogs = []
 
     ai_reply = "エラーが発生しました。"
 
+    # 3. Gemini処理
     try:
         model = genai.GenerativeModel("gemini-1.5-flash")
         
@@ -113,6 +155,7 @@ async def chat_endpoint(request: ChatRequest):
                     "age": extracted.get("age"),
                     "gender": extracted.get("gender")
                 }
+                # None除去
                 new_dog = {k: v for k, v in new_dog.items() if v is not None}
                 supabase.table("dogs").insert(new_dog).execute()
                 
@@ -123,7 +166,7 @@ async def chat_endpoint(request: ChatRequest):
         else:
             # 相談モード
             dog = dogs[0]
-            dog_info_str = f"名前:{dog.get('name')}, 犬種:{dog.get('breed')}, 年齢:{dog.get('age')}, 性別:{dog.get('gender')}"
+            dog_info_str = f"名前:{dog.get('name')}, 犬種:{dog.get('breed')}, 年齢:{dog.get('age')}"
             sys_prompt = CONSULTATION_SYSTEM_PROMPT.format(dog_info=dog_info_str)
             full_prompt = f"{sys_prompt}\n\nユーザー: {user_msg}"
 
@@ -131,30 +174,17 @@ async def chat_endpoint(request: ChatRequest):
         ai_reply = resp.text
 
     except Exception as e:
-        print(f"Error: {e}")
-        ai_reply = "システムエラーです。"
+        print(f"Gemini Error: {e}")
+        ai_reply = "申し訳ありません、システムエラーが発生しました。"
 
-    # ログ保存
+    # 4. ログ保存 (スキーマ不一致は次回修正。まずはInsertできるように)
+    # ※ 仮対応: sender形式で保存
     try:
         supabase.table("chat_logs").insert([
             {"user_id": user_id, "message": user_msg, "sender": "user"},
             {"user_id": user_id, "message": ai_reply, "sender": "ai"}
         ]).execute()
-    except:
-        pass
+    except Exception as e:
+        print(f"Log Error: {e}")
 
     return {"reply": ai_reply}
-
-# --- フロントエンド配信 ---
-@app.get("/")
-async def read_index():
-    targets = ["chat.html", "index.html"]
-    for filename in targets:
-        path = FRONTEND_DIR / filename
-        if path.exists():
-            return FileResponse(path)
-    # ファイルが見つからない場合
-    raise HTTPException(404, detail=f"Frontend not found in {FRONTEND_DIR}")
-
-if FRONTEND_DIR.exists():
-    app.mount("/", StaticFiles(directory=str(FRONTEND_DIR)), name="frontend")
