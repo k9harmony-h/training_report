@@ -7,42 +7,24 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client, Client
-from openai import OpenAI
+import google.generativeai as genai
 from dotenv import load_dotenv
 
-# ==========================================
-# 1. パスと環境変数の堅牢な設定 (根本修正)
-# ==========================================
-
-# このファイル (backend/main.py) の場所を基準にパスを特定
-# backend_dir = .../ai_chat_bot/backend
+# --- パス設定 (絶対パス) ---
+# このファイルの親ディレクトリ(backend)を取得
 BACKEND_DIR = Path(__file__).resolve().parent
-
-# project_root = .../ai_chat_bot
+# プロジェクトルート(ai_chat_bot)を取得
 PROJECT_ROOT = BACKEND_DIR.parent
-
-# frontend_dir = .../ai_chat_bot/frontend
+# 関連パスの定義
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
-
-# .envのパス
 ENV_PATH = PROJECT_ROOT / ".env"
 
-# .env読み込み
+# .envの読み込み
 load_dotenv(dotenv_path=ENV_PATH)
-
-# デバッグ用ログ（Cloud Run起動時にパス構成が正しいか出力）
-print(f"--- SERVER CONFIG ---")
-print(f"ROOT: {PROJECT_ROOT}")
-print(f"FRONTEND: {FRONTEND_DIR}")
-print(f"ENV: {ENV_PATH}")
-print(f"---------------------")
 
 app = FastAPI()
 
-# ==========================================
-# 2. 基本設定 (CORS / Client)
-# ==========================================
-
+# --- CORS設定 ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -51,20 +33,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- クライアント初期化 ---
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    print("WARNING: Supabase credentials not found in .env")
-
+# Supabase接続
 supabase: Client = create_client(SUPABASE_URL or "", SUPABASE_KEY or "")
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
-# ==========================================
-# 3. AIロジック & API定義
-# ==========================================
+# Gemini接続
+if GOOGLE_API_KEY:
+    genai.configure(api_key=GOOGLE_API_KEY)
+else:
+    print("CRITICAL: GOOGLE_API_KEY is missing.")
 
+# --- プロンプト ---
 CONSULTATION_SYSTEM_PROMPT = """
 あなたは犬の行動学に精通したプロのドッグトレーナーです。以下の犬の情報を前提に回答してください。
 【対象の犬】 {dog_info}
@@ -85,104 +68,71 @@ class ChatRequest(BaseModel):
     user_id: str
     message: str
 
+# --- Geminiヘルパー関数 ---
 def extract_dog_info(text: str):
     try:
-        completion = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "ユーザーの入力から犬の情報（名前, 犬種, 年齢, 性別）を抽出してJSONで返してください。不明な場合はnullにしてください。"},
-                {"role": "user", "content": text}
-            ],
-            functions=[{
-                "name": "save_dog_profile",
-                "description": "犬のプロフィール情報を保存する",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "name": {"type": "string"},
-                        "breed": {"type": "string"},
-                        "age": {"type": "string"},
-                        "gender": {"type": "string"}
-                    }
-                }
-            }],
-            function_call="auto"
-        )
-        message = completion.choices[0].message
-        if message.function_call and message.function_call.name == "save_dog_profile":
-            return json.loads(message.function_call.arguments)
-    except Exception as e:
-        print(f"Extract Info Error: {e}")
-    return None
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        prompt = f"""
+        ユーザー入力: "{text}"
+        タスク: 名前, 犬種, 年齢, 性別を抽出してJSONのみ出力。
+        キー: name, breed, age, gender (不明はnull)
+        """
+        response = model.generate_content(prompt)
+        cleaned = response.text.replace("```json", "").replace("```", "").strip()
+        return json.loads(cleaned)
+    except:
+        return None
 
+# --- APIエンドポイント ---
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
     user_id = request.user_id
     user_msg = request.message
     
-    # プロフィール同期
+    # DB同期
     try:
         supabase.table("profiles").upsert({"user_id": user_id}).execute()
-    except Exception as e:
-        print(f"Profile Error: {e}")
-
-    # 犬情報取得
-    dogs = []
-    try:
         res = supabase.table("dogs").select("*").eq("user_id", user_id).execute()
         dogs = res.data
-    except Exception as e:
-        print(f"Dog Fetch Error: {e}")
+    except:
+        dogs = []
 
-    system_prompt = ""
-    messages = []
+    ai_reply = "エラーが発生しました。"
 
-    # 分岐ロジック
-    if not dogs:
-        extracted = extract_dog_info(user_msg)
-        if extracted and (extracted.get("name") or extracted.get("breed")):
-            new_dog = {
-                "user_id": user_id,
-                "name": extracted.get("name"),
-                "breed": extracted.get("breed"),
-                "age": extracted.get("age"),
-                "gender": extracted.get("gender")
-            }
-            # None除去
-            new_dog = {k: v for k, v in new_dog.items() if v is not None}
-            supabase.table("dogs").insert(new_dog).execute()
-            
-            system_prompt = CONSULTATION_SYSTEM_PROMPT.format(dog_info=str(new_dog))
-            messages = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"（システム通知: 登録完了 {new_dog}。ユーザーに伝えてください）\nユーザー: {user_msg}"}
-            ]
-        else:
-            system_prompt = REGISTRATION_SYSTEM_PROMPT
-            messages = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_msg}
-            ]
-    else:
-        dog = dogs[0]
-        dog_info_str = f"名前:{dog.get('name')}, 犬種:{dog.get('breed')}, 年齢:{dog.get('age')}, 性別:{dog.get('gender')}"
-        system_prompt = CONSULTATION_SYSTEM_PROMPT.format(dog_info=dog_info_str)
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_msg}
-        ]
-
-    # 返信生成
     try:
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            max_tokens=500
-        )
-        ai_reply = response.choices[0].message.content
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        
+        if not dogs:
+            # 登録モード
+            extracted = extract_dog_info(user_msg)
+            if extracted and (extracted.get("name") or extracted.get("breed")):
+                new_dog = {
+                    "user_id": user_id,
+                    "name": extracted.get("name"),
+                    "breed": extracted.get("breed"),
+                    "age": extracted.get("age"),
+                    "gender": extracted.get("gender")
+                }
+                new_dog = {k: v for k, v in new_dog.items() if v is not None}
+                supabase.table("dogs").insert(new_dog).execute()
+                
+                sys_prompt = CONSULTATION_SYSTEM_PROMPT.format(dog_info=str(new_dog))
+                full_prompt = f"{sys_prompt}\n\n(システム: 登録完了報告)\nユーザー: {user_msg}"
+            else:
+                full_prompt = f"{REGISTRATION_SYSTEM_PROMPT}\n\nユーザー: {user_msg}"
+        else:
+            # 相談モード
+            dog = dogs[0]
+            dog_info_str = f"名前:{dog.get('name')}, 犬種:{dog.get('breed')}, 年齢:{dog.get('age')}, 性別:{dog.get('gender')}"
+            sys_prompt = CONSULTATION_SYSTEM_PROMPT.format(dog_info=dog_info_str)
+            full_prompt = f"{sys_prompt}\n\nユーザー: {user_msg}"
+
+        resp = model.generate_content(full_prompt)
+        ai_reply = resp.text
+
     except Exception as e:
-        ai_reply = "申し訳ありません。エラーが発生しました。"
-        print(f"OpenAI Error: {e}")
+        print(f"Error: {e}")
+        ai_reply = "システムエラーです。"
 
     # ログ保存
     try:
@@ -190,31 +140,21 @@ async def chat_endpoint(request: ChatRequest):
             {"user_id": user_id, "message": user_msg, "sender": "user"},
             {"user_id": user_id, "message": ai_reply, "sender": "ai"}
         ]).execute()
-    except Exception as e:
-        print(f"Log Error: {e}")
+    except:
+        pass
 
     return {"reply": ai_reply}
 
-
-# ==========================================
-# 4. フロントエンド配信 (根本修正)
-# ==========================================
-
-# (A) ルートアクセス '/' への対応
-# index.html ではなく chat.html を明示的に返す
+# --- フロントエンド配信 ---
 @app.get("/")
 async def read_index():
-    chat_html_path = FRONTEND_DIR / "chat.html"
-    index_html_path = FRONTEND_DIR / "index.html"
-    
-    if chat_html_path.exists():
-        return FileResponse(chat_html_path)
-    elif index_html_path.exists():
-        return FileResponse(index_html_path)
-    else:
-        raise HTTPException(status_code=404, detail=f"Frontend file not found. Checked: {chat_html_path}")
+    targets = ["chat.html", "index.html"]
+    for filename in targets:
+        path = FRONTEND_DIR / filename
+        if path.exists():
+            return FileResponse(path)
+    # ファイルが見つからない場合
+    raise HTTPException(404, detail=f"Frontend not found in {FRONTEND_DIR}")
 
-# (B) その他の静的ファイル (JS/CSSなどがあればここから配信)
-# フォルダが存在する場合のみマウントする
 if FRONTEND_DIR.exists():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIR)), name="frontend")
