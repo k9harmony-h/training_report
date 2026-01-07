@@ -18,14 +18,24 @@ PROJECT_ROOT = BACKEND_DIR.parent
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
 ENV_PATH = PROJECT_ROOT / ".env"
 
-load_dotenv(dotenv_path=ENV_PATH)
+# ★デバッグ用: パス確認 (ここを追加・修正)★
+print(f"DEBUG: Checking .env path: {ENV_PATH}")
+print(f"DEBUG: File exists?: {ENV_PATH.exists()}")
+
+# .envの読み込み (override=True を追加)
+load_dotenv(dotenv_path=ENV_PATH, override=True)
 
 # 設定値の取得
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-LINE_CHANNEL_ID = os.getenv("LINE_CHANNEL_ID") # 検証用
-LIFF_ID = os.getenv("LIFF_ID") # フロントエンド注入用
+LINE_CHANNEL_ID = os.getenv("LINE_CHANNEL_ID")
+LIFF_ID = os.getenv("LIFF_ID")
+
+# ★デバッグ用: 値確認★
+print("----------- CONFIG DEBUG -----------")
+print(f"LIFF_ID: {LIFF_ID}")
+print("------------------------------------")
 
 app = FastAPI()
 
