@@ -11,7 +11,6 @@ from dotenv import load_dotenv
 # === 1. 環境変数の読み込み ===
 current_dir = Path(__file__).resolve().parent
 env_path = current_dir / '.env'
-# ローカル環境用（Renderでは無視されますがエラーにはなりません）
 if env_path.exists():
     load_dotenv(dotenv_path=env_path)
 
@@ -50,7 +49,6 @@ class ChatRequest(BaseModel):
 # === 5. HTMLを表示する機能 ===
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
-    # frontend/chat.html の場所を探して読み込む
     html_path = current_dir.parent / "frontend" / "chat.html"
     try:
         with open(html_path, "r", encoding="utf-8") as f:
@@ -62,17 +60,26 @@ async def read_root():
 @app.post("/chat")
 async def chat_endpoint(req: ChatRequest):
     try:
-        # ★★★ 追加箇所：ID確認用 ★★★
-        # LINE画面で「id」と打つと、自分のユーザーIDが返ってきます
+        # ID確認用コマンド
         if req.message == "id":
             return {"reply": req.user_id}
-        # ★★★★★★★★★★★★★★★★
 
         # A. ユーザー情報取得
         user_data = supabase.table("profiles").select("*").eq("user_id", req.user_id).execute()
         
         dog_info = "情報なし(新規)"
-        if user_data.data:
+        
+        # ★★★ 修正箇所1: プロフィールがない場合、自動作成する ★★★
+        # これを行わないと、外部キー制約がある場合にログ保存でエラーになります
+        if not user_data.data:
+            try:
+                # 最低限のIDだけ登録
+                supabase.table("profiles").insert({"user_id": req.user_id}).execute()
+                print(f"新規ユーザー登録: {req.user_id}")
+            except Exception as create_err:
+                print(f"プロフィール作成エラー(無視): {create_err}")
+        else:
+            # プロフィールがある場合は情報を取得
             p = user_data.data[0]
             dog_info = f"犬種:{p.get('dog_breed','?')}, 年齢:{p.get('dog_age','?')}, 悩み:{p.get('issues','?')}"
 
@@ -93,13 +100,16 @@ async def chat_endpoint(req: ChatRequest):
         ai_text = response.choices[0].message.content
 
         # C. ログ保存
-        # プロフィールが存在する場合のみログを保存（エラー回避）
-        if user_data.data:
+        # ★★★ 修正箇所2: if文を削除し、必ず保存するように変更 ★★★
+        try:
             supabase.table("chat_logs").insert({
                 "user_id": req.user_id,
                 "question": req.message,
                 "ai_answer": ai_text
             }).execute()
+        except Exception as log_err:
+            print(f"ログ保存エラー: {log_err}")
+            # ログ保存失敗でもチャット自体は止めないようにログ出力のみにする
 
         return {"reply": ai_text}
 
