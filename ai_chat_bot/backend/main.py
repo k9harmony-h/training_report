@@ -1,23 +1,22 @@
 import os
 import json
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles # 追加
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client, Client
 from openai import OpenAI
 from dotenv import load_dotenv
-from fastapi.middleware.cors import CORSMiddleware
 
 # --- 設定読み込み ---
 load_dotenv()
-print("--- DEBUG ENV START ---")
-print(f"SUPABASE_URL: {os.getenv('SUPABASE_URL')}")
-print("--- DEBUG ENV END ---")
+
 app = FastAPI()
 
-# CORS設定（LIFFなどの外部フロントエンドからアクセスできるようにする）
+# CORS設定
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 本番環境ではLIFFのURLに限定することを推奨
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,7 +53,7 @@ class ChatRequest(BaseModel):
     user_id: str
     message: str
 
-# --- ヘルパー関数: 犬情報の抽出 ---
+# --- ヘルパー関数 ---
 def extract_dog_info(text: str):
     completion = openai_client.chat.completions.create(
         model="gpt-4o-mini",
@@ -82,13 +81,13 @@ def extract_dog_info(text: str):
         return json.loads(message.function_call.arguments)
     return None
 
-# --- メイン処理エンドポイント ---
+# --- APIエンドポイント ---
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
     user_id = request.user_id
     user_msg = request.message
     
-    # 1. ユーザー登録確認 (profiles)
+    # 1. ユーザー登録確認
     try:
         supabase.table("profiles").upsert({"user_id": user_id}).execute()
     except Exception as e:
@@ -101,9 +100,7 @@ async def chat_endpoint(request: ChatRequest):
     system_prompt = ""
     
     if not dogs:
-        # --- A. 未登録の場合（登録モード）---
         extracted = extract_dog_info(user_msg)
-        
         if extracted and (extracted.get("name") or extracted.get("breed")):
             new_dog = {
                 "user_id": user_id,
@@ -127,7 +124,6 @@ async def chat_endpoint(request: ChatRequest):
                 {"role": "user", "content": user_msg}
             ]
     else:
-        # --- B. 登録済みの場合（相談モード）---
         dog = dogs[0]
         dog_info_str = f"名前:{dog.get('name')}, 犬種:{dog.get('breed')}, 年齢:{dog.get('age')}, 性別:{dog.get('gender')}"
         system_prompt = CONSULTATION_SYSTEM_PROMPT.format(dog_info=dog_info_str)
@@ -136,7 +132,6 @@ async def chat_endpoint(request: ChatRequest):
             {"role": "user", "content": user_msg}
         ]
 
-    # 3. OpenAIで返信生成
     response = openai_client.chat.completions.create(
         model="gpt-4o",
         messages=messages,
@@ -144,11 +139,17 @@ async def chat_endpoint(request: ChatRequest):
     )
     ai_reply = response.choices[0].message.content
 
-    # 4. ログ保存
-    supabase.table("chat_logs").insert([
-        {"user_id": user_id, "message": user_msg, "sender": "user"},
-        {"user_id": user_id, "message": ai_reply, "sender": "ai"}
-    ]).execute()
+    # ログ保存
+    try:
+        supabase.table("chat_logs").insert([
+            {"user_id": user_id, "message": user_msg, "sender": "user"},
+            {"user_id": user_id, "message": ai_reply, "sender": "ai"}
+        ]).execute()
+    except Exception as e:
+        print(f"Log insert error: {e}")
 
-    # 5. 【重要】レスポンスとして返す（LINE APIは叩かない）
     return {"reply": ai_reply}
+
+# --- 【重要】フロントエンドの配信設定 ---
+# これを一番最後に書くのがポイントです
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
