@@ -1,122 +1,154 @@
 import os
-from pathlib import Path
+import json
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client, Client
 from openai import OpenAI
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
-# === 1. 環境変数の読み込み ===
-current_dir = Path(__file__).resolve().parent
-env_path = current_dir / '.env'
-if env_path.exists():
-    load_dotenv(dotenv_path=env_path)
-
-# === 2. 設定値の取得 ===
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-# === 3. アプリ初期化 ===
+# --- 設定読み込み ---
+load_dotenv()
+print("--- DEBUG ENV START ---")
+print(f"SUPABASE_URL: {os.getenv('SUPABASE_URL')}")
+print("--- DEBUG ENV END ---")
 app = FastAPI()
 
+# CORS設定（LIFFなどの外部フロントエンドからアクセスできるようにする）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # 本番環境ではLIFFのURLに限定することを推奨
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# クライアント初期化
-supabase: Client = None
-openai_client = None
-try:
-    if SUPABASE_URL and SUPABASE_KEY:
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    if OPENAI_API_KEY:
-        openai_client = OpenAI(api_key=OPENAI_API_KEY)
-except Exception as e:
-    print(f"Client Init Error: {e}")
+# 環境変数の取得
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# === 4. データ形式 ===
+# クライアント初期化
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
+
+# --- プロンプト定義 ---
+CONSULTATION_SYSTEM_PROMPT = """
+あなたは犬の行動学に精通したプロのドッグトレーナーです。以下の犬の情報を前提に回答してください。
+【対象の犬】 {dog_info}
+回答ルール: 300文字以内。共感的に。
+"""
+
+REGISTRATION_SYSTEM_PROMPT = """
+あなたは「K9 Harmony」の受付アシスタントです。
+ユーザーはまだ犬のプロフィールを登録していません。
+親しみやすく挨拶し、以下の4点を聞き出してください。
+1. ワンちゃんの名前
+2. 犬種
+3. 年齢
+4. 性別
+"""
+
+# --- データモデル ---
 class ChatRequest(BaseModel):
     user_id: str
     message: str
 
-# === 5. HTMLを表示する機能 ===
-@app.get("/", response_class=HTMLResponse)
-async def read_root():
-    html_path = current_dir.parent / "frontend" / "chat.html"
-    try:
-        with open(html_path, "r", encoding="utf-8") as f:
-            return f.read()
-    except FileNotFoundError:
-        return "<h1>Error: HTML file not found on server</h1>"
+# --- ヘルパー関数: 犬情報の抽出 ---
+def extract_dog_info(text: str):
+    completion = openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "ユーザーの入力から犬の情報（名前, 犬種, 年齢, 性別）を抽出してJSONで返してください。不明な場合はnullにしてください。"},
+            {"role": "user", "content": text}
+        ],
+        functions=[{
+            "name": "save_dog_profile",
+            "description": "犬のプロフィール情報を保存する",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "breed": {"type": "string"},
+                    "age": {"type": "string"},
+                    "gender": {"type": "string"}
+                }
+            }
+        }],
+        function_call="auto"
+    )
+    message = completion.choices[0].message
+    if message.function_call and message.function_call.name == "save_dog_profile":
+        return json.loads(message.function_call.arguments)
+    return None
 
-# === 6. チャット機能 ===
+# --- メイン処理エンドポイント ---
 @app.post("/chat")
-async def chat_endpoint(req: ChatRequest):
+async def chat_endpoint(request: ChatRequest):
+    user_id = request.user_id
+    user_msg = request.message
+    
+    # 1. ユーザー登録確認 (profiles)
     try:
-        # ID確認用コマンド
-        if req.message == "id":
-            return {"reply": req.user_id}
-
-        # A. ユーザー情報取得
-        user_data = supabase.table("profiles").select("*").eq("user_id", req.user_id).execute()
-        
-        dog_info = "情報なし(新規)"
-        
-        # ★★★ 修正箇所1: プロフィールがない場合、自動作成する ★★★
-        # これを行わないと、外部キー制約がある場合にログ保存でエラーになります
-        if not user_data.data:
-            try:
-                # 最低限のIDだけ登録
-                supabase.table("profiles").insert({"user_id": req.user_id}).execute()
-                print(f"新規ユーザー登録: {req.user_id}")
-            except Exception as create_err:
-                print(f"プロフィール作成エラー(無視): {create_err}")
-        else:
-            # プロフィールがある場合は情報を取得
-            p = user_data.data[0]
-            dog_info = f"犬種:{p.get('dog_breed','?')}, 年齢:{p.get('dog_age','?')}, 悩み:{p.get('issues','?')}"
-
-        # B. AI生成
-        system_prompt = f"""
-        あなたはプロのドッグトレーナーです。以下の犬の情報を前提に回答してください。
-        【対象の犬】 {dog_info}
-        回答ルール: 300文字以内。共感的に。
-        """
-
-        response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": req.message}
-            ]
-        )
-        ai_text = response.choices[0].message.content
-
-        # C. ログ保存
-        # ★★★ 修正箇所2: if文を削除し、必ず保存するように変更 ★★★
-        try:
-            supabase.table("chat_logs").insert({
-                "user_id": req.user_id,
-                "question": req.message,
-                "ai_answer": ai_text
-            }).execute()
-        except Exception as log_err:
-            print(f"ログ保存エラー: {log_err}")
-            # ログ保存失敗でもチャット自体は止めないようにログ出力のみにする
-
-        return {"reply": ai_text}
-
+        supabase.table("profiles").upsert({"user_id": user_id}).execute()
     except Exception as e:
-        print(f"ERROR: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Profile upsert error: {e}")
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8002)
+    # 2. 犬の登録確認
+    dog_data = supabase.table("dogs").select("*").eq("user_id", user_id).execute()
+    dogs = dog_data.data
+    
+    system_prompt = ""
+    
+    if not dogs:
+        # --- A. 未登録の場合（登録モード）---
+        extracted = extract_dog_info(user_msg)
+        
+        if extracted and (extracted.get("name") or extracted.get("breed")):
+            new_dog = {
+                "user_id": user_id,
+                "name": extracted.get("name"),
+                "breed": extracted.get("breed"),
+                "age": extracted.get("age"),
+                "gender": extracted.get("gender")
+            }
+            new_dog = {k: v for k, v in new_dog.items() if v is not None}
+            supabase.table("dogs").insert(new_dog).execute()
+            
+            system_prompt = CONSULTATION_SYSTEM_PROMPT.format(dog_info=str(new_dog))
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"（システム通知: ユーザーが犬の情報 {new_dog} を入力しました。登録を受け付けたと伝えてください。）\n\nユーザーの発言: {user_msg}"}
+            ]
+        else:
+            system_prompt = REGISTRATION_SYSTEM_PROMPT
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_msg}
+            ]
+    else:
+        # --- B. 登録済みの場合（相談モード）---
+        dog = dogs[0]
+        dog_info_str = f"名前:{dog.get('name')}, 犬種:{dog.get('breed')}, 年齢:{dog.get('age')}, 性別:{dog.get('gender')}"
+        system_prompt = CONSULTATION_SYSTEM_PROMPT.format(dog_info=dog_info_str)
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_msg}
+        ]
+
+    # 3. OpenAIで返信生成
+    response = openai_client.chat.completions.create(
+        model="gpt-4o",
+        messages=messages,
+        max_tokens=500
+    )
+    ai_reply = response.choices[0].message.content
+
+    # 4. ログ保存
+    supabase.table("chat_logs").insert([
+        {"user_id": user_id, "message": user_msg, "sender": "user"},
+        {"user_id": user_id, "message": ai_reply, "sender": "ai"}
+    ]).execute()
+
+    # 5. 【重要】レスポンスとして返す（LINE APIは叩かない）
+    return {"reply": ai_reply}
