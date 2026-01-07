@@ -1,7 +1,7 @@
 import os
 import json
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles # 追加
+from fastapi.staticfiles import StaticFiles # ★ここが復活
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client, Client
@@ -150,6 +150,6 @@ async def chat_endpoint(request: ChatRequest):
 
     return {"reply": ai_reply}
 
-# --- 【重要】フロントエンドの配信設定 ---
-# これを一番最後に書くのがポイントです
+# --- 【復活】フロントエンド配信設定 ---
+# これがないと画面が出ずに "Not Found" になります
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
