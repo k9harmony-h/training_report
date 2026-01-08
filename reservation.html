@@ -3,303 +3,192 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>レッスンの予約 | K9 Harmony</title>
+  <title>予約 - K9 Harmony</title>
   
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/reservation.css">
+  
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  
+  <!-- Square Web Payments SDK -->
   <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
-  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="css/style.css"> <link rel="stylesheet" href="css/reservation.css"> </head>
+  <!-- Lottie -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+</head>
 <body>
-
-  <div id="loadingOverlay">
-    <div class="loading-content">
-        <div class="spinner-border spinner-border-brand" role="status"></div>
-        <p id="tipsText">Loading...</p>
-    </div>
+  <!-- ローディングオーバーレイ -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div id="lottie-animation" class="loading-animation"></div>
+    <div class="loading-text">読み込み中...</div>
   </div>
 
-  <header class="header-area">
-      <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="header-logo" alt="K9 Harmony">
-  </header>
+  <!-- メインコンテナ -->
+  <div class="page">
+    <!-- ヘッダー -->
+    <header class="header">
+      <h1 class="header-title">レッスン予約</h1>
+    </header>
 
-  <div class="progress-container">
-    <div class="progress-bg"></div>
-    <div class="progress-bar-fill" id="progress-fill"></div>
-    <div class="step-dot active" id="dot-1"></div>
-    <div class="step-dot" id="dot-2"></div>
-    <div class="step-dot" id="dot-3"></div>
-    <div class="step-dot" id="dot-4"></div>
-    <div class="step-dot" id="dot-5"></div>
-  </div>
-
-  <div id="app-container">
-
-    <div id="view-1" class="view-section active">
-      <h2>予約内容</h2>
-      
-      <div class="card" id="dog-info-card">
-        <label>選択中のワンちゃん</label>
-        <div id="selected-dog-name" style="font-size:1.2rem; font-weight:bold; color:var(--c-main-turquoise); margin-bottom:10px;">---</div>
-        <button class="btn btn-secondary" id="btn-change-dog" style="padding:8px 15px; font-size:0.8rem; width:auto; display:inline-block;" onclick="showDogSelectModal(true)">変更する</button>
-
-        <div style="background:var(--c-bg-mist); padding:10px; border-radius:8px; margin-top:15px;">
-          <label style="display:flex; align-items:center; margin:0; cursor:pointer;">
-            <input type="checkbox" id="multi-dog-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);" onchange="handleMultiDogChange()">
-            2頭目の追加 (+2,000円 / +30分)
-          </label>
+    <div class="container">
+      <!-- ステップインジケーター -->
+      <div class="step-indicator">
+        <div class="step" data-step="1">
+          <div class="step-number">1</div>
+          <div class="step-label">犬を選択</div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-number">2</div>
+          <div class="step-label">日時選択</div>
+        </div>
+        <div class="step" data-step="3">
+          <div class="step-number">3</div>
+          <div class="step-label">商品選択</div>
+        </div>
+        <div class="step" data-step="4">
+          <div class="step-number">4</div>
+          <div class="step-label">確認・決済</div>
         </div>
       </div>
 
-      <div id="existing-customer-link-area" style="text-align:right; display:none; margin-bottom:20px;">
-          <span class="text-link" onclick="openUidModal()">すでにご契約中のお客様はこちら</span>
-      </div>
-
-      <div class="card">
-        <label>メニュー</label>
-        <select id="menu-select"><option>読み込み中...</option></select>
-      </div>
-
-      <button class="btn btn-primary" onclick="goToView(2)">次へ (日時選択)</button>
-      <button class="btn btn-cancel-rsv" onclick="alert('キャンセル機能実装予定')">予約のキャンセルはこちら</button>
-    </div>
-
-    <div id="view-2" class="view-section">
-      <h2>日時の選択</h2>
-      <div class="card" style="padding:15px 5px; position:relative;">
-        <div class="cal-controls" style="padding:0 10px;">
-          <button class="btn btn-secondary" style="width:auto; padding:5px 10px; font-size:0.8rem;" onclick="shiftWeek(-1)">&lt; 前週</button>
-          <span id="cal-range-text" style="font-weight:bold; font-size:0.9rem;">--/-- 〜</span>
-          <button class="btn btn-secondary" style="width:auto; padding:5px 10px; font-size:0.8rem;" onclick="shiftWeek(1)">次週 &gt;</button>
-        </div>
-
-        <div class="cal-wrapper">
-          <div id="cal-overlay-loader">
-              <div class="spinner" style="width:30px; height:30px; border-width:3px;"></div>
-              <div style="font-size:0.8rem; color:var(--c-text-gray); margin-top:5px;">スケジュール確認中...</div>
-          </div>
-          <table class="cal-table">
-            <thead><tr id="cal-header"><th>時間</th></tr></thead>
-            <tbody id="cal-body"></tbody>
-          </table>
-        </div>
-
-        <div class="cal-legend">
-          <span><span style="color:var(--c-main-turquoise); font-weight:bold;">○</span> 可能</span>
-          <span><span style="color:#fbc02d; font-weight:bold;">△</span> わずか</span>
-          <span><span style="background:#f0f0f0; padding:0 4px; color:#ccc;">×</span> 不可</span>
+      <!-- ステップ1: 犬選択 -->
+      <div id="step-1" class="hidden">
+        <div class="card">
+          <h2 class="card-title">レッスンを受ける犬を選択してください</h2>
+          <div id="dog-list" class="dog-list"></div>
         </div>
       </div>
 
-      <div class="card" id="alt-address-card">
-          <label style="display:flex; align-items:center; cursor:pointer; margin-bottom:0;">
-              <input type="checkbox" id="alt-address-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);" onchange="toggleAltAddress()">
-              申込住所と異なる場所で実施
-          </label>
-          <div id="alt-address-area" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
-              <label>郵便番号 <span style="color:red">*</span></label>
-              <input type="tel" id="alt-zip" placeholder="123-4567" inputmode="numeric" pattern="\d*" maxlength="8" oninput="formatZipAndFetch(this, 'alt-addr')">
-              <label>住所 <span style="color:red">*</span></label>
-              <input type="text" id="alt-addr" placeholder="東京都...">
-              <label>施設名</label>
-              <input type="text" id="alt-building">
-              <label>目印</label>
-              <input type="text" id="alt-note">
-          </div>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn btn-secondary" onclick="goToView(1)">戻る</button>
-        <button class="btn btn-primary" id="btn-to-step3" disabled onclick="goToView(3)">次へ</button>
-      </div>
-    </div>
-
-    <div id="view-3" class="view-section">
-      <h2>確認と規約</h2>
-      <div class="card">
-        <label>ご予約内容</label>
-        <div style="line-height:1.8; font-size:0.95rem;">
-          <div><strong>日時:</strong> <span id="conf-datetime">---</span></div>
-          <div><strong>場所:</strong> <span id="conf-place">---</span></div>
-          <div><strong>犬名:</strong> <span id="conf-dog">---</span></div>
-          <div><strong>コース:</strong> <span id="conf-course">---</span></div>
-        </div>
-        
-        <div style="border-top:1px solid #eee; margin:15px 0; padding-top:10px;">
-          <div style="display:flex; justify-content:space-between;">
-              <span>出張費</span>
-              <span id="conf-travel-fee" style="color:var(--c-accent-copper);">計算中...</span>
-          </div>
-          <div id="conf-travel-msg" style="font-size:0.75rem; color:#888; margin-top:5px;">
-              正確な出張費を計算しております。最終確認画面にて正式な交通費をお知らせいたします。
-          </div>
-        </div>
-
-        <div style="border-top:1px solid #eee; margin:15px 0; padding-top:15px;">
-          <label>備考</label>
-          <textarea id="conf-remarks" rows="2" placeholder="ご質問や連絡事項がございましたらご記入ください"></textarea>
-        </div>
-
-        <div style="border-top:1px solid #eee; margin:15px 0; padding-top:15px;">
-          <label>Voucher / 紹介コード</label>
-          <div style="display:flex; gap:10px;">
-              <input type="text" id="voucher-code" placeholder="コードを入力" style="margin-bottom:0;">
-              <button class="btn btn-secondary" style="margin-top:0; padding:10px;" id="btn-apply-voucher" onclick="applyVoucher()">適用</button>
-          </div>
-          <div id="voucher-result" style="font-size:0.9rem; font-weight:bold; margin-top:5px;"></div>
-        </div>
-
-        <div style="font-size:1.3rem; font-weight:bold; color:var(--c-sub-deep-ocean); text-align:right; margin-top:10px;">
-          合計: <span id="conf-total">¥---</span>
-        </div>
-        
-        <label style="margin-top:15px;">お支払い方法</label>
-        <select id="payment-method">
-          <option value="CARD">クレジットカード</option>
-          <option value="QUICPAY">QUICPay</option>
-          <option value="ID">iD</option>
-          <option value="IC">交通系IC</option>
-          <option value="CASH">当日現金払い</option>
-        </select>
-
-        <div style="margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
-          <label style="display:flex; align-items:center; cursor:pointer;">
-              <input type="checkbox" id="receipt-check" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);" onchange="toggleReceiptInput()">
-              領収書の発行を希望する
-          </label>
-          <div id="receipt-input-area" style="display:none; margin-top:10px;">
-              <label>宛名 <span style="color:red">*</span></label>
-              <input type="text" id="receipt-name" placeholder="例：山田 太郎 / (株)K9">
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <label>規約等の確認</label>
-        <div class="checkbox-row">
-          <input type="checkbox" class="term-check" id="chk-policy" onchange="checkAllTerms()">
-          <span onclick="openTerms('policy')" style="cursor:pointer; text-decoration:underline; flex:1;">キャンセルポリシーに同意</span>
-        </div>
-        <div style="border-top:1px solid #eee; margin-top:10px; padding-top:10px; font-weight:bold;">
-          <label style="display:flex; align-items:center; cursor:pointer;">
-              <input type="checkbox" id="chk-all" style="width:20px; height:20px; accent-color:var(--c-main-turquoise);" onchange="toggleAllTerms()">
-              全てに同意する
-          </label>
-        </div>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn btn-secondary" onclick="goToView(2)">戻る</button>
-        <button class="btn btn-primary" id="btn-confirm-next" disabled onclick="checkUserAndNext()">次へ</button>
-      </div>
-    </div>
-
-    <div id="view-4" class="view-section">
-      <h2>情報入力</h2>
-      
-      <div id="form-existing">
-          <div class="card">
-            <label>クレジットカード情報</label>
-            <div id="saved-card-area" style="display:none;">
-                <div style="margin-bottom:10px; font-size:0.9rem; color:#666;">登録済みのカードを選択してください</div>
-                <div id="saved-card-list"></div>
-                <div class="saved-card-item" id="opt-new-card" onclick="selectCard('NEW')">
-                    <div style="flex:1;"><div style="font-weight:bold;">新しいカードを使う</div></div>
-                    <div id="check-new" class="check-mark" style="display:none;"><i class="fa-solid fa-check" style="color:var(--c-main-turquoise);"></i></div>
+      <!-- ステップ2: 日時選択 -->
+      <div id="step-2" class="hidden">
+        <div class="card">
+          <h2 class="card-title">日時を選択してください</h2>
+          
+          <!-- カレンダー -->
+          <div class="date-selector">
+            <div class="calendar">
+              <div class="calendar-header">
+                <div class="calendar-month" id="calendar-month">2026年 1月</div>
+                <div class="calendar-nav">
+                  <button class="calendar-nav-btn" id="calendar-prev">◀</button>
+                  <button class="calendar-nav-btn" id="calendar-next">▶</button>
                 </div>
-            </div>
-            
-            <div id="new-card-form" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
-                <div id="sq-card-div-existing"></div> 
-                <label style="display:flex; align-items:center; margin-top:15px; cursor:pointer;">
-                    <input type="checkbox" id="save-card-check-existing" style="width:20px; height:20px; margin-right:10px; accent-color:var(--c-main-turquoise);">
-                    次回のためにカード情報を保存する
-                </label>
-            </div>
-          </div>
-          <div class="btn-row">
-              <button class="btn btn-secondary" onclick="goToView(3)">戻る</button>
-              <button class="btn btn-primary" id="btn-final-check-existing" onclick="handleCardTokenize()">最終確認へ</button>
-          </div>
-      </div>
-
-      <div id="form-new" style="display:none;">
-          <div class="card">
-              <h3>顧客情報</h3>
-              <label>氏名 <span style="color:red">*</span></label><input type="text" id="reg-name">
               </div>
+              
+              <div class="calendar-weekdays">
+                <div class="calendar-weekday">日</div>
+                <div class="calendar-weekday">月</div>
+                <div class="calendar-weekday">火</div>
+                <div class="calendar-weekday">水</div>
+                <div class="calendar-weekday">木</div>
+                <div class="calendar-weekday">金</div>
+                <div class="calendar-weekday">土</div>
+              </div>
+              
+              <div class="calendar-dates" id="calendar-dates"></div>
+            </div>
           </div>
-      
-      <div id="form-new-card-only" style="display:none;">
-          <div class="card">
-              <label>クレジットカード入力</label>
-              <div id="sq-container-holder"></div>
-          </div>
-          <div class="btn-row">
-              <button class="btn btn-secondary" onclick="backToForm()">戻る</button>
-              <button class="btn btn-primary" id="btn-final-check-new" onclick="handleCardTokenize()">最終確認へ</button>
-          </div>
+          
+          <!-- 時間選択 -->
+          <div class="card-subtitle mt-4">時間を選択</div>
+          <div id="time-slots" class="time-slots"></div>
+        </div>
       </div>
-    </div>
 
-    <div id="view-5" class="view-section">
-      <h2>最終確認</h2>
-      <div class="card">
-        <label>内容確認</label>
-        <div id="final-summary" style="white-space:pre-wrap; font-size:0.9rem; line-height:1.6;"></div>
+      <!-- ステップ3: 商品選択 -->
+      <div id="step-3" class="hidden">
+        <div class="card">
+          <h2 class="card-title">レッスンコースを選択してください</h2>
+          <div id="product-list" class="product-list"></div>
+        </div>
       </div>
-      <div class="card" style="background:#fff3e0; border:1px solid #ffe0b2; color:#e65100;">
-        <label style="color:#e65100;"><i class="fa-solid fa-triangle-exclamation"></i> キャンセル規定</label>
-        <p style="font-size:0.85rem; margin:0;">受付締切: 前日18:00<br>前日: 50% / 当日: 100% のキャンセル料が発生します。</p>
-      </div>
-      <button class="btn btn-primary" onclick="submitReservation()">上記に同意して予約を確定する</button>
-      <button class="btn btn-secondary" onclick="goBackFromFinal()">修正する</button>
-    </div>
 
-    <div id="view-6" class="view-section" style="text-align:center; padding-top:30px;">
-      <i class="fa-regular fa-circle-check" style="font-size:4rem; color:var(--c-main-turquoise); margin-bottom:20px;"></i>
-      <h2>予約完了</h2>
-      <p>ご予約ありがとうございます。</p>
-      
-      <div class="card">
-          <button class="btn btn-primary" style="background:#06C755; box-shadow:none;" onclick="shareLine()">
-              <i class="fa-brands fa-line"></i> LINEに送信
+      <!-- ステップ4: 確認・決済 -->
+      <div id="step-4" class="hidden">
+        <!-- 予約内容確認 -->
+        <div class="card">
+          <h2 class="card-title">予約内容の確認</h2>
+          <div class="confirmation-section">
+            <div class="confirmation-item">
+              <div class="confirmation-label">犬</div>
+              <div class="confirmation-value" id="confirm-dog">-</div>
+            </div>
+            <div class="confirmation-item">
+              <div class="confirmation-label">日時</div>
+              <div class="confirmation-value" id="confirm-datetime">-</div>
+            </div>
+            <div class="confirmation-item">
+              <div class="confirmation-label">レッスンコース</div>
+              <div class="confirmation-value" id="confirm-product">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 決済情報 -->
+        <div class="card">
+          <h2 class="card-title">お支払い情報</h2>
+          
+          <!-- 料金サマリー -->
+          <div class="payment-summary mb-3">
+            <div class="summary-row">
+              <div class="summary-label">レッスン料金</div>
+              <div class="summary-value" id="summary-price">¥0</div>
+            </div>
+            <div class="summary-row">
+              <div class="summary-label">消費税（10%）</div>
+              <div class="summary-value" id="summary-tax">¥0</div>
+            </div>
+            <div class="summary-row total">
+              <div class="summary-label">合計</div>
+              <div class="summary-value total" id="summary-total">¥0</div>
+            </div>
+          </div>
+          
+          <!-- カード入力フォーム -->
+          <div class="card-subtitle mb-2">クレジットカード情報</div>
+          <div id="card-container"></div>
+          
+          <div class="form-group mt-3">
+            <p class="text-secondary" style="font-size: 12px;">
+              ※ このシステムは安全なSquare決済システムを使用しています。<br>
+              ※ カード情報は暗号化されて保護されます。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 成功画面 -->
+      <div id="success-page" class="hidden">
+        <div class="card text-center">
+          <div style="font-size: 64px; margin-bottom: 16px;">✅</div>
+          <h2 class="card-title">予約が完了しました！</h2>
+          <p class="text-secondary mb-4">
+            予約確認のメッセージをLINEでお送りしました。<br>
+            当日お会いできることを楽しみにしています！
+          </p>
+          <button class="btn btn-primary btn-lg btn-block" onclick="app.handleComplete()">
+            完了
           </button>
-          <div style="margin-top:20px;">
-              <button class="btn btn-primary" onclick="location.reload()">続けて登録</button>
-          </div>
+        </div>
       </div>
-      <button class="btn btn-secondary" style="border:none; margin-top:20px;" onclick="liff.closeWindow()">閉じる</button>
-    </div>
 
-  </div>
-
-  <div id="sq-card-source" style="display:none;">
-      <div id="sq-card-div"></div>
-  </div>
-
-  <footer class="site-footer">
-      <div class="footer-logo-container">
-          <img src="https://raw.githubusercontent.com/k9harmony-h/training_report/main/K9_logoFull.png" class="footer-logo-img" alt="K9 Harmony">
+      <!-- アクションボタン -->
+      <div id="action-buttons" class="action-buttons">
+        <button id="btn-back" class="btn btn-outline hidden">戻る</button>
+        <button id="btn-next" class="btn btn-primary">次へ</button>
+        <button id="btn-confirm" class="btn btn-primary btn-lg hidden">予約を確定する</button>
       </div>
-      <div class="footer-info">
-          <p><strong>K9 Harmony</strong></p>
-          <p>東京都板橋区</p>
-      </div>
-      <div style="margin-top:20px;">&copy; 2025 K9 Harmony</div>
-  </footer>
-
-  <div class="modal-overlay" id="dog-modal-overlay">
-    <div class="center-modal" id="dog-modal">
-      <h3 style="text-align:center; color:var(--c-sub-deep-ocean); margin-bottom:15px;">ワンちゃんを選択</h3>
-      <div id="dog-list-container"></div>
     </div>
   </div>
+
+  <!-- JavaScript -->
   <script src="js/config.js"></script>
-  <script src="js/common.js"></script>
+  <script src="js/liff-handler.js"></script>
+  <script src="js/api-client.js"></script>
   <script src="js/reservation.js"></script>
+  <script src="js/reservation-steps.js"></script>
+  <script src="js/reservation-payment.js"></script>
 </body>
 </html>
