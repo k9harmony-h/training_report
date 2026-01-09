@@ -3,7 +3,7 @@
  * K9 Harmony - API Client
  * ============================================================================
  * GASバックエンドとの通信を管理
- * 最終更新: 2026-01-08
+ * 最終更新: 2026-01-09（lockSlot修正）
  */
 
 class ApiClient {
@@ -87,9 +87,9 @@ class ApiClient {
         const response = await fetch(this.baseUrl, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
+            'Content-Type': 'application/json'
           },
-          body: new URLSearchParams(payload),
+          body: JSON.stringify(payload),
           signal: controller.signal
         });
         
@@ -161,19 +161,17 @@ class ApiClient {
      * @returns {Promise<Object>} ロック結果
      */
     async lockSlot(slotData) {
-        // userIdをslotDataから取得
-        const response = await this.post('lockSlot', {
-          action: 'lockSlot',
-          userId: slotData.userId,  // ← slotDataから取得
-          trainerId: slotData.trainerId,
-          officeId: slotData.officeId,
-          reservationDate: slotData.date,
-          customerId: slotData.customerId,
-          dogId: slotData.dogId
-        });
-        
-        return response;
-      }
+      const response = await this.post('lockSlot', {
+        userId: slotData.userId,
+        trainerId: slotData.trainerId,
+        officeId: slotData.officeId,
+        reservationDate: slotData.date,
+        customerId: slotData.customerId,
+        dogId: slotData.dogId
+      });
+      
+      return response;
+    }
   
     /**
      * 予約+決済作成

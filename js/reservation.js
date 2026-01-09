@@ -3,7 +3,7 @@
  * K9 Harmony - Reservation Page
  * ============================================================================
  * 予約画面のメインロジック
- * 最終更新: 2026-01-08
+ * 最終更新: 2026-01-09（lockReservationSlot修正）
  */
 
 class ReservationApp {
@@ -343,23 +343,16 @@ class ReservationApp {
       try {
         this.showLoading('予約枠を確保中...');
         
-        const slotData = {
-          trainerId: 'default-trainer', // TODO: トレーナー選択機能追加時に変更
+        const lockData = {
+          userId: this.customerData.line_user_id,
+          trainerId: this.selectedTrainer?.trainer_id || 'default-trainer',
+          officeId: this.selectedOffice?.office_id || 'default-office',
           date: this.selectedDate,
-          time: this.selectedTime,
           customerId: this.customerData.customer_id,
           dogId: this.selectedDog.dog_id
         };
-        const lockData = {
-            userId: this.customerData.line_user_id,  // ← 追加
-            trainerId: this.selectedTrainer?.trainer_id || 'default-trainer',
-            officeId: this.selectedOffice?.office_id || 'default-office',
-            date: this.selectedDate,
-            customerId: this.customerData.customer_id,
-            dogId: this.selectedDog.dog_id
-          };
           
-        const response = await apiClient.lockSlot(slotData);
+        const response = await apiClient.lockSlot(lockData);
         this.lockId = response.lockId;
         
         this.hideLoading();
