@@ -20,7 +20,7 @@ const FRONTEND_CONFIG = {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   API: {
     // 本番環境ではこのURLを実際のGAS WebアプリURLに置き換え
-    BASE_URL: 'https://script.google.com/macros/s/AKfycby-QIf4K6z5MHgVZYUiR-WTxRjAsivLvOp8TAFH4vTm5E3ebjA7cyf7yzHdAend8D0pJw/exec',
+    BASE_URL: 'https://script.google.com/macros/s/AKfycbz2Vj_XNup140GHGE6IlfLd-xrHtzBNx7T6OAmJUHLK5C5sAWoMZOC7sRoljrPYkeLvTg/exec',
     TIMEOUT: 30000 // 30秒
   },
   
