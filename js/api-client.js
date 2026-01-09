@@ -161,10 +161,18 @@ class ApiClient {
      * @returns {Promise<Object>} ロック結果
      */
     async lockSlot(slotData) {
-      return await this.post('lockSlot', {
-        slotData: JSON.stringify(slotData)
-      });
-    }
+        const response = await this.post('lockSlot', {
+          action: 'lockSlot',
+          userId: this.liffHandler.getUserId(),  // ← userIdを追加
+          trainerId: slotData.trainerId,
+          officeId: slotData.officeId,
+          reservationDate: slotData.date,
+          customerId: slotData.customerId,
+          dogId: slotData.dogId
+        });
+        
+        return response;
+      }
   
     /**
      * 予約+決済作成
