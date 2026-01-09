@@ -814,13 +814,19 @@ class ReservationApp {
     document.getElementById('confirm-product').textContent = this.selectedProduct.product_name;
     
     // 料金サマリー
-    const price = Number(this.selectedProduct.price);
-    const tax = Number(this.selectedProduct.tax_included_price - this.selectedProduct.price);
-    const total = Number(this.selectedProduct.tax_included_price);
+    // tax_included_price がない場合は計算
+    const basePrice = Number(this.selectedProduct.product_price || this.selectedProduct.price || 0);
+    const taxIncludedPrice = Number(this.selectedProduct.tax_included_price || basePrice * 1.1);
+    const tax = taxIncludedPrice - basePrice;
     
-    document.getElementById('summary-price').textContent = `¥${price.toLocaleString('ja-JP')}`;
-    document.getElementById('summary-tax').textContent = `¥${tax.toLocaleString('ja-JP')}`;
-    document.getElementById('summary-total').textContent = `¥${total.toLocaleString('ja-JP')}`;
+    document.getElementById('summary-price').textContent = `¥${basePrice.toLocaleString('ja-JP')}`;
+    document.getElementById('summary-tax').textContent = `¥${Math.round(tax).toLocaleString('ja-JP')}`;
+    document.getElementById('summary-total').textContent = `¥${Math.round(taxIncludedPrice).toLocaleString('ja-JP')}`;
+    
+    // selectedProduct に tax_included_price を設定（決済時に使用）
+    if (!this.selectedProduct.tax_included_price) {
+      this.selectedProduct.tax_included_price = Math.round(taxIncludedPrice);
+    }
   };
   
   /**
