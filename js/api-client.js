@@ -3,7 +3,7 @@
  * K9 Harmony - API Client
  * ============================================================================
  * GASバックエンドとの通信を管理
- * 最終更新: 2026-01-09（lockSlot修正）
+ * 最終更新: 2026-01-09（CORS対応）
  */
 
 class ApiClient {
@@ -75,7 +75,6 @@ class ApiClient {
       try {
         const payload = {
           action: action,
-          lineAccessToken: liffHandler.getAccessToken(),
           ...data
         };
         
@@ -87,7 +86,7 @@ class ApiClient {
         const response = await fetch(this.baseUrl, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'text/plain'
           },
           body: JSON.stringify(payload),
           signal: controller.signal
