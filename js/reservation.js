@@ -911,7 +911,7 @@ class ReservationApp {
       
       const paymentData = {
         source_id: sourceId,
-        amount: this.selectedProduct.tax_included_price,
+        amount: Number(this.selectedProduct.tax_included_price),
         currency: 'JPY',
         customer_id: this.customerData.customer_id
       };
