@@ -350,7 +350,15 @@ class ReservationApp {
           customerId: this.customerData.customer_id,
           dogId: this.selectedDog.dog_id
         };
-        
+        const lockData = {
+            userId: this.customerData.line_user_id,  // ← 追加
+            trainerId: this.selectedTrainer?.trainer_id || 'default-trainer',
+            officeId: this.selectedOffice?.office_id || 'default-office',
+            date: this.selectedDate,
+            customerId: this.customerData.customer_id,
+            dogId: this.selectedDog.dog_id
+          };
+          
         const response = await apiClient.lockSlot(slotData);
         this.lockId = response.lockId;
         

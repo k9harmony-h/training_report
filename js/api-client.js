@@ -161,9 +161,10 @@ class ApiClient {
      * @returns {Promise<Object>} ロック結果
      */
     async lockSlot(slotData) {
+        // userIdをslotDataから取得
         const response = await this.post('lockSlot', {
           action: 'lockSlot',
-          userId: this.liffHandler.getUserId(),  // ← userIdを追加
+          userId: slotData.userId,  // ← slotDataから取得
           trainerId: slotData.trainerId,
           officeId: slotData.officeId,
           reservationDate: slotData.date,
