@@ -181,6 +181,7 @@ class ApiClient {
      */
     async createReservationWithPayment(reservationData, paymentData, lockId) {
       return await this.post('createReservationWithPayment', {
+        userId: liffHandler.getUserId(),
         reservationData: JSON.stringify(reservationData),
         paymentData: JSON.stringify(paymentData),
         lockId: lockId
