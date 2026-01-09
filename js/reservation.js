@@ -899,12 +899,13 @@ class ReservationApp {
     try {
       const reservationData = {
         customer_id: this.customerData.customer_id,
-        dog_id: this.selectedDog.dog_id,
+        primary_dog_id: this.selectedDog.dog_id,
         product_id: this.selectedProduct.product_id,
         reservation_date: this.selectedDate,
         start_time: this.selectedTime,
         duration: this.selectedProduct.duration,
-        trainer_id: 'default-trainer', // TODO: トレーナー選択機能追加時に変更
+        trainer_id: 'default-trainer',
+        office_id: 'default-office',
         status: 'confirmed'
       };
       
