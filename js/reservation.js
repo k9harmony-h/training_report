@@ -462,11 +462,32 @@ class ReservationApp {
         card.classList.add('selected');
       }
       
+      // 年齢計算（birth_dateから計算）
+      let ageText = '';
+      if (dog.age) {
+        ageText = `${dog.age}歳`;
+      } else if (dog.birth_date) {
+        const birthDate = new Date(dog.birth_date);
+        const today = new Date();
+        const ageYears = Math.floor((today - birthDate) / (365.25 * 24 * 60 * 60 * 1000));
+        ageText = `${ageYears}歳`;
+      }
+      
+      // 性別表示
+      let genderText = '';
+      if (dog.gender === 'male' || dog.dog_gender === '♂') {
+        genderText = 'オス';
+      } else if (dog.gender === 'female' || dog.dog_gender === '♀') {
+        genderText = 'メス';
+      }
+      
+      const breed = dog.breed || dog.dog_breed || '犬種不明';
+      
       card.innerHTML = `
         <div class="dog-avatar">🐕</div>
         <div class="dog-info">
           <div class="dog-name">${dog.dog_name}</div>
-          <div class="dog-details">${dog.breed} / ${dog.age}歳 / ${dog.gender === 'male' ? 'オス' : 'メス'}</div>
+          <div class="dog-details">${breed}${ageText ? ' / ' + ageText : ''}${genderText ? ' / ' + genderText : ''}</div>
         </div>
       `;
       
@@ -747,21 +768,22 @@ class ReservationApp {
       card.classList.add('selected');
     }
     
-    const price = Number(product.price).toLocaleString('ja-JP');
-    const tax = Number(product.tax_included_price - product.price).toLocaleString('ja-JP');
-    const total = Number(product.tax_included_price).toLocaleString('ja-JP');
+    // 料金計算（renderConfirmationDetailsと同じロジック）
+    const basePrice = Number(product.product_price || product.price || 0);
+    const taxIncludedPrice = Number(product.tax_included_price || basePrice * 1.1);
+    const duration = product.duration || product.product_duration || 90;
     
     card.innerHTML = `
       <div class="product-header">
         <div class="product-name">${product.product_name}</div>
         <div class="product-price">
-          ¥${total}
+          ¥${Math.round(taxIncludedPrice).toLocaleString('ja-JP')}
           <span class="product-price-unit">(税込)</span>
         </div>
       </div>
-      <div class="product-description">${product.description || ''}</div>
+      <div class="product-description">${product.description || product.product_description || ''}</div>
       <div class="product-duration">
-        ⏱️ ${product.duration}分
+        ⏱️ ${duration}分
       </div>
     `;
     

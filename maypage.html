@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>マイページ - K9 Harmony</title>
+  
+  <!-- Common Styles -->
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/styles.css">
+  
+  <!-- LIFF SDK -->
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  
+  <!-- Lottie -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+</head>
+<body>
+  <!-- ローディングオーバーレイ -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="loading-content">
+      <div id="lottie-animation" class="lottie-container"></div>
+      <p class="loading-text">読み込み中...</p>
+    </div>
+  </div>
+
+  <!-- ヘッダー -->
+  <header class="header">
+    <div class="container">
+      <h1 class="header-title">マイページ</h1>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="main-content">
+    <div class="container">
+      
+      <!-- 顧客情報 -->
+      <section class="customer-info-section">
+        <div class="customer-info-card">
+          <div class="customer-avatar">🐕</div>
+          <div class="customer-details">
+            <h2 class="customer-name" id="customer-name">読み込み中...</h2>
+            <p class="customer-lifecycle">
+              <span class="lifecycle-badge" id="lifecycle-badge">-</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 今後の予約 -->
+      <section class="reservations-section">
+        <div class="section-header">
+          <h2 class="section-title">📅 今後の予約</h2>
+          <span class="section-count" id="upcoming-count">0件</span>
+        </div>
+        
+        <div id="upcoming-reservations" class="reservations-list">
+          <!-- 予約カードがここに動的に追加される -->
+        </div>
+
+        <div id="upcoming-empty" class="empty-state hidden">
+          <p>今後の予約はありません</p>
+          <a href="reservation.html" class="btn btn-primary">新しい予約をする</a>
+        </div>
+      </section>
+
+      <!-- 過去の予約 -->
+      <section class="reservations-section">
+        <div class="section-header">
+          <h2 class="section-title">📜 過去の予約</h2>
+          <span class="section-count" id="past-count">0件</span>
+        </div>
+        
+        <div id="past-reservations" class="reservations-list">
+          <!-- 予約カードがここに動的に追加される -->
+        </div>
+
+        <div id="past-empty" class="empty-state hidden">
+          <p>過去の予約はありません</p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- キャンセル確認モーダル -->
+  <div id="cancel-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">予約のキャンセル</h3>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>この予約をキャンセルしますか？</p>
+        <div class="reservation-summary" id="cancel-summary">
+          <!-- 予約サマリーが表示される -->
+        </div>
+        <div class="form-group">
+          <label for="cancel-reason">キャンセル理由（任意）</label>
+          <textarea 
+            id="cancel-reason" 
+            class="form-textarea" 
+            placeholder="キャンセル理由を入力してください"
+            rows="3"
+          ></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancel-no">戻る</button>
+        <button class="btn btn-danger" id="cancel-yes">キャンセルする</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 予約詳細モーダル -->
+  <div id="detail-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">予約詳細</h3>
+        <button class="modal-close" id="detail-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="detail-content" class="reservation-detail">
+          <!-- 予約詳細が表示される -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="detail-ok">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/config.js?v=7"></script>
+  <script src="js/liff-handler.js?v=7"></script>
+  <script src="js/api-client.js?v=7"></script>
+  <script src="js/mypage.js?v=1"></script>
+</body>
+</html>
