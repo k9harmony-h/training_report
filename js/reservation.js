@@ -382,7 +382,7 @@ class ReservationApp {
         };
           
         const response = await apiClient.lockSlot(lockData);
-        this.lockId = response.lockId;
+        this.lockId = response.lock_id;
         
         this.hideLoading();
         this.showSuccess('予約枠を確保しました');
