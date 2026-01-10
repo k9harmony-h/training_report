@@ -2,24 +2,26 @@
  * ============================================================================
  * K9 Harmony - Reservation Page
  * ============================================================================
- * 予約画面のメインロジック
- * 最終更新: 2026-01-09（lockReservationSlot修正）
+ * 予約画面のメインロジック（トレーナー選択+複数犬選択対応）
+ * 最終更新: 2026-01-10
  */
 
 class ReservationApp {
     constructor() {
-      // ステップ管理
+      // ステップ管理（5ステップに変更）
       this.currentStep = 1;
-      this.totalSteps = 4;
+      this.totalSteps = 5;
       
       // データ管理
       this.customerData = null;
       this.dogs = [];
+      this.trainers = [];
       this.products = [];
       this.availableSlots = [];
       
-      // 選択データ
-      this.selectedDog = null;
+      // 選択データ（複数犬対応）
+      this.selectedDogs = [];  // ← 変更: 配列に
+      this.selectedTrainer = null;  // ← 追加
       this.selectedDate = null;
       this.selectedTime = null;
       this.selectedProduct = null;
@@ -86,6 +88,10 @@ class ReservationApp {
           throw new Error('犬の登録情報が見つかりません。先にマイページから犬を登録してください。');
         }
         
+        // トレーナー一覧取得
+        const trainerResponse = await apiClient.getTrainerList();
+        this.trainers = trainerResponse.trainers || [];
+        
         // 商品一覧取得
         const productResponse = await apiClient.getProductList();
         this.products = productResponse.products || [];
@@ -93,6 +99,7 @@ class ReservationApp {
         console.log('[App] Initial data loaded:', {
           customer: this.customerData,
           dogs: this.dogs.length,
+          trainers: this.trainers.length,
           products: this.products.length
         });
         
@@ -190,17 +197,34 @@ class ReservationApp {
       this.currentStep = step;
       
       // 全ステップ非表示
-      for (let i = 1; i <= this.totalSteps; i++) {
-        const stepElement = document.getElementById(`step-${i}`);
-        if (stepElement) {
-          stepElement.classList.add('hidden');
-        }
-      }
+      document.getElementById('step-1')?.classList.add('hidden');
+      document.getElementById('step-trainer')?.classList.add('hidden');
+      document.getElementById('step-2')?.classList.add('hidden');
+      document.getElementById('step-3')?.classList.add('hidden');
+      document.getElementById('step-4')?.classList.add('hidden');
       
-      // 指定ステップ表示
-      const currentStepElement = document.getElementById(`step-${step}`);
-      if (currentStepElement) {
-        currentStepElement.classList.remove('hidden');
+      // ステップ別表示
+      switch (step) {
+        case 1:
+          document.getElementById('step-1')?.classList.remove('hidden');
+          this.renderDogSelection();
+          break;
+        case 2:
+          document.getElementById('step-trainer')?.classList.remove('hidden');
+          this.renderTrainerSelection();
+          break;
+        case 3:
+          document.getElementById('step-2')?.classList.remove('hidden');
+          this.renderDateTimeSelection();
+          break;
+        case 4:
+          document.getElementById('step-3')?.classList.remove('hidden');
+          this.renderProductSelection();
+          break;
+        case 5:
+          document.getElementById('step-4')?.classList.remove('hidden');
+          this.renderConfirmation();
+          break;
       }
       
       // ステップインジケーター更新
@@ -208,22 +232,6 @@ class ReservationApp {
       
       // ボタン表示制御
       this.updateButtons();
-      
-      // ステップ別の初期化処理
-      switch (step) {
-        case 1:
-          this.renderDogSelection();
-          break;
-        case 2:
-          this.renderDateTimeSelection();
-          break;
-        case 3:
-          this.renderProductSelection();
-          break;
-        case 4:
-          this.renderConfirmation();
-          break;
-      }
       
       // ページトップにスクロール
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -264,6 +272,20 @@ class ReservationApp {
       // 次へボタン
       if (nextBtn) {
         nextBtn.classList.toggle('hidden', this.currentStep === this.totalSteps);
+        
+        // Step 1の場合、選択数を表示
+        if (this.currentStep === 1) {
+          if (this.selectedDogs.length > 0) {
+            nextBtn.textContent = `次へ（${this.selectedDogs.length}頭選択中）`;
+            nextBtn.disabled = false;
+          } else {
+            nextBtn.textContent = '次へ';
+            nextBtn.disabled = true;
+          }
+        } else {
+          nextBtn.textContent = '次へ';
+          nextBtn.disabled = false;
+        }
       }
       
       // 確定ボタン
@@ -282,8 +304,8 @@ class ReservationApp {
           return;
         }
         
-        // ステップ2（日時選択）→ステップ3（商品選択）の場合、予約枠をロック
-        if (this.currentStep === 2) {
+        // ステップ3（日時選択）→ステップ4（商品選択）の場合、予約枠をロック
+        if (this.currentStep === 3) {
           await this.lockReservationSlot();
         }
         
@@ -311,20 +333,27 @@ class ReservationApp {
     validateCurrentStep() {
       switch (this.currentStep) {
         case 1:
-          if (!this.selectedDog) {
+          if (this.selectedDogs.length === 0) {
             this.showError('犬を選択してください。');
             return false;
           }
           return true;
           
         case 2:
+          if (!this.selectedTrainer) {
+            this.showError('トレーナーを選択してください。');
+            return false;
+          }
+          return true;
+          
+        case 3:
           if (!this.selectedDate || !this.selectedTime) {
             this.showError('日時を選択してください。');
             return false;
           }
           return true;
           
-        case 3:
+        case 4:
           if (!this.selectedProduct) {
             this.showError('商品を選択してください。');
             return false;
@@ -345,18 +374,18 @@ class ReservationApp {
         
         const lockData = {
           userId: this.customerData.line_user_id,
-          trainerId: this.selectedTrainer?.trainer_id || 'default-trainer',
-          officeId: this.selectedOffice?.office_id || 'default-office',
+          trainerId: this.selectedTrainer.trainer_id,
+          officeId: 'default-office',
           date: this.selectedDate,
           customerId: this.customerData.customer_id,
-          dogId: this.selectedDog.dog_id
+          dogId: this.selectedDogs[0].dog_id  // 主犬
         };
           
         const response = await apiClient.lockSlot(lockData);
         this.lockId = response.lockId;
         
         this.hideLoading();
-        this.showSuccess(FRONTEND_CONFIG.SUCCESS_MESSAGES.SLOT_LOCKED);
+        this.showSuccess('予約枠を確保しました');
         
       } catch (error) {
         this.hideLoading();
@@ -429,11 +458,11 @@ class ReservationApp {
       // 自動削除
       setTimeout(() => {
         toast.remove();
-      }, FRONTEND_CONFIG.UI.TOAST_DURATION);
+      }, 3000);
     }
   
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // ステップ1: 犬選択
+    // ステップ1: 犬選択（複数選択対応）
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   
     /**
@@ -449,6 +478,9 @@ class ReservationApp {
         const card = this.createDogCard(dog);
         container.appendChild(card);
       });
+      
+      // ボタン更新（選択数表示）
+      this.updateButtons();
     }
   
     /**
@@ -458,11 +490,12 @@ class ReservationApp {
       const card = document.createElement('div');
       card.className = 'dog-card';
       
-      if (this.selectedDog && this.selectedDog.dog_id === dog.dog_id) {
+      const isSelected = this.selectedDogs.some(d => d.dog_id === dog.dog_id);
+      if (isSelected) {
         card.classList.add('selected');
       }
       
-      // 年齢計算（birth_dateから計算）
+      // 年齢計算
       let ageText = '';
       if (dog.age) {
         ageText = `${dog.age}歳`;
@@ -484,6 +517,7 @@ class ReservationApp {
       const breed = dog.breed || dog.dog_breed || '犬種不明';
       
       card.innerHTML = `
+        <input type="checkbox" class="dog-checkbox" ${isSelected ? 'checked' : ''}>
         <div class="dog-avatar">🐕</div>
         <div class="dog-info">
           <div class="dog-name">${dog.dog_name}</div>
@@ -491,21 +525,562 @@ class ReservationApp {
         </div>
       `;
       
-      card.addEventListener('click', () => {
-        this.selectDog(dog);
+      // クリックイベント
+      card.addEventListener('click', (e) => {
+        // チェックボックス以外をクリックした場合も動作
+        if (e.target.type !== 'checkbox') {
+          const checkbox = card.querySelector('.dog-checkbox');
+          checkbox.checked = !checkbox.checked;
+        }
+        this.toggleDogSelection(dog);
       });
       
       return card;
     }
   
     /**
-     * 犬選択
+     * 犬の選択/解除をトグル
      */
-    selectDog(dog) {
-      this.selectedDog = dog;
+    toggleDogSelection(dog) {
+      const index = this.selectedDogs.findIndex(d => d.dog_id === dog.dog_id);
+      
+      if (index > -1) {
+        // 選択解除
+        this.selectedDogs.splice(index, 1);
+      } else {
+        // 選択追加
+        this.selectedDogs.push(dog);
+      }
+      
+      // 再レンダリング
       this.renderDogSelection();
       
-      console.log('[App] Dog selected:', dog);
+      console.log('[App] Selected dogs:', this.selectedDogs.length);
+    }
+  
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ステップ2: トレーナー選択
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  
+    /**
+     * トレーナー選択画面レンダリング
+     */
+    renderTrainerSelection() {
+      const container = document.getElementById('trainer-list');
+      if (!container) return;
+      
+      container.innerHTML = '';
+      
+      this.trainers.forEach(trainer => {
+        const card = this.createTrainerCard(trainer);
+        container.appendChild(card);
+      });
+    }
+  
+    /**
+     * トレーナーカード作成
+     */
+    createTrainerCard(trainer) {
+      const card = document.createElement('div');
+      card.className = 'trainer-card';
+      
+      if (this.selectedTrainer && this.selectedTrainer.trainer_id === trainer.trainer_id) {
+        card.classList.add('selected');
+      }
+      
+      card.innerHTML = `
+        <div class="trainer-avatar">👤</div>
+        <div class="trainer-info">
+          <div class="trainer-name">${trainer.trainer_name}</div>
+          <div class="trainer-specialty">${trainer.specialty || '総合トレーナー'}</div>
+        </div>
+      `;
+      
+      card.addEventListener('click', () => {
+        this.selectTrainer(trainer);
+      });
+      
+      return card;
+    }
+  
+    /**
+     * トレーナー選択
+     */
+    selectTrainer(trainer) {
+      this.selectedTrainer = trainer;
+      this.renderTrainerSelection();
+      
+      console.log('[App] Trainer selected:', trainer);
+    }
+  
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ステップ3: 日時選択
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  
+    renderDateTimeSelection() {
+      this.renderCalendar();
+    }
+  
+    /**
+     * カレンダーレンダリング
+     */
+    renderCalendar() {
+      const container = document.getElementById('calendar-dates');
+      if (!container) return;
+      
+      const today = new Date();
+      const currentMonth = this.calendarMonth || today.getMonth();
+      const currentYear = this.calendarYear || today.getFullYear();
+      
+      // 月表示更新
+      const monthLabel = document.getElementById('calendar-month');
+      if (monthLabel) {
+        const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+        monthLabel.textContent = `${currentYear}年 ${monthNames[currentMonth]}`;
+      }
+      
+      // カレンダー生成
+      const firstDay = new Date(currentYear, currentMonth, 1);
+      const lastDay = new Date(currentYear, currentMonth + 1, 0);
+      const prevLastDay = new Date(currentYear, currentMonth, 0);
+      
+      const firstDayOfWeek = firstDay.getDay();
+      const lastDate = lastDay.getDate();
+      const prevLastDate = prevLastDay.getDate();
+      
+      container.innerHTML = '';
+      
+      // 前月の日付
+      for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+        const date = prevLastDate - i;
+        const dateElement = this.createDateElement(date, 'other-month');
+        container.appendChild(dateElement);
+      }
+      
+      // 当月の日付
+      for (let date = 1; date <= lastDate; date++) {
+        const dateObj = new Date(currentYear, currentMonth, date);
+        const isToday = dateObj.toDateString() === today.toDateString();
+        const isPast = dateObj < today && !isToday;
+        const isFuture = dateObj > new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000);
+        
+        let className = '';
+        if (isToday) className = 'today';
+        if (isPast || isFuture) className += ' disabled';
+        
+        const dateElement = this.createDateElement(date, className, dateObj);
+        container.appendChild(dateElement);
+      }
+      
+      // 次月の日付（6週分まで埋める）
+      const totalCells = container.children.length;
+      const remainingCells = 42 - totalCells;
+      
+      for (let date = 1; date <= remainingCells; date++) {
+        const dateElement = this.createDateElement(date, 'other-month');
+        container.appendChild(dateElement);
+      }
+      
+      // ナビゲーションボタンイベント
+      this.attachCalendarNav();
+    }
+  
+    /**
+     * 日付要素作成
+     */
+    createDateElement(date, className = '', dateObj = null) {
+      const element = document.createElement('div');
+      element.className = `calendar-date ${className}`;
+      element.textContent = date;
+      
+      if (dateObj && !className.includes('disabled') && !className.includes('other-month')) {
+        element.addEventListener('click', () => {
+          this.selectDate(dateObj);
+        });
+        
+        // 選択中の日付をハイライト
+        if (this.selectedDate && this.selectedDate === dateObj.toISOString().split('T')[0]) {
+          element.classList.add('selected');
+        }
+      }
+      
+      return element;
+    }
+  
+    /**
+     * カレンダーナビゲーション
+     */
+    attachCalendarNav() {
+      const prevBtn = document.getElementById('calendar-prev');
+      const nextBtn = document.getElementById('calendar-next');
+      
+      if (prevBtn) {
+        prevBtn.onclick = () => {
+          this.changeMonth(-1);
+        };
+      }
+      
+      if (nextBtn) {
+        nextBtn.onclick = () => {
+          this.changeMonth(1);
+        };
+      }
+    }
+  
+    /**
+     * 月変更
+     */
+    changeMonth(delta) {
+      const today = new Date();
+      const currentMonth = this.calendarMonth || today.getMonth();
+      const currentYear = this.calendarYear || today.getFullYear();
+      
+      const newDate = new Date(currentYear, currentMonth + delta, 1);
+      
+      this.calendarMonth = newDate.getMonth();
+      this.calendarYear = newDate.getFullYear();
+      
+      this.renderCalendar();
+    }
+  
+    /**
+     * 日付選択
+     */
+    async selectDate(dateObj) {
+      try {
+        this.selectedDate = dateObj.toISOString().split('T')[0];
+        this.selectedTime = null;
+        
+        this.renderCalendar();
+        
+        // 空き枠取得
+        await this.loadAvailableSlots();
+        
+        // 時間選択表示
+        this.renderTimeSlots();
+        
+        console.log('[App] Date selected:', this.selectedDate);
+        
+      } catch (error) {
+        console.error('[App] Failed to select date:', error);
+        this.showError(error.message);
+      }
+    }
+  
+    /**
+     * 空き枠取得
+     */
+    async loadAvailableSlots() {
+      try {
+        this.showLoading('空き枠を確認中...');
+        
+        const response = await apiClient.getAvailableSlots(
+          this.selectedTrainer.trainer_id,
+          this.selectedDate
+        );
+        this.availableSlots = response.slots || [];
+        
+        this.hideLoading();
+        
+      } catch (error) {
+        this.hideLoading();
+        throw error;
+      }
+    }
+  
+    /**
+     * 時間スロットレンダリング
+     */
+    renderTimeSlots() {
+      const container = document.getElementById('time-slots');
+      if (!container) return;
+      
+      container.innerHTML = '';
+      
+      // 営業時間内の時間スロットを生成
+      for (let hour = 9; hour < 18; hour++) {
+        const timeStr = `${hour.toString().padStart(2, '0')}:00`;
+        const isAvailable = this.availableSlots.includes(timeStr);
+        
+        const slot = document.createElement('div');
+        slot.className = `time-slot${isAvailable ? '' : ' disabled'}`;
+        slot.textContent = timeStr;
+        
+        if (this.selectedTime === timeStr) {
+          slot.classList.add('selected');
+        }
+        
+        if (isAvailable) {
+          slot.addEventListener('click', () => {
+            this.selectTime(timeStr);
+          });
+        }
+        
+        container.appendChild(slot);
+      }
+    }
+  
+    /**
+     * 時間選択
+     */
+    selectTime(time) {
+      this.selectedTime = time;
+      this.renderTimeSlots();
+      
+      console.log('[App] Time selected:', time);
+    }
+  
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ステップ4: 商品選択
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  
+    renderProductSelection() {
+      const container = document.getElementById('product-list');
+      if (!container) return;
+      
+      container.innerHTML = '';
+      
+      this.products.forEach(product => {
+        const card = this.createProductCard(product);
+        container.appendChild(card);
+      });
+    }
+  
+    /**
+     * 商品カード作成
+     */
+    createProductCard(product) {
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      
+      if (this.selectedProduct && this.selectedProduct.product_id === product.product_id) {
+        card.classList.add('selected');
+      }
+      
+      const basePrice = Number(product.product_price || product.price || 0);
+      const taxIncludedPrice = Number(product.tax_included_price || basePrice * 1.1);
+      const duration = product.duration || product.product_duration || 90;
+      
+      card.innerHTML = `
+        <div class="product-header">
+          <div class="product-name">${product.product_name}</div>
+          <div class="product-price">
+            ¥${Math.round(taxIncludedPrice).toLocaleString('ja-JP')}
+            <span class="product-price-unit">(税込)</span>
+          </div>
+        </div>
+        <div class="product-description">${product.description || product.product_description || ''}</div>
+        <div class="product-duration">
+          ⏱️ ${duration}分
+        </div>
+      `;
+      
+      card.addEventListener('click', () => {
+        this.selectProduct(product);
+      });
+      
+      return card;
+    }
+  
+    /**
+     * 商品選択
+     */
+    selectProduct(product) {
+      this.selectedProduct = product;
+      this.renderProductSelection();
+      
+      console.log('[App] Product selected:', product);
+    }
+  
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ステップ5: 確認・決済
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  
+    async renderConfirmation() {
+      // 確認情報表示
+      this.renderConfirmationDetails();
+      
+      // Square決済フォーム初期化
+      await this.initSquareCardForm();
+    }
+  
+    /**
+     * 確認情報表示
+     */
+    renderConfirmationDetails() {
+      // 犬情報（複数対応）
+      const dogNames = this.selectedDogs.map(d => d.dog_name).join('、');
+      document.getElementById('confirm-dog').textContent = dogNames;
+      
+      // トレーナー情報
+      document.getElementById('confirm-trainer').textContent = this.selectedTrainer.trainer_name;
+      
+      // 日時情報
+      const dateStr = new Date(this.selectedDate).toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'short'
+      });
+      document.getElementById('confirm-datetime').textContent = `${dateStr} ${this.selectedTime}`;
+      
+      // 商品情報
+      document.getElementById('confirm-product').textContent = this.selectedProduct.product_name;
+      
+      // 料金計算（複数頭対応）
+      const basePrice = Number(this.selectedProduct.product_price || this.selectedProduct.price || 0);
+      const taxIncludedPrice = Number(this.selectedProduct.tax_included_price || basePrice * 1.1);
+      
+      // 複数頭料金（2頭目以降 +2000円/頭）
+      const multiDogFee = (this.selectedDogs.length - 1) * 2000;
+      const totalBeforeTax = basePrice + multiDogFee;
+      const tax = Math.round(totalBeforeTax * 0.1);
+      const total = totalBeforeTax + tax;
+      
+      document.getElementById('summary-price').textContent = `¥${basePrice.toLocaleString('ja-JP')}`;
+      document.getElementById('summary-tax').textContent = `¥${tax.toLocaleString('ja-JP')}`;
+      document.getElementById('summary-multi-dog').textContent = `¥${multiDogFee.toLocaleString('ja-JP')}`;
+      document.getElementById('summary-total').textContent = `¥${total.toLocaleString('ja-JP')}`;
+      
+      // 決済用の金額を保存
+      this.totalAmount = total;
+    }
+  
+    /**
+     * Square決済フォーム初期化
+     */
+    async initSquareCardForm() {
+      try {
+        if (this.card) {
+          await this.card.destroy();
+        }
+        
+        this.card = await this.payments.card();
+        await this.card.attach('#card-container');
+        
+        console.log('[Square] Card form initialized');
+        
+      } catch (error) {
+        console.error('[Square] Failed to initialize card form:', error);
+        this.showError('決済フォームの初期化に失敗しました。');
+      }
+    }
+  
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 決済処理
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  
+    /**
+     * 予約確定処理
+     */
+    async handleConfirm() {
+      try {
+        const confirmBtn = document.getElementById('btn-confirm');
+        if (confirmBtn) {
+          confirmBtn.disabled = true;
+        }
+        
+        this.showLoading('決済処理中...');
+        
+        // Square決済トークン化
+        const tokenResult = await this.card.tokenize();
+        
+        if (tokenResult.status === 'OK') {
+          // 予約+決済作成
+          await this.createReservation(tokenResult.token);
+          
+          this.hideLoading();
+          
+          // 成功画面表示
+          this.showSuccessPage();
+          
+        } else {
+          throw new Error(tokenResult.errors?.[0]?.message || '決済処理に失敗しました');
+        }
+        
+      } catch (error) {
+        console.error('[App] Reservation failed:', error);
+        this.hideLoading();
+        this.showError(error.message);
+        
+        const confirmBtn = document.getElementById('btn-confirm');
+        if (confirmBtn) {
+          confirmBtn.disabled = false;
+        }
+      }
+    }
+  
+    /**
+     * 予約作成
+     */
+    async createReservation(sourceId) {
+      try {
+        const reservationData = {
+          customer_id: this.customerData.customer_id,
+          primary_dog_id: this.selectedDogs[0].dog_id,
+          additional_dog_ids: this.selectedDogs.slice(1).map(d => d.dog_id),
+          product_id: this.selectedProduct.product_id,
+          reservation_date: this.selectedDate,
+          start_time: this.selectedTime,
+          duration: this.selectedProduct.duration || 90,
+          trainer_id: this.selectedTrainer.trainer_id,
+          office_id: 'default-office',
+          status: 'confirmed'
+        };
+        
+        const paymentData = {
+          source_id: sourceId,
+          amount: this.totalAmount,
+          currency: 'JPY',
+          customer_id: this.customerData.customer_id
+        };
+        
+        const response = await apiClient.createReservationWithPayment(
+          reservationData,
+          paymentData,
+          this.lockId
+        );
+        
+        console.log('[App] Reservation created:', response);
+        
+        return response;
+        
+      } catch (error) {
+        console.error('[App] Failed to create reservation:', error);
+        throw error;
+      }
+    }
+  
+    /**
+     * 成功画面表示
+     */
+    showSuccessPage() {
+      // 全ステップ非表示
+      document.getElementById('step-1')?.classList.add('hidden');
+      document.getElementById('step-trainer')?.classList.add('hidden');
+      document.getElementById('step-2')?.classList.add('hidden');
+      document.getElementById('step-3')?.classList.add('hidden');
+      document.getElementById('step-4')?.classList.add('hidden');
+      
+      // 成功画面表示
+      const successPage = document.getElementById('success-page');
+      if (successPage) {
+        successPage.classList.remove('hidden');
+      }
+      
+      // ボタン非表示
+      document.getElementById('action-buttons')?.classList.add('hidden');
+      
+      // 成功メッセージ
+      this.showSuccess('予約が完了しました！');
+    }
+  
+    /**
+     * 完了ボタンハンドラ
+     */
+    handleComplete() {
+      // LINEアプリを閉じる
+      liffHandler.closeWindow();
     }
   }
   
@@ -516,479 +1091,3 @@ class ReservationApp {
   document.addEventListener('DOMContentLoaded', () => {
     app.init();
   });
-  /**
-   * ============================================================================
-   * K9 Harmony - Reservation Steps (Part 2)
-   * ============================================================================
-   * 予約画面のステップ2-4処理
-   * 最終更新: 2026-01-08
-   */
-  
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // ステップ2: 日時選択
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  
-  ReservationApp.prototype.renderDateTimeSelection = function() {
-    this.renderCalendar();
-  };
-  
-  /**
-   * カレンダーレンダリング
-   */
-  ReservationApp.prototype.renderCalendar = function() {
-    const container = document.getElementById('calendar-dates');
-    if (!container) return;
-    
-    const today = new Date();
-    const currentMonth = this.calendarMonth || today.getMonth();
-    const currentYear = this.calendarYear || today.getFullYear();
-    
-    // 月表示更新
-    const monthLabel = document.getElementById('calendar-month');
-    if (monthLabel) {
-      const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-      monthLabel.textContent = `${currentYear}年 ${monthNames[currentMonth]}`;
-    }
-    
-    // カレンダー生成
-    const firstDay = new Date(currentYear, currentMonth, 1);
-    const lastDay = new Date(currentYear, currentMonth + 1, 0);
-    const prevLastDay = new Date(currentYear, currentMonth, 0);
-    
-    const firstDayOfWeek = firstDay.getDay();
-    const lastDate = lastDay.getDate();
-    const prevLastDate = prevLastDay.getDate();
-    
-    container.innerHTML = '';
-    
-    // 前月の日付
-    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
-      const date = prevLastDate - i;
-      const dateElement = this.createDateElement(date, 'other-month');
-      container.appendChild(dateElement);
-    }
-    
-    // 当月の日付
-    for (let date = 1; date <= lastDate; date++) {
-      const dateObj = new Date(currentYear, currentMonth, date);
-      const isToday = dateObj.toDateString() === today.toDateString();
-      const isPast = dateObj < today && !isToday;
-      const isFuture = dateObj > new Date(today.getTime() + FRONTEND_CONFIG.UI.MAX_ADVANCE_DAYS * 24 * 60 * 60 * 1000);
-      
-      let className = '';
-      if (isToday) className = 'today';
-      if (isPast || isFuture) className += ' disabled';
-      
-      const dateElement = this.createDateElement(date, className, dateObj);
-      container.appendChild(dateElement);
-    }
-    
-    // 次月の日付（6週分まで埋める）
-    const totalCells = container.children.length;
-    const remainingCells = 42 - totalCells; // 6週 × 7日
-    
-    for (let date = 1; date <= remainingCells; date++) {
-      const dateElement = this.createDateElement(date, 'other-month');
-      container.appendChild(dateElement);
-    }
-    
-    // ナビゲーションボタンイベント
-    this.attachCalendarNav();
-  };
-  
-  /**
-   * 日付要素作成
-   */
-  ReservationApp.prototype.createDateElement = function(date, className = '', dateObj = null) {
-    const element = document.createElement('div');
-    element.className = `calendar-date ${className}`;
-    element.textContent = date;
-    
-    if (dateObj && !className.includes('disabled') && !className.includes('other-month')) {
-      element.addEventListener('click', () => {
-        this.selectDate(dateObj);
-      });
-      
-      // 選択中の日付をハイライト
-      if (this.selectedDate && this.selectedDate === dateObj.toISOString().split('T')[0]) {
-        element.classList.add('selected');
-      }
-    }
-    
-    return element;
-  };
-  
-  /**
-   * カレンダーナビゲーション
-   */
-  ReservationApp.prototype.attachCalendarNav = function() {
-    const prevBtn = document.getElementById('calendar-prev');
-    const nextBtn = document.getElementById('calendar-next');
-    
-    if (prevBtn) {
-      prevBtn.onclick = () => {
-        this.changeMonth(-1);
-      };
-    }
-    
-    if (nextBtn) {
-      nextBtn.onclick = () => {
-        this.changeMonth(1);
-      };
-    }
-  };
-  
-  /**
-   * 月変更
-   */
-  ReservationApp.prototype.changeMonth = function(delta) {
-    const today = new Date();
-    const currentMonth = this.calendarMonth || today.getMonth();
-    const currentYear = this.calendarYear || today.getFullYear();
-    
-    const newDate = new Date(currentYear, currentMonth + delta, 1);
-    
-    this.calendarMonth = newDate.getMonth();
-    this.calendarYear = newDate.getFullYear();
-    
-    this.renderCalendar();
-  };
-  
-  /**
-   * 日付選択
-   */
-  ReservationApp.prototype.selectDate = async function(dateObj) {
-    try {
-      this.selectedDate = dateObj.toISOString().split('T')[0];
-      this.selectedTime = null; // 時間選択をリセット
-      
-      this.renderCalendar();
-      
-      // 空き枠取得
-      await this.loadAvailableSlots();
-      
-      // 時間選択表示
-      this.renderTimeSlots();
-      
-      console.log('[App] Date selected:', this.selectedDate);
-      
-    } catch (error) {
-      console.error('[App] Failed to select date:', error);
-      this.showError(error.message);
-    }
-  };
-  
-  /**
-   * 空き枠取得
-   */
-  ReservationApp.prototype.loadAvailableSlots = async function() {
-    try {
-      this.showLoading('空き枠を確認中...');
-      
-      const response = await apiClient.getAvailableSlots('default-trainer', this.selectedDate);
-      this.availableSlots = response.slots || [];
-      
-      this.hideLoading();
-      
-    } catch (error) {
-      this.hideLoading();
-      throw error;
-    }
-  };
-  
-  /**
-   * 時間スロットレンダリング
-   */
-  ReservationApp.prototype.renderTimeSlots = function() {
-    const container = document.getElementById('time-slots');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    // 営業時間内の時間スロットを生成
-    const start = FRONTEND_CONFIG.UI.BUSINESS_HOURS.START;
-    const end = FRONTEND_CONFIG.UI.BUSINESS_HOURS.END;
-    
-    for (let hour = start; hour < end; hour++) {
-      const timeStr = `${hour.toString().padStart(2, '0')}:00`;
-      const isAvailable = this.availableSlots.includes(timeStr);
-      
-      const slot = document.createElement('div');
-      slot.className = `time-slot${isAvailable ? '' : ' disabled'}`;
-      slot.textContent = timeStr;
-      
-      if (this.selectedTime === timeStr) {
-        slot.classList.add('selected');
-      }
-      
-      if (isAvailable) {
-        slot.addEventListener('click', () => {
-          this.selectTime(timeStr);
-        });
-      }
-      
-      container.appendChild(slot);
-    }
-  };
-  
-  /**
-   * 時間選択
-   */
-  ReservationApp.prototype.selectTime = function(time) {
-    this.selectedTime = time;
-    this.renderTimeSlots();
-    
-    console.log('[App] Time selected:', time);
-  };
-  
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // ステップ3: 商品選択
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  
-  ReservationApp.prototype.renderProductSelection = function() {
-    const container = document.getElementById('product-list');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    this.products.forEach(product => {
-      const card = this.createProductCard(product);
-      container.appendChild(card);
-    });
-  };
-  
-  /**
-   * 商品カード作成
-   */
-  ReservationApp.prototype.createProductCard = function(product) {
-    const card = document.createElement('div');
-    card.className = 'product-card';
-    
-    if (this.selectedProduct && this.selectedProduct.product_id === product.product_id) {
-      card.classList.add('selected');
-    }
-    
-    // 料金計算（renderConfirmationDetailsと同じロジック）
-    const basePrice = Number(product.product_price || product.price || 0);
-    const taxIncludedPrice = Number(product.tax_included_price || basePrice * 1.1);
-    const duration = product.duration || product.product_duration || 90;
-    
-    card.innerHTML = `
-      <div class="product-header">
-        <div class="product-name">${product.product_name}</div>
-        <div class="product-price">
-          ¥${Math.round(taxIncludedPrice).toLocaleString('ja-JP')}
-          <span class="product-price-unit">(税込)</span>
-        </div>
-      </div>
-      <div class="product-description">${product.description || product.product_description || ''}</div>
-      <div class="product-duration">
-        ⏱️ ${duration}分
-      </div>
-    `;
-    
-    card.addEventListener('click', () => {
-      this.selectProduct(product);
-    });
-    
-    return card;
-  };
-  
-  /**
-   * 商品選択
-   */
-  ReservationApp.prototype.selectProduct = function(product) {
-    this.selectedProduct = product;
-    this.renderProductSelection();
-    
-    console.log('[App] Product selected:', product);
-  };
-  
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // ステップ4: 確認・決済
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  
-  ReservationApp.prototype.renderConfirmation = async function() {
-    // 確認情報表示
-    this.renderConfirmationDetails();
-    
-    // Square決済フォーム初期化
-    await this.initSquareCardForm();
-  };
-  
-  /**
-   * 確認情報表示
-   */
-  ReservationApp.prototype.renderConfirmationDetails = function() {
-    // 犬情報
-    document.getElementById('confirm-dog').textContent = this.selectedDog.dog_name;
-    
-    // 日時情報
-    const dateStr = new Date(this.selectedDate).toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      weekday: 'short'
-    });
-    document.getElementById('confirm-datetime').textContent = `${dateStr} ${this.selectedTime}`;
-    
-    // 商品情報
-    document.getElementById('confirm-product').textContent = this.selectedProduct.product_name;
-    
-    // 料金サマリー
-    // tax_included_price がない場合は計算
-    const basePrice = Number(this.selectedProduct.product_price || this.selectedProduct.price || 0);
-    const taxIncludedPrice = Number(this.selectedProduct.tax_included_price || basePrice * 1.1);
-    const tax = taxIncludedPrice - basePrice;
-    
-    document.getElementById('summary-price').textContent = `¥${basePrice.toLocaleString('ja-JP')}`;
-    document.getElementById('summary-tax').textContent = `¥${Math.round(tax).toLocaleString('ja-JP')}`;
-    document.getElementById('summary-total').textContent = `¥${Math.round(taxIncludedPrice).toLocaleString('ja-JP')}`;
-    
-    // selectedProduct に tax_included_price を設定（決済時に使用）
-    if (!this.selectedProduct.tax_included_price) {
-      this.selectedProduct.tax_included_price = Math.round(taxIncludedPrice);
-    }
-  };
-  
-  /**
-   * Square決済フォーム初期化
-   */
-  ReservationApp.prototype.initSquareCardForm = async function() {
-    try {
-      if (this.card) {
-        await this.card.destroy();
-      }
-      
-      this.card = await this.payments.card();
-      await this.card.attach('#card-container');
-      
-      console.log('[Square] Card form initialized');
-      
-    } catch (error) {
-      console.error('[Square] Failed to initialize card form:', error);
-      this.showError('決済フォームの初期化に失敗しました。');
-    }
-  };
-  /**
-   * ============================================================================
-   * K9 Harmony - Reservation Payment
-   * ============================================================================
-   * 予約画面の決済処理
-   * 最終更新: 2026-01-08
-   */
-  
-  /**
-   * 予約確定処理
-   */
-  ReservationApp.prototype.handleConfirm = async function() {
-    try {
-      // ボタン無効化
-      const confirmBtn = document.getElementById('btn-confirm');
-      if (confirmBtn) {
-        confirmBtn.disabled = true;
-      }
-      
-      this.showLoading('決済処理中...');
-      
-      // Square決済トークン化
-      const tokenResult = await this.card.tokenize();
-      
-      if (tokenResult.status === 'OK') {
-        // 予約+決済作成
-        await this.createReservation(tokenResult.token);
-        
-        this.hideLoading();
-        
-        // 成功画面表示
-        this.showSuccessPage();
-        
-      } else {
-        throw new Error(tokenResult.errors?.[0]?.message || FRONTEND_CONFIG.ERROR_MESSAGES.PAYMENT_ERROR);
-      }
-      
-    } catch (error) {
-      console.error('[App] Reservation failed:', error);
-      this.hideLoading();
-      this.showError(error.message);
-      
-      // ボタン再有効化
-      const confirmBtn = document.getElementById('btn-confirm');
-      if (confirmBtn) {
-        confirmBtn.disabled = false;
-      }
-    }
-  };
-  
-  /**
-   * 予約作成
-   */
-  ReservationApp.prototype.createReservation = async function(sourceId) {
-    try {
-      const reservationData = {
-        customer_id: this.customerData.customer_id,
-        primary_dog_id: this.selectedDog.dog_id,
-        product_id: this.selectedProduct.product_id,
-        reservation_date: this.selectedDate,
-        start_time: this.selectedTime,
-        duration: this.selectedProduct.duration,
-        trainer_id: 'default-trainer',
-        office_id: 'default-office',
-        status: 'confirmed'
-      };
-      
-      const paymentData = {
-        source_id: sourceId,
-        amount: Number(this.selectedProduct.tax_included_price),
-        currency: 'JPY',
-        customer_id: this.customerData.customer_id
-      };
-      
-      const response = await apiClient.createReservationWithPayment(
-        reservationData,
-        paymentData,
-        this.lockId
-      );
-      
-      console.log('[App] Reservation created:', response);
-      
-      return response;
-      
-    } catch (error) {
-      console.error('[App] Failed to create reservation:', error);
-      throw error;
-    }
-  };
-  
-  /**
-   * 成功画面表示
-   */
-  ReservationApp.prototype.showSuccessPage = function() {
-    // 全ステップ非表示
-    for (let i = 1; i <= this.totalSteps; i++) {
-      const stepElement = document.getElementById(`step-${i}`);
-      if (stepElement) {
-        stepElement.classList.add('hidden');
-      }
-    }
-    
-    // 成功画面表示
-    const successPage = document.getElementById('success-page');
-    if (successPage) {
-      successPage.classList.remove('hidden');
-    }
-    
-    // ボタン非表示
-    document.getElementById('action-buttons').classList.add('hidden');
-    
-    // 成功メッセージ
-    this.showSuccess(FRONTEND_CONFIG.SUCCESS_MESSAGES.RESERVATION_CREATED);
-  };
-  
-  /**
-   * 完了ボタンハンドラ
-   */
-  ReservationApp.prototype.handleComplete = function() {
-    // LINEアプリを閉じる
-    liffHandler.closeWindow();
-  };

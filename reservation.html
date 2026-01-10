@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>予約 - K9 Harmony 1739</title>
+  <title>予約 - K9 Harmony</title>
   
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/common.css">
@@ -41,14 +41,18 @@
         </div>
         <div class="step" data-step="2">
           <div class="step-number">2</div>
-          <div class="step-label">日時選択</div>
+          <div class="step-label">トレーナー</div>
         </div>
         <div class="step" data-step="3">
           <div class="step-number">3</div>
-          <div class="step-label">商品選択</div>
+          <div class="step-label">日時選択</div>
         </div>
         <div class="step" data-step="4">
           <div class="step-number">4</div>
+          <div class="step-label">コース選択</div>
+        </div>
+        <div class="step" data-step="5">
+          <div class="step-number">5</div>
           <div class="step-label">確認・決済</div>
         </div>
       </div>
@@ -57,7 +61,16 @@
       <div id="step-1" class="hidden">
         <div class="card">
           <h2 class="card-title">レッスンを受ける犬を選択してください</h2>
+          <p class="card-subtitle">複数選択可能です</p>
           <div id="dog-list" class="dog-list"></div>
+        </div>
+      </div>
+
+      <!-- ステップ1.5: トレーナー選択 -->
+      <div id="step-trainer" class="hidden">
+        <div class="card">
+          <h2 class="card-title">トレーナーを選択してください</h2>
+          <div id="trainer-list" class="trainer-list"></div>
         </div>
       </div>
 
@@ -116,6 +129,10 @@
               <div class="confirmation-value" id="confirm-dog">-</div>
             </div>
             <div class="confirmation-item">
+              <div class="confirmation-label">トレーナー</div>
+              <div class="confirmation-value" id="confirm-trainer">-</div>
+            </div>
+            <div class="confirmation-item">
               <div class="confirmation-label">日時</div>
               <div class="confirmation-value" id="confirm-datetime">-</div>
             </div>
@@ -139,6 +156,10 @@
             <div class="summary-row">
               <div class="summary-label">消費税（10%）</div>
               <div class="summary-value" id="summary-tax">¥0</div>
+            </div>
+            <div class="summary-row">
+              <div class="summary-label">複数頭料金</div>
+              <div class="summary-value" id="summary-multi-dog">¥0</div>
             </div>
             <div class="summary-row total">
               <div class="summary-label">合計</div>
@@ -183,10 +204,10 @@
     </div>
   </div>
 
-  <!-- JavaScript（統合版・1ファイルのみ） -->
-  <script src="js/config.js?v=7"></script>
-  <script src="js/liff-handler.js?v=7"></script>
-  <script src="js/api-client.js?v=7"></script>
-  <script src="js/reservation.js?v=7"></script>
+  <!-- JavaScript -->
+  <script src="js/config.js?v=8"></script>
+  <script src="js/liff-handler.js?v=8"></script>
+  <script src="js/api-client.js?v=8"></script>
+  <script src="js/reservation.js?v=8"></script>
 </body>
 </html>

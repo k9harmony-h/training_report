@@ -476,6 +476,58 @@
     font-size: var(--font-size-sm);
     margin-bottom: var(--spacing-md);
   }
+
+  /* トレーナーカード */
+.trainer-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+  
+  .trainer-card {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .trainer-card:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+  }
+  
+  .trainer-card.selected {
+    border-color: #3b82f6;
+    background: #dbeafe;
+  }
+  
+  .trainer-avatar {
+    font-size: 2rem;
+    margin-right: 1rem;
+  }
+  
+  .trainer-name {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  
+  .trainer-specialty {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+  
+  /* 犬チェックボックス */
+  .dog-checkbox {
+    margin-right: 0.5rem;
+  }
+  
+  .dog-card {
+    position: relative;
+  }
   
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      レスポンシブ対応

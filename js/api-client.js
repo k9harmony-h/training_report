@@ -3,7 +3,7 @@
  * K9 Harmony - API Client
  * ============================================================================
  * GASバックエンドとの通信を管理
- * 最終更新: 2026-01-09（CORS対応）
+ * 最終更新: 2026-01-10（トレーナー選択対応）
  */
 
 class ApiClient {
@@ -134,6 +134,14 @@ class ApiClient {
     }
   
     /**
+     * トレーナー一覧取得
+     * @returns {Promise<Object>} トレーナーリスト
+     */
+    async getTrainerList() {
+      return await this.get('getTrainerList');
+    }
+  
+    /**
      * 商品一覧取得
      * @returns {Promise<Array>} 商品リスト
      */
@@ -206,6 +214,7 @@ class ApiClient {
      */
     async cancelReservation(reservationId, reason) {
       return await this.post('cancelReservation', {
+        userId: liffHandler.getUserId(),
         reservationId: reservationId,
         reason: reason
       });
