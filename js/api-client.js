@@ -154,13 +154,19 @@ class ApiClient {
         date
       });
     }
-  
-    async lockSlot(lockData) {
-      return await this.post('lockSlot', {
-        userId: liffHandler.getUserId(),
-        ...lockData
-      });
-    }
+/**
+ * 予約枠ロック（GETリクエストに変更 - GAS CORS制約回避）
+ */
+async lockSlot(trainerId, officeId, date, customerId) {
+    console.log('[API] Locking slot with GET request (CORS workaround)');
+    
+    return this.get('lockSlot', {
+      trainerId,
+      officeId,
+      reservationDate: date,
+      customerId
+    });
+  }
   
     async createReservationWithPayment(reservationData, paymentData, lockId) {
       return await this.post('createReservationWithPayment', {
