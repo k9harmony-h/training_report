@@ -30,7 +30,7 @@ const FRONTEND_CONFIG = {
   WORKER: {
     BASE_URL: 'https://k9-harmony-ppcl.k9-harmony-ppcl.workers.dev',
     TIMEOUT: 30000
-  }
+  },
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Square Web Payments SDK設定
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
