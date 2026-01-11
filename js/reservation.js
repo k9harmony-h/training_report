@@ -298,25 +298,20 @@ class ReservationApp {
      * 次へボタンハンドラ
      */
     async handleNext() {
-      try {
-        // バリデーション
-        if (!this.validateCurrentStep()) {
-          return;
+        try {
+          if (!this.validateCurrentStep()) {
+            return;
+          }
+          
+          // lockSlotは削除（決済時に空き枠を再確認）
+          
+          this.showStep(this.currentStep + 1);
+          
+        } catch (error) {
+          console.error('[App] Failed to proceed to next step:', error);
+          this.showError(error.message);
         }
-        
-        // ステップ3（日時選択）→ステップ4（商品選択）の場合、予約枠をロック
-        if (this.currentStep === 3) {
-          await this.lockReservationSlot();
-        }
-        
-        // 次のステップへ
-        this.showStep(this.currentStep + 1);
-        
-      } catch (error) {
-        console.error('[App] Failed to proceed to next step:', error);
-        this.showError(error.message);
       }
-    }
   
     /**
      * 戻るボタンハンドラ
@@ -1035,10 +1030,10 @@ class ReservationApp {
         };
         
         const response = await apiClient.createReservationWithPayment(
-          reservationData,
-          paymentData,
-          this.lockId
-        );
+            reservationData,
+            paymentData,
+            null  // ← lockId不要
+          );
         
         console.log('[App] Reservation created:', response);
         
