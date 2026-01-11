@@ -46,7 +46,7 @@ const FRONTEND_CONFIG = {
       LOCATION_ID: 'LP7Q98MRY63VH'
     },
     // 現在の環境（'sandbox' または 'production'）
-    ENVIRONMENT: 'sandbox'
+    ENVIRONMENT: 'production'
   },
   
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
