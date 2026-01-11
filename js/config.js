@@ -24,6 +24,13 @@ const FRONTEND_CONFIG = {
     TIMEOUT: 30000 // 30秒
   },
   
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Cloudflare Workers API設定
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  WORKER: {
+    BASE_URL: 'https://k9-harmony-ppcl.k9-harmony-ppcl.workers.dev',
+    TIMEOUT: 30000
+  }
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Square Web Payments SDK設定
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
