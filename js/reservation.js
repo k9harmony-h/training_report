@@ -109,25 +109,31 @@ class ReservationApp {
       }
     }
   
-    /**
-     * Square Web Payments SDK初期化
-     */
-    async initSquarePayments() {
-      try {
-        const squareConfig = getCurrentSquareConfig();
-        
-        this.payments = Square.payments(
-          squareConfig.APPLICATION_ID,
-          squareConfig.LOCATION_ID
-        );
-        
-        console.log('[Square] Payments SDK initialized');
-        
-      } catch (error) {
-        console.error('[Square] Initialization failed:', error);
-        throw new Error('決済システムの初期化に失敗しました。');
-      }
-    }
+/**
+ * Square Web Payments SDK初期化
+ */
+async initSquarePayments() {
+  try {
+    const squareConfig = getCurrentSquareConfig();
+    const environment = FRONTEND_CONFIG.SQUARE.ENVIRONMENT;
+    
+    console.log('[Square] Initializing with environment:', environment);
+    console.log('[Square] Application ID:', squareConfig.APPLICATION_ID);
+    console.log('[Square] Location ID:', squareConfig.LOCATION_ID);
+    
+    this.payments = Square.payments(
+      squareConfig.APPLICATION_ID,
+      squareConfig.LOCATION_ID,
+      { environment: environment }  // ← この行を追加
+    );
+    
+    console.log('[Square] Payments SDK initialized');
+    
+  } catch (error) {
+    console.error('[Square] Initialization failed:', error);
+    throw new Error('決済システムの初期化に失敗しました。');
+  }
+}
   
     /**
      * UI初期化
