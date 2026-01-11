@@ -365,33 +365,32 @@ class ReservationApp {
       }
     }
   
-    /**
-     * 予約枠ロック
-     */
     async lockReservationSlot() {
-      try {
-        this.showLoading('予約枠を確保中...');
-        
-        const lockData = {
-          userId: this.customerData.line_user_id,
-          trainerId: this.selectedTrainer.trainer_id,
-          officeId: 'default-office',
-          date: this.selectedDate,
-          customerId: this.customerData.customer_id,
-          dogId: this.selectedDogs[0].dog_id  // 主犬
-        };
+        try {
+          console.log('[App] Locking reservation slot');
           
-        const response = await apiClient.lockSlot(lockData);
-        this.lockId = response.lock_id;
-        
-        this.hideLoading();
-        this.showSuccess('予約枠を確保しました');
-        
-      } catch (error) {
-        this.hideLoading();
-        throw error;
+          // ✅ 個別の引数として渡す
+          const result = await apiClient.lockSlot(
+            this.selectedTrainer.trainer_id,  // trainerId
+            'default-office',                  // officeId
+            this.selectedDate,                 // date
+            this.customer.customer_id          // customerId
+          );
+          
+          if (result.error) {
+            throw new Error(result.message);
+          }
+          
+          this.lockId = result.lockId;
+          console.log('[App] Slot locked successfully:', this.lockId);
+          
+          return result;
+          
+        } catch (error) {
+          console.error('[App] Failed to lock slot:', error);
+          throw error;
+        }
       }
-    }
   
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // ローディング・通知
