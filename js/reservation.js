@@ -374,7 +374,7 @@ class ReservationApp {
             this.selectedTrainer.trainer_id,  // trainerId
             'default-office',                  // officeId
             this.selectedDate,                 // date
-            this.customer.customer_id          // customerId
+            this.customerData.customer_id      // customerId
           );
           
           if (result.error) {
