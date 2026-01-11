@@ -168,14 +168,19 @@ async lockSlot(trainerId, officeId, date, customerId) {
     });
   }
   
-    async createReservationWithPayment(reservationData, paymentData, lockId) {
-      return await this.post('createReservationWithPayment', {
-        userId: liffHandler.getUserId(),
-        reservationData: JSON.stringify(reservationData),
-        paymentData: JSON.stringify(paymentData),
-        lockId
-      });
-    }
+  async createReservationWithPayment(reservationData, paymentData, lockId) {
+    console.log('[API] Creating reservation with payment (GET method - CORS workaround)');
+    
+    const reservationDataStr = JSON.stringify(reservationData);
+    const paymentDataStr = JSON.stringify(paymentData);
+    
+    return this.get('createReservationWithPayment', {
+      userId: liffHandler.getUserId(),
+      reservationData: reservationDataStr,
+      paymentData: paymentDataStr,
+      lockId: lockId
+    });
+  }
   
     async cancelReservation(reservationId, reason) {
       return await this.post('cancelReservation', {
