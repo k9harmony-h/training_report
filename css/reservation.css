@@ -3,542 +3,793 @@
  * K9 Harmony - Reservation Page Styles
  * ============================================================================
  * 予約画面専用のスタイル
- * 最終更新: 2026-01-08
+ * 最終更新: 2026-01-17 23:55
+ * バージョン: v2.0.0
+ * 
+ * 【このファイルについて】
+ * - reservation.html専用のスタイル
+ * - common.cssで定義された変数・基本スタイルを継承
+ * - プログレスバー、カレンダー、料金表示等の専用UI
  */
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   ステップインジケーター
+   プログレスバー（5段階）
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-   .step-indicator {
+   .progress-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-xl);
-    padding: var(--spacing-md) 0;
-  }
-  
-  .step {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    padding: var(--spacing-lg) var(--spacing-xl);
     position: relative;
+    max-width: 600px;
+    margin: 0 auto var(--spacing-lg);
   }
   
-  .step:not(:last-child)::after {
-    content: '';
+  .progress-bg {
     position: absolute;
-    top: 20px;
-    left: 50%;
-    width: 100%;
+    top: 50%;
+    left: 40px;
+    right: 40px;
     height: 2px;
-    background-color: var(--border-color);
-    z-index: -1;
+    background: var(--c-border-color);
+    z-index: 0;
+    transform: translateY(-50%);
   }
   
-  .step.active:not(:last-child)::after {
-    background-color: var(--primary-color);
+  .progress-bar-fill {
+    position: absolute;
+    top: 50%;
+    left: 40px;
+    height: 2px;
+    background: var(--c-main-turquoise);
+    z-index: 0;
+    width: 0%;
+    transition: width var(--transition-base);
+    transform: translateY(-50%);
   }
   
-  .step-number {
-    width: 40px;
-    height: 40px;
+  .step-dot {
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    background-color: var(--bg-tertiary);
-    color: var(--text-tertiary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: var(--font-size-md);
-    margin-bottom: var(--spacing-xs);
+    background: #e0e0e0;
+    z-index: 1;
+    position: relative;
+    border: 2px solid white;
     transition: all var(--transition-base);
   }
   
-  .step.active .step-number {
-    background-color: var(--primary-color);
-    color: var(--text-light);
+  .step-dot.active {
+    background: var(--c-main-turquoise);
+    transform: scale(1.3);
+    box-shadow: 0 0 0 4px rgba(87, 195, 194, 0.2);
   }
   
-  .step.completed .step-number {
-    background-color: var(--success-color);
-    color: var(--text-light);
+  .step-dot.done {
+    background: var(--c-main-turquoise);
   }
   
-  .step-label {
-    font-size: var(--font-size-xs);
-    color: var(--text-tertiary);
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     View切り替え
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  
+  .view-section {
+    display: none;
+    animation: fadeIn var(--transition-slow);
+  }
+  
+  .view-section.active {
+    display: block;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     View 1: 犬・コース・トレーナー選択
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  
+  .selected-dog-display {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--c-main-turquoise);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--c-bg-mist);
+    border-radius: var(--radius-sm);
     text-align: center;
-    transition: color var(--transition-base);
   }
   
-  .step.active .step-label {
-    color: var(--primary-color);
-    font-weight: 600;
-  }
-  
-  .step.completed .step-label {
-    color: var(--success-color);
-  }
-  
-  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     犬選択カード
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  
-  .dog-list {
-    display: grid;
-    gap: var(--spacing-md);
-  }
-  
-  .dog-card {
-    background-color: var(--bg-primary);
-    border: 2px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
+  .multi-dog-check-container {
+    margin-top: var(--spacing-md);
     padding: var(--spacing-md);
-    cursor: pointer;
-    transition: all var(--transition-base);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
+    background: var(--c-bg-mist);
+    border-radius: var(--radius-sm);
   }
   
-  .dog-card:hover {
-    border-color: var(--primary-light);
-    box-shadow: var(--shadow-md);
-  }
-  
-  .dog-card.selected {
-    border-color: var(--primary-color);
-    background-color: rgba(74, 144, 226, 0.05);
-  }
-  
-  .dog-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background-color: var(--bg-tertiary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-xl);
-    flex-shrink: 0;
-  }
-  
-  .dog-info {
-    flex: 1;
-  }
-  
-  .dog-name {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: var(--spacing-xs);
-  }
-  
-  .dog-details {
+  .ticket-info {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: rgba(87, 195, 194, 0.1);
+    border-radius: var(--radius-sm);
+    border-left: 4px solid var(--c-main-turquoise);
     font-size: var(--font-size-sm);
-    color: var(--text-secondary);
+    font-weight: 600;
+    color: var(--c-sub-deep-ocean);
   }
   
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     日時選択
+     View 2: カレンダー（月間表示）
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   
-  .date-selector {
-    margin-bottom: var(--spacing-lg);
-  }
-  
-  .calendar {
-    background-color: var(--bg-primary);
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-md);
-  }
-  
-  .calendar-header {
+  .calendar-controls {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--spacing-md);
   }
   
-  .calendar-month {
+  .calendar-month-label {
     font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--text-primary);
+    font-weight: 700;
+    color: var(--c-sub-deep-ocean);
+    font-family: var(--font-serif);
   }
   
-  .calendar-nav {
-    display: flex;
-    gap: var(--spacing-sm);
+  .calendar-wrapper {
+    position: relative;
+    min-height: 320px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--c-border-light);
+    overflow: hidden;
   }
   
-  .calendar-nav-btn {
-    width: 36px;
-    height: 36px;
-    border: none;
-    border-radius: var(--border-radius-sm);
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: all var(--transition-fast);
+  .calendar-overlay-loader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
     display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: center;
+    align-items: center;
+    z-index: 10;
   }
   
-  .calendar-nav-btn:hover {
-    background-color: var(--primary-color);
-    color: var(--text-light);
-  }
-  
-  .calendar-weekdays {
+  .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: var(--spacing-xs);
-    margin-bottom: var(--spacing-sm);
+    gap: 1px;
+    background: var(--c-border-light);
+    border: 1px solid var(--c-border-light);
   }
   
-  .calendar-weekday {
+  .calendar-header {
+    display: contents;
+  }
+  
+  .calendar-day-header {
+    background: var(--c-bg-mist);
+    padding: var(--spacing-sm);
     text-align: center;
     font-size: var(--font-size-xs);
-    color: var(--text-tertiary);
-    font-weight: 600;
-    padding: var(--spacing-xs);
+    font-weight: 700;
+    color: var(--c-sub-deep-ocean);
+    border-bottom: 2px solid var(--c-border-color);
   }
   
-  .calendar-dates {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: var(--spacing-xs);
+  .calendar-day-header.sunday {
+    color: #D0021B;
   }
   
-  .calendar-date {
-    aspect-ratio: 1;
+  .calendar-day-header.saturday {
+    color: #1E88E5;
+  }
+  
+  .calendar-day {
+    background: white;
+    padding: var(--spacing-sm);
+    min-height: 60px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: var(--font-size-sm);
-    border-radius: var(--border-radius-sm);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: background var(--transition-fast);
     position: relative;
   }
   
-  .calendar-date:hover:not(.disabled):not(.other-month) {
-    background-color: var(--primary-light);
-    color: var(--text-light);
+  .calendar-day:hover:not(.calendar-day-disabled):not(.calendar-day-other-month) {
+    background: var(--c-bg-mist);
   }
   
-  .calendar-date.selected {
-    background-color: var(--primary-color);
-    color: var(--text-light);
-    font-weight: 600;
-  }
-  
-  .calendar-date.today {
-    border: 2px solid var(--primary-color);
-  }
-  
-  .calendar-date.disabled {
-    color: var(--text-tertiary);
-    cursor: not-allowed;
-    opacity: 0.3;
-  }
-  
-  .calendar-date.other-month {
-    color: var(--text-tertiary);
-    opacity: 0.5;
-  }
-  
-  /* 時間選択 */
-  .time-slots {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--spacing-sm);
-    margin-top: var(--spacing-md);
-  }
-  
-  .time-slot {
-    padding: var(--spacing-md);
-    border: 2px solid var(--border-color);
-    border-radius: var(--border-radius-md);
-    text-align: center;
-    cursor: pointer;
-    transition: all var(--transition-fast);
+  .calendar-day-number {
     font-size: var(--font-size-sm);
     font-weight: 600;
+    color: var(--c-text-sumi);
+    margin-bottom: 4px;
   }
   
-  .time-slot:hover:not(.disabled) {
-    border-color: var(--primary-light);
-    background-color: rgba(74, 144, 226, 0.05);
+  .calendar-day.sunday .calendar-day-number {
+    color: #D0021B;
   }
   
-  .time-slot.selected {
-    border-color: var(--primary-color);
-    background-color: var(--primary-color);
-    color: var(--text-light);
+  .calendar-day.saturday .calendar-day-number {
+    color: #1E88E5;
   }
   
-  .time-slot.disabled {
+  .calendar-day-other-month {
     opacity: 0.3;
+    cursor: default;
+  }
+  
+  .calendar-day-disabled {
+    background: #f5f5f5;
     cursor: not-allowed;
   }
   
-  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     商品選択
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  
-  .product-list {
-    display: grid;
-    gap: var(--spacing-md);
+  .calendar-day-today {
+    background: rgba(87, 195, 194, 0.1);
   }
   
-  .product-card {
-    background-color: var(--bg-primary);
-    border: 2px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-lg);
-    cursor: pointer;
-    transition: all var(--transition-base);
+  .calendar-day-selected {
+    background: var(--c-main-turquoise);
   }
   
-  .product-card:hover {
-    border-color: var(--primary-light);
-    box-shadow: var(--shadow-md);
+  .calendar-day-selected .calendar-day-number,
+  .calendar-day-selected .availability-symbol {
+    color: white !important;
   }
   
-  .product-card.selected {
-    border-color: var(--primary-color);
-    background-color: rgba(74, 144, 226, 0.05);
-  }
-  
-  .product-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: start;
-    margin-bottom: var(--spacing-sm);
-  }
-  
-  .product-name {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-  
-  .product-price {
-    font-size: var(--font-size-xl);
+  .availability-symbol {
+    font-size: 1.2rem;
     font-weight: 700;
-    color: var(--primary-color);
   }
   
-  .product-price-unit {
+  .symbol-available {
+    color: var(--c-main-turquoise);
+  }
+  
+  .symbol-few {
+    color: #FBC02D;
+  }
+  
+  .symbol-full {
+    color: #E0E0E0;
+  }
+  
+  .calendar-legend {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-md);
     font-size: var(--font-size-sm);
-    font-weight: 400;
-    color: var(--text-secondary);
+    color: var(--c-text-gray);
   }
   
-  .product-description {
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-    line-height: 1.5;
-    margin-bottom: var(--spacing-sm);
-  }
-  
-  .product-duration {
-    display: inline-flex;
+  .calendar-legend span {
+    display: flex;
     align-items: center;
-    gap: var(--spacing-xs);
+    gap: 4px;
+  }
+  
+  /* 別住所入力エリア */
+  .alt-address-area {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--c-border-light);
+  }
+  
+  .radio-group {
+    display: flex;
+    gap: var(--spacing-lg);
+  }
+  
+  .radio-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    cursor: pointer;
     font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    background-color: var(--bg-secondary);
-    border-radius: var(--border-radius-sm);
+  }
+  
+  .radio-label input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--c-main-turquoise);
+    cursor: pointer;
   }
   
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     決済フォーム
+     View 3: 料金・規約
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   
-  .payment-section {
-    background-color: var(--bg-primary);
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-lg);
-    margin-bottom: var(--spacing-lg);
-  }
-  
-  #card-container {
-    margin-bottom: var(--spacing-lg);
-  }
-  
-  .payment-summary {
-    background-color: var(--bg-secondary);
-    border-radius: var(--border-radius-md);
-    padding: var(--spacing-md);
+  .reservation-summary {
+    font-size: var(--font-size-sm);
+    line-height: 1.8;
   }
   
   .summary-row {
     display: flex;
     justify-content: space-between;
-    align-items: center;
     padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--c-border-light);
   }
   
-  .summary-row.total {
-    border-top: 2px solid var(--border-color);
-    margin-top: var(--spacing-sm);
-    padding-top: var(--spacing-md);
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-  }
-  
-  .summary-label {
-    color: var(--text-secondary);
-  }
-  
-  .summary-value {
-    color: var(--text-primary);
-    font-weight: 600;
-  }
-  
-  .summary-value.total {
-    font-size: var(--font-size-xl);
-    color: var(--primary-color);
-  }
-  
-  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     確認画面
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  
-  .confirmation-section {
-    margin-bottom: var(--spacing-lg);
-  }
-  
-  .confirmation-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-md) 0;
-    border-bottom: 1px solid var(--border-light);
-  }
-  
-  .confirmation-item:last-child {
+  .summary-row:last-child {
     border-bottom: none;
   }
   
-  .confirmation-label {
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
+  .summary-label {
+    font-weight: 600;
+    color: var(--c-text-gray);
   }
   
-  .confirmation-value {
-    font-size: var(--font-size-md);
-    color: var(--text-primary);
+  /* 料金内訳 */
+  .price-breakdown {
+    font-size: var(--font-size-sm);
+  }
+  
+  .price-row {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--c-border-light);
+  }
+  
+  .price-row:last-child {
+    border-bottom: none;
+  }
+  
+  .price-subtotal {
     font-weight: 600;
+    padding-top: var(--spacing-md);
+    border-top: 2px solid var(--c-border-color);
+    margin-top: var(--spacing-sm);
+  }
+  
+  .price-total {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--c-sub-deep-ocean);
+    padding-top: var(--spacing-md);
+    border-top: 2px solid var(--c-sub-deep-ocean);
+    margin-top: var(--spacing-md);
+  }
+  
+  /* 出張費セクション */
+  .travel-fee-section {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--c-border-light);
+  }
+  
+  .travel-distance {
+    font-size: var(--font-size-xs);
+    color: var(--c-text-gray);
+    margin-top: 4px;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  /* アコーディオン */
+  .accordion {
+    margin-top: var(--spacing-md);
+  }
+  
+  .accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--c-bg-mist);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--c-sub-deep-ocean);
+    transition: background var(--transition-fast);
+  }
+  
+  .accordion-header:hover {
+    background: #e8ecec;
+  }
+  
+  .accordion-icon {
+    transition: transform var(--transition-fast);
+  }
+  
+  .accordion-header.open .accordion-icon {
+    transform: rotate(180deg);
+  }
+  
+  .accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height var(--transition-base);
+  }
+  
+  .accordion-content.open {
+    max-height: 300px;
+    margin-top: var(--spacing-sm);
+  }
+  
+  .fee-table {
+    width: 100%;
+    font-size: var(--font-size-xs);
+    border-collapse: collapse;
+  }
+  
+  .fee-table td {
+    padding: var(--spacing-sm);
+    border-bottom: 1px solid var(--c-border-light);
+  }
+  
+  .fee-table td:last-child {
     text-align: right;
+    font-weight: 600;
+  }
+  
+  .fee-note {
+    font-size: var(--font-size-xs);
+    color: var(--c-text-gray);
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--c-bg-mist);
+    border-radius: var(--radius-sm);
+  }
+  
+  /* Voucherセクション */
+  .voucher-section {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--c-border-light);
+  }
+  
+  .voucher-input-group {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .voucher-input-group .form-control {
+    flex: 1;
+    margin-bottom: 0;
+  }
+  
+  .voucher-input-group .btn {
+    white-space: nowrap;
+    padding: 12px var(--spacing-md);
+  }
+  
+  .voucher-result {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+  }
+  
+  /* チェックボックス区切り */
+  .checkbox-divider {
+    height: 1px;
+    background: var(--c-border-color);
+    margin: var(--spacing-md) 0;
+  }
+  
+  /* キャンセル料情報ボックス */
+  .cancellation-info-box {
+    background: #FFF8E1;
+    border: 1px solid #FFE082;
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .cancellation-info-header {
+    font-weight: 700;
+    color: #F57C00;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+  
+  .cancellation-info-body {
+    font-size: var(--font-size-sm);
+  }
+  
+  .cancellation-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+  
+  .cancellation-policy {
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid #FFE082;
+    font-size: var(--font-size-xs);
+    color: var(--c-text-gray);
   }
   
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     アクションボタン
+     View 4: 決済・情報入力
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   
-  .action-buttons {
+  .view4-pattern {
+    display: none;
+  }
+  
+  .view4-pattern.active {
+    display: block;
+  }
+  
+  .view4-substep {
+    display: none;
+  }
+  
+  .view4-substep.active {
+    display: block;
+  }
+  
+  /* 初回レッスン情報カード */
+  .info-card {
+    background: #E3F2FD;
+    border: 1px solid #90CAF9;
+  }
+  
+  .info-header {
+    font-weight: 700;
+    color: #1565C0;
+    margin-bottom: var(--spacing-sm);
     display: flex;
-    gap: var(--spacing-md);
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+  
+  .info-body {
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+  }
+  
+  .info-body ul {
+    margin: var(--spacing-sm) 0;
+    padding-left: var(--spacing-lg);
+  }
+  
+  .info-body li {
+    margin-bottom: 4px;
+  }
+  
+  .info-note {
+    margin-top: var(--spacing-sm);
+    font-weight: 600;
+    color: var(--c-sub-deep-ocean);
+  }
+  
+  /* Square決済フォーム */
+  #square-card-container,
+  #square-card-container-new {
+    min-height: 100px;
+    background: var(--c-bg-mist);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-md);
+    border: 1px solid var(--c-border-light);
+  }
+  
+  /* 現地決済の注意 */
+  .payment-method-notice {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: rgba(87, 195, 194, 0.1);
+    border-radius: var(--radius-sm);
+    border-left: 4px solid var(--c-main-turquoise);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--c-sub-deep-ocean);
+  }
+  
+  /* 警告カード */
+  .warning-card {
+    background: #FFEBEE;
+    border: 1px solid #FFCDD2;
+  }
+  
+  .warning-header {
+    font-weight: 700;
+    color: #C62828;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+  
+  .warning-body {
+    font-size: var(--font-size-sm);
+    color: var(--c-text-sumi);
+  }
+  
+  .warning-body p {
+    margin: 4px 0;
+  }
+  
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     View 5: サンクスページ
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  
+  .thanks-container {
+    text-align: center;
+  }
+  
+  .thanks-icon {
+    font-size: 4rem;
+    color: var(--c-main-turquoise);
+    margin-bottom: var(--spacing-lg);
+    animation: checkBounce 0.6s ease-out;
+  }
+  
+  @keyframes checkBounce {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  .thanks-message {
+    font-size: var(--font-size-lg);
+    color: var(--c-text-gray);
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .thanks-actions {
     margin-top: var(--spacing-lg);
   }
   
-  .action-buttons .btn {
-    flex: 1;
-  }
-  
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     エラー表示
+     モーダル
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   
-  .error-message {
-    background-color: rgba(208, 2, 27, 0.1);
-    border-left: 4px solid var(--danger-color);
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius-sm);
-    color: var(--danger-color);
-    font-size: var(--font-size-sm);
-    margin-bottom: var(--spacing-md);
+  /* 犬選択モーダル */
+  .dog-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin: var(--spacing-md) 0;
   }
   
-  .success-message {
-    background-color: rgba(126, 211, 33, 0.1);
-    border-left: 4px solid var(--success-color);
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius-sm);
-    color: var(--success-color);
+  /* UIDモーダル */
+  .uid-modal-message {
     font-size: var(--font-size-sm);
+    color: var(--c-text-gray);
+    line-height: 1.6;
     margin-bottom: var(--spacing-md);
-  }
-
-  /* トレーナーカード */
-.trainer-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
-    margin: 2rem 0;
+    text-align: left;
   }
   
-  .trainer-card {
+  .uid-display {
+    background: var(--c-bg-mist);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    word-break: break-all;
+    margin-bottom: var(--spacing-md);
+    border: 1px solid var(--c-border-color);
+  }
+  
+  /* 時間選択モーダル */
+  .time-slot-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin: var(--spacing-md) 0;
+  }
+  
+  /* 規約モーダル */
+  .top-sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--c-border-light);
+    font-weight: 700;
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  
+  .btn-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--c-text-gray);
+    padding: 0;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
-    padding: 1rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background var(--transition-fast);
   }
   
-  .trainer-card:hover {
-    border-color: #3b82f6;
-    background: #eff6ff;
-  }
-  
-  .trainer-card.selected {
-    border-color: #3b82f6;
-    background: #dbeafe;
-  }
-  
-  .trainer-avatar {
-    font-size: 2rem;
-    margin-right: 1rem;
-  }
-  
-  .trainer-name {
-    font-weight: 600;
-    font-size: 1rem;
-  }
-  
-  .trainer-specialty {
-    font-size: 0.875rem;
-    color: #6b7280;
-  }
-  
-  /* 犬チェックボックス */
-  .dog-checkbox {
-    margin-right: 0.5rem;
-  }
-  
-  .dog-card {
-    position: relative;
+  .btn-close:hover {
+    background: var(--c-bg-mist);
   }
   
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     レスポンシブ対応
+     レスポンシブ
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   
-  @media (max-width: 360px) {
-    .time-slots {
-      grid-template-columns: repeat(2, 1fr);
+  @media (max-width: 480px) {
+    .progress-container {
+      padding: var(--spacing-md);
     }
-    
-    .step-label {
-      font-size: 10px;
+  
+    .progress-bg,
+    .progress-bar-fill {
+      left: 20px;
+      right: 20px;
     }
+  
+    .calendar-day {
+      min-height: 50px;
+      padding: 4px;
+    }
+  
+    .calendar-day-number {
+      font-size: 11px;
+    }
+  
+    .availability-symbol {
+      font-size: 1rem;
+    }
+  
+    .voucher-input-group {
+      flex-direction: column;
+    }
+  
+    .voucher-input-group .btn {
+      width: 100%;
+    }
+  
+    .price-total {
+      font-size: var(--font-size-md);
+    }
+  }
+  
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     ユーティリティ（reservation専用）
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  
+  .text-success {
+    color: #7ED321;
+  }
+  
+  .text-danger {
+    color: #D0021B;
+  }
+  
+  .text-warning {
+    color: #F5A623;
   }
