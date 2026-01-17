@@ -45,19 +45,29 @@ class ReservationApp {
      */
     async init() {
       try {
+        debugLog('🚀 Reservation app initializing...', 'info');
+        
         this.showLoading('初期化中...');
         
-        // LIFF初期化
+        debugLog('📱 LIFF initializing...', 'info');
         const liffSuccess = await liffHandler.init();
+        
         if (!liffSuccess) {
-          return; // ログイン画面にリダイレクト済み
+          debugLog('❌ LIFF initialization failed', 'error');
+          return;
         }
         
+        debugLog('✅ LIFF initialized successfully', 'success');
+        
         // データ読み込み
+        debugLog('📊 Loading initial data...', 'info');
         await this.loadInitialData();
+        debugLog('✅ Initial data loaded', 'success');
         
         // Square初期化
+        debugLog('💳 Square Payments initializing...', 'info');
         await this.initSquarePayments();
+        debugLog('✅ Square Payments initialized', 'success');
         
         // UI初期化
         this.initUI();
@@ -67,8 +77,11 @@ class ReservationApp {
         
         this.hideLoading();
         
+        debugLog('🎉 Reservation app ready!', 'success');
+        
       } catch (error) {
         console.error('[App] Initialization failed:', error);
+        debugLog(`❌ Initialization failed: ${error.message}`, 'error');
         this.hideLoading();
         this.showError(error.message);
       }

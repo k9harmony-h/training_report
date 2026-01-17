@@ -19,6 +19,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 </head>
 <body>
+    <!-- ログスタンプ（ページ上部） -->
+    <div id="debug-timestamp" class="debug-timestamp">
+      <span class="debug-label">🐾 K9 Harmony Debug Mode</span>
+      <span id="page-load-time">Loading...</span>
+      <span class="debug-version">v2026.01.17</span>
+    </div>
+  
   <!-- ローディングオーバーレイ -->
   <div id="loading-overlay" class="loading-overlay">
     <div id="lottie-animation" class="loading-animation"></div>
@@ -203,11 +210,22 @@
       </div>
     </div>
   </div>
-
+  <!-- デバッグコンソール（ページ下部） -->
+  <div id="debug-console" class="debug-console">
+    <div class="debug-console-header">
+      <span>📋 Debug Console</span>
+      <button id="debug-clear-btn" class="debug-btn">Clear</button>
+      <button id="debug-toggle-btn" class="debug-btn">Minimize</button>
+    </div>
+    <div id="debug-console-body" class="debug-console-body">
+      <div class="debug-log">Console initialized...</div>
+    </div>
+  </div>
   <!-- JavaScript -->
-  <script src="js/config.js?v=11"></script>
-  <script src="js/liff-handler.js?v=11"></script>
-  <script src="js/reservation.js?v=11"></script>
-  <script src="js/api-client.js?v=11"></script>
+  <script src="js/config.js?v=12"></script>
+  <script src="js/debug.js?v=12"></script>
+  <script src="js/liff-handler.js?v=12"></script>
+  <script src="js/reservation.js?v=12"></script>
+  <script src="js/api-client.js?v=12"></script>
 </body>
 </html>
