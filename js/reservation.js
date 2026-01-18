@@ -288,54 +288,115 @@
      function initializeView1() {
       debugLog('📋 View 1 初期化', 'info');
       
-      // ===== まずメニュー選択欄をレンダリング =====
-      renderMenuSelect();
-      
-      // ===== 次にイベントリスナーを登録 =====
-      
-      // 複数頭チェックボックスのイベント
-      document.getElementById('multi-dog-check').addEventListener('change', (e) => {
-        AppState.isMultiDog = e.target.checked;
-        validateView1();
-      });
-      
-      // トレーナー選択のイベント
-      document.getElementById('trainer-select').addEventListener('change', (e) => {
-        AppState.selectedTrainer = e.target.value;
-      });
-      
-      // メニュー選択のイベント
-      document.getElementById('menu-select').addEventListener('change', (e) => {
-        const selectedOption = e.target.options[e.target.selectedIndex];
-        AppState.selectedMenu = {
-          duration: parseInt(e.target.value),
-          price: parseInt(selectedOption.getAttribute('data-price')),
-          name: selectedOption.text
-        };
-        validateView1();
-      });
-      
-      // ===== 既存顧客 or 新規顧客の処理 =====
-      
-      if (AppState.userData) {
-        // 既存顧客の場合
+      try {
+        // ===== Step 1: メニュー選択欄をレンダリング =====
+        debugLog('📋 Step 1: renderMenuSelect() 開始', 'info');
+        renderMenuSelect();
+        debugLog('✅ Step 1: renderMenuSelect() 完了', 'success');
         
-        // 犬が1頭のみなら自動選択
-        if (AppState.userDogs.length === 1) {
-          selectDog(0);
-        } else {
-          // 複数頭の場合は初期表示
-          document.getElementById('selected-dog-name').textContent = '---';
+        // ===== Step 2: イベントリスナー登録 =====
+        debugLog('📋 Step 2: イベントリスナー登録開始', 'info');
+        
+        // 複数頭チェックボックス
+        const multiDogCheck = document.getElementById('multi-dog-check');
+        if (multiDogCheck) {
+          multiDogCheck.removeEventListener('change', handleMultiDogChange); // 重複防止
+          multiDogCheck.addEventListener('change', handleMultiDogChange);
+          debugLog('✅ 複数頭チェックボックス: イベント登録完了', 'success');
         }
         
-      } else {
-        // 新規顧客の場合
-        document.getElementById('selected-dog-name').textContent = 'ご新規のお客様';
-        document.getElementById('btn-change-dog').style.display = 'none';
-        document.getElementById('existing-customer-link-area').classList.remove('hidden');
+        // トレーナー選択
+        const trainerSelect = document.getElementById('trainer-select');
+        if (trainerSelect) {
+          trainerSelect.removeEventListener('change', handleTrainerChange);
+          trainerSelect.addEventListener('change', handleTrainerChange);
+          debugLog('✅ トレーナー選択: イベント登録完了', 'success');
+        }
+        
+        // メニュー選択
+        const menuSelect = document.getElementById('menu-select');
+        if (menuSelect) {
+          menuSelect.removeEventListener('change', handleMenuChange);
+          menuSelect.addEventListener('change', handleMenuChange);
+          debugLog('✅ メニュー選択: イベント登録完了', 'success');
+          
+          // 初期値を手動で設定
+          if (menuSelect.options.length > 0) {
+            const selectedOption = menuSelect.options[menuSelect.selectedIndex];
+            AppState.selectedMenu = {
+              duration: parseInt(menuSelect.value),
+              price: parseInt(selectedOption.getAttribute('data-price')),
+              name: selectedOption.text
+            };
+            debugLog(`✅ 初期メニュー設定: ${AppState.selectedMenu.name}`, 'success');
+          }
+        }
+        
+        debugLog('✅ Step 2: イベントリスナー登録完了', 'success');
+        
+        // ===== Step 3: ユーザータイプ別の処理 =====
+        debugLog('📋 Step 3: ユーザータイプ確認', 'info');
+        debugLog(`🔍 AppState.userData: ${AppState.userData ? 'あり' : 'なし'}`, 'info');
+        debugLog(`🔍 AppState.userDogs.length: ${AppState.userDogs.length}`, 'info');
+        
+        if (AppState.userData) {
+          // 既存顧客の場合
+          debugLog('👤 既存顧客として処理', 'info');
+          
+          if (AppState.userDogs.length === 1) {
+            debugLog('🐕 犬1頭のため自動選択', 'info');
+            selectDog(0);
+          } else if (AppState.userDogs.length > 1) {
+            debugLog('🐕 複数頭のため手動選択待ち', 'info');
+            document.getElementById('selected-dog-name').textContent = '---';
+          } else {
+            debugLog('⚠️ 犬データなし', 'warn');
+            document.getElementById('selected-dog-name').textContent = '犬情報なし';
+          }
+          
+        } else {
+          // 新規顧客の場合
+          debugLog('🆕 新規顧客として処理', 'info');
+          document.getElementById('selected-dog-name').textContent = 'ご新規のお客様';
+          document.getElementById('btn-change-dog').style.display = 'none';
+          document.getElementById('existing-customer-link-area').classList.remove('hidden');
+        }
+        
+        debugLog('✅ Step 3: ユーザー処理完了', 'success');
+        
+        // ===== Step 4: バリデーション =====
+        debugLog('📋 Step 4: バリデーション実行', 'info');
+        validateView1();
+        debugLog('✅ Step 4: バリデーション完了', 'success');
+        
+        debugLog('✅ View 1 初期化完了', 'success');
+        
+      } catch (error) {
+        debugLog(`❌ View 1 初期化エラー: ${error.message}`, 'error');
+        console.error('initializeView1 Error:', error);
       }
-      
-      // 最後にバリデーション
+    }
+    
+    // イベントハンドラー（グローバルに定義）
+    function handleMultiDogChange(e) {
+      AppState.isMultiDog = e.target.checked;
+      debugLog(`🐕 複数頭: ${AppState.isMultiDog}`, 'info');
+      validateView1();
+    }
+    
+    function handleTrainerChange(e) {
+      AppState.selectedTrainer = e.target.value;
+      debugLog(`👨‍🏫 トレーナー: ${AppState.selectedTrainer}`, 'info');
+    }
+    
+    function handleMenuChange(e) {
+      const selectedOption = e.target.options[e.target.selectedIndex];
+      AppState.selectedMenu = {
+        duration: parseInt(e.target.value),
+        price: parseInt(selectedOption.getAttribute('data-price')),
+        name: selectedOption.text
+      };
+      debugLog(`📋 メニュー選択: ${AppState.selectedMenu.name} (¥${AppState.selectedMenu.price})`, 'info');
       validateView1();
     }
   
@@ -343,27 +404,44 @@
    * メニュー選択欄のレンダリング
    */
   function renderMenuSelect() {
+    debugLog('📋 renderMenuSelect() 開始', 'info');
+    debugLog(`🔍 AppState.products.length: ${AppState.products.length}`, 'info');
+    
     const select = document.getElementById('menu-select');
+    if (!select) {
+      debugLog('❌ menu-select要素が見つかりません', 'error');
+      return;
+    }
+    
     select.innerHTML = '';
     
     if (AppState.products.length > 0) {
-      AppState.products.forEach(product => {
+      debugLog('📦 商品データからメニュー生成', 'info');
+      
+      AppState.products.forEach((product, index) => {
+        debugLog(`🔍 商品${index}: ${product.name}, カテゴリ: ${product.category}`, 'info');
+        
         if (product.category === 'トレーニング') {
           const option = document.createElement('option');
-          option.value = 90; // TODO: 商品の実際の時間
+          option.value = 90; // TODO: product.duration
           option.setAttribute('data-price', product.price);
           option.textContent = `${product.name} (¥${product.price.toLocaleString()})`;
           select.appendChild(option);
+          debugLog(`✅ メニュー追加: ${product.name}`, 'success');
         }
       });
+      
     } else {
-      // デフォルト
+      debugLog('⚠️ 商品データなし - デフォルトメニュー使用', 'warn');
+      
       const option = document.createElement('option');
       option.value = 90;
       option.setAttribute('data-price', 4900);
       option.textContent = '単発レッスン (¥4,900)';
       select.appendChild(option);
-    }    
+    }
+    
+    debugLog(`✅ renderMenuSelect() 完了 (options: ${select.options.length})`, 'success');
   }
   
   /**
@@ -371,11 +449,27 @@
    * @param {number} index - 犬のインデックス
    */
   function selectDog(index) {
-    AppState.selectedDog = AppState.userDogs[index];
-    document.getElementById('selected-dog-name').textContent = 
-      AppState.selectedDog.name_disp || AppState.selectedDog.name;
+    debugLog(`🐕 selectDog(${index}) 開始`, 'info');
+    debugLog(`🔍 AppState.userDogs.length: ${AppState.userDogs.length}`, 'info');
     
-    debugLog(`🐕 犬選択: ${AppState.selectedDog.name}`, 'info');
+    if (index < 0 || index >= AppState.userDogs.length) {
+      debugLog(`❌ 無効なインデックス: ${index}`, 'error');
+      return;
+    }
+    
+    AppState.selectedDog = AppState.userDogs[index];
+    debugLog(`🔍 selectedDog: ${JSON.stringify(AppState.selectedDog)}`, 'info');
+    
+    const element = document.getElementById('selected-dog-name');
+    if (!element) {
+      debugLog('❌ selected-dog-name要素が見つかりません', 'error');
+      return;
+    }
+    
+    const dogName = AppState.selectedDog.name_disp || AppState.selectedDog.name || AppState.selectedDog.dog_name;
+    element.textContent = dogName;
+    
+    debugLog(`✅ 犬選択完了: ${dogName}`, 'success');
     validateView1();
   }
   
