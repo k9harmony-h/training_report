@@ -103,19 +103,20 @@ window.onload = async () => {
   /**
  * 必須データ読み込み（Priority 2）
  */
+/**
+ * 必須データ読み込み（Priority 2）
+ */
 async function loadEssentialData() {
   try {
     const startTime = performance.now();
     
     debugLog(`🔍 GAS URL: ${CONFIG.API.GAS_URL}`, 'info');
     
-    // 並列読み込みで高速化（トレーナー追加）
-    const [customerData, productsData, trainersData] = await Promise.all([
+    // 並列読み込みで高速化
+    const [customerData, productsData] = await Promise.all([
       fetch(`${CONFIG.API.GAS_URL}?type=data&userId=${AppState.lineUserId}`)
         .then(res => res.json()),
       fetch(`${CONFIG.API.GAS_URL}?type=products`)
-        .then(res => res.json()),
-      fetch(`${CONFIG.API.GAS_URL}?type=trainers`)
         .then(res => res.json())
     ]);
     
@@ -153,17 +154,25 @@ async function loadEssentialData() {
       }
     }
     
-    // ===== トレーナーデータ処理（追加）=====
-    if (trainersData && trainersData.trainers && Array.isArray(trainersData.trainers)) {
-      AppState.trainers = trainersData.trainers;
-    } else if (Array.isArray(trainersData)) {
-      AppState.trainers = trainersData;
-    } else {
-      debugLog('⚠️ トレーナーデータなし', 'warn');
-      AppState.trainers = [];
-    }
+    // ===== トレーナーデータ（暫定的にハードコード）=====
+    // TODO: バックエンドに type=trainers エンドポイントを実装後、APIから取得に変更
+    AppState.trainers = [
+      {
+        trainer_id: 'trainer001',
+        trainer_name: '平田',
+        specialty: '総合トレーナー',
+        status: 'ACTIVE'
+      },
+      {
+        trainer_id: 'trainer002',
+        trainer_name: '山田',
+        specialty: 'パピートレーナー',
+        status: 'ACTIVE'
+      }
+    ];
     
     debugLog(`🔍 AppState.trainers.length: ${AppState.trainers.length}`, 'info');
+    debugLog(`✅ トレーナーデータ（暫定）: ${AppState.trainers.map(t => t.trainer_name).join(', ')}`, 'success');
     
     const endTime = performance.now();
     debugLog(`✅ データ読み込み完了 (${Math.round(endTime - startTime)}ms)`, 'success');
@@ -680,56 +689,63 @@ function renderMenuSelect() {
   /**
    * カレンダー日付セルを追加
    */
-  function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWeek, slots = []) {
-    const cell = document.createElement('div');
-    cell.className = 'calendar-day';
-    
-    if (isOtherMonth) {
-      cell.classList.add('calendar-day-other-month');
-    }
-    if (isToday) {
-      cell.classList.add('calendar-day-today');
-    }
-    if (dayOfWeek === 0) {
-      cell.classList.add('sunday');
-    }
-    if (dayOfWeek === 6) {
-      cell.classList.add('saturday');
-    }
-    
-    // 日付番号
-    const numberEl = document.createElement('div');
-    numberEl.className = 'calendar-day-number';
-    numberEl.textContent = dayNumber;
-    cell.appendChild(numberEl);
-    
-    // 空き状況シンボル
-    if (!isOtherMonth && slots.length > 0) {
-      const symbolEl = document.createElement('div');
-      symbolEl.className = 'availability-symbol';
-      
-      if (slots.length >= 5) {
-        symbolEl.classList.add('symbol-available');
-        symbolEl.textContent = '●';
-      } else if (slots.length >= 2) {
-        symbolEl.classList.add('symbol-few');
-        symbolEl.textContent = '◐';
-      } else {
-        symbolEl.classList.add('symbol-full');
-        symbolEl.textContent = '○';
-      }
-      
-      cell.appendChild(symbolEl);
-      
-      // クリックイベント
-      cell.style.cursor = 'pointer';
-      cell.addEventListener('click', () => {
-        openTimeModal(dateStr, slots);
-      });
-    }
-    
-    grid.appendChild(cell);
+  /**
+ * カレンダー日付セルを追加
+ */
+function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWeek, slots = []) {
+  const cell = document.createElement('div');
+  cell.className = 'calendar-day';
+  
+  if (isOtherMonth) {
+    cell.classList.add('calendar-day-other-month');
   }
+  if (isToday) {
+    cell.classList.add('calendar-day-today');
+  }
+  if (dayOfWeek === 0) {
+    cell.classList.add('sunday');
+  }
+  if (dayOfWeek === 6) {
+    cell.classList.add('saturday');
+  }
+  
+  // 日付番号
+  const numberEl = document.createElement('div');
+  numberEl.className = 'calendar-day-number';
+  numberEl.textContent = dayNumber;
+  cell.appendChild(numberEl);
+  
+  // 空き状況シンボル
+  if (!isOtherMonth && slots.length > 0) {
+    const symbolEl = document.createElement('div');
+    symbolEl.className = 'availability-symbol';
+    
+    if (slots.length >= 5) {
+      symbolEl.classList.add('symbol-available');
+      symbolEl.textContent = '●';
+    } else if (slots.length >= 2) {
+      symbolEl.classList.add('symbol-few');
+      symbolEl.textContent = '◐';
+    } else {
+      symbolEl.classList.add('symbol-full');
+      symbolEl.textContent = '○';
+    }
+    
+    cell.appendChild(symbolEl);
+    
+    // ===== 修正: クリックイベントを追加 =====
+    cell.style.cursor = 'pointer';
+    cell.addEventListener('click', () => {
+      debugLog(`📅 日付クリック: ${dateStr}`, 'info');
+      openTimeModal(dateStr, slots);
+    });
+  } else if (!isOtherMonth) {
+    // 空き枠がない場合は無効化
+    cell.classList.add('calendar-day-disabled');
+  }
+  
+  grid.appendChild(cell);
+}
   
   /**
    * 月をシフト
@@ -1517,34 +1533,71 @@ function renderMenuSelect() {
   }
   
   /**
-   * 時間選択モーダル表示
-   * @param {string} dateStr - 日付（YYYY-MM-DD）
-   * @param {Array} slots - 利用可能な時間スロット
-   */
-  function openTimeModal(dateStr, slots) {
-    const title = document.getElementById('time-modal-title');
-    const container = document.getElementById('time-slot-buttons');
-    
-    title.textContent = `${dateStr} - 時間を選択してください`;
-    container.innerHTML = '';
-    
-    slots.forEach(time => {
-      const btn = document.createElement('button');
-      btn.className = 'btn btn-outline btn-block';
-      btn.textContent = `${time} 開始`;
-      btn.onclick = () => {
-        selectTime(dateStr, time);
-        closeTimeModal();
-      };
-      container.appendChild(btn);
-    });
-    
-    openModal('time-modal-overlay');
+ * 時間選択モーダル表示
+ * @param {string} dateStr - 日付（YYYY-MM-DD）
+ * @param {Array} slots - 利用可能な時間スロット
+ */
+function openTimeModal(dateStr, slots) {
+  debugLog(`📅 時間選択モーダル表示: ${dateStr}`, 'info');
+  debugLog(`🔍 利用可能な時間: ${slots.join(', ')}`, 'info');
+  
+  // 選択中の日付を更新
+  AppState.selectedDate = dateStr;
+  
+  // モーダルのタイトル更新
+  const date = new Date(dateStr);
+  const dateFormatted = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日（${['日','月','火','水','木','金','土'][date.getDay()]}）`;
+  document.getElementById('time-modal-title').textContent = dateFormatted;
+  
+  // 時間ボタン生成
+  const container = document.getElementById('time-slot-buttons');
+  container.innerHTML = '';
+  
+  slots.forEach(time => {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-outline btn-block';
+    btn.textContent = `${time} 開始`;
+    btn.onclick = () => {
+      selectTime(dateStr, time);
+      closeTimeModal();
+    };
+    container.appendChild(btn);
+  });
+  
+  // モーダル表示
+  openModal('time-modal-overlay');
+  
+  debugLog(`✅ 時間選択モーダル表示完了 (${slots.length}件)`, 'success');
+}
+
+/**
+ * 時間選択モーダルを閉じる
+ */
+function closeTimeModal() {
+  closeModal('time-modal-overlay');
+}
+
+/**
+ * 時間選択
+ * @param {string} date - 日付
+ * @param {string} time - 時間
+ */
+function selectTime(date, time) {
+  AppState.selectedDate = date;
+  AppState.selectedTime = time;
+  
+  // ボタンテキスト更新
+  const btn = document.getElementById('btn-next-view3');
+  if (btn) {
+    btn.textContent = `${date} ${time}〜 次へ`;
+    btn.disabled = false;
   }
   
-  function closeTimeModal() {
-    closeModal('time-modal-overlay');
-  }
+  // カレンダー再レンダリング（選択状態を反映）
+  renderCalendar();
+  
+  debugLog(`✅ 時間選択: ${date} ${time}`, 'success');
+}
   
   /**
    * 時間選択
