@@ -55,37 +55,50 @@
   /**
    * アプリケーション起動
    */
-  window.onload = async () => {
-    debugLog('🚀 App Start', 'info');
+  /**
+ * アプリケーション起動
+ */
+window.onload = async () => {
+  debugLog('🚀 App Start', 'info');
+  
+  try {
+    // ローディングTips開始
+    startLoadingTips();
     
-    try {
-      // ローディングTips開始
-      startLoadingTips();
-      
-      // Priority 1: LIFF初期化
-      debugLog('📱 Priority 1: LIFF初期化', 'info');
-      await initializeLiff();
-      
-      // Priority 2: 必須データ読み込み
-      debugLog('📊 Priority 2: 必須データ読み込み', 'info');
-      await loadEssentialData();
-      
-      // 画面表示
-      hideLoading();
-      goToView(1);
-      
-      // Priority 3: カレンダーデータ（当月）
-      debugLog('📅 Priority 3: 当月カレンダー読み込み', 'info');
-      loadCalendarData(0);
-      
-      // Priority 4: 事前読み込み
-      prefetchData();
-      
-    } catch (error) {
-      debugLog(`❌ 初期化エラー: ${error.message}`, 'error');
-      showError('アプリケーションの起動に失敗しました。ページを再読み込みしてください。');
+    // Priority 1: LIFF初期化
+    debugLog('📱 Priority 1: LIFF初期化', 'info');
+    await liff.init({ liffId: CONFIG.LIFF.ID });
+    
+    if (!liff.isLoggedIn()) {
+      debugLog('⚠️ ユーザー未ログイン - ログイン画面へ', 'warn');
+      liff.login({ redirectUri: window.location.href });
+      return;
     }
-  };
+    
+    const profile = await liff.getProfile();
+    AppState.lineUserId = profile.userId;
+    debugLog(`✅ LIFF初期化完了 - UserID: ${profile.userId.substring(0, 8)}...`, 'success');
+    
+    // Priority 2: 必須データ読み込み
+    debugLog('📊 Priority 2: 必須データ読み込み', 'info');
+    await loadEssentialData();
+    
+    // 画面表示
+    hideLoading();
+    goToView(1);
+    
+    // Priority 3: カレンダーデータ（当月）
+    debugLog('📅 Priority 3: 当月カレンダー読み込み', 'info');
+    loadCalendarData(0);
+    
+    // Priority 4: 事前読み込み
+    prefetchData();
+    
+  } catch (error) {
+    debugLog(`❌ 初期化エラー: ${error.message}`, 'error');
+    showError('アプリケーションの起動に失敗しました。ページを再読み込みしてください。');
+  }
+};
   
   /**
    * LIFF初期化
@@ -94,27 +107,22 @@
     try {
       const startTime = performance.now();
       
+      // ===== デバッグ用: GAS URLを確認 =====
+      debugLog(`🔍 GAS URL: ${CONFIG.API.GAS_URL}`, 'info');
+      
       // 並列読み込みで高速化
       const [customerData, productsData] = await Promise.all([
-        apiCall('GET', { type: 'data', userId: AppState.lineUserId }),
-        apiCall('GET', { type: 'products' })
+        fetch(`${CONFIG.API.GAS_URL}?type=data&userId=${AppState.lineUserId}`)
+          .then(res => res.json()),
+        fetch(`${CONFIG.API.GAS_URL}?type=products`)
+          .then(res => res.json())
       ]);
       
-      // ===== 商品データの構造を詳細確認 =====
+      // ===== 商品データの詳細確認 =====
       debugLog('🔍 ===== 商品データ詳細確認 =====', 'info');
-      debugLog(`🔍 productsData 全体: ${JSON.stringify(productsData)}`, 'info');
-      debugLog(`🔍 productsData.products: ${JSON.stringify(productsData.products)}`, 'info');
+      debugLog(`🔍 productsData: ${JSON.stringify(productsData).substring(0, 200)}...`, 'info');
       
-      if (productsData.products && productsData.products.length > 0) {
-        debugLog(`🔍 最初の商品の全フィールド:`, 'info');
-        const firstProduct = productsData.products[0];
-        for (let key in firstProduct) {
-          debugLog(`  - ${key}: ${firstProduct[key]}`, 'info');
-        }
-      }
-      debugLog('🔍 ===== 確認終了 =====', 'info');
-      
-      // 顧客データ処理（データの保存のみ）
+      // 顧客データ処理
       if (customerData && customerData.customer) {
         AppState.userData = customerData.customer;
         AppState.userDogs = customerData.dogs || [];
@@ -123,8 +131,26 @@
         debugLog('📝 新規顧客', 'info');
       }
       
-      // 商品データ処理（データの保存のみ）
-      AppState.products = productsData.products || [];
+      // 商品データ処理（複数のパターンに対応）
+      if (productsData.products && Array.isArray(productsData.products)) {
+        AppState.products = productsData.products;
+      } else if (Array.isArray(productsData)) {
+        AppState.products = productsData;
+      } else {
+        debugLog('⚠️ 商品データの形式が不明です', 'warn');
+        AppState.products = [];
+      }
+      
+      debugLog(`🔍 AppState.products.length: ${AppState.products.length}`, 'info');
+      
+      // 最初の商品を詳細確認
+      if (AppState.products.length > 0) {
+        const firstProduct = AppState.products[0];
+        debugLog(`🔍 最初の商品:`, 'info');
+        for (let key in firstProduct) {
+          debugLog(`  - ${key}: ${firstProduct[key]}`, 'info');
+        }
+      }
       
       const endTime = performance.now();
       debugLog(`✅ データ読み込み完了 (${Math.round(endTime - startTime)}ms)`, 'success');
@@ -409,20 +435,30 @@
       debugLog('📦 商品データからメニュー生成', 'info');
       
       AppState.products.forEach((product, index) => {
-        debugLog(`🔍 商品${index}: ${product.name}, カテゴリ: ${product.category}`, 'info');
+        // 複数のフィールド名パターンに対応
+        const name = product.product_name || product.name;
+        const category = product.product_category || product.category;
+        const price = product.product_price || product.price;
+        const duration = product.product_duration || product.duration || 90;
         
-        if (product.category === 'トレーニング') {
+        debugLog(`🔍 商品${index}: name=${name}, category=${category}, price=${price}`, 'info');
+        
+        if (category === 'トレーニング' || category === 'training') {
           const option = document.createElement('option');
-          option.value = 90; // TODO: product.duration
-          option.setAttribute('data-price', product.price);
-          option.textContent = `${product.name} (¥${product.price.toLocaleString()})`;
+          option.value = duration;
+          option.setAttribute('data-price', price);
+          option.setAttribute('data-id', product.product_id || product.id || index);
+          option.textContent = `${name} (¥${Number(price).toLocaleString()})`;
           select.appendChild(option);
-          debugLog(`✅ メニュー追加: ${product.name}`, 'success');
+          debugLog(`✅ メニュー追加: ${name}`, 'success');
         }
       });
       
-    } else {
-      debugLog('⚠️ 商品データなし - デフォルトメニュー使用', 'warn');
+    }
+    
+    // オプションが1つも追加されなかった場合、デフォルトを追加
+    if (select.options.length === 0) {
+      debugLog('⚠️ トレーニング商品なし - デフォルトメニュー使用', 'warn');
       
       const option = document.createElement('option');
       option.value = 90;
