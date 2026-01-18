@@ -101,65 +101,78 @@ window.onload = async () => {
 };
   
   /**
-   * LIFF初期化
-   */
-  async function loadEssentialData() {
-    try {
-      const startTime = performance.now();
-      
-      // ===== デバッグ用: GAS URLを確認 =====
-      debugLog(`🔍 GAS URL: ${CONFIG.API.GAS_URL}`, 'info');
-      
-      // 並列読み込みで高速化
-      const [customerData, productsData] = await Promise.all([
-        fetch(`${CONFIG.API.GAS_URL}?type=data&userId=${AppState.lineUserId}`)
-          .then(res => res.json()),
-        fetch(`${CONFIG.API.GAS_URL}?type=products`)
-          .then(res => res.json())
-      ]);
-      
-      // ===== 商品データの詳細確認 =====
-      debugLog('🔍 ===== 商品データ詳細確認 =====', 'info');
-      debugLog(`🔍 productsData: ${JSON.stringify(productsData).substring(0, 200)}...`, 'info');
-      
-      // 顧客データ処理
-      if (customerData && customerData.customer) {
-        AppState.userData = customerData.customer;
-        AppState.userDogs = customerData.dogs || [];
-        debugLog(`✅ 既存顧客: ${AppState.userData.name}`, 'success');
-      } else {
-        debugLog('📝 新規顧客', 'info');
-      }
-      
-      // 商品データ処理（複数のパターンに対応）
-      if (productsData.products && Array.isArray(productsData.products)) {
-        AppState.products = productsData.products;
-      } else if (Array.isArray(productsData)) {
-        AppState.products = productsData;
-      } else {
-        debugLog('⚠️ 商品データの形式が不明です', 'warn');
-        AppState.products = [];
-      }
-      
-      debugLog(`🔍 AppState.products.length: ${AppState.products.length}`, 'info');
-      
-      // 最初の商品を詳細確認
-      if (AppState.products.length > 0) {
-        const firstProduct = AppState.products[0];
-        debugLog(`🔍 最初の商品:`, 'info');
-        for (let key in firstProduct) {
-          debugLog(`  - ${key}: ${firstProduct[key]}`, 'info');
-        }
-      }
-      
-      const endTime = performance.now();
-      debugLog(`✅ データ読み込み完了 (${Math.round(endTime - startTime)}ms)`, 'success');
-      
-    } catch (error) {
-      debugLog(`❌ データ読み込みエラー: ${error.message}`, 'error');
-      throw error;
+ * 必須データ読み込み（Priority 2）
+ */
+async function loadEssentialData() {
+  try {
+    const startTime = performance.now();
+    
+    debugLog(`🔍 GAS URL: ${CONFIG.API.GAS_URL}`, 'info');
+    
+    // 並列読み込みで高速化（トレーナー追加）
+    const [customerData, productsData, trainersData] = await Promise.all([
+      fetch(`${CONFIG.API.GAS_URL}?type=data&userId=${AppState.lineUserId}`)
+        .then(res => res.json()),
+      fetch(`${CONFIG.API.GAS_URL}?type=products`)
+        .then(res => res.json()),
+      fetch(`${CONFIG.API.GAS_URL}?type=trainers`)
+        .then(res => res.json())
+    ]);
+    
+    // ===== 商品データの詳細確認 =====
+    debugLog('🔍 ===== 商品データ詳細確認 =====', 'info');
+    debugLog(`🔍 productsData: ${JSON.stringify(productsData).substring(0, 200)}...`, 'info');
+    
+    // 顧客データ処理
+    if (customerData && customerData.customer) {
+      AppState.userData = customerData.customer;
+      AppState.userDogs = customerData.dogs || [];
+      debugLog(`✅ 既存顧客: ${AppState.userData.name}`, 'success');
+    } else {
+      debugLog('📝 新規顧客', 'info');
     }
+    
+    // 商品データ処理
+    if (productsData.products && Array.isArray(productsData.products)) {
+      AppState.products = productsData.products;
+    } else if (Array.isArray(productsData)) {
+      AppState.products = productsData;
+    } else {
+      debugLog('⚠️ 商品データの形式が不明です', 'warn');
+      AppState.products = [];
+    }
+    
+    debugLog(`🔍 AppState.products.length: ${AppState.products.length}`, 'info');
+    
+    // 最初の商品を詳細確認
+    if (AppState.products.length > 0) {
+      const firstProduct = AppState.products[0];
+      debugLog(`🔍 最初の商品:`, 'info');
+      for (let key in firstProduct) {
+        debugLog(`  - ${key}: ${firstProduct[key]}`, 'info');
+      }
+    }
+    
+    // ===== トレーナーデータ処理（追加）=====
+    if (trainersData && trainersData.trainers && Array.isArray(trainersData.trainers)) {
+      AppState.trainers = trainersData.trainers;
+    } else if (Array.isArray(trainersData)) {
+      AppState.trainers = trainersData;
+    } else {
+      debugLog('⚠️ トレーナーデータなし', 'warn');
+      AppState.trainers = [];
+    }
+    
+    debugLog(`🔍 AppState.trainers.length: ${AppState.trainers.length}`, 'info');
+    
+    const endTime = performance.now();
+    debugLog(`✅ データ読み込み完了 (${Math.round(endTime - startTime)}ms)`, 'success');
+    
+  } catch (error) {
+    debugLog(`❌ データ読み込みエラー: ${error.message}`, 'error');
+    throw error;
   }
+}
   
   /**
    * カレンダーデータ読み込み（Priority 3）
@@ -310,13 +323,18 @@ window.onload = async () => {
         renderMenuSelect();
         debugLog('✅ Step 1: renderMenuSelect() 完了', 'success');
         
-        // ===== Step 2: イベントリスナー登録 =====
+        // ===== Step 2: トレーナー選択欄をレンダリング（追加）=====
+        debugLog('📋 Step 1.5: renderTrainerSelect() 開始', 'info');
+        renderTrainerSelect();
+        debugLog('✅ Step 1.5: renderTrainerSelect() 完了', 'success');
+        
+        // ===== Step 3: イベントリスナー登録 =====
         debugLog('📋 Step 2: イベントリスナー登録開始', 'info');
         
         // 複数頭チェックボックス
         const multiDogCheck = document.getElementById('multi-dog-check');
         if (multiDogCheck) {
-          multiDogCheck.removeEventListener('change', handleMultiDogChange); // 重複防止
+          multiDogCheck.removeEventListener('change', handleMultiDogChange);
           multiDogCheck.addEventListener('change', handleMultiDogChange);
           debugLog('✅ 複数頭チェックボックス: イベント登録完了', 'success');
         }
@@ -342,7 +360,9 @@ window.onload = async () => {
             AppState.selectedMenu = {
               duration: parseInt(menuSelect.value),
               price: parseInt(selectedOption.getAttribute('data-price')),
-              name: selectedOption.text
+              name: selectedOption.text,
+              id: selectedOption.getAttribute('data-id'),
+              type: selectedOption.getAttribute('data-type')
             };
             debugLog(`✅ 初期メニュー設定: ${AppState.selectedMenu.name}`, 'success');
           }
@@ -350,7 +370,7 @@ window.onload = async () => {
         
         debugLog('✅ Step 2: イベントリスナー登録完了', 'success');
         
-        // ===== Step 3: ユーザータイプ別の処理 =====
+        // ===== Step 4: ユーザータイプ別の処理 =====
         debugLog('📋 Step 3: ユーザータイプ確認', 'info');
         debugLog(`🔍 AppState.userData: ${AppState.userData ? 'あり' : 'なし'}`, 'info');
         debugLog(`🔍 AppState.userDogs.length: ${AppState.userDogs.length}`, 'info');
@@ -363,8 +383,13 @@ window.onload = async () => {
             debugLog('🐕 犬1頭のため自動選択', 'info');
             selectDog(0);
           } else if (AppState.userDogs.length > 1) {
-            debugLog('🐕 複数頭のため手動選択待ち', 'info');
+            debugLog('🐕 複数頭のため選択モーダル表示', 'info');
             document.getElementById('selected-dog-name').textContent = '---';
+            
+            // ===== 修正: 複数頭の場合、自動でモーダル表示 =====
+            setTimeout(() => {
+              showDogSelectModal();
+            }, 500);
           } else {
             debugLog('⚠️ 犬データなし', 'warn');
             document.getElementById('selected-dog-name').textContent = '犬情報なし';
@@ -380,7 +405,7 @@ window.onload = async () => {
         
         debugLog('✅ Step 3: ユーザー処理完了', 'success');
         
-        // ===== Step 4: バリデーション =====
+        // ===== Step 5: バリデーション =====
         debugLog('📋 Step 4: バリデーション実行', 'info');
         validateView1();
         debugLog('✅ Step 4: バリデーション完了', 'success');
@@ -415,60 +440,118 @@ window.onload = async () => {
       debugLog(`📋 メニュー選択: ${AppState.selectedMenu.name} (¥${AppState.selectedMenu.price})`, 'info');
       validateView1();
     }
-  
   /**
-   * メニュー選択欄のレンダリング
-   */
-  function renderMenuSelect() {
-    debugLog('📋 renderMenuSelect() 開始', 'info');
-    debugLog(`🔍 AppState.products.length: ${AppState.products.length}`, 'info');
-    
-    const select = document.getElementById('menu-select');
-    if (!select) {
-      debugLog('❌ menu-select要素が見つかりません', 'error');
-      return;
-    }
-    
-    select.innerHTML = '';
-    
-    if (AppState.products.length > 0) {
-      debugLog('📦 商品データからメニュー生成', 'info');
-      
-      AppState.products.forEach((product, index) => {
-        // 複数のフィールド名パターンに対応
-        const name = product.product_name || product.name;
-        const category = product.product_category || product.category;
-        const price = product.product_price || product.price;
-        const duration = product.product_duration || product.duration || 90;
-        
-        debugLog(`🔍 商品${index}: name=${name}, category=${category}, price=${price}`, 'info');
-        
-        if (category === 'トレーニング' || category === 'training') {
-          const option = document.createElement('option');
-          option.value = duration;
-          option.setAttribute('data-price', price);
-          option.setAttribute('data-id', product.product_id || product.id || index);
-          option.textContent = `${name} (¥${Number(price).toLocaleString()})`;
-          select.appendChild(option);
-          debugLog(`✅ メニュー追加: ${name}`, 'success');
-        }
-      });
-      
-    }
-    
-    // オプションが1つも追加されなかった場合、デフォルトを追加
-    if (select.options.length === 0) {
-      debugLog('⚠️ トレーニング商品なし - デフォルトメニュー使用', 'warn');
-      
-      const option = document.createElement('option');
-      option.value = 90;
-      option.setAttribute('data-price', 4900);
-      option.textContent = '単発レッスン (¥4,900)';
-      select.appendChild(option);
-    }
-    
-    debugLog(`✅ renderMenuSelect() 完了 (options: ${select.options.length})`, 'success');
+ * トレーナー選択欄のレンダリング
+ */
+function renderTrainerSelect() {
+  debugLog('📋 renderTrainerSelect() 開始', 'info');
+  debugLog(`🔍 AppState.trainers.length: ${AppState.trainers ? AppState.trainers.length : 0}`, 'info');
+  
+  const select = document.getElementById('trainer-select');
+  if (!select) {
+    debugLog('⚠️ trainer-select要素が見つかりません', 'warn');
+    return;
   }
+  
+  // トレーナーデータがない場合は非表示
+  const trainerCard = document.getElementById('trainer-select-card');
+  if (!AppState.trainers || AppState.trainers.length === 0) {
+    debugLog('⚠️ トレーナーデータなし - 選択欄を非表示', 'warn');
+    if (trainerCard) {
+      trainerCard.style.display = 'none';
+    }
+    return;
+  }
+  
+  // トレーナーが1人の場合は非表示
+  if (AppState.trainers.length === 1) {
+    debugLog('📋 トレーナー1人のため自動選択', 'info');
+    AppState.selectedTrainer = AppState.trainers[0].trainer_id || AppState.trainers[0].id;
+    if (trainerCard) {
+      trainerCard.style.display = 'none';
+    }
+    return;
+  }
+  
+  // トレーナーが2人以上の場合は表示
+  debugLog('📋 トレーナー複数 - 選択欄を表示', 'info');
+  if (trainerCard) {
+    trainerCard.style.display = '';
+  }
+  
+  select.innerHTML = '<option value="">トレーナーを選択してください</option>';
+  
+  AppState.trainers.forEach((trainer, index) => {
+    const name = trainer.trainer_name || trainer.name;
+    const id = trainer.trainer_id || trainer.id;
+    
+    const option = document.createElement('option');
+    option.value = id;
+    option.textContent = name;
+    select.appendChild(option);
+    
+    debugLog(`✅ トレーナー追加: ${name}`, 'success');
+  });
+  
+  debugLog(`✅ renderTrainerSelect() 完了 (options: ${select.options.length})`, 'success');
+}
+  /**
+ * メニュー選択欄のレンダリング
+ */
+function renderMenuSelect() {
+  debugLog('📋 renderMenuSelect() 開始', 'info');
+  debugLog(`🔍 AppState.products.length: ${AppState.products.length}`, 'info');
+  
+  const select = document.getElementById('menu-select');
+  if (!select) {
+    debugLog('❌ menu-select要素が見つかりません', 'error');
+    return;
+  }
+  
+  select.innerHTML = '';
+  
+  if (AppState.products.length > 0) {
+    debugLog('📦 商品データからメニュー生成', 'info');
+    
+    AppState.products.forEach((product, index) => {
+      // 複数のフィールド名パターンに対応
+      const name = product.product_name || product.name;
+      const category = product.product_category || product.category;
+      const price = product.product_price || product.price;
+      const duration = product.product_duration || product.duration || 90;
+      const productType = product.product_type || product.type;
+      
+      debugLog(`🔍 商品${index}: name=${name}, category=${category}, type=${productType}, price=${price}`, 'info');
+      
+      // ===== 修正: categoryがない場合は全商品を表示 =====
+      // 条件: テスト決済以外をすべて表示
+      if (name && name !== 'テスト決済') {
+        const option = document.createElement('option');
+        option.value = duration;
+        option.setAttribute('data-price', price);
+        option.setAttribute('data-id', product.product_id || product.id || index);
+        option.setAttribute('data-type', productType || 'SINGLE');
+        option.textContent = `${name} (¥${Number(price).toLocaleString()})`;
+        select.appendChild(option);
+        debugLog(`✅ メニュー追加: ${name}`, 'success');
+      }
+    });
+    
+  }
+  
+  // オプションが1つも追加されなかった場合、デフォルトを追加
+  if (select.options.length === 0) {
+    debugLog('⚠️ 商品なし - デフォルトメニュー使用', 'warn');
+    
+    const option = document.createElement('option');
+    option.value = 90;
+    option.setAttribute('data-price', 4900);
+    option.textContent = '単発レッスン (¥4,900)';
+    select.appendChild(option);
+  }
+  
+  debugLog(`✅ renderMenuSelect() 完了 (options: ${select.options.length})`, 'success');
+}
   
   /**
    * 犬を選択
