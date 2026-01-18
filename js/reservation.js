@@ -124,39 +124,17 @@
         apiCall('GET', { type: 'products' })
       ]);
       
-      // デバッグ: レスポンス全体を確認
-      console.log('🔍 customerData:', customerData);
-      console.log('🔍 customerData.customer:', customerData?.customer);
-      console.log('🔍 customerData.customer.name:', customerData?.customer?.name);
-      console.log('🔍 customerData.customer.customer_name:', customerData?.customer?.customer_name);
-      
-      // 顧客データ処理
+      // 顧客データ処理（データの保存のみ）
       if (customerData && customerData.customer) {
         AppState.userData = customerData.customer;
         AppState.userDogs = customerData.dogs || [];
-        
-        console.log('🔍 AppState.userData:', AppState.userData);
-        console.log('🔍 AppState.userData.name:', AppState.userData.name);
-        
         debugLog(`✅ 既存顧客: ${AppState.userData.name}`, 'success');
-        
-        // 犬が1頭のみなら自動選択
-        if (AppState.userDogs.length === 1) {
-          selectDog(0);
-        }
-        
       } else {
         debugLog('📝 新規顧客', 'info');
-        
-        // 新規顧客向けUI表示
-        document.getElementById('selected-dog-name').textContent = 'ご新規のお客様';
-        document.getElementById('btn-change-dog').style.display = 'none';
-        document.getElementById('existing-customer-link-area').classList.remove('hidden');
       }
       
-      // 商品データ処理
+      // 商品データ処理（データの保存のみ）
       AppState.products = productsData.products || [];
-      renderMenuSelect();
       
       const endTime = performance.now();
       debugLog(`✅ データ読み込み完了 (${Math.round(endTime - startTime)}ms)`, 'success');
@@ -307,33 +285,59 @@
      View 1: 犬・コース・トレーナー選択
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   
-  function initializeView1() {
-    debugLog('📋 View 1 初期化', 'info');
-    
-    // 複数頭チェックボックスのイベント
-    document.getElementById('multi-dog-check').addEventListener('change', (e) => {
-      AppState.isMultiDog = e.target.checked;
+     function initializeView1() {
+      debugLog('📋 View 1 初期化', 'info');
+      
+      // ===== まずメニュー選択欄をレンダリング =====
+      renderMenuSelect();
+      
+      // ===== 次にイベントリスナーを登録 =====
+      
+      // 複数頭チェックボックスのイベント
+      document.getElementById('multi-dog-check').addEventListener('change', (e) => {
+        AppState.isMultiDog = e.target.checked;
+        validateView1();
+      });
+      
+      // トレーナー選択のイベント
+      document.getElementById('trainer-select').addEventListener('change', (e) => {
+        AppState.selectedTrainer = e.target.value;
+      });
+      
+      // メニュー選択のイベント
+      document.getElementById('menu-select').addEventListener('change', (e) => {
+        const selectedOption = e.target.options[e.target.selectedIndex];
+        AppState.selectedMenu = {
+          duration: parseInt(e.target.value),
+          price: parseInt(selectedOption.getAttribute('data-price')),
+          name: selectedOption.text
+        };
+        validateView1();
+      });
+      
+      // ===== 既存顧客 or 新規顧客の処理 =====
+      
+      if (AppState.userData) {
+        // 既存顧客の場合
+        
+        // 犬が1頭のみなら自動選択
+        if (AppState.userDogs.length === 1) {
+          selectDog(0);
+        } else {
+          // 複数頭の場合は初期表示
+          document.getElementById('selected-dog-name').textContent = '---';
+        }
+        
+      } else {
+        // 新規顧客の場合
+        document.getElementById('selected-dog-name').textContent = 'ご新規のお客様';
+        document.getElementById('btn-change-dog').style.display = 'none';
+        document.getElementById('existing-customer-link-area').classList.remove('hidden');
+      }
+      
+      // 最後にバリデーション
       validateView1();
-    });
-    
-    // トレーナー選択のイベント
-    document.getElementById('trainer-select').addEventListener('change', (e) => {
-      AppState.selectedTrainer = e.target.value;
-    });
-    
-    // メニュー選択のイベント
-    document.getElementById('menu-select').addEventListener('change', (e) => {
-      const selectedOption = e.target.options[e.target.selectedIndex];
-      AppState.selectedMenu = {
-        duration: parseInt(e.target.value),
-        price: parseInt(selectedOption.getAttribute('data-price')),
-        name: selectedOption.text
-      };
-      validateView1();
-    });
-    
-    validateView1();
-  }
+    }
   
   /**
    * メニュー選択欄のレンダリング
@@ -359,10 +363,7 @@
       option.setAttribute('data-price', 4900);
       option.textContent = '単発レッスン (¥4,900)';
       select.appendChild(option);
-    }
-    
-    // 初期選択をトリガー
-    select.dispatchEvent(new Event('change'));
+    }    
   }
   
   /**
