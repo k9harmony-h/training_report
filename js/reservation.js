@@ -125,9 +125,9 @@
       ]);
       
       // 顧客データ処理
-      if (customerData.customer) {
+      if (customerData && customerData.customer) {
         AppState.userData = customerData.customer;
-        AppState.userDogs = customerData.all_dogs || [customerData.dog];
+        AppState.userDogs = customerData.dogs || [];
         
         debugLog(`✅ 既存顧客: ${AppState.userData.name}`, 'success');
         
