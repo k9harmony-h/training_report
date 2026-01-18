@@ -124,6 +124,20 @@
         apiCall('GET', { type: 'products' })
       ]);
       
+      // ===== 商品データの構造を詳細確認 =====
+      debugLog('🔍 ===== 商品データ詳細確認 =====', 'info');
+      debugLog(`🔍 productsData 全体: ${JSON.stringify(productsData)}`, 'info');
+      debugLog(`🔍 productsData.products: ${JSON.stringify(productsData.products)}`, 'info');
+      
+      if (productsData.products && productsData.products.length > 0) {
+        debugLog(`🔍 最初の商品の全フィールド:`, 'info');
+        const firstProduct = productsData.products[0];
+        for (let key in firstProduct) {
+          debugLog(`  - ${key}: ${firstProduct[key]}`, 'info');
+        }
+      }
+      debugLog('🔍 ===== 確認終了 =====', 'info');
+      
       // 顧客データ処理（データの保存のみ）
       if (customerData && customerData.customer) {
         AppState.userData = customerData.customer;
