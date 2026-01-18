@@ -90,30 +90,6 @@
   /**
    * LIFF初期化
    */
-  async function initializeLiff() {
-    try {
-      await liff.init({ liffId: CONFIG.LIFF.ID });
-      
-      if (!liff.isLoggedIn()) {
-        debugLog('⚠️ ユーザー未ログイン - ログイン画面へ', 'warn');
-        liff.login({ redirectUri: window.location.href });
-        return;
-      }
-      
-      const profile = await liff.getProfile();
-      AppState.lineUserId = profile.userId;
-      
-      debugLog(`✅ LIFF初期化完了 - UserID: ${profile.userId.substring(0, 8)}...`, 'success');
-      
-    } catch (error) {
-      debugLog(`❌ LIFF初期化失敗: ${error.message}`, 'error');
-      throw error;
-    }
-  }
-  
-  /**
-   * 必須データ読み込み（Priority 2）
-   */
   async function loadEssentialData() {
     try {
       const startTime = performance.now();
