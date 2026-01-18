@@ -124,10 +124,19 @@
         apiCall('GET', { type: 'products' })
       ]);
       
+      // デバッグ: レスポンス全体を確認
+      console.log('🔍 customerData:', customerData);
+      console.log('🔍 customerData.customer:', customerData?.customer);
+      console.log('🔍 customerData.customer.name:', customerData?.customer?.name);
+      console.log('🔍 customerData.customer.customer_name:', customerData?.customer?.customer_name);
+      
       // 顧客データ処理
       if (customerData && customerData.customer) {
         AppState.userData = customerData.customer;
         AppState.userDogs = customerData.dogs || [];
+        
+        console.log('🔍 AppState.userData:', AppState.userData);
+        console.log('🔍 AppState.userData.name:', AppState.userData.name);
         
         debugLog(`✅ 既存顧客: ${AppState.userData.name}`, 'success');
         
