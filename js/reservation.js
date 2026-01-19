@@ -51,10 +51,6 @@
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      初期化処理
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  
-  /**
-   * アプリケーション起動
-   */
   /**
  * アプリケーション起動
  */
@@ -100,9 +96,6 @@ window.onload = async () => {
   }
 };
   
-  /**
- * 必須データ読み込み（Priority 2）
- */
 /**
  * 必須データ読み込み（Priority 2）
  */
@@ -113,10 +106,12 @@ async function loadEssentialData() {
     debugLog(`🔍 GAS URL: ${CONFIG.API.GAS_URL}`, 'info');
     
     // 並列読み込みで高速化
-    const [customerData, productsData] = await Promise.all([
+    const [customerData, productsData, trainersData] = await Promise.all([
       fetch(`${CONFIG.API.GAS_URL}?type=data&userId=${AppState.lineUserId}`)
         .then(res => res.json()),
       fetch(`${CONFIG.API.GAS_URL}?type=products`)
+        .then(res => res.json()),
+      fetch(`${CONFIG.API.GAS_URL}?action=getTrainerList`)  // ← 修正
         .then(res => res.json())
     ]);
     
@@ -154,25 +149,29 @@ async function loadEssentialData() {
       }
     }
     
-    // ===== トレーナーデータ（暫定的にハードコード）=====
-    // TODO: バックエンドに type=trainers エンドポイントを実装後、APIから取得に変更
-    AppState.trainers = [
-      {
-        trainer_id: 'trainer001',
-        trainer_name: '平田',
-        specialty: '総合トレーナー',
-        status: 'ACTIVE'
-      },
-      {
-        trainer_id: 'trainer002',
-        trainer_name: '山田',
-        specialty: 'パピートレーナー',
-        status: 'ACTIVE'
-      }
-    ];
+    // ===== トレーナーデータ処理 =====
+    debugLog('🔍 ===== トレーナーデータ詳細確認 =====', 'info');
+    debugLog(`🔍 trainersData: ${JSON.stringify(trainersData).substring(0, 200)}...`, 'info');
+    
+    if (trainersData && trainersData.trainers && Array.isArray(trainersData.trainers)) {
+      AppState.trainers = trainersData.trainers;
+    } else if (trainersData && Array.isArray(trainersData)) {
+      AppState.trainers = trainersData;
+    } else {
+      debugLog('⚠️ トレーナーデータの形式が不明です', 'warn');
+      AppState.trainers = [];
+    }
     
     debugLog(`🔍 AppState.trainers.length: ${AppState.trainers.length}`, 'info');
-    debugLog(`✅ トレーナーデータ（暫定）: ${AppState.trainers.map(t => t.trainer_name).join(', ')}`, 'success');
+    
+    // 最初のトレーナーを詳細確認
+    if (AppState.trainers.length > 0) {
+      const firstTrainer = AppState.trainers[0];
+      debugLog(`🔍 最初のトレーナー:`, 'info');
+      for (let key in firstTrainer) {
+        debugLog(`  - ${key}: ${firstTrainer[key]}`, 'info');
+      }
+    }
     
     const endTime = performance.now();
     debugLog(`✅ データ読み込み完了 (${Math.round(endTime - startTime)}ms)`, 'success');
@@ -183,51 +182,60 @@ async function loadEssentialData() {
   }
 }
   
-  /**
-   * カレンダーデータ読み込み（Priority 3）
-   * @param {number} monthOffset - 月のオフセット（0=当月, 1=翌月, -1=前月）
-   */
-  async function loadCalendarData(monthOffset) {
-    const targetDate = new Date();
-    targetDate.setMonth(targetDate.getMonth() + monthOffset);
+/**
+ * カレンダーデータ読み込み（Priority 3）
+ * @param {number} monthOffset - 月のオフセット（0=当月, 1=翌月, -1=前月）
+ */
+async function loadCalendarData(monthOffset) {
+  const targetDate = new Date();
+  targetDate.setMonth(targetDate.getMonth() + monthOffset);
+  
+  const year = targetDate.getFullYear();
+  const month = targetDate.getMonth() + 1;
+  const monthKey = `${year}-${month}`;
+  
+  // キャッシュチェック
+  if (AppState.calendarCache.has(monthKey)) {
+    const cached = AppState.calendarCache.get(monthKey);
+    const now = Date.now();
     
-    const monthKey = `${targetDate.getFullYear()}-${targetDate.getMonth() + 1}`;
-    
-    // キャッシュチェック
-    if (AppState.calendarCache.has(monthKey)) {
-      const cached = AppState.calendarCache.get(monthKey);
-      const now = Date.now();
-      
-      if (now - cached.timestamp < CONFIG.UI.CALENDAR.CACHE_DURATION) {
-        debugLog(`📅 カレンダーキャッシュ使用: ${monthKey}`, 'info');
-        return cached.data;
-      }
-    }
-    
-    try {
-      debugLog(`📅 カレンダーデータ取得: ${monthKey}`, 'info');
-      
-      const startDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
-      const data = await apiCall('POST', {
-        action: 'get_month_availability',
-        startDate: startDate.toISOString().split('T')[0],
-        menuDuration: 90 // TODO: 選択されたメニューの時間を使用
-      });
-      
-      // キャッシュに保存
-      AppState.calendarCache.set(monthKey, {
-        data: data.availability || {},
-        timestamp: Date.now()
-      });
-      
-      debugLog(`✅ カレンダーデータ取得完了: ${monthKey}`, 'success');
-      return data.availability || {};
-      
-    } catch (error) {
-      debugLog(`❌ カレンダーデータ取得エラー: ${error.message}`, 'error');
-      return {};
+    if (now - cached.timestamp < CONFIG.UI.CALENDAR.CACHE_DURATION) {
+      debugLog(`📅 カレンダーキャッシュ使用: ${monthKey}`, 'info');
+      return cached.data;
     }
   }
+  
+  try {
+    debugLog(`📅 カレンダーデータ取得: ${monthKey}`, 'info');
+    
+    // ===== 修正: CalendarService仕様に合わせる =====
+    const data = await apiCall('POST', {
+      action: 'getMonthAvailability',
+      year: year,
+      month: month,
+      trainer_code: AppState.selectedTrainer || 'TRN-001',  // ← トレーナーコード
+      is_multiple_dogs: AppState.isMultiDog || false
+    });
+    
+    // エラーチェック
+    if (!data.success) {
+      throw new Error(data.error || 'カレンダーデータ取得失敗');
+    }
+    
+    // キャッシュに保存
+    AppState.calendarCache.set(monthKey, {
+      data: data.availability || {},
+      timestamp: Date.now()
+    });
+    
+    debugLog(`✅ カレンダーデータ取得完了: ${monthKey}`, 'success');
+    return data.availability || {};
+    
+  } catch (error) {
+    debugLog(`❌ カレンダーデータ取得エラー: ${error.message}`, 'error');
+    return {};
+  }
+}
   
   /**
    * 事前読み込み（Priority 4）
