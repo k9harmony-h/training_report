@@ -208,28 +208,39 @@ async function loadCalendarData(monthOffset) {
   try {
     debugLog(`📅 カレンダーデータ取得: ${monthKey}`, 'info');
     
-    // ===== 修正: CalendarService仕様に合わせる =====
     const data = await apiCall('POST', {
       action: 'getMonthAvailability',
       year: year,
       month: month,
-      trainer_code: AppState.selectedTrainer || 'TRN-001',  // ← トレーナーコード
+      trainer_code: AppState.selectedTrainer || 'TRN-001',
       is_multiple_dogs: AppState.isMultiDog || false
     });
     
-    // エラーチェック
-    if (!data.success) {
+    // ===== 修正: エラーチェックを改善 =====
+    // data.error が true の場合はエラー
+    if (data.error === true) {
+      throw new Error(data.message || 'カレンダーデータ取得失敗');
+    }
+    
+    // data.success が false の場合もエラー
+    if (data.success === false) {
       throw new Error(data.error || 'カレンダーデータ取得失敗');
+    }
+    
+    // availability が存在しない場合
+    if (!data.availability) {
+      debugLog(`⚠️ availability フィールドなし: ${JSON.stringify(data).substring(0, 200)}`, 'warn');
+      throw new Error('カレンダーデータの形式が不正です');
     }
     
     // キャッシュに保存
     AppState.calendarCache.set(monthKey, {
-      data: data.availability || {},
+      data: data.availability,
       timestamp: Date.now()
     });
     
-    debugLog(`✅ カレンダーデータ取得完了: ${monthKey}`, 'success');
-    return data.availability || {};
+    debugLog(`✅ カレンダーデータ取得完了: ${monthKey} (${Object.keys(data.availability).length}日分)`, 'success');
+    return data.availability;
     
   } catch (error) {
     debugLog(`❌ カレンダーデータ取得エラー: ${error.message}`, 'error');
