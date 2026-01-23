@@ -788,16 +788,19 @@
     </div>
   </div>
 
-  <!-- 時間選択モーダル -->
-  <div id="time-modal-overlay" class="modal-overlay" onclick="closeTimeModal()">
-    <div class="bottom-modal" onclick="event.stopPropagation()">
-      <h3 id="time-modal-title">時間を選択してください</h3>
-      <div id="time-slot-buttons" class="time-slot-buttons">
+<!-- 時間選択モーダル -->
+<div id="time-modal-overlay" class="modal-overlay" onclick="closeTimeModal()">
+  <div class="bottom-modal time-selection-modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <h3 id="time-modal-title">時間を選択してください</h3>
+    <div class="time-slot-container">
+      <div id="time-slot-buttons" class="time-slot-grid">
         <!-- JavaScriptで動的生成 -->
       </div>
-      <button class="btn btn-secondary btn-block" onclick="closeTimeModal()">閉じる</button>
     </div>
+    <button class="btn btn-secondary btn-block" onclick="closeTimeModal()">閉じる</button>
   </div>
+</div>
 
   <!-- 規約モーダル -->
   <div id="terms-overlay" class="modal-overlay" onclick="closeTerms()"></div>
