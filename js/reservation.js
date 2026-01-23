@@ -788,14 +788,15 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
      View 3: 料金計算・規約確認
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   
-  function initializeView3() {
+     async function initializeView3() {
     debugLog('💰 View 3 初期化', 'info');
-    
+  
+  try {
     // 予約内容表示
     renderReservationSummary();
     
-    // 料金計算
-    calculatePricing();
+    // 料金計算（非同期処理をawait）
+    await calculatePricing();
     
     // キャンセル料表示
     updateCancellationInfo();
@@ -806,7 +807,14 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
     });
     
     document.getElementById('chk-all').addEventListener('change', toggleAllTerms);
+    
+    debugLog('✅ View 3 初期化完了', 'success');
+    
+  } catch (error) {
+    debugLog(`❌ View 3 初期化エラー: ${error.message}`, 'error');
+    console.error('initializeView3 Error:', error);
   }
+}
   
   /**
    * 予約内容サマリーのレンダリング
