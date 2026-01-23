@@ -293,28 +293,30 @@ async function loadCalendarData(monthOffset) {
     
     // activeクラスを追加
     targetView.classList.add('active');
-    targetView.style.cssText = `
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    height: auto !important;
-    max-height: none !important;
-    transform: none !important;
-  `;
-    
-    debugLog(`✅ view-${viewNumber}にactiveクラスを追加しました`, 'success');
-    
-    // ===== デバッグ: 変更後の状態確認 =====
-    setTimeout(() => {
-      debugLog(`🔍 view-${viewNumber}の変更後の表示状態:`, 'info');
-      debugLog(`  - display: ${getComputedStyle(targetView).display}`, 'info');
-      debugLog(`  - visibility: ${getComputedStyle(targetView).visibility}`, 'info');
-      debugLog(`  - opacity: ${getComputedStyle(targetView).opacity}`, 'info');
-      debugLog(`  - height: ${getComputedStyle(targetView).height}`, 'info');
-      debugLog(`  - max-height: ${getComputedStyle(targetView).maxHeight}`, 'info');
-      debugLog(`  - overflow: ${getComputedStyle(targetView).overflow}`, 'info');
-      debugLog(`  - transform: ${getComputedStyle(targetView).transform}`, 'info');
-    }, 100);
+    // ===== 強制的にスタイルを上書き =====
+targetView.style.cssText = `
+display: block !important;
+opacity: 1 !important;
+visibility: visible !important;
+height: auto !important;
+max-height: none !important;
+transform: none !important;
+position: relative !important;
+z-index: 1 !important;
+`;
+
+// ===== 親要素も強制表示 =====
+const parent = targetView.parentElement;
+if (parent) {
+parent.style.cssText = `
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 100vh !important;
+  height: auto !important;
+`;
+debugLog(`✅ 親要素も表示設定`, 'success');
+}
     
     // プログレスバー更新
     updateProgressBar(viewNumber);

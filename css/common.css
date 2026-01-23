@@ -133,6 +133,7 @@
     max-width: 600px;
     margin: 0 auto;
     padding: var(--spacing-md);
+    min-height: calc(100vh - 70px);
   }
   
   .page {
