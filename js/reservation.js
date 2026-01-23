@@ -277,7 +277,7 @@ async function loadCalendarData(monthOffset) {
     // 全Viewを非表示
     document.querySelectorAll('.view-section').forEach(el => {
       el.classList.remove('active');
-      el.style.display = 'none';  // ← 強制的にdisplay:noneを設定
+      el.style.display = 'none';
       debugLog(`🔍 ${el.id} を非表示にしました`, 'info');
     });
     
@@ -291,28 +291,13 @@ async function loadCalendarData(monthOffset) {
     
     debugLog(`🔍 view-${viewNumber}要素が見つかりました`, 'info');
     
-    // ===== デバッグ: 要素の状態確認 =====
-    // reservation.js - goToView() の最後に追加
-setTimeout(() => {
-  debugLog(`🔍 view-${viewNumber}の変更後の表示状態:`, 'info');
-  debugLog(`  - display: ${getComputedStyle(targetView).display}`, 'info');
-  debugLog(`  - visibility: ${getComputedStyle(targetView).visibility}`, 'info');
-  debugLog(`  - opacity: ${getComputedStyle(targetView).opacity}`, 'info');
-  debugLog(`  - height: ${getComputedStyle(targetView).height}`, 'info');  // ← 追加
-  debugLog(`  - max-height: ${getComputedStyle(targetView).maxHeight}`, 'info');  // ← 追加
-  debugLog(`  - overflow: ${getComputedStyle(targetView).overflow}`, 'info');  // ← 追加
-  debugLog(`  - transform: ${getComputedStyle(targetView).transform}`, 'info');  // ← 追加
-}, 100);
-}
-    
-    
     // activeクラスを追加
     targetView.classList.add('active');
-    targetView.style.display = 'block';  // ← 強制的にdisplay:blockを設定
-    targetView.style.opacity = '1';  // ← 追加
-targetView.style.height = 'auto';  // ← 追加
-targetView.style.maxHeight = 'none';  // ← 追加
-targetView.style.transform = 'none';  // ← 追加
+    targetView.style.display = 'block';
+    targetView.style.opacity = '1';
+    targetView.style.height = 'auto';
+    targetView.style.maxHeight = 'none';
+    targetView.style.transform = 'none';
     
     debugLog(`✅ view-${viewNumber}にactiveクラスを追加しました`, 'success');
     
@@ -322,6 +307,10 @@ targetView.style.transform = 'none';  // ← 追加
       debugLog(`  - display: ${getComputedStyle(targetView).display}`, 'info');
       debugLog(`  - visibility: ${getComputedStyle(targetView).visibility}`, 'info');
       debugLog(`  - opacity: ${getComputedStyle(targetView).opacity}`, 'info');
+      debugLog(`  - height: ${getComputedStyle(targetView).height}`, 'info');
+      debugLog(`  - max-height: ${getComputedStyle(targetView).maxHeight}`, 'info');
+      debugLog(`  - overflow: ${getComputedStyle(targetView).overflow}`, 'info');
+      debugLog(`  - transform: ${getComputedStyle(targetView).transform}`, 'info');
     }, 100);
     
     // プログレスバー更新
@@ -337,6 +326,7 @@ targetView.style.transform = 'none';  // ← 追加
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
     debugLog(`✅ View切り替え完了: ${viewNumber}`, 'success');
+  }
   /**
    * プログレスバー更新
    * @param {number} step - 現在のステップ（1-5）
