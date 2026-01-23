@@ -156,61 +156,62 @@
       </div>
 
       <!-- 別住所での実施 -->
-      <div class="card">
-        <label class="checkbox-row">
-          <input type="checkbox" id="alt-address-check" onchange="toggleAltAddress()">
-          <span>申込住所と異なる場所で実施</span>
+<div class="card">
+  <label class="checkbox-row">
+    <input type="checkbox" id="alt-address-check" onchange="toggleAltAddress()">
+    <span>申込住所と異なる場所で実施</span>
+  </label>
+
+  <div class="alt-address-area hidden" id="alt-address-area">
+    <div class="form-group">
+      <label class="form-label required">住所</label>
+      <input type="text" id="alt-addr" class="form-control" placeholder="東京都板橋区前野町...">
+    </div>
+  
+    <div class="form-group">
+      <label class="form-label">施設名</label>
+      <input type="text" id="alt-building" class="form-control" placeholder="例: ○○公園">
+    </div>
+  
+    <div class="form-group">
+      <label class="form-label required">目印</label>
+      <input type="text" id="alt-landmark" class="form-control" placeholder="例: 駐車場の隣">
+    </div>
+  
+    <div class="form-group">
+      <label class="form-label">場所のタイプ</label>
+      <div class="radio-group">
+        <label class="radio-label">
+          <input type="radio" name="alt-location-type" value="outdoor" checked>
+          <span>屋外</span>
         </label>
-
-        <div class="alt-address-area hidden" id="alt-address-area">
-          <div class="form-group">
-            <label class="form-label required">住所</label>
-            <input type="text" id="alt-addr" class="form-control" placeholder="東京都板橋区前野町...">
-          </div>
-        
-          <div class="form-group">
-            <label class="form-label">施設名</label>
-            <input type="text" id="alt-building" class="form-control" placeholder="例: ○○公園">
-          </div>
-        
-          <div class="form-group">
-            <label class="form-label required">目印</label>
-            <input type="text" id="alt-landmark" class="form-control" placeholder="例: 駐車場の隣">
-          </div>
-        
-          <div class="form-group">
-            <label class="form-label">場所のタイプ</label>
-            <div class="radio-group">
-              <label class="radio-label">
-                <input type="radio" name="alt-location-type" value="outdoor" checked>
-                <span>屋外</span>
-              </label>
-              <label class="radio-label">
-                <input type="radio" name="alt-location-type" value="indoor">
-                <span>屋内</span>
-              </label>
-            </div>
-          </div>
-        
-          <div class="form-group">
-            <label class="form-label">備考</label>
-            <textarea 
-              id="alt-remarks" 
-              class="form-control" 
-              rows="2" 
-              placeholder="駐車場の有無、アクセス方法など"
-            ></textarea>
-          </div>
-        </div>
-
-      <!-- ボタン -->
-      <div class="btn-row">
-        <button class="btn btn-secondary" onclick="goToView(1)">戻る</button>
-        <button class="btn btn-primary" id="btn-next-view3" onclick="goToView(3)" disabled>
-          次へ
-        </button>
+        <label class="radio-label">
+          <input type="radio" name="alt-location-type" value="indoor">
+          <span>屋内</span>
+        </label>
       </div>
     </div>
+  
+    <div class="form-group">
+      <label class="form-label">備考</label>
+      <textarea 
+        id="alt-remarks" 
+        class="form-control" 
+        rows="2" 
+        placeholder="駐車場の有無、アクセス方法など"
+      ></textarea>
+    </div>
+  </div>
+</div>  <!-- ← ここで card を閉じる（追加） -->
+
+<!-- ボタン -->
+<div class="btn-row">
+  <button class="btn btn-secondary" onclick="goToView(1)">戻る</button>
+  <button class="btn btn-primary" id="btn-next-view3" onclick="goToView(3)" disabled>
+    次へ
+  </button>
+</div>
+</div>  <!-- ← ここで view-2 を閉じる -->
 
     <!-- ────────────────────────────────────────────────────
          View 3: 概算料金・場所・規約
