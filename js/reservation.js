@@ -298,10 +298,20 @@ async function loadCalendarData(monthOffset) {
     debugLog(`  - opacity: ${getComputedStyle(targetView).opacity}`, 'info');
     debugLog(`  - z-index: ${getComputedStyle(targetView).zIndex}`, 'info');
     debugLog(`  - innerHTML length: ${targetView.innerHTML.length}`, 'info');
+    debugLog(`  - height: ${getComputedStyle(targetView).height}`, 'info');  // ← 追加
+  debugLog(`  - max-height: ${getComputedStyle(targetView).maxHeight}`, 'info');  // ← 追加
+  debugLog(`  - overflow: ${getComputedStyle(targetView).overflow}`, 'info');  // ← 追加
+  debugLog(`  - transform: ${getComputedStyle(targetView).transform}`, 'info');  // ← 追加
+}
+    
     
     // activeクラスを追加
     targetView.classList.add('active');
     targetView.style.display = 'block';  // ← 強制的にdisplay:blockを設定
+    targetView.style.opacity = '1';  // ← 追加
+targetView.style.height = 'auto';  // ← 追加
+targetView.style.maxHeight = 'none';  // ← 追加
+targetView.style.transform = 'none';  // ← 追加
     
     debugLog(`✅ view-${viewNumber}にactiveクラスを追加しました`, 'success');
     
@@ -326,8 +336,6 @@ async function loadCalendarData(monthOffset) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
     debugLog(`✅ View切り替え完了: ${viewNumber}`, 'success');
-  }
-  
   /**
    * プログレスバー更新
    * @param {number} step - 現在のステップ（1-5）
