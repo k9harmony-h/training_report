@@ -293,11 +293,14 @@ async function loadCalendarData(monthOffset) {
     
     // activeクラスを追加
     targetView.classList.add('active');
-    targetView.style.display = 'block';
-    targetView.style.opacity = '1';
-    targetView.style.height = 'auto';
-    targetView.style.maxHeight = 'none';
-    targetView.style.transform = 'none';
+    targetView.style.cssText = `
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    transform: none !important;
+  `;
     
     debugLog(`✅ view-${viewNumber}にactiveクラスを追加しました`, 'success');
     

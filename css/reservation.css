@@ -76,14 +76,15 @@
   
      .view-section {
       display: none !important;
-      animation: fadeIn var(--transition-slow);
+      /*animation: fadeIn var(--transition-slow);*/
     }
     
     .view-section.active {
       display: block !important;
-      animation: fadeIn var(--transition-slow);
+      opacity: 1;
+      /*animation: fadeIn var(--transition-slow);*/
     }
-    
+    /*
     @keyframes fadeIn {
       from {
         opacity: 0;
@@ -94,7 +95,7 @@
         transform: translateY(0);
       }
     }
-  
+  */
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      View 1: 犬・コース・トレーナー選択
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
