@@ -292,16 +292,17 @@ async function loadCalendarData(monthOffset) {
     debugLog(`🔍 view-${viewNumber}要素が見つかりました`, 'info');
     
     // ===== デバッグ: 要素の状態確認 =====
-    debugLog(`🔍 view-${viewNumber}の現在の表示状態:`, 'info');
-    debugLog(`  - display: ${getComputedStyle(targetView).display}`, 'info');
-    debugLog(`  - visibility: ${getComputedStyle(targetView).visibility}`, 'info');
-    debugLog(`  - opacity: ${getComputedStyle(targetView).opacity}`, 'info');
-    debugLog(`  - z-index: ${getComputedStyle(targetView).zIndex}`, 'info');
-    debugLog(`  - innerHTML length: ${targetView.innerHTML.length}`, 'info');
-    debugLog(`  - height: ${getComputedStyle(targetView).height}`, 'info');  // ← 追加
+    // reservation.js - goToView() の最後に追加
+setTimeout(() => {
+  debugLog(`🔍 view-${viewNumber}の変更後の表示状態:`, 'info');
+  debugLog(`  - display: ${getComputedStyle(targetView).display}`, 'info');
+  debugLog(`  - visibility: ${getComputedStyle(targetView).visibility}`, 'info');
+  debugLog(`  - opacity: ${getComputedStyle(targetView).opacity}`, 'info');
+  debugLog(`  - height: ${getComputedStyle(targetView).height}`, 'info');  // ← 追加
   debugLog(`  - max-height: ${getComputedStyle(targetView).maxHeight}`, 'info');  // ← 追加
   debugLog(`  - overflow: ${getComputedStyle(targetView).overflow}`, 'info');  // ← 追加
   debugLog(`  - transform: ${getComputedStyle(targetView).transform}`, 'info');  // ← 追加
+}, 100);
 }
     
     
