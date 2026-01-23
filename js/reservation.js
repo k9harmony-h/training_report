@@ -208,39 +208,28 @@ async function loadCalendarData(monthOffset) {
   try {
     debugLog(`📅 カレンダーデータ取得: ${monthKey}`, 'info');
     
+    // ===== 修正: CalendarService仕様に合わせる =====
     const data = await apiCall('POST', {
       action: 'getMonthAvailability',
       year: year,
       month: month,
-      trainer_code: AppState.selectedTrainer || 'TRN-001',
+      trainer_code: AppState.selectedTrainer || 'TRN-001',  // ← トレーナーコード
       is_multiple_dogs: AppState.isMultiDog || false
     });
     
-    // ===== 修正: エラーチェックを改善 =====
-    // data.error が true の場合はエラー
-    if (data.error === true) {
-      throw new Error(data.message || 'カレンダーデータ取得失敗');
-    }
-    
-    // data.success が false の場合もエラー
-    if (data.success === false) {
+    // エラーチェック
+    if (!data.success) {
       throw new Error(data.error || 'カレンダーデータ取得失敗');
-    }
-    
-    // availability が存在しない場合
-    if (!data.availability) {
-      debugLog(`⚠️ availability フィールドなし: ${JSON.stringify(data).substring(0, 200)}`, 'warn');
-      throw new Error('カレンダーデータの形式が不正です');
     }
     
     // キャッシュに保存
     AppState.calendarCache.set(monthKey, {
-      data: data.availability,
+      data: data.availability || {},
       timestamp: Date.now()
     });
     
-    debugLog(`✅ カレンダーデータ取得完了: ${monthKey} (${Object.keys(data.availability).length}日分)`, 'success');
-    return data.availability;
+    debugLog(`✅ カレンダーデータ取得完了: ${monthKey}`, 'success');
+    return data.availability || {};
     
   } catch (error) {
     debugLog(`❌ カレンダーデータ取得エラー: ${error.message}`, 'error');
@@ -866,14 +855,14 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
     document.getElementById('price-subtotal').textContent = `¥${subtotal.toLocaleString()}`;
     
     // 出張費計算
-    document.getElementById('price-travel-fee').textContent = '計算中...';
-    AppState.travelFee = await calculateTravelFee();
-    document.getElementById('price-travel-fee').textContent = 
-      AppState.travelFee === 0 ? '無料' : `¥${AppState.travelFee.toLocaleString()}`;
-    
-    // 合計
-    updateTotalPrice();
-  }
+  document.getElementById('price-travel-fee').textContent = '計算中...';  // ④実装済み
+  AppState.travelFee = await calculateTravelFee();
+  document.getElementById('price-travel-fee').textContent = 
+    AppState.travelFee === 0 ? '無料' : `¥${AppState.travelFee.toLocaleString()}`;  // ⑤実装済み
+  
+  // 合計
+  updateTotalPrice();  // ⑤実装済み
+}
   
   /**
    * 出張費計算
@@ -1551,7 +1540,7 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
     });
   }
   
-/**
+  /**
  * 時間選択モーダル表示
  * @param {string} dateStr - 日付（YYYY-MM-DD）
  * @param {Array} slots - 利用可能な時間スロット
@@ -1560,65 +1549,30 @@ function openTimeModal(dateStr, slots) {
   debugLog(`📅 時間選択モーダル表示: ${dateStr}`, 'info');
   debugLog(`🔍 利用可能な時間: ${slots.join(', ')}`, 'info');
   
+  // 選択中の日付を更新
   AppState.selectedDate = dateStr;
   
+  // モーダルのタイトル更新
   const date = new Date(dateStr);
   const dateFormatted = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日（${['日','月','火','水','木','金','土'][date.getDay()]}）`;
   document.getElementById('time-modal-title').textContent = dateFormatted;
   
+  // 時間ボタン生成
   const container = document.getElementById('time-slot-buttons');
-  container.className = 'time-slot-grid';
   container.innerHTML = '';
   
-  // 営業時間の全時間帯をループ
-  const startHour = 10;
-  const endHour = 18;
+  slots.forEach(time => {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-outline btn-block';
+    btn.textContent = `${time} 開始`;
+    btn.onclick = () => {
+      selectTime(dateStr, time);
+      closeTimeModal();
+    };
+    container.appendChild(btn);
+  });
   
-  for (let hour = startHour; hour <= endHour; hour++) {
-    const hourStr = hour.toString().padStart(2, '0');
-    
-    const slot00 = `${hourStr}:00`;
-    const slot30 = `${hourStr}:30`;
-    
-    const has00 = slots.includes(slot00);
-    const has30 = slots.includes(slot30);
-    
-    // 両方選択不可の場合は非表示
-    if (!has00 && !has30) {
-      continue;
-    }
-    
-    // 00分開始ボタン
-    const btn00 = document.createElement('button');
-    btn00.className = has00 ? 'time-slot-btn' : 'time-slot-btn disabled';
-    btn00.textContent = `${hourStr}:00開始`;
-    btn00.disabled = !has00;
-    
-    if (has00) {
-      btn00.onclick = () => {
-        selectTime(dateStr, slot00);
-        closeTimeModal();
-      };
-    }
-    
-    container.appendChild(btn00);
-    
-    // 30分開始ボタン
-    const btn30 = document.createElement('button');
-    btn30.className = has30 ? 'time-slot-btn half' : 'time-slot-btn half disabled';
-    btn30.textContent = `${hourStr}:30開始`;
-    btn30.disabled = !has30;
-    
-    if (has30) {
-      btn30.onclick = () => {
-        selectTime(dateStr, slot30);
-        closeTimeModal();
-      };
-    }
-    
-    container.appendChild(btn30);
-  }
-  
+  // モーダル表示
   openModal('time-modal-overlay');
   
   debugLog(`✅ 時間選択モーダル表示完了 (${slots.length}件)`, 'success');
@@ -1722,6 +1676,8 @@ function selectTime(date, time) {
   function toggleAltAddress() {
     const area = document.getElementById('alt-address-area');
     const isChecked = document.getElementById('alt-address-check').checked;
+    
+    AppState.useAltAddress = isChecked;
     
     if (isChecked) {
       area.classList.remove('hidden');
