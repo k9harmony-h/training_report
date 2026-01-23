@@ -615,11 +615,22 @@ function renderMenuSelect() {
     debugLog('📅 View 2 初期化', 'info');
     renderCalendar();
     
-    // 別住所チェックボックス
-    document.getElementById('alt-address-check').addEventListener('change', (e) => {
-      AppState.useAltAddress = e.target.checked;
-    });
-  }
+    // ①View2読み込み時に出張費を事前計算
+  preCalculateTravelFee();
+  
+  // 別住所チェックボックス
+  document.getElementById('alt-address-check').addEventListener('change', (e) => {
+    AppState.useAltAddress = e.target.checked;
+    toggleAltAddress();
+    
+    // ②別住所の場合は再計算をリセット
+    if (e.target.checked) {
+      AppState.travelFee = null;
+    } else {
+      preCalculateTravelFee();
+    }
+  });
+}
   
   /**
    * 月間カレンダーのレンダリング
@@ -959,7 +970,35 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
       resultEl.style.color = '#D0021B';
     }
   }
+  /**
+ * 出張費を事前計算（View2読み込み時）
+ */
+async function preCalculateTravelFee() {
+  if (!AppState.userData || !AppState.userData.base_lat) {
+    AppState.travelFee = 0;
+    AppState.travelDistance = 0;
+    debugLog('⚠️ 顧客データなし - 出張費0円', 'warn');
+    return;
+  }
   
+  try {
+    const distance = CONFIG.calculateDistance(
+      CONFIG.OFFICE.LAT,
+      CONFIG.OFFICE.LNG,
+      AppState.userData.base_lat,
+      AppState.userData.base_lng
+    );
+    
+    AppState.travelFee = CONFIG.calculateTravelFee(distance);
+    AppState.travelDistance = distance;
+    
+    debugLog(`✅ 出張費事前計算: ${distance.toFixed(1)}km = ¥${AppState.travelFee}`, 'success');
+  } catch (error) {
+    debugLog(`❌ 出張費計算エラー: ${error.message}`, 'error');
+    AppState.travelFee = 0;
+    AppState.travelDistance = 0;
+  }
+}
   /**
    * キャンセル料情報更新
    */
@@ -1540,7 +1579,7 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
     });
   }
   
-  /**
+/**
  * 時間選択モーダル表示
  * @param {string} dateStr - 日付（YYYY-MM-DD）
  * @param {Array} slots - 利用可能な時間スロット
@@ -1549,30 +1588,65 @@ function openTimeModal(dateStr, slots) {
   debugLog(`📅 時間選択モーダル表示: ${dateStr}`, 'info');
   debugLog(`🔍 利用可能な時間: ${slots.join(', ')}`, 'info');
   
-  // 選択中の日付を更新
   AppState.selectedDate = dateStr;
   
-  // モーダルのタイトル更新
   const date = new Date(dateStr);
   const dateFormatted = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日（${['日','月','火','水','木','金','土'][date.getDay()]}）`;
   document.getElementById('time-modal-title').textContent = dateFormatted;
   
-  // 時間ボタン生成
   const container = document.getElementById('time-slot-buttons');
+  container.className = 'time-slot-grid';
   container.innerHTML = '';
   
-  slots.forEach(time => {
-    const btn = document.createElement('button');
-    btn.className = 'btn btn-outline btn-block';
-    btn.textContent = `${time} 開始`;
-    btn.onclick = () => {
-      selectTime(dateStr, time);
-      closeTimeModal();
-    };
-    container.appendChild(btn);
-  });
+  // 営業時間の全時間帯をループ（10:00-18:30）
+  const startHour = 10;
+  const endHour = 18;
   
-  // モーダル表示
+  for (let hour = startHour; hour <= endHour; hour++) {
+    const hourStr = hour.toString().padStart(2, '0');
+    
+    const slot00 = `${hourStr}:00`;
+    const slot30 = `${hourStr}:30`;
+    
+    const has00 = slots.includes(slot00);
+    const has30 = slots.includes(slot30);
+    
+    // 両方選択不可の場合は非表示
+    if (!has00 && !has30) {
+      continue;
+    }
+    
+    // 00分開始ボタン
+    const btn00 = document.createElement('button');
+    btn00.className = has00 ? 'time-slot-btn' : 'time-slot-btn disabled';
+    btn00.textContent = `${hourStr}:00開始`;
+    btn00.disabled = !has00;
+    
+    if (has00) {
+      btn00.onclick = () => {
+        selectTime(dateStr, slot00);
+        closeTimeModal();
+      };
+    }
+    
+    container.appendChild(btn00);
+    
+    // 30分開始ボタン
+    const btn30 = document.createElement('button');
+    btn30.className = has30 ? 'time-slot-btn half' : 'time-slot-btn half disabled';
+    btn30.textContent = `${hourStr}:30開始`;
+    btn30.disabled = !has30;
+    
+    if (has30) {
+      btn30.onclick = () => {
+        selectTime(dateStr, slot30);
+        closeTimeModal();
+      };
+    }
+    
+    container.appendChild(btn30);
+  }
+  
   openModal('time-modal-overlay');
   
   debugLog(`✅ 時間選択モーダル表示完了 (${slots.length}件)`, 'success');
