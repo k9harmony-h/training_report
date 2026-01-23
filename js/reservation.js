@@ -259,12 +259,25 @@ async function loadCalendarData(monthOffset) {
   function goToView(viewNumber) {
     debugLog(`🔄 View切り替え: ${AppState.currentView} → ${viewNumber}`, 'info');
     
-    // ===== デバッグ追加 =====
+    // ===== ローディング強制非表示 =====
+    hideLoading();
+    debugLog('✅ ローディング非表示', 'success');
+    
+    // ===== モーダル強制クローズ =====
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.classList.remove('open');
+    });
+    document.querySelectorAll('.center-modal, .bottom-modal, .top-sheet').forEach(modal => {
+      modal.classList.remove('open');
+    });
+    debugLog('✅ 全モーダルクローズ', 'success');
+    
     debugLog(`🔍 View${viewNumber}要素の確認開始`, 'info');
     
     // 全Viewを非表示
     document.querySelectorAll('.view-section').forEach(el => {
       el.classList.remove('active');
+      el.style.display = 'none';  // ← 強制的にdisplay:noneを設定
       debugLog(`🔍 ${el.id} を非表示にしました`, 'info');
     });
     
@@ -277,8 +290,28 @@ async function loadCalendarData(monthOffset) {
     }
     
     debugLog(`🔍 view-${viewNumber}要素が見つかりました`, 'info');
+    
+    // ===== デバッグ: 要素の状態確認 =====
+    debugLog(`🔍 view-${viewNumber}の現在の表示状態:`, 'info');
+    debugLog(`  - display: ${getComputedStyle(targetView).display}`, 'info');
+    debugLog(`  - visibility: ${getComputedStyle(targetView).visibility}`, 'info');
+    debugLog(`  - opacity: ${getComputedStyle(targetView).opacity}`, 'info');
+    debugLog(`  - z-index: ${getComputedStyle(targetView).zIndex}`, 'info');
+    debugLog(`  - innerHTML length: ${targetView.innerHTML.length}`, 'info');
+    
+    // activeクラスを追加
     targetView.classList.add('active');
+    targetView.style.display = 'block';  // ← 強制的にdisplay:blockを設定
+    
     debugLog(`✅ view-${viewNumber}にactiveクラスを追加しました`, 'success');
+    
+    // ===== デバッグ: 変更後の状態確認 =====
+    setTimeout(() => {
+      debugLog(`🔍 view-${viewNumber}の変更後の表示状態:`, 'info');
+      debugLog(`  - display: ${getComputedStyle(targetView).display}`, 'info');
+      debugLog(`  - visibility: ${getComputedStyle(targetView).visibility}`, 'info');
+      debugLog(`  - opacity: ${getComputedStyle(targetView).opacity}`, 'info');
+    }, 100);
     
     // プログレスバー更新
     updateProgressBar(viewNumber);
