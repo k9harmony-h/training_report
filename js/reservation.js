@@ -274,12 +274,15 @@ async function loadCalendarData(monthOffset) {
     
     debugLog(`🔍 View${viewNumber}要素の確認開始`, 'info');
     
-    // 全Viewを非表示
-    document.querySelectorAll('.view-section').forEach(el => {
-      el.classList.remove('active');
-      el.style.display = 'none';
-      debugLog(`🔍 ${el.id} を非表示にしました`, 'info');
-    });
+    // ===== 修正: 全View要素を明示的に非表示 =====
+    for (let i = 1; i <= 5; i++) {
+      const viewEl = document.getElementById(`view-${i}`);
+      if (viewEl) {
+        viewEl.classList.remove('active');
+        viewEl.style.cssText = 'display: none !important;';
+        debugLog(`🔍 view-${i} を非表示にしました`, 'info');
+      }
+    }
     
     // 指定Viewを表示
     const targetView = document.getElementById(`view-${viewNumber}`);
@@ -293,30 +296,32 @@ async function loadCalendarData(monthOffset) {
     
     // activeクラスを追加
     targetView.classList.add('active');
+    
     // ===== 強制的にスタイルを上書き =====
-targetView.style.cssText = `
-display: block !important;
-opacity: 1 !important;
-visibility: visible !important;
-height: auto !important;
-max-height: none !important;
-transform: none !important;
-position: relative !important;
-z-index: 1 !important;
-`;
-
-// ===== 親要素も強制表示 =====
-const parent = targetView.parentElement;
-if (parent) {
-parent.style.cssText = `
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  min-height: 100vh !important;
-  height: auto !important;
-`;
-debugLog(`✅ 親要素も表示設定`, 'success');
-}
+    targetView.style.cssText = `
+      display: block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      height: auto !important;
+      max-height: none !important;
+      transform: none !important;
+      position: relative !important;
+      z-index: 1 !important;
+    `;
+    
+    debugLog(`✅ view-${viewNumber}にactiveクラスを追加しました`, 'success');
+    
+    // ===== デバッグ: 変更後の状態確認 =====
+    setTimeout(() => {
+      debugLog(`🔍 各Viewの表示状態確認:`, 'info');
+      for (let i = 1; i <= 5; i++) {
+        const v = document.getElementById(`view-${i}`);
+        if (v) {
+          const display = getComputedStyle(v).display;
+          debugLog(`  - view-${i}: display=${display}`, i === viewNumber ? 'success' : 'info');
+        }
+      }
+    }, 100);
     
     // プログレスバー更新
     updateProgressBar(viewNumber);
