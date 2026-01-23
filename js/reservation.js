@@ -832,68 +832,99 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
    * 予約内容サマリーのレンダリング
    */
   function renderReservationSummary() {
-    // 日時
-    document.getElementById('conf-datetime').textContent = 
-      `${AppState.selectedDate} ${AppState.selectedTime}`;
+    debugLog('📋 予約内容サマリー生成開始', 'info');
     
-    // 場所
-    let place = '';
-    if (AppState.useAltAddress && AppState.altAddress) {
-      place = AppState.altAddress.address;
-    } else if (AppState.userData) {
-      place = AppState.userData.address || '未登録';
-    } else {
-      place = '新規登録住所';
+    try {
+      // 日時
+      const datetimeStr = `${AppState.selectedDate} ${AppState.selectedTime}`;
+      document.getElementById('conf-datetime').textContent = datetimeStr;
+      debugLog(`✅ 日時: ${datetimeStr}`, 'success');
+      
+      // 場所
+      let place = '';
+      if (AppState.useAltAddress && AppState.altAddress) {
+        place = AppState.altAddress.address;
+      } else if (AppState.userData) {
+        place = AppState.userData.address || '未登録';
+      } else {
+        place = '新規登録住所';
+      }
+      document.getElementById('conf-place').textContent = place;
+      debugLog(`✅ 場所: ${place}`, 'success');
+      
+      // 犬名
+      let dogName = '';
+      if (AppState.selectedDog) {
+        dogName = AppState.selectedDog.name_disp || AppState.selectedDog.name;
+      } else {
+        dogName = '新規登録犬';
+      }
+      document.getElementById('conf-dog').textContent = dogName;
+      debugLog(`✅ 犬名: ${dogName}`, 'success');
+      
+      // コース
+      let courseName = AppState.selectedMenu.name;
+      if (AppState.isMultiDog) {
+        courseName += ' (+2頭目)';
+      }
+      document.getElementById('conf-course').textContent = courseName;
+      debugLog(`✅ コース: ${courseName}`, 'success');
+      
+      debugLog('✅ 予約内容サマリー生成完了', 'success');
+      
+    } catch (error) {
+      debugLog(`❌ 予約内容サマリー生成エラー: ${error.message}`, 'error');
+      console.error('renderReservationSummary Error:', error);
+      throw error;
     }
-    document.getElementById('conf-place').textContent = place;
-    
-    // 犬名
-    let dogName = '';
-    if (AppState.selectedDog) {
-      dogName = AppState.selectedDog.name_disp || AppState.selectedDog.name;
-    } else {
-      dogName = '新規登録犬';
-    }
-    document.getElementById('conf-dog').textContent = dogName;
-    
-    // コース
-    let courseName = AppState.selectedMenu.name;
-    if (AppState.isMultiDog) {
-      courseName += ' (+2頭目)';
-    }
-    document.getElementById('conf-course').textContent = courseName;
   }
   
   /**
    * 料金計算
    */
   async function calculatePricing() {
-    // レッスン料金
-    AppState.lessonPrice = AppState.selectedMenu.price;
-    document.getElementById('price-lesson').textContent = 
-      `¥${AppState.lessonPrice.toLocaleString()}`;
+    debugLog('💰 料金計算開始', 'info');
     
-    // 複数頭料金
-    const multiDogRow = document.getElementById('price-multi-row');
-    if (AppState.isMultiDog) {
-      multiDogRow.style.display = '';
-    } else {
-      multiDogRow.style.display = 'none';
+    try {
+      // レッスン料金
+      AppState.lessonPrice = AppState.selectedMenu.price;
+      document.getElementById('price-lesson').textContent = 
+        `¥${AppState.lessonPrice.toLocaleString()}`;
+      debugLog(`✅ レッスン料金: ¥${AppState.lessonPrice}`, 'success');
+      
+      // 複数頭料金
+      const multiDogRow = document.getElementById('price-multi-row');
+      if (AppState.isMultiDog) {
+        multiDogRow.style.display = '';
+        debugLog('✅ 複数頭料金: 表示', 'success');
+      } else {
+        multiDogRow.style.display = 'none';
+        debugLog('✅ 複数頭料金: 非表示', 'success');
+      }
+      
+      // 小計
+      const subtotal = AppState.lessonPrice + (AppState.isMultiDog ? CONFIG.PRICING.MULTI_DOG_FEE : 0);
+      document.getElementById('price-subtotal').textContent = `¥${subtotal.toLocaleString()}`;
+      debugLog(`✅ 小計: ¥${subtotal}`, 'success');
+      
+      // 出張費計算
+      debugLog('💰 出張費計算開始', 'info');
+      document.getElementById('price-travel-fee').textContent = '計算中...';
+      AppState.travelFee = await calculateTravelFee();
+      document.getElementById('price-travel-fee').textContent = 
+        AppState.travelFee === 0 ? '無料' : `¥${AppState.travelFee.toLocaleString()}`;
+      debugLog(`✅ 出張費: ¥${AppState.travelFee}`, 'success');
+      
+      // 合計
+      updateTotalPrice();
+      debugLog(`✅ 料金計算完了`, 'success');
+      
+    } catch (error) {
+      debugLog(`❌ 料金計算エラー: ${error.message}`, 'error');
+      console.error('calculatePricing Error:', error);
+      throw error;
     }
-    
-    // 小計
-    const subtotal = AppState.lessonPrice + (AppState.isMultiDog ? CONFIG.PRICING.MULTI_DOG_FEE : 0);
-    document.getElementById('price-subtotal').textContent = `¥${subtotal.toLocaleString()}`;
-    
-    // 出張費計算
-  document.getElementById('price-travel-fee').textContent = '計算中...';  // ④実装済み
-  AppState.travelFee = await calculateTravelFee();
-  document.getElementById('price-travel-fee').textContent = 
-    AppState.travelFee === 0 ? '無料' : `¥${AppState.travelFee.toLocaleString()}`;  // ⑤実装済み
-  
-  // 合計
-  updateTotalPrice();  // ⑤実装済み
-}
+  }
   
   /**
    * 出張費計算
