@@ -259,16 +259,26 @@ async function loadCalendarData(monthOffset) {
   function goToView(viewNumber) {
     debugLog(`🔄 View切り替え: ${AppState.currentView} → ${viewNumber}`, 'info');
     
+    // ===== デバッグ追加 =====
+    debugLog(`🔍 View${viewNumber}要素の確認開始`, 'info');
+    
     // 全Viewを非表示
     document.querySelectorAll('.view-section').forEach(el => {
       el.classList.remove('active');
+      debugLog(`🔍 ${el.id} を非表示にしました`, 'info');
     });
     
     // 指定Viewを表示
     const targetView = document.getElementById(`view-${viewNumber}`);
-    if (targetView) {
-      targetView.classList.add('active');
+    
+    if (!targetView) {
+      debugLog(`❌ view-${viewNumber}要素が見つかりません`, 'error');
+      return;
     }
+    
+    debugLog(`🔍 view-${viewNumber}要素が見つかりました`, 'info');
+    targetView.classList.add('active');
+    debugLog(`✅ view-${viewNumber}にactiveクラスを追加しました`, 'success');
     
     // プログレスバー更新
     updateProgressBar(viewNumber);
@@ -281,6 +291,8 @@ async function loadCalendarData(monthOffset) {
     
     // トップへスクロール
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    debugLog(`✅ View切り替え完了: ${viewNumber}`, 'success');
   }
   
   /**
