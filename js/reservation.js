@@ -1216,45 +1216,72 @@ function showView4Pattern(pattern) {
     document.getElementById('view4-new-info').classList.add('active');
   }
   
-  /**
-   * 確定料金表示
-   */
-  function renderFinalPricing() {
-    const lessonPrice = AppState.lessonPrice;
-    const travelFee = AppState.travelFee;
-    const discount = AppState.voucherDiscount;
-    const total = AppState.totalPrice;
-    
-    // 既存ユーザー + カード
-    document.getElementById('final-price-lesson').textContent = `¥${lessonPrice.toLocaleString()}`;
-    document.getElementById('final-price-travel').textContent = 
-      travelFee === 0 ? '無料' : `¥${travelFee.toLocaleString()}`;
-    document.getElementById('final-price-total').textContent = `¥${total.toLocaleString()}`;
-    
-    if (AppState.isMultiDog) {
-      document.getElementById('final-price-multi-row').style.display = '';
-    }
-    
-    if (discount > 0) {
-      document.getElementById('final-price-discount-row').style.display = '';
-      document.getElementById('final-price-discount').textContent = `-¥${discount.toLocaleString()}`;
-    }
-    
-    // 現地決済
-    document.getElementById('cash-price-lesson').textContent = `¥${lessonPrice.toLocaleString()}`;
-    document.getElementById('cash-price-travel').textContent = 
-      travelFee === 0 ? '無料' : `¥${travelFee.toLocaleString()}`;
-    document.getElementById('cash-price-total').textContent = `¥${total.toLocaleString()}`;
-    
-    if (AppState.isMultiDog) {
-      document.getElementById('cash-price-multi-row').style.display = '';
-    }
-    
-    if (discount > 0) {
-      document.getElementById('cash-price-discount-row').style.display = '';
-      document.getElementById('cash-price-discount').textContent = `-¥${discount.toLocaleString()}`;
-    }
+/**
+ * 確定料金表示
+ */
+function renderFinalPricing() {
+  debugLog('💰 確定料金表示開始', 'info');
+  
+  const lessonPrice = AppState.lessonPrice;
+  const travelFee = AppState.travelFee;
+  const discount = AppState.voucherDiscount;
+  const total = AppState.totalPrice;
+  const multiDogFee = CONFIG.PRICING.MULTI_DOG_FEE;  // ← 追加
+  
+  // ===== 既存ユーザー + カード =====
+  document.getElementById('final-price-lesson').textContent = `¥${lessonPrice.toLocaleString()}`;
+  document.getElementById('final-price-travel').textContent = 
+    travelFee === 0 ? '無料' : `¥${travelFee.toLocaleString()}`;
+  document.getElementById('final-price-total').textContent = `¥${total.toLocaleString()}`;
+  
+  // 複数頭料金（条件付き表示）
+  const finalMultiRow = document.getElementById('final-price-multi-row');
+  if (AppState.isMultiDog) {
+    finalMultiRow.style.display = '';
+    document.getElementById('final-price-multi').textContent = `¥${multiDogFee.toLocaleString()}`;  // ← 追加
+    debugLog('✅ 複数頭料金: 表示', 'success');
+  } else {
+    finalMultiRow.style.display = 'none';
+    debugLog('✅ 複数頭料金: 非表示', 'success');
   }
+  
+  // 割引（条件付き表示）
+  const finalDiscountRow = document.getElementById('final-price-discount-row');
+  if (discount > 0) {
+    finalDiscountRow.style.display = '';
+    document.getElementById('final-price-discount').textContent = `-¥${discount.toLocaleString()}`;
+    debugLog('✅ 割引: 表示', 'success');
+  } else {
+    finalDiscountRow.style.display = 'none';
+    debugLog('✅ 割引: 非表示', 'success');
+  }
+  
+  // ===== 現地決済 =====
+  document.getElementById('cash-price-lesson').textContent = `¥${lessonPrice.toLocaleString()}`;
+  document.getElementById('cash-price-travel').textContent = 
+    travelFee === 0 ? '無料' : `¥${travelFee.toLocaleString()}`;
+  document.getElementById('cash-price-total').textContent = `¥${total.toLocaleString()}`;
+  
+  // 複数頭料金（条件付き表示）
+  const cashMultiRow = document.getElementById('cash-price-multi-row');
+  if (AppState.isMultiDog) {
+    cashMultiRow.style.display = '';
+    document.getElementById('cash-price-multi').textContent = `¥${multiDogFee.toLocaleString()}`;  // ← 追加
+  } else {
+    cashMultiRow.style.display = 'none';
+  }
+  
+  // 割引（条件付き表示）
+  const cashDiscountRow = document.getElementById('cash-price-discount-row');
+  if (discount > 0) {
+    cashDiscountRow.style.display = '';
+    document.getElementById('cash-price-discount').textContent = `-¥${discount.toLocaleString()}`;
+  } else {
+    cashDiscountRow.style.display = 'none';
+  }
+  
+  debugLog('✅ 確定料金表示完了', 'success');
+}
   
   /**
    * Square初期化
@@ -1356,69 +1383,85 @@ function showView4Pattern(pattern) {
   }
   
   /**
-   * 予約確定（現地決済 or 決済完了後）
-   * @param {boolean} isPaid - 決済済みかどうか
-   */
-  async function submitReservation(isPaid = false) {
-    try {
-      showLoading('予約を確定中...');
-      
-      // 新規ユーザーの登録情報
-      let regData = null;
-      if (!AppState.userData) {
-        regData = {
-          name: document.getElementById('reg-name').value,
-          phone: document.getElementById('reg-phone').value,
-          zip: document.getElementById('reg-zip').value,
-          address: document.getElementById('reg-addr').value,
-          landmark: document.getElementById('reg-landmark').value,
-          dogName: document.getElementById('reg-dog-name').value,
-          dogBreed: document.getElementById('reg-dog-breed').value,
-          dogAge: document.getElementById('reg-dog-age').value,
-          neutered: document.getElementById('reg-dog-neutered').checked,
-          concerns: document.getElementById('reg-concerns').value,
-          remarks: document.getElementById('reg-remarks').value
-        };
-      }
-      
-      // 予約データ
-      const payload = {
-        action: 'add_reservation',
-        userId: AppState.userData ? AppState.userData.unique_key : 'NEW_USER',
-        lineUserId: AppState.lineUserId,
-        date: AppState.selectedDate,
-        time: AppState.selectedTime,
-        dogId: AppState.selectedDog ? AppState.selectedDog.id : null,
-        trainerId: AppState.selectedTrainer,
-        menuId: AppState.selectedMenu.id,
-        isMultiDog: AppState.isMultiDog,
-        useAltAddress: AppState.useAltAddress,
-        altAddress: AppState.altAddress,
-        voucherCode: AppState.voucherData ? AppState.voucherData.code : null,
-        remarks: document.getElementById('conf-remarks').value,
-        paymentMethod: document.getElementById('payment-method').value,
-        paymentStatus: isPaid ? 'PAID' : 'UNPAID',
-        totalPrice: AppState.totalPrice,
-        regData: regData
+ * 予約確定（現地決済 or 決済完了後）
+ * @param {boolean} isPaid - 決済済みかどうか
+ */
+async function submitReservation(isPaid = false) {
+  try {
+    showLoading('予約を確定中...');
+    
+    // 新規ユーザーの登録情報
+    let regData = null;
+    if (!AppState.userData) {
+      regData = {
+        name: document.getElementById('reg-name').value,
+        phone: document.getElementById('reg-phone').value,
+        zip: document.getElementById('reg-zip').value,
+        address: document.getElementById('reg-addr').value,
+        landmark: document.getElementById('reg-landmark').value,
+        dogName: document.getElementById('reg-dog-name').value,
+        dogBreed: document.getElementById('reg-dog-breed').value,
+        dogAge: document.getElementById('reg-dog-age').value,
+        neutered: document.getElementById('reg-dog-neutered').checked,
+        concerns: document.getElementById('reg-concerns').value,
+        remarks: document.getElementById('reg-remarks').value
       };
-      
-      const result = await apiCall('POST', payload);
-      
-      if (result.status === 'success') {
-        debugLog('✅ 予約確定成功', 'success');
-        hideLoading();
-        goToView(5);
-      } else {
-        hideLoading();
-        alert(`予約の確定に失敗しました: ${result.message}`);
-      }
-      
-    } catch (error) {
-      hideLoading();
-      debugLog(`❌ 予約確定エラー: ${error.message}`, 'error');
-      alert('予約処理中にエラーが発生しました');
     }
+    
+    // ===== 修正: userIdの設定 =====
+    let userId;
+    if (AppState.userData && AppState.userData.customer_id) {
+      userId = AppState.userData.customer_id;
+    } else if (AppState.userData && AppState.userData.unique_key) {
+      userId = AppState.userData.unique_key;
+    } else if (AppState.lineUserId) {
+      userId = AppState.lineUserId;  // ← 新規ユーザーの場合、LINE UserIDを使用
+    } else {
+      throw new Error('ユーザーIDが取得できません');
+    }
+    
+    debugLog(`📋 userId: ${userId}`, 'info');
+    
+    // 予約データ
+    const payload = {
+      action: 'add_reservation',
+      userId: userId,  // ← 修正後のuserId
+      lineUserId: AppState.lineUserId,
+      date: AppState.selectedDate,
+      time: AppState.selectedTime,
+      dogId: AppState.selectedDog ? AppState.selectedDog.dog_id : null,
+      trainerId: AppState.selectedTrainer,
+      menuId: AppState.selectedMenu.id,
+      isMultiDog: AppState.isMultiDog,
+      useAltAddress: AppState.useAltAddress,
+      altAddress: AppState.altAddress,
+      voucherCode: AppState.voucherData ? AppState.voucherData.code : null,
+      remarks: document.getElementById('conf-remarks').value,
+      paymentMethod: document.getElementById('payment-method').value,
+      paymentStatus: isPaid ? 'PAID' : 'UNPAID',
+      totalPrice: AppState.totalPrice,
+      regData: regData
+    };
+    
+    debugLog(`📤 予約データ: ${JSON.stringify(payload).substring(0, 200)}...`, 'info');
+    
+    const result = await apiCall('POST', payload);
+    
+    if (result.status === 'success') {
+      debugLog('✅ 予約確定成功', 'success');
+      hideLoading();
+      goToView(5);
+    } else {
+      hideLoading();
+      alert(`予約の確定に失敗しました: ${result.message}`);
+    }
+    
+  } catch (error) {
+    hideLoading();
+    debugLog(`❌ 予約確定エラー: ${error.message}`, 'error');
+    alert('予約処理中にエラーが発生しました: ' + error.message);
   }
+}
   
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      View 5: サンクスページ
