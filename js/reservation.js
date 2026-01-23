@@ -1164,29 +1164,37 @@ async function preCalculateTravelFee() {
   }
   
   /**
-   * View 4のパターン表示
-   * @param {string} pattern - 'existing-card' | 'new-card' | 'cash'
-   */
-  function showView4Pattern(pattern) {
-    // 全パターンを非表示
-    document.querySelectorAll('.view4-pattern').forEach(el => {
-      el.classList.remove('active');
-    });
-    
-    // 指定パターンを表示
-    document.getElementById(`view4-${pattern}`).classList.add('active');
-    
-    debugLog(`💳 View 4 パターン: ${pattern}`, 'info');
-    
-    // Square初期化（カード決済の場合）
-    if (pattern === 'existing-card') {
-      initializeSquare('square-card-container');
-    } else if (pattern === 'new-card') {
-      // 新規ユーザーは最初情報入力画面
-      document.getElementById('view4-new-info').classList.add('active');
-      document.getElementById('view4-new-card-input').classList.remove('active');
-    }
+ * View 4のパターン表示
+ * @param {string} pattern - 'existing-card' | 'new-card' | 'cash'
+ */
+function showView4Pattern(pattern) {
+  debugLog(`💳 View 4 パターン切替: ${pattern}`, 'info');
+  
+  // 全パターンを非表示
+  document.querySelectorAll('.view4-pattern').forEach(el => {
+    el.classList.remove('active');
+    el.classList.add('hidden');  // ← hidden追加
+  });
+  
+  // 指定パターンを表示
+  const targetPattern = document.getElementById(`view4-${pattern}`);
+  if (targetPattern) {
+    targetPattern.classList.add('active');
+    targetPattern.classList.remove('hidden');  // ← hidden削除（重要）
+    debugLog(`✅ view4-${pattern}を表示`, 'success');
+  } else {
+    debugLog(`❌ view4-${pattern}が見つかりません`, 'error');
   }
+  
+  // Square初期化（カード決済の場合）
+  if (pattern === 'existing-card') {
+    initializeSquare('square-card-container');
+  } else if (pattern === 'new-card') {
+    // 新規ユーザーは最初情報入力画面
+    document.getElementById('view4-new-info').classList.add('active');
+    document.getElementById('view4-new-card-input').classList.remove('active');
+  }
+}
   
   /**
    * 新規ユーザー：カードフォーム表示

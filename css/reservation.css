@@ -537,13 +537,13 @@
      View 4: 決済・情報入力
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   
-  .view4-pattern {
-    display: none;
-  }
-  
-  .view4-pattern.active {
-    display: block;
-  }
+     .view4-pattern {
+      display: none;
+    }
+    
+    .view4-pattern.active {
+      display: block !important;  /* ← !importantを追加 */
+    }
   
   .view4-substep {
     display: none;
