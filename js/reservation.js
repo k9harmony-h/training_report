@@ -1428,13 +1428,38 @@ async function submitReservation(isPaid = false) {
     // ===== 別住所データ収集 =====
 let altAddressData = null;
 if (AppState.useAltAddress) {
-  const altAddr = document.getElementById('alt-address').value.trim();
-  const altBuilding = document.getElementById('alt-building').value.trim();
-  const altLandmark = document.getElementById('alt-landmark').value.trim();
-  const altLocationType = document.getElementById('alt-location-type').value;
-  const altRemarks = document.getElementById('alt-remarks').value.trim();
+  debugLog('📍 別住所データ収集開始', 'info');
   
-  // ===== バリデーション：別住所が入力されているか確認 =====
+  // ===== 要素取得（正しいID）=====
+  const altAddrEl = document.getElementById('alt-addr');                    // ← 修正
+  const altBuildingEl = document.getElementById('alt-building');            // ← 正しい
+  const altLandmarkEl = document.getElementById('alt-landmark');            // ← 正しい
+  const altRemarksEl = document.getElementById('alt-remarks');              // ← 正しい
+  
+  // ===== radioボタンから値を取得 =====
+  const altLocationTypeRadios = document.getElementsByName('alt-location-type');
+  let altLocationType = 'OUTDOOR';  // デフォルト
+  for (let i = 0; i < altLocationTypeRadios.length; i++) {
+    if (altLocationTypeRadios[i].checked) {
+      altLocationType = altLocationTypeRadios[i].value.toUpperCase();
+      break;
+    }
+  }
+  
+  // ===== エラーハンドリング =====
+  if (!altAddrEl) {
+    hideLoading();
+    alert('別住所入力フォームが見つかりません。ページを再読み込みしてください。');
+    debugLog('❌ alt-addr要素が見つかりません', 'error');
+    return;
+  }
+  
+  const altAddr = altAddrEl.value.trim();
+  const altBuilding = altBuildingEl ? altBuildingEl.value.trim() : '';
+  const altLandmark = altLandmarkEl ? altLandmarkEl.value.trim() : '';
+  const altRemarks = altRemarksEl ? altRemarksEl.value.trim() : '';
+  
+  // ===== バリデーション =====
   if (!altAddr) {
     hideLoading();
     alert('別住所を使用する場合は、住所を入力してください');
@@ -1445,7 +1470,7 @@ if (AppState.useAltAddress) {
     address: altAddr,
     buildingName: altBuilding || null,
     landmark: altLandmark || null,
-    locationType: altLocationType || 'OUTDOOR',
+    locationType: altLocationType,
     remarks: altRemarks || null
   };
   
