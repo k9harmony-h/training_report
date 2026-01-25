@@ -1423,29 +1423,36 @@ async function submitReservation(isPaid = false) {
     debugLog(`📋 userId: ${userId}`, 'info');
     
     // 予約データ
-    const payload = {
-      action: 'add_reservation',
-      userId: userId,  // ← 修正後のuserId
-      lineUserId: AppState.lineUserId,
-      date: AppState.selectedDate,
-      time: AppState.selectedTime,
-      dogId: AppState.selectedDog ? AppState.selectedDog.dog_id : null,
-      trainerId: AppState.selectedTrainer,
-      menuId: AppState.selectedMenu.id,
-      isMultiDog: AppState.isMultiDog,
-      useAltAddress: AppState.useAltAddress,
-      altAddress: AppState.altAddress,
-      voucherCode: AppState.voucherData ? AppState.voucherData.code : null,
-      remarks: document.getElementById('conf-remarks').value,
-      paymentMethod: document.getElementById('payment-method').value,
-      paymentStatus: isPaid ? 'PAID' : 'UNPAID',
-      totalPrice: AppState.totalPrice,
-      regData: regData
-    };
-    
-    debugLog(`📤 予約データ: ${JSON.stringify(payload).substring(0, 200)}...`, 'info');
-    
-    const result = await apiCall('POST', payload);
+    // 予約データ
+const payload = {
+  action: 'add_reservation',
+  userId: userId,
+  lineUserId: AppState.lineUserId,
+  date: AppState.selectedDate,
+  time: AppState.selectedTime,
+  dogId: AppState.selectedDog ? AppState.selectedDog.dog_id : null,
+  trainerId: AppState.selectedTrainer,
+  menuId: AppState.selectedMenu.id,
+  isMultiDog: AppState.isMultiDog,
+  useAltAddress: AppState.useAltAddress,
+  altAddress: AppState.altAddress,
+  voucherCode: AppState.voucherData ? AppState.voucherData.code : null,
+  remarks: document.getElementById('conf-remarks').value,
+  paymentMethod: document.getElementById('payment-method').value,
+  paymentStatus: isPaid ? 'PAID' : 'UNPAID',
+  totalPrice: AppState.totalPrice,
+  regData: regData
+};
+
+// ===== デバッグログ追加 =====
+debugLog('📤 送信データ詳細:', 'info');
+debugLog(`  action: ${payload.action}`, 'info');
+debugLog(`  userId: ${payload.userId}`, 'info');
+debugLog(`  date: ${payload.date}`, 'info');
+debugLog(`  time: ${payload.time}`, 'info');
+debugLog(`  全データ: ${JSON.stringify(payload)}`, 'info');
+
+const result = await apiCall('POST', payload);
     
     if (result.status === 'success') {
       debugLog('✅ 予約確定成功', 'success');
