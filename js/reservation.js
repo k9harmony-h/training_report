@@ -99,19 +99,22 @@ window.onload = async () => {
 /**
  * 必須データ読み込み（Priority 2）
  */
+/**
+ * 必須データ読み込み（Priority 2）
+ */
 async function loadEssentialData() {
   try {
     const startTime = performance.now();
     
     debugLog(`🔍 GAS URL: ${CONFIG.API.GAS_URL}`, 'info');
     
-    // 並列読み込みで高速化
+    // ===== 修正: lineUserIdをすべてのリクエストに追加 =====
     const [customerData, productsData, trainersData] = await Promise.all([
-      fetch(`${CONFIG.API.GAS_URL}?type=data&userId=${AppState.lineUserId}`)
+      fetch(`${CONFIG.API.GAS_URL}?type=data&lineUserId=${AppState.lineUserId}`)
         .then(res => res.json()),
-      fetch(`${CONFIG.API.GAS_URL}?type=products`)
+      fetch(`${CONFIG.API.GAS_URL}?type=products&lineUserId=${AppState.lineUserId}`)
         .then(res => res.json()),
-      fetch(`${CONFIG.API.GAS_URL}?action=getTrainerList`)  // ← 修正
+      fetch(`${CONFIG.API.GAS_URL}?action=getTrainerList&lineUserId=${AppState.lineUserId}`)
         .then(res => res.json())
     ]);
     
