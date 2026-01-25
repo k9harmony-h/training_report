@@ -1354,11 +1354,52 @@ function renderFinalPricing() {
   }
   
   /**
-   * 決済実行
-   */
-  async function executePayment() {
+ * 決済実行（アトミック処理に統合）
+ */
+async function executePayment() {
+  try {
+    showLoading('決済処理中...');
+    
+    debugLog('💳 決済処理開始（アトミックトランザクション）', 'info');
+    
+    // ===== 修正: submitReservation(true)に統合 =====
+    // Square Token化は既に完了しているので、
+    // submitReservation内でcreateReservationWithPaymentを呼び出す
+    
+    await submitReservation(true);
+    
+  } catch (error) {
+    hideLoading();
+    debugLog(`❌ 決済エラー: ${error.message}`, 'error');
+    alert('決済処理中にエラーが発生しました: ' + error.message);
+  }
+}
+  
+  /**
+ * 予約確定（現地決済 or 決済完了後）
+ * @param {boolean} isPaid - 決済済みかどうか
+ */
+  async function submitReservation(isPaid = false) {
     try {
-      showLoading('決済処理中...');
+      showLoading('予約を確定中...');
+      
+      // 新規ユーザーの登録情報
+      let regData = null;
+      if (!AppState.userData) {
+        regData = {
+          name: document.getElementById('reg-name').value,
+          phone: document.getElementById('reg-phone').value,
+          zip: document.getElementById('reg-zip').value,
+          address: document.getElementById('reg-addr').value,
+          landmark: document.getElementById('reg-landmark').value,
+          dogName: document.getElementById('reg-dog-name').value,
+          dogBreed: document.getElementById('reg-dog-breed').value,
+          dogAge: document.getElementById('reg-dog-age').value,
+          neutered: document.getElementById('reg-dog-neutered').checked,
+          concerns: document.getElementById('reg-concerns').value,
+          remarks: document.getElementById('reg-remarks').value
+        };
+      }
       
       // ===== userId取得 =====
       let userId;
@@ -1372,171 +1413,158 @@ function renderFinalPricing() {
         throw new Error('ユーザーIDが取得できません');
       }
       
-      const result = await apiCall('POST', {
-        action: 'execute_payment',
-        userId: userId,
-        lineUserId: AppState.lineUserId,
-        amount: AppState.totalPrice,
-        token: AppState.paymentToken,
-        note: `K9 Harmony予約 (${AppState.lineUserId})`
-      });
+      debugLog(`📋 userId: ${userId}`, 'info');
       
-      if (result.status === 'success') {
-        debugLog(`✅ 決済成功: ${result.data.paymentId}`, 'success');
+      // ===== 別住所データ収集 =====
+      let altAddressData = null;
+      if (AppState.useAltAddress) {
+        debugLog('📍 別住所データ収集開始', 'info');
         
-        // 予約確定へ
-        await submitReservation(true);
+        const altAddrEl = document.getElementById('alt-addr');
+        const altBuildingEl = document.getElementById('alt-building');
+        const altLandmarkEl = document.getElementById('alt-landmark');
+        const altRemarksEl = document.getElementById('alt-remarks');
+        
+        const altLocationTypeRadios = document.getElementsByName('alt-location-type');
+        let altLocationType = 'OUTDOOR';
+        for (let i = 0; i < altLocationTypeRadios.length; i++) {
+          if (altLocationTypeRadios[i].checked) {
+            altLocationType = altLocationTypeRadios[i].value.toUpperCase();
+            break;
+          }
+        }
+        
+        if (!altAddrEl) {
+          hideLoading();
+          alert('別住所入力フォームが見つかりません。ページを再読み込みしてください。');
+          debugLog('❌ alt-addr要素が見つかりません', 'error');
+          return;
+        }
+        
+        const altAddr = altAddrEl.value.trim();
+        const altBuilding = altBuildingEl ? altBuildingEl.value.trim() : '';
+        const altLandmark = altLandmarkEl ? altLandmarkEl.value.trim() : '';
+        const altRemarks = altRemarksEl ? altRemarksEl.value.trim() : '';
+        
+        if (!altAddr) {
+          hideLoading();
+          alert('別住所を使用する場合は、住所を入力してください');
+          return;
+        }
+        
+        altAddressData = {
+          address: altAddr,
+          buildingName: altBuilding || null,
+          landmark: altLandmark || null,
+          locationType: altLocationType,
+          remarks: altRemarks || null
+        };
+        
+        debugLog(`✅ 別住所データ収集: ${JSON.stringify(altAddressData)}`, 'success');
+      }
+      
+      // ===== 修正: カード決済の場合はcreateReservationWithPaymentを使用 =====
+      const paymentMethod = document.getElementById('payment-method').value;
+      
+      if (isPaid && paymentMethod === 'CARD' && AppState.paymentToken) {
+        // ★★★ アトミック処理: 決済+予約を1つのトランザクションで実行 ★★★
+        debugLog('💳 カード決済: createReservationWithPaymentを使用', 'info');
+        
+        // 予約データ構築
+        const reservationData = {
+          customer_id: userId,
+          primary_dog_id: AppState.selectedDog ? AppState.selectedDog.dog_id : null,
+          trainer_id: AppState.selectedTrainer,
+          office_id: 'default-office',
+          product_id: AppState.selectedMenu.id,
+          reservation_date: AppState.selectedDate,
+          start_time: AppState.selectedTime,
+          duration: AppState.selectedMenu.duration + (AppState.isMultiDog ? 30 : 0),
+          is_multi_dog: AppState.isMultiDog,
+          use_alt_address: AppState.useAltAddress,
+          alt_address: altAddressData,
+          voucher_code: AppState.voucherData ? AppState.voucherData.code : null,
+          notes: document.getElementById('conf-remarks').value,
+          reg_data: regData
+        };
+        
+        // 決済データ構築
+        const paymentData = {
+          amount: AppState.lessonPrice + (AppState.isMultiDog ? 2000 : 0),
+          tax_amount: Math.floor((AppState.lessonPrice + (AppState.isMultiDog ? 2000 : 0)) * 0.1),
+          total_amount: AppState.totalPrice,
+          payment_method: 'CREDIT_CARD',
+          square_source_id: AppState.paymentToken
+        };
+        
+        const payload = {
+          action: 'createReservationWithPayment',
+          userId: userId,
+          lineUserId: AppState.lineUserId,
+          reservationData: JSON.stringify(reservationData),
+          paymentData: JSON.stringify(paymentData),
+          lockId: null
+        };
+        
+        debugLog('📤 送信データ (createReservationWithPayment):', 'info');
+        debugLog(`  全データ: ${JSON.stringify(payload)}`, 'info');
+        
+        const result = await apiCall('POST', payload);
+        
+        if (result.success) {
+          debugLog('✅ 決済+予約確定成功', 'success');
+          hideLoading();
+          goToView(5);
+        } else {
+          hideLoading();
+          alert(`決済に失敗しました: ${result.message || result.error}`);
+        }
         
       } else {
-        hideLoading();
-        alert(`決済に失敗しました: ${result.message}`);
+        // ★★★ 現地決済: 従来のadd_reservationを使用 ★★★
+        debugLog('💵 現地決済: add_reservationを使用', 'info');
+        
+        const payload = {
+          action: 'add_reservation',
+          userId: userId,
+          lineUserId: AppState.lineUserId,
+          date: AppState.selectedDate,
+          time: AppState.selectedTime,
+          dogId: AppState.selectedDog ? AppState.selectedDog.dog_id : null,
+          trainerId: AppState.selectedTrainer,
+          menuId: AppState.selectedMenu.id,
+          isMultiDog: AppState.isMultiDog,
+          useAltAddress: AppState.useAltAddress,
+          altAddress: altAddressData,
+          voucherCode: AppState.voucherData ? AppState.voucherData.code : null,
+          remarks: document.getElementById('conf-remarks').value,
+          paymentMethod: paymentMethod,
+          paymentStatus: 'UNPAID',
+          totalPrice: AppState.totalPrice,
+          regData: regData
+        };
+        
+        debugLog('📤 送信データ (add_reservation):', 'info');
+        debugLog(`  全データ: ${JSON.stringify(payload)}`, 'info');
+        
+        const result = await apiCall('POST', payload);
+        
+        if (result.status === 'success') {
+          debugLog('✅ 予約確定成功', 'success');
+          hideLoading();
+          goToView(5);
+        } else {
+          hideLoading();
+          alert(`予約の確定に失敗しました: ${result.message}`);
+        }
       }
       
     } catch (error) {
       hideLoading();
-      debugLog(`❌ 決済エラー: ${error.message}`, 'error');
-      alert('決済処理中にエラーが発生しました');
+      debugLog(`❌ 予約確定エラー: ${error.message}`, 'error');
+      alert('予約処理中にエラーが発生しました: ' + error.message);
     }
   }
-  
-  /**
- * 予約確定（現地決済 or 決済完了後）
- * @param {boolean} isPaid - 決済済みかどうか
- */
-async function submitReservation(isPaid = false) {
-  try {
-    showLoading('予約を確定中...');
-    
-    // 新規ユーザーの登録情報
-    let regData = null;
-    if (!AppState.userData) {
-      regData = {
-        name: document.getElementById('reg-name').value,
-        phone: document.getElementById('reg-phone').value,
-        zip: document.getElementById('reg-zip').value,
-        address: document.getElementById('reg-addr').value,
-        landmark: document.getElementById('reg-landmark').value,
-        dogName: document.getElementById('reg-dog-name').value,
-        dogBreed: document.getElementById('reg-dog-breed').value,
-        dogAge: document.getElementById('reg-dog-age').value,
-        neutered: document.getElementById('reg-dog-neutered').checked,
-        concerns: document.getElementById('reg-concerns').value,
-        remarks: document.getElementById('reg-remarks').value
-      };
-    }
-    
-    // ===== 修正: userIdの設定 =====
-    let userId;
-    if (AppState.userData && AppState.userData.customer_id) {
-      userId = AppState.userData.customer_id;
-    } else if (AppState.userData && AppState.userData.unique_key) {
-      userId = AppState.userData.unique_key;
-    } else if (AppState.lineUserId) {
-      userId = AppState.lineUserId;  // ← 新規ユーザーの場合、LINE UserIDを使用
-    } else {
-      throw new Error('ユーザーIDが取得できません');
-    }
-    
-    debugLog(`📋 userId: ${userId}`, 'info');
-    
-    // ===== 別住所データ収集 =====
-let altAddressData = null;
-if (AppState.useAltAddress) {
-  debugLog('📍 別住所データ収集開始', 'info');
-  
-  // ===== 要素取得（正しいID）=====
-  const altAddrEl = document.getElementById('alt-addr');                    // ← 修正
-  const altBuildingEl = document.getElementById('alt-building');            // ← 正しい
-  const altLandmarkEl = document.getElementById('alt-landmark');            // ← 正しい
-  const altRemarksEl = document.getElementById('alt-remarks');              // ← 正しい
-  
-  // ===== radioボタンから値を取得 =====
-  const altLocationTypeRadios = document.getElementsByName('alt-location-type');
-  let altLocationType = 'OUTDOOR';  // デフォルト
-  for (let i = 0; i < altLocationTypeRadios.length; i++) {
-    if (altLocationTypeRadios[i].checked) {
-      altLocationType = altLocationTypeRadios[i].value.toUpperCase();
-      break;
-    }
-  }
-  
-  // ===== エラーハンドリング =====
-  if (!altAddrEl) {
-    hideLoading();
-    alert('別住所入力フォームが見つかりません。ページを再読み込みしてください。');
-    debugLog('❌ alt-addr要素が見つかりません', 'error');
-    return;
-  }
-  
-  const altAddr = altAddrEl.value.trim();
-  const altBuilding = altBuildingEl ? altBuildingEl.value.trim() : '';
-  const altLandmark = altLandmarkEl ? altLandmarkEl.value.trim() : '';
-  const altRemarks = altRemarksEl ? altRemarksEl.value.trim() : '';
-  
-  // ===== バリデーション =====
-  if (!altAddr) {
-    hideLoading();
-    alert('別住所を使用する場合は、住所を入力してください');
-    return;
-  }
-  
-  altAddressData = {
-    address: altAddr,
-    buildingName: altBuilding || null,
-    landmark: altLandmark || null,
-    locationType: altLocationType,
-    remarks: altRemarks || null
-  };
-  
-  debugLog(`✅ 別住所データ収集: ${JSON.stringify(altAddressData)}`, 'success');
-}
-
-// 予約データ
-const payload = {
-  action: 'add_reservation',
-  userId: userId,
-  lineUserId: AppState.lineUserId,
-  date: AppState.selectedDate,
-  time: AppState.selectedTime,
-  dogId: AppState.selectedDog ? AppState.selectedDog.dog_id : null,
-  trainerId: AppState.selectedTrainer,
-  menuId: AppState.selectedMenu.id,
-  isMultiDog: AppState.isMultiDog,
-  useAltAddress: AppState.useAltAddress,
-  altAddress: altAddressData,  // ← 修正：収集したデータを使用
-  voucherCode: AppState.voucherData ? AppState.voucherData.code : null,
-  remarks: document.getElementById('conf-remarks').value,
-  paymentMethod: document.getElementById('payment-method').value,
-  paymentStatus: isPaid ? 'PAID' : 'UNPAID',
-  totalPrice: AppState.totalPrice,
-  regData: regData
-};
-
-// ===== デバッグログ追加 =====
-debugLog('📤 送信データ詳細:', 'info');
-debugLog(`  action: ${payload.action}`, 'info');
-debugLog(`  userId: ${payload.userId}`, 'info');
-debugLog(`  date: ${payload.date}`, 'info');
-debugLog(`  time: ${payload.time}`, 'info');
-debugLog(`  全データ: ${JSON.stringify(payload)}`, 'info');
-
-const result = await apiCall('POST', payload);
-    
-    if (result.status === 'success') {
-      debugLog('✅ 予約確定成功', 'success');
-      hideLoading();
-      goToView(5);
-    } else {
-      hideLoading();
-      alert(`予約の確定に失敗しました: ${result.message}`);
-    }
-    
-  } catch (error) {
-    hideLoading();
-    debugLog(`❌ 予約確定エラー: ${error.message}`, 'error');
-    alert('予約処理中にエラーが発生しました: ' + error.message);
-  }
-}
   
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      View 5: サンクスページ
