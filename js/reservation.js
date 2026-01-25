@@ -1360,8 +1360,22 @@ function renderFinalPricing() {
     try {
       showLoading('決済処理中...');
       
+      // ===== userId取得 =====
+      let userId;
+      if (AppState.userData && AppState.userData.customer_id) {
+        userId = AppState.userData.customer_id;
+      } else if (AppState.userData && AppState.userData.unique_key) {
+        userId = AppState.userData.unique_key;
+      } else if (AppState.lineUserId) {
+        userId = AppState.lineUserId;
+      } else {
+        throw new Error('ユーザーIDが取得できません');
+      }
+      
       const result = await apiCall('POST', {
         action: 'execute_payment',
+        userId: userId,
+        lineUserId: AppState.lineUserId,
         amount: AppState.totalPrice,
         token: AppState.paymentToken,
         note: `K9 Harmony予約 (${AppState.lineUserId})`
