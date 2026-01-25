@@ -1425,8 +1425,34 @@ async function submitReservation(isPaid = false) {
     
     debugLog(`📋 userId: ${userId}`, 'info');
     
-    // 予約データ
-    // 予約データ
+    // ===== 別住所データ収集 =====
+let altAddressData = null;
+if (AppState.useAltAddress) {
+  const altAddr = document.getElementById('alt-address').value.trim();
+  const altBuilding = document.getElementById('alt-building').value.trim();
+  const altLandmark = document.getElementById('alt-landmark').value.trim();
+  const altLocationType = document.getElementById('alt-location-type').value;
+  const altRemarks = document.getElementById('alt-remarks').value.trim();
+  
+  // ===== バリデーション：別住所が入力されているか確認 =====
+  if (!altAddr) {
+    hideLoading();
+    alert('別住所を使用する場合は、住所を入力してください');
+    return;
+  }
+  
+  altAddressData = {
+    address: altAddr,
+    buildingName: altBuilding || null,
+    landmark: altLandmark || null,
+    locationType: altLocationType || 'OUTDOOR',
+    remarks: altRemarks || null
+  };
+  
+  debugLog(`✅ 別住所データ収集: ${JSON.stringify(altAddressData)}`, 'success');
+}
+
+// 予約データ
 const payload = {
   action: 'add_reservation',
   userId: userId,
@@ -1438,7 +1464,7 @@ const payload = {
   menuId: AppState.selectedMenu.id,
   isMultiDog: AppState.isMultiDog,
   useAltAddress: AppState.useAltAddress,
-  altAddress: AppState.altAddress,
+  altAddress: altAddressData,  // ← 修正：収集したデータを使用
   voucherCode: AppState.voucherData ? AppState.voucherData.code : null,
   remarks: document.getElementById('conf-remarks').value,
   paymentMethod: document.getElementById('payment-method').value,
