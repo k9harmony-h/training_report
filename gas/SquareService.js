@@ -31,7 +31,7 @@ var SquareService = {
         },
         autocomplete: true,
         reference_id: paymentData.reservation_id || paymentData.payment_id,
-        note: 'K9 Harmony レッスン予約'
+        note: 'K9 Harmony トレーニング予約'
       };
       
       var retryResult = RetryHandler.execute(function() {
@@ -68,10 +68,12 @@ var SquareService = {
       }
       
       log('INFO', 'SquareService', 'Payment authorized: ' + result.payment.id);
-      
+
       return {
         success: true,
         square_payment_id: result.payment.id,
+        square_order_id: result.payment.order_id || null,
+        square_receipt_url: result.payment.receipt_url || null,
         status: result.payment.status,
         amount: result.payment.amount_money.amount,
         card_last4: result.payment.card_details ? result.payment.card_details.card.last_4 : null,

@@ -85,7 +85,18 @@ var dbData = {
   alt_landmark: data.alt_landmark || null,
   alt_location_type: data.alt_location_type || null,
   alt_remarks: data.alt_remarks || null,
-  
+
+  // ===== クーポン情報 =====
+  coupon_id: data.coupon_id || null,
+  coupon_code: data.coupon_code || null,
+  coupon_value: data.coupon_value || 0,
+
+  // ===== 金額情報 =====
+  lesson_amount: data.lesson_amount || 0,
+  travel_fee: data.travel_fee || 0,
+  total_amount: data.total_amount || 0,
+  payment_method: data.payment_method || null,
+
   status: data.status,
   payment_status: data.payment_status,
   cancellation_reason: '',

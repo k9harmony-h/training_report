@@ -318,6 +318,8 @@ var Transaction = {
       var paymentUpdateData = {
         payment_status: 'CAPTURED',
         square_payment_id: squareResult.square_payment_id,
+        square_order_id: squareResult.square_order_id || '',
+        square_receipt_url: squareResult.square_receipt_url || '',
         card_brand: squareResult.card_brand || '',
         card_last4: squareResult.card_last4 || '',
         updated_at: new Date()
@@ -328,6 +330,8 @@ var Transaction = {
       // メモリ内のpaymentオブジェクトも更新
       payment.payment_status = 'CAPTURED';
       payment.square_payment_id = squareResult.square_payment_id;
+      payment.square_order_id = squareResult.square_order_id;
+      payment.square_receipt_url = squareResult.square_receipt_url;
       payment.card_brand = squareResult.card_brand;
       payment.card_last4 = squareResult.card_last4;
 
@@ -355,6 +359,8 @@ var Transaction = {
           customer_id: payment.customer_id,
           product_id: reservation.product_id || '',
           sales_price: payment.amount,
+          coupon_id: reservation.coupon_id || '',
+          coupon_value: reservation.coupon_value || 0,
           sales_amount: payment.total_amount,
           tax_amount: payment.tax_amount,
           sale_type: 'LESSON',
@@ -368,6 +374,11 @@ var Transaction = {
 
         DB.insert(CONFIG.SHEET.SALES, saleData);
         log('INFO', 'Transaction', 'Sale recorded: ' + saleData.sale_id);
+
+        // クーポン使用回数をインクリメント
+        if (reservation.coupon_id && typeof CouponService !== 'undefined') {
+          CouponService.incrementUsage(reservation.coupon_id);
+        }
 
         // ロールバック登録: 売上取り消し
         Transaction.registerRollback(
@@ -407,6 +418,7 @@ var Transaction = {
       log('INFO', 'Transaction', '=== Transaction completed successfully ===');
 
       return {
+        success: true,
         reservation: reservation,
         payment: payment
       };

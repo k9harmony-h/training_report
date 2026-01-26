@@ -120,7 +120,7 @@ log('DEBUG', 'Main', 'Final lineUserId', { lineUserId: lineUserId });
     // ============================================================================
     // userId必須チェック
     // ============================================================================
-    var actionsWithoutUserId = ['getProductList', 'getTrainerList', 'healthCheck', 'getAvailableSlots', 'products'];
+    var actionsWithoutUserId = ['getProductList', 'getTrainerList', 'healthCheck', 'getAvailableSlots', 'products', 'validateCouponCode', 'getApplicableCoupon', 'check_voucher'];
     
     if (actionsWithoutUserId.indexOf(action) === -1 && !lineUserId) {
       return ContentService.createTextOutput(JSON.stringify({
@@ -180,7 +180,19 @@ log('DEBUG', 'Main', 'Final lineUserId', { lineUserId: lineUserId });
       case 'healthCheck':
         response = handleHealthCheck();
         break;
-        
+
+      case 'getApplicableCoupon':
+        response = handleGetApplicableCoupon(e.parameter);
+        break;
+
+      case 'validateCouponCode':
+        response = handleValidateCouponCode(e.parameter);
+        break;
+
+      case 'check_voucher':
+        response = handleCheckVoucher(e.parameter);
+        break;
+
       default:
         return ContentService.createTextOutput(JSON.stringify({
           error: true,
@@ -655,8 +667,19 @@ alt_location_type: altLocationType,
 alt_remarks: altRemarks,
   status: 'PENDING',
   payment_status: requestBody.paymentStatus || 'UNPAID',
+  payment_method: requestBody.paymentMethod || 'CASH',
   notes: requestBody.remarks || '',
-  
+
+  // ===== クーポン情報 =====
+  coupon_id: requestBody.coupon_id || null,
+  coupon_code: requestBody.coupon_code || null,
+  coupon_value: requestBody.coupon_value || 0,
+
+  // ===== 金額内訳 =====
+  lesson_amount: requestBody.lesson_amount || 0,
+  travel_fee: requestBody.travel_fee || 0,
+  total_amount: requestBody.totalPrice || 0,
+
   // ===== CalendarRepository用の追加データ =====
   customer_name: customer.customer_name,
   customer_code: customer.customer_code,
@@ -665,10 +688,9 @@ alt_remarks: altRemarks,
   dog_code: dog.dog_code,
   trainer_name: trainer ? trainer.trainer_name : '',
   trainer_code: trainer ? trainer.trainer_code : '',
-  product_name: product ? product.product_name : '単発レッスン',
+  product_name: product ? product.product_name : '単発トレーニング',
   address: locationAddress,
-  total_amount: requestBody.totalPrice || 0,
-  
+
   created_by: 'WEB_RESERVATION'
 };
     
@@ -884,6 +906,67 @@ function handleGetTrainerList() {
   });
   
   return { trainers: activeTrainers };
+}
+
+/**
+ * 適用可能なクーポン取得（自動適用）
+ */
+function handleGetApplicableCoupon(params) {
+  var productId = params.productId;
+  var amount = parseInt(params.amount) || 0;
+  var reservationDate = params.reservationDate;
+
+  if (!productId || !amount) {
+    return { coupon: null };
+  }
+
+  var coupon = CouponService.getAutoApplicableCoupon(productId, amount, reservationDate);
+  return { coupon: coupon };
+}
+
+/**
+ * クーポンコード検証
+ */
+function handleValidateCouponCode(params) {
+  var couponCode = params.couponCode;
+  var productId = params.productId;
+  var amount = parseInt(params.amount) || 0;
+
+  if (!couponCode) {
+    return { valid: false, message: 'クーポンコードを入力してください' };
+  }
+
+  return CouponService.validateCouponCode(couponCode, productId, amount);
+}
+
+/**
+ * Voucher/クーポンコード検証（既存フロントエンド互換）
+ */
+function handleCheckVoucher(params) {
+  var couponCode = params.code;
+
+  if (!couponCode) {
+    return { valid: false, message: 'コードを入力してください' };
+  }
+
+  // CouponServiceで検証
+  var result = CouponService.validateCouponCode(couponCode, 'ALL', 99999);
+
+  if (result.valid) {
+    return {
+      valid: true,
+      coupon_id: result.coupon.coupon_id,
+      code: result.coupon.coupon_code,
+      name: result.coupon.coupon_name,
+      discount_type: result.coupon.discount_type,
+      discount_value: result.coupon.discount_amount
+    };
+  } else {
+    return {
+      valid: false,
+      message: result.message
+    };
+  }
 }
 
 /**
@@ -1171,7 +1254,18 @@ function handleCreateReservationWithPayment(lineUserId, requestBody) {
 
     status: 'PENDING',
     payment_status: 'PENDING',
+    payment_method: paymentDataFromClient.payment_method || 'CREDIT',
     notes: reservationDataFromClient.notes || '',
+
+    // クーポン情報
+    coupon_id: reservationDataFromClient.coupon_id || null,
+    coupon_code: reservationDataFromClient.coupon_code || null,
+    coupon_value: reservationDataFromClient.coupon_value || 0,
+
+    // 金額内訳
+    lesson_amount: reservationDataFromClient.lesson_amount || 0,
+    travel_fee: reservationDataFromClient.travel_fee || 0,
+    total_amount: paymentDataFromClient.total_amount || 0,
 
     // CalendarRepository用の追加データ
     customer_name: customer.customer_name,
@@ -1181,9 +1275,8 @@ function handleCreateReservationWithPayment(lineUserId, requestBody) {
     dog_code: dog.dog_code,
     trainer_name: trainer ? trainer.trainer_name : '',
     trainer_code: trainer ? trainer.trainer_code : '',
-    product_name: product ? product.product_name : '単発レッスン',
+    product_name: product ? product.product_name : '単発トレーニング',
     address: locationAddress,
-    total_amount: paymentDataFromClient.total_amount || 0,
 
     created_by: 'WEB_RESERVATION'
   };

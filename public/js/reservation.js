@@ -531,6 +531,7 @@ async function loadCalendarData(monthOffset) {
     function handleTrainerChange(e) {
       AppState.selectedTrainer = e.target.value;
       debugLog(`👨‍🏫 トレーナー: ${AppState.selectedTrainer}`, 'info');
+      validateView1();
     }
     
     function handleMenuChange(e) {
@@ -691,7 +692,11 @@ function renderMenuSelect() {
    * View 1のバリデーション
    */
   function validateView1() {
-    const isValid = AppState.selectedDog && AppState.selectedMenu;
+    // トレーナーが複数いる場合は選択必須
+    const needsTrainerSelection = AppState.trainers && AppState.trainers.length > 1;
+    const trainerValid = !needsTrainerSelection || AppState.selectedTrainer;
+
+    const isValid = AppState.selectedDog && AppState.selectedMenu && trainerValid;
     document.getElementById('btn-next-view2').disabled = !isValid;
   }
   
@@ -823,24 +828,28 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
   cell.appendChild(numberEl);
   
   // 空き状況シンボル
+  // 1日の最大枠数（これより少なければ予約が入っている）
+  const MAX_SLOTS_PER_DAY = 8;
+
   if (!isOtherMonth && slots.length > 0) {
     const symbolEl = document.createElement('div');
     symbolEl.className = 'availability-symbol';
-    
-    if (slots.length >= 5) {
+
+    // 全枠空いている場合のみ「空きあり」、それ以外は「残り僅か」
+    if (slots.length >= MAX_SLOTS_PER_DAY) {
       symbolEl.classList.add('symbol-available');
       symbolEl.textContent = '●';
-    } else if (slots.length >= 2) {
+      symbolEl.title = '空きあり';
+    } else {
+      // 1件でも予約があれば「残り僅か」
       symbolEl.classList.add('symbol-few');
       symbolEl.textContent = '◐';
-    } else {
-      symbolEl.classList.add('symbol-full');
-      symbolEl.textContent = '○';
+      symbolEl.title = '残り僅か';
     }
-    
+
     cell.appendChild(symbolEl);
-    
-    // ===== 修正: クリックイベントを追加 =====
+
+    // クリックイベント
     cell.style.cursor = 'pointer';
     cell.addEventListener('click', () => {
       debugLog(`📅 日付クリック: ${dateStr}`, 'info');
@@ -1166,8 +1175,18 @@ async function preCalculateTravelFee() {
    * View4へ遷移（ユーザータイプによって分岐）
    */
   function checkUserAndNext() {
+    // 別住所チェックがONの場合、必須項目を検証
+    if (AppState.useAltAddress) {
+      const altAddr = document.getElementById('alt-addr')?.value?.trim();
+      if (!altAddr) {
+        alert('別住所を使用する場合は、住所を入力してください');
+        document.getElementById('alt-addr')?.focus();
+        return;
+      }
+    }
+
     const paymentMethod = document.getElementById('payment-method').value;
-    
+
     if (AppState.userData) {
       // 既存ユーザー
       if (paymentMethod === 'CARD') {
@@ -1185,7 +1204,7 @@ async function preCalculateTravelFee() {
         showView4Pattern('cash');
       }
     }
-    
+
     goToView(4);
   }
   
@@ -2164,16 +2183,84 @@ function selectTime(date, time) {
       terms: '利用規約',
       law: '特定商取引法に基づく表記'
     };
-    
+
     const contents = {
-      policy: '【キャンセルポリシー】\n\n受付締切: 予約日前日の18:00まで\n\nキャンセル料:\n・4日前まで: 無料\n・3日前〜2日前: トレーニング料金の50%\n・前日〜当日: トレーニング料金の100%\n\n※天候不良等による中止の場合はキャンセル料は発生しません。',
-      privacy: '【個人情報の取扱について】\n\nお客様からお預かりした個人情報は、トレーニングの実施および関連サービスの提供のみに使用いたします。\n\n第三者への開示は、法令に基づく場合を除き、お客様の同意なく行うことはございません。',
-      terms: '【利用規約】\n\n本サービスをご利用いただく際は、以下の規約に同意いただいたものとみなします。\n\n1. トレーニングは予約制です\n2. 時間厳守をお願いします\n3. ワクチン接種証明書が必要です\n4. キャンセルポリシーに従います',
-      law: '【特定商取引法に基づく表記】\n\n事業者名: K9 Harmony\n代表者: 平田\n所在地: 〒174-0063 東京都板橋区前野町6-55-1\n電話番号: 070-9043-1109\n\nお支払い方法: クレジットカード、QUICPay、iD、交通系IC、現金\nサービスの提供時期: 予約日時'
+      policy: `
+        <h3>受付締切</h3>
+        <p>予約日前日の <strong>18:00</strong> まで</p>
+
+        <h3>キャンセル料</h3>
+        <table class="terms-table">
+          <tr><th>キャンセル時期</th><th>キャンセル料</th></tr>
+          <tr><td>4日前の23:59まで</td><td class="free">無料</td></tr>
+          <tr><td>3日前〜2日前の23:59</td><td class="warn">トレーニング料金の50%</td></tr>
+          <tr><td>前日〜当日</td><td class="alert">トレーニング料金の100%</td></tr>
+        </table>
+
+        <div class="terms-note">
+          <i class="fa-solid fa-info-circle"></i>
+          天候不良等による中止の場合、キャンセル料は発生しません。
+        </div>
+      `,
+      privacy: `
+        <h3>収集する情報</h3>
+        <ul>
+          <li>お名前、ご連絡先（電話番号・メールアドレス）</li>
+          <li>ご住所（出張サービスのため）</li>
+          <li>パートナー（犬）の情報</li>
+          <li>LINE ユーザーID（通知のため）</li>
+        </ul>
+
+        <h3>利用目的</h3>
+        <ul>
+          <li>トレーニングサービスの提供</li>
+          <li>予約確認・リマインド通知</li>
+          <li>サービス向上のための分析</li>
+        </ul>
+
+        <h3>第三者への開示</h3>
+        <p>法令に基づく場合を除き、お客様の同意なく第三者への開示は行いません。</p>
+
+        <h3>お問い合わせ</h3>
+        <p>個人情報に関するお問い合わせは、LINE公式アカウントまでご連絡ください。</p>
+      `,
+      terms: `
+        <h3>第1条（適用）</h3>
+        <p>本規約は、K9 Harmonyが提供するトレーニングサービス（以下「本サービス」）の利用に関する条件を定めます。</p>
+
+        <h3>第2条（予約）</h3>
+        <ul>
+          <li>本サービスは完全予約制です</li>
+          <li>予約時間の厳守をお願いいたします</li>
+          <li>遅刻の場合、トレーニング時間が短縮される場合があります</li>
+        </ul>
+
+        <h3>第3条（ワクチン接種）</h3>
+        <p>安全なトレーニングのため、混合ワクチン・狂犬病予防接種の証明書をご提示いただく場合があります。</p>
+
+        <h3>第4条（キャンセル）</h3>
+        <p>キャンセルポリシーに従い、キャンセル料が発生する場合があります。詳細は「キャンセルポリシー」をご確認ください。</p>
+
+        <h3>第5条（免責事項）</h3>
+        <p>トレーニング中の事故・怪我について、当方の故意または重大な過失による場合を除き、責任を負いかねます。</p>
+      `,
+      law: `
+        <table class="terms-table law-table">
+          <tr><th>事業者名</th><td>K9 Harmony</td></tr>
+          <tr><th>代表者</th><td>平田</td></tr>
+          <tr><th>所在地</th><td>〒174-0063<br>東京都板橋区前野町6-55-1</td></tr>
+          <tr><th>電話番号</th><td>070-9043-1109</td></tr>
+          <tr><th>メール</th><td>LINE公式アカウントにてお問い合わせください</td></tr>
+          <tr><th>サービス料金</th><td>各メニューページに記載</td></tr>
+          <tr><th>お支払い方法</th><td>クレジットカード、QUICPay、iD、交通系IC、現金</td></tr>
+          <tr><th>サービス提供時期</th><td>予約日時にサービスを提供</td></tr>
+          <tr><th>返品・交換</th><td>サービスの性質上、返品・交換はお受けできません</td></tr>
+        </table>
+      `
     };
-    
+
     document.getElementById('terms-title').textContent = titles[type];
-    document.getElementById('terms-content').textContent = contents[type];
+    document.getElementById('terms-content').innerHTML = contents[type];
     
     document.getElementById('terms-overlay').classList.add('open');
     document.getElementById('terms-sheet').classList.add('open');

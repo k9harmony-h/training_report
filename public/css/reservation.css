@@ -20,10 +20,13 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-lg) var(--spacing-xl);
+    padding: var(--spacing-md) var(--spacing-xl);
     position: relative;
     max-width: 600px;
-    margin: 0 auto var(--spacing-lg);
+    margin: 0 auto var(--spacing-md);
+    background: white;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    box-shadow: var(--shadow-sm);
   }
   
   .progress-bg {
@@ -774,7 +777,96 @@
   .btn-close:hover {
     background: var(--c-bg-mist);
   }
-  
+
+  /* 規約コンテンツ */
+  .top-sheet-content {
+    padding: var(--spacing-md) var(--spacing-lg);
+    line-height: 1.8;
+  }
+
+  .top-sheet-content h3 {
+    color: var(--c-sub-deep-ocean);
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    margin: var(--spacing-lg) 0 var(--spacing-sm);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 2px solid var(--c-main-turquoise);
+  }
+
+  .top-sheet-content h3:first-child {
+    margin-top: 0;
+  }
+
+  .top-sheet-content p {
+    margin: var(--spacing-sm) 0;
+    color: var(--c-text-base);
+  }
+
+  .top-sheet-content ul {
+    margin: var(--spacing-sm) 0;
+    padding-left: var(--spacing-lg);
+  }
+
+  .top-sheet-content li {
+    margin: var(--spacing-xs) 0;
+    color: var(--c-text-base);
+  }
+
+  .terms-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: var(--spacing-md) 0;
+    font-size: var(--font-size-sm);
+  }
+
+  .terms-table th,
+  .terms-table td {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--c-border-light);
+    text-align: left;
+  }
+
+  .terms-table th {
+    background: var(--c-bg-mist);
+    color: var(--c-sub-deep-ocean);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .terms-table .free {
+    color: var(--c-success);
+    font-weight: 600;
+  }
+
+  .terms-table .warn {
+    color: var(--c-warning);
+    font-weight: 600;
+  }
+
+  .terms-table .alert {
+    color: var(--c-error);
+    font-weight: 600;
+  }
+
+  .law-table th {
+    width: 120px;
+    vertical-align: top;
+  }
+
+  .terms-note {
+    background: var(--c-bg-mist);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    margin-top: var(--spacing-md);
+    color: var(--c-text-gray);
+    font-size: var(--font-size-sm);
+  }
+
+  .terms-note i {
+    color: var(--c-main-turquoise);
+    margin-right: var(--spacing-xs);
+  }
+
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      レスポンシブ
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */

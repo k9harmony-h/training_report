@@ -43,37 +43,140 @@ var NotificationService = {
       // 犬情報取得
       var dog = DogRepository.findById(reservation.primary_dog_id);
       var dogName = dog.error ? '（犬情報取得失敗）' : dog.dog_name;
-      
+      // 性別による敬称（♂→くん、それ以外→ちゃん）
+      var dogSuffix = '';
+      if (!dog.error && dog.dog_gender) {
+        dogSuffix = (dog.dog_gender === '♂' || dog.dog_gender === 'オス' || dog.dog_gender === 'male') ? 'くん' : 'ちゃん';
+      }
+      var dogNameWithSuffix = dogName + (dogSuffix ? dogSuffix : '');
+
       // 商品情報取得
       var products = DB.fetchTable(CONFIG.SHEET.PRODUCTS);
-      var product = products.find(function(p) { return p.product_id === reservation.product_id; });
-      var productName = product ? product.product_name : '（商品情報取得失敗）';
-      
-      // 日付フォーマット
-      var reservationDate = reservation.reservation_date;
-      if (reservationDate instanceof Date) {
-        reservationDate = Utilities.formatDate(reservationDate, 'JST', 'yyyy年MM月dd日(E)');
-      } else {
-        var dateStr = String(reservationDate).split(' ')[0];
-        reservationDate = dateStr.replace(/-/g, '/');
+      var productId = reservation.product_id;
+      log('DEBUG', 'NotificationService', 'Looking for product', { product_id: productId });
+      var product = products.find(function(p) { return p.product_id === productId; });
+      var productName = product ? product.product_name : '出張トレーニング';
+      var productDuration = product ? (product.product_duration || product.duration || '') : '';
+      // 商品価格（税込価格を優先）
+      var productPrice = 0;
+      if (product) {
+        productPrice = product.tax_included_price || product.product_price || product.price || 0;
       }
-      
-      // メッセージ作成
+
+      // クーポン情報取得
+      var couponName = '';
+      var couponValue = 0;
+      if (reservation.coupon_id) {
+        var coupons = DB.fetchTable(CONFIG.SHEET.COUPONS);
+        var coupon = coupons.find(function(c) { return c.coupon_id === reservation.coupon_id; });
+        if (coupon) {
+          couponName = coupon.coupon_name || '';
+          couponValue = reservation.coupon_value || coupon.discount_value || 0;
+        }
+      }
+
+      // 金額情報
+      // トレーニング料金 = 商品価格（商品マスターから取得）
+      var lessonPrice = productPrice;
+      // 2頭目追加の場合
+      if (reservation.is_multi_dog) {
+        lessonPrice += 2000;
+      }
+      // 出張費（予約から取得、なければ0）
+      var travelFee = (reservation.travel_fee && reservation.travel_fee > 0) ? reservation.travel_fee : 0;
+      // 割引額
+      var discountAmount = couponValue;
+      // 合計（予約から取得、なければ計算）
+      var totalAmount = (reservation.total_amount && reservation.total_amount > 0)
+        ? reservation.total_amount
+        : (lessonPrice + travelFee - discountAmount);
+
+      // 決済方法
+      var paymentMethod = reservation.payment_method || '';
+      // payment_statusから推測
+      if (!paymentMethod && reservation.payment_status === 'CAPTURED') {
+        paymentMethod = 'CREDIT';
+      }
+
+      log('DEBUG', 'NotificationService', 'Price details', {
+        productPrice: productPrice,
+        lessonPrice: lessonPrice,
+        travelFee: travelFee,
+        discountAmount: discountAmount,
+        totalAmount: totalAmount,
+        paymentMethod: paymentMethod
+      });
+
+      // 日付フォーマット（yyyy/mm/dd(曜日)形式）
+      var reservationDate = reservation.reservation_date;
+      var formattedDate = '';
+      if (reservationDate instanceof Date) {
+        formattedDate = Utilities.formatDate(reservationDate, 'JST', 'yyyy/MM/dd(E)');
+      } else {
+        // 文字列の場合、Date型に変換してフォーマット
+        var dateObj = new Date(reservationDate);
+        if (!isNaN(dateObj.getTime())) {
+          formattedDate = Utilities.formatDate(dateObj, 'JST', 'yyyy/MM/dd(E)');
+        } else {
+          formattedDate = String(reservationDate).split(' ')[0].replace(/-/g, '/');
+        }
+      }
+
+      // 時刻フォーマット（start_timeがDateオブジェクトの場合の対応）
+      var startTime = reservation.start_time;
+      var formattedTime = '';
+      if (startTime instanceof Date) {
+        formattedTime = Utilities.formatDate(startTime, 'JST', 'HH:mm');
+      } else if (typeof startTime === 'string') {
+        formattedTime = startTime;
+      } else {
+        formattedTime = '';
+      }
+
+      // メッセージ作成（高級感のある表現）
+      // コース表示（時間がある場合は付与）
+      var courseDisplay = productName;
+      if (productDuration) {
+        courseDisplay += '(' + productDuration + '分)';
+      }
+
 var messageText = customer.customer_name + ' 様\n\n' +
-                  'ご予約ありがとうございます！\n\n' +
+                  'このたびはご予約いただき、誠にありがとうございます。\n\n' +
                   '━━━━━━━━━━━━━━━━\n' +
-                  '■ 予約内容\n' +
+                  '■ ご予約内容\n' +
                   '━━━━━━━━━━━━━━━━\n' +
                   '予約番号: ' + (reservation.reservation_code || reservation.reservation_id.substring(0, 8)) + '\n' +
-                  '日時: ' + reservationDate + ' ' + (reservation.start_time || '') + '\n' +
-                  '商品: ' + productName + '\n' +
-                  '犬: ' + dogName + '\n' +
-                  'トレーナー: ' + trainerName + '\n';
+                  '日時: ' + formattedDate + ' ' + formattedTime + '\n' +
+                  'コース: ' + courseDisplay + '\n' +
+                  'パートナー: ' + dogNameWithSuffix + '\n' +
+                  '担当トレーナー: ' + trainerName + '\n\n' +
+                  '━━━━━━━━━━━━━━━━\n' +
+                  '■ ご請求内容\n' +
+                  '━━━━━━━━━━━━━━━━\n' +
+                  'トレーニング料金: ¥' + lessonPrice.toLocaleString() + '\n' +
+                  '出張費: ¥' + travelFee.toLocaleString() + '\n';
+
+// 割引がある場合
+if (discountAmount > 0) {
+  messageText += '割引: -¥' + discountAmount.toLocaleString() + '\n';
+  if (couponName) {
+    messageText += '（' + couponName + '）\n';
+  }
+}
+
+messageText += '合計: ¥' + totalAmount.toLocaleString() + '\n';
+
+// 決済方法による条件分岐メッセージ
+if (paymentMethod === 'CREDIT' || paymentMethod === 'credit' || paymentMethod === 'card') {
+  messageText += '\n※ご予約時にクレジットカードにてお支払い完了済みです。\n';
+} else if (paymentMethod === 'CASH' || paymentMethod === 'cash' || paymentMethod === 'onsite') {
+  messageText += '\n※当日、担当トレーナーにお支払いをお願いいたします。\n';
+}
       
 // ===== 別住所情報の追加 =====
 if (reservation.alt_address) {
   messageText += '\n━━━━━━━━━━━━━━━━\n' +
-                 '■ レッスン場所\n' +
+                 '■ トレーニング場所\n' +
                  '※申し込み住所と異なる場所で実施\n' +
                  '━━━━━━━━━━━━━━━━\n' +
                  '住所: ' + reservation.alt_address + '\n';
@@ -101,8 +204,8 @@ if (reservation.alt_address) {
   }
 }
 
-messageText += '\nご来店をお待ちしております🐾\n\n' +
-               '※キャンセルは24時間前まで可能です';
+messageText += '\n当日、お会いできますことを\n心よりお待ち申し上げております。\n\n' +
+               '※キャンセルは予約日の前日までにご連絡ください';
       
       // LINE通知送信
       var result = this._sendLineMessage(customer.line_user_id, messageText);
@@ -213,13 +316,22 @@ messageText += '\nご来店をお待ちしております🐾\n\n' +
         reservationDate = Utilities.formatDate(reservationDate, 'JST', 'M月d日(E)');
       }
       
+      // 時刻フォーマット
+      var startTime = reservation.start_time;
+      var formattedTime = '';
+      if (startTime instanceof Date) {
+        formattedTime = Utilities.formatDate(startTime, 'JST', 'HH:mm');
+      } else {
+        formattedTime = startTime || '';
+      }
+
       var messageText = customer.customer_name + ' 様\n\n' +
-                        '明日のレッスンのご案内です🐾\n\n' +
-                        '【予約内容】\n' +
-                        '日時: ' + reservationDate + ' ' + reservation.start_time + '\n' +
+                        '明日のトレーニングについてご案内申し上げます。\n\n' +
+                        '【ご予約内容】\n' +
+                        '日時: ' + reservationDate + ' ' + formattedTime + '\n' +
                         '担当: ' + trainerName + '\n' +
                         '予約番号: ' + (reservation.reservation_code || '') + '\n\n' +
-                        'お待ちしております！';
+                        'お会いできますことを楽しみにしております。';
       
       return this._sendLineMessage(customer.line_user_id, messageText);
       
@@ -607,7 +719,7 @@ NotificationService._sendAutoCancellationLine = function(customer, reservation, 
       message += '返金処理は3-5営業日以内に\n完了いたします。\n\n';
     }
     
-    message += 'またのご利用を心より\nお待ちしております🐾';
+    message += 'またのご利用を心より\nお待ち申し上げております。';
     
     this._sendLineMessage(customer.line_user_id, message);
     
@@ -741,14 +853,14 @@ NotificationService.sendCancellationRequestConfirmation = function(customerId, r
  */
 NotificationService._sendCancellationConfirmationLine = function(customer, reservation, cancellationData) {
   try {
-    var message = '🐾 K9 Harmonyです\n\n';
-    message += 'キャンセル申請を受け付けました。\n\n';
-    message += '営業時間内にご連絡いたします。\n\n';
+    var message = 'K9 Harmonyでございます。\n\n';
+    message += 'キャンセルのお申し出を承りました。\n\n';
+    message += '営業時間内にご連絡させていただきます。\n\n';
     message += '【営業時間】\n';
     message += '木曜日: 13:00〜20:00\n';
     message += 'その他祝日: 10:00〜20:00\n';
     message += '定休日: 水曜日\n\n';
-    message += 'ご不便をおかけいたしますが、\n何卒よろしくお願いいたします🙇';
+    message += 'ご不便をおかけいたしますが、\n何卒よろしくお願い申し上げます。';
     
     this._sendLineMessage(customer.line_user_id, message);
     
@@ -835,7 +947,7 @@ NotificationService._sendCancellationApprovedLine = function(customer, reservati
       message += '※返金処理は3-5営業日以内に\n完了いたします。\n\n';
     }
     
-    message += 'またのご利用を心より\nお待ちしております🐾';
+    message += 'またのご利用を心より\nお待ち申し上げております。';
     
     this._sendLineMessage(customer.line_user_id, message);
     

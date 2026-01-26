@@ -48,8 +48,8 @@ createReservationEvent(reservation) {
     
     // ===== 1. イベントタイトル作成 =====
     const customerName = reservation.customer_name || '顧客名不明';
-    const dogName = reservation.dog_name || '犬名不明';
-    const productName = reservation.product_name || '単発レッスン';
+    const dogName = reservation.dog_name || 'パートナー不明';
+    const productName = reservation.product_name || '単発トレーニング';
     const title = `【予約】${customerName}様 - ${dogName}（${productName}）`;
     
     log('INFO', 'CalendarRepository', 'タイトル: ' + title);
@@ -322,8 +322,8 @@ return {
    */
   _buildEventTitle(reservation) {
     const customerName = reservation.customer_name || '顧客名不明';
-    const dogName = reservation.dog_name || '犬名不明';
-    const productName = reservation.product_name || '単発レッスン';
+    const dogName = reservation.dog_name || 'パートナー不明';
+    const productName = reservation.product_name || '単発トレーニング';
     
     return `【予約】${customerName}様 - ${dogName}（${productName}）`;
   }
@@ -343,7 +343,7 @@ return {
     description += '\n';
     
     if (reservation.address) {
-      description += '【レッスン場所】\n';
+      description += '【トレーニング場所】\n';
       description += `${reservation.address}\n`;
       description += '\n';
     }
