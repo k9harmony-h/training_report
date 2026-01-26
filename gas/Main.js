@@ -189,6 +189,10 @@ log('DEBUG', 'Main', 'Final lineUserId', { lineUserId: lineUserId });
         response = handleValidateCouponCode(e.parameter);
         break;
 
+      case 'geocodeAddress':
+        response = handleGeocodeAddress(e.parameter);
+        break;
+
       case 'check_voucher':
         response = handleCheckVoucher(e.parameter);
         break;
@@ -937,6 +941,63 @@ function handleValidateCouponCode(params) {
   }
 
   return CouponService.validateCouponCode(couponCode, productId, amount);
+}
+
+/**
+ * 住所ジオコーディング（座標取得）
+ * Google Maps APIを使用して住所から緯度経度を取得
+ */
+function handleGeocodeAddress(params) {
+  var address = params.address;
+
+  if (!address) {
+    return { success: false, error: '住所を入力してください' };
+  }
+
+  try {
+    // 日本国内の住所として検索
+    var fullAddress = address;
+    if (!address.includes('日本') && !address.includes('Japan')) {
+      fullAddress = '日本 ' + address;
+    }
+
+    var geocoder = Maps.newGeocoder();
+    geocoder.setLanguage('ja');
+    geocoder.setRegion('jp');
+
+    var response = geocoder.geocode(fullAddress);
+
+    if (response.status !== 'OK' || !response.results || response.results.length === 0) {
+      log('WARN', 'Main', 'Geocoding failed', { address: address, status: response.status });
+      return {
+        success: false,
+        error: '住所が見つかりませんでした。正確な住所を入力してください。'
+      };
+    }
+
+    var location = response.results[0].geometry.location;
+    var formattedAddress = response.results[0].formatted_address;
+
+    log('INFO', 'Main', 'Geocoding success', {
+      address: address,
+      lat: location.lat,
+      lng: location.lng
+    });
+
+    return {
+      success: true,
+      lat: location.lat,
+      lng: location.lng,
+      formattedAddress: formattedAddress
+    };
+
+  } catch (error) {
+    log('ERROR', 'Main', 'Geocoding error', { address: address, error: error.message });
+    return {
+      success: false,
+      error: 'ジオコーディングエラー: ' + error.message
+    };
+  }
 }
 
 /**

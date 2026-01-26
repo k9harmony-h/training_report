@@ -1032,19 +1032,54 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
   async function calculateTravelFee() {
     // 住所取得
     let targetLat, targetLng;
-    
-    if (AppState.useAltAddress && AppState.altAddress) {
-      // 別住所の場合（ジオコーディングが必要）
-      // TODO: ジオコーディングAPI実装
-      return 1000; // 仮の値
+
+    if (AppState.useAltAddress) {
+      // 別住所の場合 - ジオコーディングで座標取得
+      const altAddr = document.getElementById('alt-addr')?.value?.trim();
+      if (!altAddr) {
+        debugLog('⚠️ 別住所が入力されていません', 'warn');
+        document.getElementById('travel-km').textContent = '-';
+        return 0;
+      }
+
+      try {
+        debugLog(`📍 別住所ジオコーディング: ${altAddr}`, 'info');
+        const geoResult = await apiCall('GET', { action: 'geocodeAddress', address: altAddr });
+
+        if (!geoResult.success) {
+          debugLog(`⚠️ ジオコーディング失敗: ${geoResult.error}`, 'warn');
+          showToast('住所の座標を取得できませんでした', 'error');
+          document.getElementById('travel-km').textContent = '-';
+          return 0;
+        }
+
+        targetLat = geoResult.lat;
+        targetLng = geoResult.lng;
+        debugLog(`✅ 座標取得: ${targetLat}, ${targetLng}`, 'success');
+
+        // 別住所情報を保存
+        AppState.altAddress = {
+          address: altAddr,
+          lat: targetLat,
+          lng: targetLng,
+          formattedAddress: geoResult.formattedAddress
+        };
+      } catch (error) {
+        debugLog(`❌ ジオコーディングエラー: ${error.message}`, 'error');
+        document.getElementById('travel-km').textContent = '-';
+        return 0;
+      }
     } else if (AppState.userData && AppState.userData.base_lat) {
+      // 登録住所の場合
       targetLat = AppState.userData.base_lat;
       targetLng = AppState.userData.base_lng;
     } else {
       // 新規ユーザーの場合
+      debugLog('⚠️ 新規ユーザー - 出張費計算スキップ', 'warn');
+      document.getElementById('travel-km').textContent = '-';
       return 0;
     }
-    
+
     // 距離計算
     const distance = CONFIG.calculateDistance(
       CONFIG.OFFICE.LAT,
@@ -1052,12 +1087,14 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
       targetLat,
       targetLng
     );
-    
+
     // 距離表示
     document.getElementById('travel-km').textContent = distance.toFixed(1);
-    
+
     // 料金計算
-    return CONFIG.calculateTravelFee(distance);
+    const fee = CONFIG.calculateTravelFee(distance);
+    debugLog(`✅ 出張費計算完了: ${distance.toFixed(1)}km = ¥${fee}`, 'success');
+    return fee;
   }
   
   /**
