@@ -1059,8 +1059,9 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
     const discountRow = document.getElementById('price-discount-row');
     
     try {
-      resultEl.textContent = '確認中...';
+      resultEl.textContent = 'Voucherを検索しています...';
       resultEl.className = 'voucher-result';
+      resultEl.style.color = 'var(--c-text-gray)';
       
       const result = await apiCall('GET', {
         type: 'check_voucher',
@@ -1612,6 +1613,9 @@ async function executePayment() {
         // ★★★ カード決済: アトミックトランザクション ★★★
         debugLog('💳 カード決済: createReservationWithPaymentを使用', 'info');
         
+        // クーポン情報を統合（voucherDataまたはappliedCouponから取得）
+        const couponInfo = AppState.voucherData || AppState.appliedCoupon;
+
         // 予約データ構築
         const reservationData = {
           customer_id: userId,
@@ -1625,7 +1629,9 @@ async function executePayment() {
           is_multi_dog: AppState.isMultiDog,
           use_alt_address: AppState.useAltAddress,
           alt_address: altAddressData,
-          voucher_code: AppState.voucherData ? AppState.voucherData.code : null,
+          coupon_id: couponInfo ? (couponInfo.coupon_id || null) : null,
+          coupon_code: couponInfo ? (couponInfo.code || couponInfo.coupon_code || null) : null,
+          coupon_value: couponInfo ? (couponInfo.discount_value || couponInfo.discount_amount || 0) : 0,
           notes: document.getElementById('conf-remarks').value,
           reg_data: regData
         };
