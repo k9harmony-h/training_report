@@ -1354,7 +1354,7 @@ function renderFinalPricing() {
   }
   
   /**
- * 決済実行（アトミック処理に統合）
+ * 決済実行（アトミックトランザクション）
  */
 async function executePayment() {
   try {
@@ -1362,10 +1362,9 @@ async function executePayment() {
     
     debugLog('💳 決済処理開始（アトミックトランザクション）', 'info');
     
-    // ===== 修正: submitReservation(true)に統合 =====
-    // Square Token化は既に完了しているので、
+    // submitReservation(true)に統合
+    // Square Tokenizeは既に完了しているので、
     // submitReservation内でcreateReservationWithPaymentを呼び出す
-    
     await submitReservation(true);
     
   } catch (error) {
@@ -1463,11 +1462,11 @@ async function executePayment() {
         debugLog(`✅ 別住所データ収集: ${JSON.stringify(altAddressData)}`, 'success');
       }
       
-      // ===== 修正: カード決済の場合はcreateReservationWithPaymentを使用 =====
+      // ===== 決済方法による処理分岐 =====
       const paymentMethod = document.getElementById('payment-method').value;
       
       if (isPaid && paymentMethod === 'CARD' && AppState.paymentToken) {
-        // ★★★ アトミック処理: 決済+予約を1つのトランザクションで実行 ★★★
+        // ★★★ カード決済: アトミックトランザクション ★★★
         debugLog('💳 カード決済: createReservationWithPaymentを使用', 'info');
         
         // 予約データ構築
@@ -1507,7 +1506,7 @@ async function executePayment() {
         };
         
         debugLog('📤 送信データ (createReservationWithPayment):', 'info');
-        debugLog(`  全データ: ${JSON.stringify(payload)}`, 'info');
+        debugLog(JSON.stringify(payload, null, 2), 'info');
         
         const result = await apiCall('POST', payload);
         
@@ -1521,7 +1520,7 @@ async function executePayment() {
         }
         
       } else {
-        // ★★★ 現地決済: 従来のadd_reservationを使用 ★★★
+        // ★★★ 現地決済: 従来のadd_reservation ★★★
         debugLog('💵 現地決済: add_reservationを使用', 'info');
         
         const payload = {
@@ -1545,7 +1544,7 @@ async function executePayment() {
         };
         
         debugLog('📤 送信データ (add_reservation):', 'info');
-        debugLog(`  全データ: ${JSON.stringify(payload)}`, 'info');
+        debugLog(JSON.stringify(payload, null, 2), 'info');
         
         const result = await apiCall('POST', payload);
         
