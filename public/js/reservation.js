@@ -1509,14 +1509,28 @@ async function executePayment() {
         debugLog(JSON.stringify(payload, null, 2), 'info');
         
         const result = await apiCall('POST', payload);
-        
+
+        // ===== 詳細なレスポンスログ =====
+        debugLog('📥 APIレスポンス:', 'info');
+        debugLog(JSON.stringify(result, null, 2), 'info');
+
         if (result.success) {
           debugLog('✅ 決済+予約確定成功', 'success');
           hideLoading();
           goToView(5);
         } else {
+          // エラー詳細をデバッグコンソールに出力
+          debugLog('❌ 決済エラー詳細:', 'error');
+          debugLog(`  - error: ${result.error}`, 'error');
+          debugLog(`  - code: ${result.code || 'N/A'}`, 'error');
+          debugLog(`  - message: ${result.message || 'N/A'}`, 'error');
+          if (result.debug) {
+            debugLog(`  - debug: ${JSON.stringify(result.debug)}`, 'error');
+          }
+
           hideLoading();
-          alert(`決済に失敗しました: ${result.message || result.error}`);
+          const errorMsg = result.message || (typeof result.error === 'string' ? result.error : JSON.stringify(result.error));
+          alert(`決済に失敗しました: ${errorMsg}`);
         }
         
       } else {
