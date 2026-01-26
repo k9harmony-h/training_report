@@ -1163,9 +1163,113 @@ async function preCalculateTravelFee() {
      View 4: 決済・情報入力
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   
-  function initializeView4() {
+  async function initializeView4() {
     debugLog('💳 View 4 初期化', 'info');
+
+    // クーポン自動適用チェック
+    await checkAutoApplicableCoupon();
+
     renderFinalPricing();
+  }
+
+  /**
+   * 自動適用可能なクーポンをチェック
+   */
+  async function checkAutoApplicableCoupon() {
+    try {
+      const productId = AppState.selectedMenu?.id;
+      const amount = AppState.lessonPrice + AppState.travelFee + (AppState.isMultiDog ? CONFIG.PRICING.MULTI_DOG_FEE : 0);
+
+      if (!productId || !amount) return;
+
+      debugLog('🎫 クーポン自動適用チェック', 'info');
+
+      const params = new URLSearchParams({
+        action: 'getApplicableCoupon',
+        productId: productId,
+        amount: amount,
+        reservationDate: AppState.selectedDate
+      });
+
+      const response = await fetch(`${CONFIG.API.GAS_URL}?${params}`);
+      const result = await response.json();
+
+      if (result.coupon) {
+        debugLog(`✅ 自動適用クーポン: ${result.coupon.coupon_name}`, 'success');
+        AppState.appliedCoupon = result.coupon;
+        AppState.voucherDiscount = result.coupon.discount_amount;
+        // 合計金額を再計算
+        AppState.totalPrice = amount - result.coupon.discount_amount;
+      } else {
+        debugLog('ℹ️ 適用可能なクーポンなし', 'info');
+        AppState.appliedCoupon = null;
+      }
+    } catch (error) {
+      debugLog(`⚠️ クーポンチェックエラー: ${error.message}`, 'warn');
+    }
+  }
+
+  /**
+   * クーポンコード手動入力・検証
+   */
+  async function applyCouponCode() {
+    const couponInput = document.getElementById('coupon-code-input');
+    const couponCode = couponInput?.value?.trim();
+
+    if (!couponCode) {
+      showToast('クーポンコードを入力してください');
+      return;
+    }
+
+    try {
+      showLoading();
+      debugLog(`🎫 クーポンコード検証: ${couponCode}`, 'info');
+
+      const productId = AppState.selectedMenu?.id;
+      const amount = AppState.lessonPrice + AppState.travelFee + (AppState.isMultiDog ? CONFIG.PRICING.MULTI_DOG_FEE : 0);
+
+      const params = new URLSearchParams({
+        action: 'validateCouponCode',
+        couponCode: couponCode,
+        productId: productId,
+        amount: amount
+      });
+
+      const response = await fetch(`${CONFIG.API.GAS_URL}?${params}`);
+      const result = await response.json();
+
+      if (result.valid) {
+        debugLog(`✅ クーポン適用: ${result.coupon.coupon_name}`, 'success');
+        AppState.appliedCoupon = result.coupon;
+        AppState.voucherDiscount = result.coupon.discount_amount;
+        AppState.totalPrice = amount - result.coupon.discount_amount;
+        renderFinalPricing();
+        showToast(`${result.coupon.coupon_name}を適用しました`);
+      } else {
+        debugLog(`❌ クーポン無効: ${result.message}`, 'error');
+        showToast(result.message);
+      }
+    } catch (error) {
+      debugLog(`⚠️ クーポン検証エラー: ${error.message}`, 'error');
+      showToast('クーポンの検証中にエラーが発生しました');
+    } finally {
+      hideLoading();
+    }
+  }
+
+  /**
+   * 適用中クーポンを削除
+   */
+  function removeCoupon() {
+    if (AppState.appliedCoupon) {
+      debugLog(`🗑️ クーポン削除: ${AppState.appliedCoupon.coupon_name}`, 'info');
+      const discountAmount = AppState.appliedCoupon.discount_amount;
+      AppState.appliedCoupon = null;
+      AppState.voucherDiscount = 0;
+      AppState.totalPrice += discountAmount;
+      renderFinalPricing();
+      showToast('クーポンを削除しました');
+    }
   }
   
   /**
@@ -1252,12 +1356,20 @@ function renderFinalPricing() {
   
   // 割引（条件付き表示）
   const finalDiscountRow = document.getElementById('final-price-discount-row');
+  const discountLabel = document.getElementById('final-price-discount-label');
   if (discount > 0) {
     finalDiscountRow.style.display = '';
     document.getElementById('final-price-discount').textContent = `-¥${discount.toLocaleString()}`;
+    // クーポン名を表示
+    if (discountLabel && AppState.appliedCoupon) {
+      discountLabel.textContent = `割引（${AppState.appliedCoupon.coupon_name}）`;
+    }
     debugLog('✅ 割引: 表示', 'success');
   } else {
     finalDiscountRow.style.display = 'none';
+    if (discountLabel) {
+      discountLabel.textContent = '割引';
+    }
     debugLog('✅ 割引: 非表示', 'success');
   }
   
