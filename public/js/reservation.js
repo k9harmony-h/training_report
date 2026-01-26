@@ -32,6 +32,7 @@
     // 料金情報
     lessonPrice: 0,
     travelFee: 0,
+    travelFeeStatus: null,  // 'CALCULATED' | 'OVER_AREA' | 'GEOCODE_FAILED' | 'NEW_USER'
     voucherDiscount: 0,
     totalPrice: 0,
     voucherData: null,
@@ -1010,11 +1011,27 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
       // 出張費計算
       debugLog('💰 出張費計算開始', 'info');
       document.getElementById('price-travel-fee').textContent = '計算中...';
-      AppState.travelFee = await calculateTravelFee();
-      document.getElementById('price-travel-fee').textContent = 
-        AppState.travelFee === 0 ? '無料' : `¥${AppState.travelFee.toLocaleString()}`;
-      debugLog(`✅ 出張費: ¥${AppState.travelFee}`, 'success');
-      
+      const travelResult = await calculateTravelFee();
+
+      // リトライ必要な場合は処理中断
+      if (travelResult.status === 'RETRY_NEEDED') {
+        document.getElementById('price-travel-fee').textContent = '-';
+        return;
+      }
+
+      AppState.travelFee = travelResult.fee;
+      AppState.travelFeeStatus = travelResult.status;
+
+      // 表示更新
+      if (travelResult.status === 'OVER_AREA' || travelResult.status === 'GEOCODE_FAILED') {
+        document.getElementById('price-travel-fee').textContent = '別途';
+      } else if (travelResult.fee === 0) {
+        document.getElementById('price-travel-fee').textContent = '無料';
+      } else {
+        document.getElementById('price-travel-fee').textContent = `¥${travelResult.fee.toLocaleString()}`;
+      }
+      debugLog(`✅ 出張費: ${travelResult.status} / ¥${AppState.travelFee}`, 'success');
+
       // 合計
       updateTotalPrice();
       debugLog(`✅ 料金計算完了`, 'success');
@@ -1028,73 +1045,102 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
   
   /**
    * 出張費計算
+   * @returns {Object} { fee: number, status: 'CALCULATED'|'OVER_AREA'|'GEOCODE_FAILED'|'NEW_USER', distance: number|null }
    */
   async function calculateTravelFee() {
-    // 住所取得
     let targetLat, targetLng;
 
+    // ===== 座標取得 =====
     if (AppState.useAltAddress) {
       // 別住所の場合 - ジオコーディングで座標取得
       const altAddr = document.getElementById('alt-addr')?.value?.trim();
       if (!altAddr) {
         debugLog('⚠️ 別住所が入力されていません', 'warn');
-        document.getElementById('travel-km').textContent = '-';
-        return 0;
+        return { fee: 0, status: 'GEOCODE_FAILED', distance: null };
       }
 
-      try {
-        debugLog(`📍 別住所ジオコーディング: ${altAddr}`, 'info');
-        const geoResult = await apiCall('GET', { action: 'geocodeAddress', address: altAddr });
-
-        if (!geoResult.success) {
-          debugLog(`⚠️ ジオコーディング失敗: ${geoResult.error}`, 'warn');
-          showToast('住所の座標を取得できませんでした', 'error');
-          document.getElementById('travel-km').textContent = '-';
-          return 0;
-        }
-
-        targetLat = geoResult.lat;
-        targetLng = geoResult.lng;
-        debugLog(`✅ 座標取得: ${targetLat}, ${targetLng}`, 'success');
-
-        // 別住所情報を保存
-        AppState.altAddress = {
-          address: altAddr,
-          lat: targetLat,
-          lng: targetLng,
-          formattedAddress: geoResult.formattedAddress
-        };
-      } catch (error) {
-        debugLog(`❌ ジオコーディングエラー: ${error.message}`, 'error');
-        document.getElementById('travel-km').textContent = '-';
-        return 0;
+      // ジオコーディング（最大2回）
+      const geoResult = await geocodeWithRetry(altAddr);
+      if (!geoResult.success) {
+        AppState.travelFeeStatus = 'GEOCODE_FAILED';
+        return { fee: 0, status: 'GEOCODE_FAILED', distance: null };
       }
+
+      targetLat = geoResult.lat;
+      targetLng = geoResult.lng;
+      AppState.altAddress = {
+        address: altAddr,
+        lat: targetLat,
+        lng: targetLng,
+        formattedAddress: geoResult.formattedAddress
+      };
+
     } else if (AppState.userData && AppState.userData.base_lat) {
       // 登録住所の場合
       targetLat = AppState.userData.base_lat;
       targetLng = AppState.userData.base_lng;
     } else {
-      // 新規ユーザーの場合
-      debugLog('⚠️ 新規ユーザー - 出張費計算スキップ', 'warn');
-      document.getElementById('travel-km').textContent = '-';
-      return 0;
+      // 新規ユーザー（View4で住所入力後に再計算）
+      debugLog('⚠️ 新規ユーザー - View4で住所入力後に計算', 'warn');
+      AppState.travelFeeStatus = 'NEW_USER';
+      return { fee: 0, status: 'NEW_USER', distance: null };
     }
 
-    // 距離計算
+    // ===== 距離計算 =====
     const distance = CONFIG.calculateDistance(
       CONFIG.OFFICE.LAT,
       CONFIG.OFFICE.LNG,
       targetLat,
       targetLng
     );
+    debugLog(`📏 距離: ${distance.toFixed(2)}km`, 'info');
 
-    // 距離表示
-    document.getElementById('travel-km').textContent = distance.toFixed(1);
+    // ===== 15km超チェック =====
+    if (distance > 15) {
+      debugLog(`⚠️ サービスエリア外: ${distance.toFixed(1)}km`, 'warn');
+      AppState.travelFeeStatus = 'OVER_AREA';
+      return { fee: 0, status: 'OVER_AREA', distance: distance };
+    }
 
-    // 料金計算
+    // ===== 料金計算 =====
     const fee = CONFIG.calculateTravelFee(distance);
     debugLog(`✅ 出張費計算完了: ${distance.toFixed(1)}km = ¥${fee}`, 'success');
-    return fee;
+    AppState.travelFeeStatus = 'CALCULATED';
+    return { fee: fee, status: 'CALCULATED', distance: distance };
+  }
+
+  /**
+   * ジオコーディング（2回リトライ）
+   */
+  async function geocodeWithRetry(address) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      debugLog(`📍 ジオコーディング試行 ${attempt}/2: ${address}`, 'info');
+
+      try {
+        const geoResult = await apiCall('GET', { action: 'geocodeAddress', address: address });
+
+        if (geoResult.success) {
+          debugLog(`✅ 座標取得成功: ${geoResult.lat}, ${geoResult.lng}`, 'success');
+          return geoResult;
+        }
+
+        debugLog(`⚠️ ジオコーディング失敗 (${attempt}回目): ${geoResult.error}`, 'warn');
+
+        if (attempt === 1) {
+          // 1回目失敗 - 再入力を促す
+          alert('住所が見つかりませんでした。正確な住所を再度入力してください。');
+          document.getElementById('alt-addr')?.focus();
+          // ユーザーが修正して再度calculateTravelFeeを呼ぶまで待つ
+          return { success: false, retry: true };
+        }
+      } catch (error) {
+        debugLog(`❌ ジオコーディングエラー (${attempt}回目): ${error.message}`, 'error');
+      }
+    }
+
+    // 2回失敗
+    alert('サービスエラーにより位置情報が読み込めませんでした。\n出張費は後日トレーナーからご連絡いたします。');
+    return { success: false, retry: false };
   }
   
   /**
@@ -1165,11 +1211,11 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
 async function preCalculateTravelFee() {
   if (!AppState.userData || !AppState.userData.base_lat) {
     AppState.travelFee = 0;
-    AppState.travelDistance = 0;
-    debugLog('⚠️ 顧客データなし - 出張費0円', 'warn');
+    AppState.travelFeeStatus = 'NEW_USER';
+    debugLog('⚠️ 顧客データなし - 新規ユーザー', 'warn');
     return;
   }
-  
+
   try {
     const distance = CONFIG.calculateDistance(
       CONFIG.OFFICE.LAT,
@@ -1177,15 +1223,22 @@ async function preCalculateTravelFee() {
       AppState.userData.base_lat,
       AppState.userData.base_lng
     );
-    
+
+    // 15km超チェック
+    if (distance > 15) {
+      AppState.travelFee = 0;
+      AppState.travelFeeStatus = 'OVER_AREA';
+      debugLog(`⚠️ 出張費事前計算: ${distance.toFixed(1)}km - サービスエリア外`, 'warn');
+      return;
+    }
+
     AppState.travelFee = CONFIG.calculateTravelFee(distance);
-    AppState.travelDistance = distance;
-    
+    AppState.travelFeeStatus = 'CALCULATED';
     debugLog(`✅ 出張費事前計算: ${distance.toFixed(1)}km = ¥${AppState.travelFee}`, 'success');
   } catch (error) {
     debugLog(`❌ 出張費計算エラー: ${error.message}`, 'error');
     AppState.travelFee = 0;
-    AppState.travelDistance = 0;
+    AppState.travelFeeStatus = 'GEOCODE_FAILED';
   }
 }
   /**
@@ -1431,17 +1484,22 @@ function showView4Pattern(pattern) {
  */
 function renderFinalPricing() {
   debugLog('💰 確定料金表示開始', 'info');
-  
+
   const lessonPrice = AppState.lessonPrice;
   const travelFee = AppState.travelFee;
   const discount = AppState.voucherDiscount;
   const total = AppState.totalPrice;
-  const multiDogFee = CONFIG.PRICING.MULTI_DOG_FEE;  // ← 追加
-  
+  const multiDogFee = CONFIG.PRICING.MULTI_DOG_FEE;
+  const travelFeeStatus = AppState.travelFeeStatus;
+
+  // 出張費表示文字列
+  const travelFeeText = (travelFeeStatus === 'OVER_AREA' || travelFeeStatus === 'GEOCODE_FAILED')
+    ? '別途'
+    : (travelFee === 0 ? '無料' : `¥${travelFee.toLocaleString()}`);
+
   // ===== 既存ユーザー + カード =====
   document.getElementById('final-price-lesson').textContent = `¥${lessonPrice.toLocaleString()}`;
-  document.getElementById('final-price-travel').textContent = 
-    travelFee === 0 ? '無料' : `¥${travelFee.toLocaleString()}`;
+  document.getElementById('final-price-travel').textContent = travelFeeText;
   document.getElementById('final-price-total').textContent = `¥${total.toLocaleString()}`;
   
   // 複数頭料金（条件付き表示）
@@ -1476,8 +1534,7 @@ function renderFinalPricing() {
   
   // ===== 現地決済 =====
   document.getElementById('cash-price-lesson').textContent = `¥${lessonPrice.toLocaleString()}`;
-  document.getElementById('cash-price-travel').textContent = 
-    travelFee === 0 ? '無料' : `¥${travelFee.toLocaleString()}`;
+  document.getElementById('cash-price-travel').textContent = travelFeeText;
   document.getElementById('cash-price-total').textContent = `¥${total.toLocaleString()}`;
   
   // 複数頭料金（条件付き表示）
@@ -1704,7 +1761,7 @@ async function executePayment() {
           coupon_code: couponInfo ? (couponInfo.code || couponInfo.coupon_code || null) : null,
           coupon_value: couponInfo ? (couponInfo.discount_value || couponInfo.discount_amount || 0) : 0,
           lesson_amount: AppState.lessonPrice + (AppState.isMultiDog ? 2000 : 0),
-          travel_fee: AppState.travelFee || 0,
+          travel_fee: (AppState.travelFeeStatus === 'OVER_AREA' || AppState.travelFeeStatus === 'GEOCODE_FAILED') ? null : AppState.travelFee,
           total_amount: AppState.totalPrice,
           payment_method: 'CREDIT',
           notes: document.getElementById('conf-remarks').value,
@@ -1781,7 +1838,7 @@ async function executePayment() {
           coupon_code: couponInfoCash ? (couponInfoCash.code || couponInfoCash.coupon_code || null) : null,
           coupon_value: couponInfoCash ? (couponInfoCash.discount_value || couponInfoCash.discount_amount || 0) : 0,
           lesson_amount: AppState.lessonPrice + (AppState.isMultiDog ? 2000 : 0),
-          travel_fee: AppState.travelFee || 0,
+          travel_fee: (AppState.travelFeeStatus === 'OVER_AREA' || AppState.travelFeeStatus === 'GEOCODE_FAILED') ? null : AppState.travelFee,
           remarks: document.getElementById('conf-remarks').value,
           paymentMethod: 'CASH',
           paymentStatus: 'UNPAID',

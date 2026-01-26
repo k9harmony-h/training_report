@@ -82,8 +82,12 @@ var NotificationService = {
       if (reservation.is_multi_dog) {
         lessonPrice += 2000;
       }
-      // 出張費（予約から取得、なければ0）
-      var travelFee = (reservation.travel_fee && reservation.travel_fee > 0) ? reservation.travel_fee : 0;
+      // 出張費（予約から取得）
+      // null = 別途（15km超またはジオコーディング失敗）
+      // 0 = 無料（3km以内）
+      // 数値 = 計算された出張費
+      var travelFee = reservation.travel_fee;
+      var isTravelFeeSeparate = (travelFee === null || travelFee === undefined || travelFee === '');
       // 割引額
       var discountAmount = couponValue;
       // 合計（予約から取得、なければ計算）
@@ -153,8 +157,16 @@ var messageText = customer.customer_name + ' 様\n\n' +
                   '━━━━━━━━━━━━━━━━\n' +
                   '■ ご請求内容\n' +
                   '━━━━━━━━━━━━━━━━\n' +
-                  'トレーニング料金: ¥' + lessonPrice.toLocaleString() + '\n' +
-                  '出張費: ¥' + travelFee.toLocaleString() + '\n';
+                  'トレーニング料金: ¥' + lessonPrice.toLocaleString() + '\n';
+
+// 出張費の表示
+if (isTravelFeeSeparate) {
+  messageText += '出張費: 別途\n';
+} else if (travelFee === 0) {
+  messageText += '出張費: 無料\n';
+} else {
+  messageText += '出張費: ¥' + travelFee.toLocaleString() + '\n';
+}
 
 // 割引がある場合
 if (discountAmount > 0) {
@@ -172,7 +184,20 @@ if (paymentMethod === 'CREDIT' || paymentMethod === 'credit' || paymentMethod ==
 } else if (paymentMethod === 'CASH' || paymentMethod === 'cash' || paymentMethod === 'onsite') {
   messageText += '\n※当日、担当トレーナーにお支払いをお願いいたします。\n';
 }
-      
+
+// ===== 出張費「別途」の場合は料金表を追加 =====
+if (isTravelFeeSeparate) {
+  messageText += '\n━━━━━━━━━━━━━━━━\n' +
+                 '■ 出張費一覧\n' +
+                 '━━━━━━━━━━━━━━━━\n' +
+                 '3km以内: 無料\n' +
+                 '3km超〜5km以内: ¥500\n' +
+                 '5km超〜10km以内: ¥1,000\n' +
+                 '10km超〜15km以内: ¥1,500\n' +
+                 '15km超: ¥1,500 + (超過距離×¥100/km)\n' +
+                 '\n※トレーナーより別途ご連絡いたします。\n';
+}
+
 // ===== 別住所情報の追加 =====
 if (reservation.alt_address) {
   messageText += '\n━━━━━━━━━━━━━━━━\n' +
