@@ -553,7 +553,7 @@
     display: block;
   }
   
-  /* 初回レッスン情報カード */
+  /* 初回トレーニング情報カード */
   .info-card {
     background: #E3F2FD;
     border: 1px solid #90CAF9;
@@ -672,7 +672,35 @@
   .thanks-actions {
     margin-top: var(--spacing-lg);
   }
-  
+
+  .thanks-notes {
+    text-align: left;
+    font-size: var(--font-size-sm);
+    color: var(--c-text-gray);
+    line-height: 1.6;
+    min-height: 60px;
+    padding: var(--spacing-sm);
+    background: var(--c-bg-light);
+    border-radius: var(--radius-sm);
+  }
+
+  .thanks-items-list {
+    text-align: left;
+    margin: 0;
+    padding-left: var(--spacing-lg);
+    font-size: var(--font-size-sm);
+    color: var(--c-text-dark);
+    line-height: 1.8;
+  }
+
+  .thanks-items-list li {
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .thanks-items-list li::marker {
+    color: var(--c-main-turquoise);
+  }
+
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      モーダル
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */

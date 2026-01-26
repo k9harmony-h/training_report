@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="description" content="K9 Harmony -Paws & People Cultural Lab- 出張型ドッグトレーニング予約システム">
-  <title>レッスンの予約 | K9 Harmony</title>
+  <title>トレーニングの予約 | K9 Harmony</title>
   
   <!-- External Libraries -->
   <script src="https://web.squarecdn.com/v1/square.js"></script>
@@ -232,7 +232,7 @@
             <span id="conf-place">---</span>
           </div>
           <div class="summary-row">
-            <span class="summary-label">犬名:</span>
+            <span class="summary-label">パートナー:</span>
             <span id="conf-dog">---</span>
           </div>
           <div class="summary-row">
@@ -248,7 +248,7 @@
         
         <div class="price-breakdown">
           <div class="price-row">
-            <span>レッスン料金</span>
+            <span>トレーニング料金</span>
             <span id="price-lesson">¥---</span>
           </div>
           <div class="price-row" id="price-multi-row" style="display: none;">
@@ -413,7 +413,7 @@
           <label class="form-label">確定料金</label>
           <div class="price-breakdown">
             <div class="price-row">
-              <span>レッスン料金</span>
+              <span>トレーニング料金</span>
               <span id="final-price-lesson">¥---</span>
             </div>
             <div class="price-row" id="final-price-multi-row">
@@ -452,15 +452,15 @@
         <!-- 初回レッスン情報 -->
         <div class="card info-card">
           <div class="info-header">
-            <i class="fa-solid fa-circle-info"></i> 初回レッスンについて
+            <i class="fa-solid fa-circle-info"></i> 初回トレーニングについて
           </div>
           <div class="info-body">
-            <p>初回レッスンは以下の流れです：</p>
+            <p>初回トレーニングは以下の流れです：</p>
             <ul>
               <li>最初の30分: カウンセリング</li>
               <li>残り60分: トレーニング</li>
             </ul>
-            <p class="info-note">合計90分間のレッスンです</p>
+            <p class="info-note">合計90分間のトレーニングです</p>
           </div>
         </div>
 
@@ -580,7 +580,7 @@
           <label class="form-label">確定料金</label>
           <div class="price-breakdown">
             <div class="price-row">
-              <span>レッスン料金</span>
+              <span>トレーニング料金</span>
               <span id="cash-price-lesson">¥---</span>
             </div>
             <div class="price-row" id="cash-price-multi-row">
@@ -648,18 +648,43 @@
               <span id="thanks-place">---</span>
             </div>
             <div class="summary-row">
-              <span class="summary-label">犬名:</span>
+              <span class="summary-label">パートナー:</span>
               <span id="thanks-dog">---</span>
             </div>
             <div class="summary-row">
               <span class="summary-label">コース:</span>
               <span id="thanks-course">---</span>
             </div>
+            <div id="thanks-coupon-row" class="summary-row" style="display: none;">
+              <span class="summary-label">クーポン:</span>
+              <span id="thanks-coupon">---</span>
+            </div>
             <div class="summary-row">
               <span class="summary-label">合計:</span>
               <span id="thanks-total" class="text-primary">¥---</span>
             </div>
           </div>
+        </div>
+
+        <!-- 当日の注意事項 -->
+        <div class="card">
+          <label class="form-label">当日の注意事項</label>
+          <div id="thanks-notes" class="thanks-notes">
+            <!-- 後日追加予定 -->
+          </div>
+        </div>
+
+        <!-- 当日の持ち物 -->
+        <div class="card">
+          <label class="form-label">当日の持ち物</label>
+          <ul class="thanks-items-list">
+            <li>リード（普段使用しているもの）</li>
+            <li>首輪またはハーネス</li>
+            <li>おやつ（普段食べ慣れているもの）</li>
+            <li>飲み水・水入れ</li>
+            <li>排泄物処理用の袋</li>
+            <li>タオル（雨天・夏季は特に）</li>
+          </ul>
         </div>
 
         <button class="btn btn-primary btn-block" onclick="shareLine()">

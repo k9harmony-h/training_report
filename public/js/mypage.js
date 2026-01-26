@@ -427,9 +427,9 @@ class MyPageApp {
           </div>
           
           <div class="detail-section">
-            <h4>レッスン内容</h4>
+            <h4>トレーニング内容</h4>
             <dl class="detail-list">
-              <dt>犬</dt>
+              <dt>パートナー</dt>
               <dd>${reservation.dog_name || '-'}</dd>
               <dt>コース</dt>
               <dd>${reservation.product_name || '-'}</dd>

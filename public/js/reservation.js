@@ -651,7 +651,7 @@ function renderMenuSelect() {
     const option = document.createElement('option');
     option.value = 90;
     option.setAttribute('data-price', 4900);
-    option.textContent = '単発レッスン (¥4,900)';
+    option.textContent = '単発トレーニング (¥4,900)';
     select.appendChild(option);
   }
   
@@ -1632,6 +1632,10 @@ async function executePayment() {
           coupon_id: couponInfo ? (couponInfo.coupon_id || null) : null,
           coupon_code: couponInfo ? (couponInfo.code || couponInfo.coupon_code || null) : null,
           coupon_value: couponInfo ? (couponInfo.discount_value || couponInfo.discount_amount || 0) : 0,
+          lesson_amount: AppState.lessonPrice + (AppState.isMultiDog ? 2000 : 0),
+          travel_fee: AppState.travelFee || 0,
+          total_amount: AppState.totalPrice,
+          payment_method: 'CREDIT',
           notes: document.getElementById('conf-remarks').value,
           reg_data: regData
         };
@@ -1685,7 +1689,10 @@ async function executePayment() {
       } else {
         // ★★★ 現地決済: 従来のadd_reservation ★★★
         debugLog('💵 現地決済: add_reservationを使用', 'info');
-        
+
+        // クーポン情報を統合（voucherDataまたはappliedCouponから取得）
+        const couponInfoCash = AppState.voucherData || AppState.appliedCoupon;
+
         const payload = {
           action: 'add_reservation',
           userId: userId,
@@ -1699,8 +1706,13 @@ async function executePayment() {
           useAltAddress: AppState.useAltAddress,
           altAddress: altAddressData,
           voucherCode: AppState.voucherData ? AppState.voucherData.code : null,
+          coupon_id: couponInfoCash ? (couponInfoCash.coupon_id || null) : null,
+          coupon_code: couponInfoCash ? (couponInfoCash.code || couponInfoCash.coupon_code || null) : null,
+          coupon_value: couponInfoCash ? (couponInfoCash.discount_value || couponInfoCash.discount_amount || 0) : 0,
+          lesson_amount: AppState.lessonPrice + (AppState.isMultiDog ? 2000 : 0),
+          travel_fee: AppState.travelFee || 0,
           remarks: document.getElementById('conf-remarks').value,
-          paymentMethod: paymentMethod,
+          paymentMethod: 'CASH',
           paymentStatus: 'UNPAID',
           totalPrice: AppState.totalPrice,
           regData: regData
@@ -1741,33 +1753,69 @@ async function executePayment() {
    * サンクスページのレンダリング
    */
   function renderThanksPage() {
-    document.getElementById('thanks-datetime').textContent = 
+    document.getElementById('thanks-datetime').textContent =
       `${AppState.selectedDate} ${AppState.selectedTime}`;
-    
+
+    // 場所の表示（別住所 > 登録住所 > 新規入力住所）
     let place = '';
-    if (AppState.useAltAddress && AppState.altAddress) {
-      place = AppState.altAddress.address;
-    } else if (AppState.userData) {
-      place = AppState.userData.address || '未登録';
+    if (AppState.useAltAddress) {
+      // 別住所使用時：入力フォームまたはAppState.altAddressから取得
+      const altAddrEl = document.getElementById('alt-addr');
+      if (altAddrEl && altAddrEl.value) {
+        place = altAddrEl.value;
+      } else if (AppState.altAddress && AppState.altAddress.address) {
+        place = AppState.altAddress.address;
+      }
+    } else if (AppState.userData && AppState.userData.address) {
+      place = AppState.userData.address;
     } else {
-      place = document.getElementById('reg-addr').value;
+      const regAddrEl = document.getElementById('reg-addr');
+      if (regAddrEl && regAddrEl.value) {
+        place = regAddrEl.value;
+      }
     }
-    document.getElementById('thanks-place').textContent = place;
-    
+    document.getElementById('thanks-place').textContent = place || '登録住所';
+
+    // 犬名に敬称を追加（♂→くん、それ以外→ちゃん）
     let dogName = '';
+    let dogSuffix = '';
     if (AppState.selectedDog) {
-      dogName = AppState.selectedDog.name_disp || AppState.selectedDog.name;
+      dogName = AppState.selectedDog.name_disp || AppState.selectedDog.dog_name || AppState.selectedDog.name;
+      const gender = AppState.selectedDog.dog_gender || AppState.selectedDog.gender || '';
+      if (gender === '♂' || gender === 'オス' || gender === 'male') {
+        dogSuffix = 'くん';
+      } else if (gender) {
+        dogSuffix = 'ちゃん';
+      }
     } else {
       dogName = document.getElementById('reg-dog-name').value;
+      // 新規登録の場合は敬称なし（性別情報がないため）
     }
-    document.getElementById('thanks-dog').textContent = dogName;
-    
+    document.getElementById('thanks-dog').textContent = dogName + dogSuffix;
+
+    // コース名
     let courseName = AppState.selectedMenu.name;
+    if (AppState.selectedMenu.duration) {
+      courseName += ` (${AppState.selectedMenu.duration}分)`;
+    }
     if (AppState.isMultiDog) {
-      courseName += ' (+2頭目)';
+      courseName += ' +2頭目';
     }
     document.getElementById('thanks-course').textContent = courseName;
-    
+
+    // クーポン情報の表示
+    const couponInfo = AppState.voucherData || AppState.appliedCoupon;
+    const couponRow = document.getElementById('thanks-coupon-row');
+    if (couponInfo && (couponInfo.discount_value || couponInfo.discount_amount)) {
+      const couponName = couponInfo.name || couponInfo.coupon_name || 'クーポン';
+      const couponValue = couponInfo.discount_value || couponInfo.discount_amount || 0;
+      document.getElementById('thanks-coupon').textContent = `${couponName} (-¥${couponValue.toLocaleString()})`;
+      couponRow.style.display = 'flex';
+    } else {
+      couponRow.style.display = 'none';
+    }
+
+    // 合計金額
     document.getElementById('thanks-total').textContent = `¥${AppState.totalPrice.toLocaleString()}`;
   }
   
@@ -1875,7 +1923,7 @@ async function executePayment() {
   ご予約内容を以下の通り承りました。
   
   ◻︎ご予約内容
-  ・愛犬名: ${dogName}
+  ・パートナー: ${dogName}
   ・日時: ${AppState.selectedDate} ${AppState.selectedTime}
   ・場所: ${place}
   ・コース: ${course}
@@ -1908,7 +1956,7 @@ async function executePayment() {
    * Googleカレンダーに登録
    */
   function addToGoogleCalendar() {
-    const title = 'K9 Harmonyレッスン';
+    const title = 'K9 Harmonyトレーニング';
     const date = AppState.selectedDate.replace(/-/g, '');
     const time = AppState.selectedTime.replace(':', '');
     const duration = AppState.selectedMenu.duration + (AppState.isMultiDog ? CONFIG.PRICING.MULTI_DOG_DURATION : 0);
@@ -2118,9 +2166,9 @@ function selectTime(date, time) {
     };
     
     const contents = {
-      policy: '【キャンセルポリシー】\n\n受付締切: 予約日前日の18:00まで\n\nキャンセル料:\n・4日前まで: 無料\n・3日前〜2日前: レッスン料金の50%\n・前日〜当日: レッスン料金の100%\n\n※天候不良等による中止の場合はキャンセル料は発生しません。',
-      privacy: '【個人情報の取扱について】\n\nお客様からお預かりした個人情報は、レッスンの実施および関連サービスの提供のみに使用いたします。\n\n第三者への開示は、法令に基づく場合を除き、お客様の同意なく行うことはございません。',
-      terms: '【利用規約】\n\n本サービスをご利用いただく際は、以下の規約に同意いただいたものとみなします。\n\n1. レッスンは予約制です\n2. 時間厳守をお願いします\n3. ワクチン接種証明書が必要です\n4. キャンセルポリシーに従います',
+      policy: '【キャンセルポリシー】\n\n受付締切: 予約日前日の18:00まで\n\nキャンセル料:\n・4日前まで: 無料\n・3日前〜2日前: トレーニング料金の50%\n・前日〜当日: トレーニング料金の100%\n\n※天候不良等による中止の場合はキャンセル料は発生しません。',
+      privacy: '【個人情報の取扱について】\n\nお客様からお預かりした個人情報は、トレーニングの実施および関連サービスの提供のみに使用いたします。\n\n第三者への開示は、法令に基づく場合を除き、お客様の同意なく行うことはございません。',
+      terms: '【利用規約】\n\n本サービスをご利用いただく際は、以下の規約に同意いただいたものとみなします。\n\n1. トレーニングは予約制です\n2. 時間厳守をお願いします\n3. ワクチン接種証明書が必要です\n4. キャンセルポリシーに従います',
       law: '【特定商取引法に基づく表記】\n\n事業者名: K9 Harmony\n代表者: 平田\n所在地: 〒174-0063 東京都板橋区前野町6-55-1\n電話番号: 070-9043-1109\n\nお支払い方法: クレジットカード、QUICPay、iD、交通系IC、現金\nサービスの提供時期: 予約日時'
     };
     
