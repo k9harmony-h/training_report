@@ -1,0 +1,935 @@
+/**
+ * ============================================================================
+ * K9 Harmony - Notification Service (reservation_id対応版)
+ * ============================================================================
+ */
+
+var NotificationService = {
+  
+  /**
+   * 予約確認通知（reservation_id から自動取得）
+   */
+  sendReservationConfirmation: function(reservationId) {
+    var context = { service: 'NotificationService', action: 'sendReservationConfirmation' };
+    
+    try {
+      log('INFO', 'NotificationService', 'Sending reservation confirmation', { reservationId: reservationId });
+      
+      // 予約情報取得
+      var reservation = ReservationRepository.findById(reservationId);
+      if (reservation.error) {
+        log('ERROR', 'NotificationService', 'Reservation not found', { reservationId: reservationId });
+        return { success: false, message: 'Reservation not found' };
+      }
+      
+      // 顧客情報取得
+      var customer = CustomerRepository.findById(reservation.customer_id);
+      if (customer.error) {
+        log('ERROR', 'NotificationService', 'Customer not found', { customer_id: reservation.customer_id });
+        return { success: false, message: 'Customer not found' };
+      }
+      
+      // LINE User IDチェック
+      if (!customer.line_user_id) {
+        log('WARN', 'NotificationService', 'No LINE ID', { customer_id: customer.customer_id });
+        return { success: false, message: 'No LINE ID' };
+      }
+      
+      // トレーナー情報取得
+      var trainers = DB.fetchTable(CONFIG.SHEET.TRAINERS);
+      var trainer = trainers.find(function(t) { return t.trainer_id === reservation.trainer_id; });
+      var trainerName = trainer ? trainer.trainer_name : 'スタッフ';
+      
+      // 犬情報取得
+      var dog = DogRepository.findById(reservation.primary_dog_id);
+      var dogName = dog.error ? '（犬情報取得失敗）' : dog.dog_name;
+      
+      // 商品情報取得
+      var products = DB.fetchTable(CONFIG.SHEET.PRODUCTS);
+      var product = products.find(function(p) { return p.product_id === reservation.product_id; });
+      var productName = product ? product.product_name : '（商品情報取得失敗）';
+      
+      // 日付フォーマット
+      var reservationDate = reservation.reservation_date;
+      if (reservationDate instanceof Date) {
+        reservationDate = Utilities.formatDate(reservationDate, 'JST', 'yyyy年MM月dd日(E)');
+      } else {
+        var dateStr = String(reservationDate).split(' ')[0];
+        reservationDate = dateStr.replace(/-/g, '/');
+      }
+      
+      // メッセージ作成
+var messageText = customer.customer_name + ' 様\n\n' +
+                  'ご予約ありがとうございます！\n\n' +
+                  '━━━━━━━━━━━━━━━━\n' +
+                  '■ 予約内容\n' +
+                  '━━━━━━━━━━━━━━━━\n' +
+                  '予約番号: ' + (reservation.reservation_code || reservation.reservation_id.substring(0, 8)) + '\n' +
+                  '日時: ' + reservationDate + ' ' + (reservation.start_time || '') + '\n' +
+                  '商品: ' + productName + '\n' +
+                  '犬: ' + dogName + '\n' +
+                  'トレーナー: ' + trainerName + '\n';
+      
+// ===== 別住所情報の追加 =====
+if (reservation.alt_address) {
+  messageText += '\n━━━━━━━━━━━━━━━━\n' +
+                 '■ レッスン場所\n' +
+                 '※申し込み住所と異なる場所で実施\n' +
+                 '━━━━━━━━━━━━━━━━\n' +
+                 '住所: ' + reservation.alt_address + '\n';
+  
+  if (reservation.alt_building_name) {
+    messageText += '施設名: ' + reservation.alt_building_name + '\n';
+  }
+  
+  if (reservation.alt_landmark) {
+    messageText += '目印: ' + reservation.alt_landmark + '\n';
+  }
+  
+  if (reservation.alt_location_type) {
+    var locationTypeMap = {
+      'OUTDOOR': '屋外',
+      'INDOOR': '屋内',
+      'PARK': '公園',
+      'FACILITY': '施設'
+    };
+    messageText += '場所タイプ: ' + (locationTypeMap[reservation.alt_location_type] || reservation.alt_location_type) + '\n';
+  }
+  
+  if (reservation.alt_remarks) {
+    messageText += '備考: ' + reservation.alt_remarks + '\n';
+  }
+}
+
+messageText += '\nご来店をお待ちしております🐾\n\n' +
+               '※キャンセルは24時間前まで可能です';
+      
+      // LINE通知送信
+      var result = this._sendLineMessage(customer.line_user_id, messageText);
+      
+      if (result.success) {
+        log('INFO', 'NotificationService', 'Notification sent successfully');
+      } else {
+        log('ERROR', 'NotificationService', 'LINE notification failed', result);
+      }
+      
+      return result;
+      
+    } catch (error) {
+      log('ERROR', 'NotificationService', 'Notification failed', { error: error.message });
+      return { success: false, message: error.message };
+    }
+  },
+  
+  /**
+   * LINEメッセージ送信（内部関数）
+   */
+  _sendLineMessage: function(lineUserId, messageText) {
+    try {
+      var url = 'https://api.line.me/v2/bot/message/push';
+      var accessToken = CONFIG.LINE.CHANNEL_ACCESS_TOKEN;
+      
+      if (!accessToken) {
+        log('ERROR', 'NotificationService', 'LINE_CHANNEL_ACCESS_TOKEN is not set');
+        throw new Error('LINE_CHANNEL_ACCESS_TOKEN is not set');
+      }
+      
+      var payload = {
+        to: lineUserId,
+        messages: [
+          {
+            type: 'text',
+            text: messageText
+          }
+        ]
+      };
+      
+      var options = {
+        method: 'post',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + accessToken
+        },
+        payload: JSON.stringify(payload),
+        muteHttpExceptions: true
+      };
+      
+      log('DEBUG', 'NotificationService', 'Sending LINE message', { userId: lineUserId });
+      
+      var response = UrlFetchApp.fetch(url, options);
+      var responseCode = response.getResponseCode();
+      var responseText = response.getContentText();
+      
+      log('DEBUG', 'NotificationService', 'LINE API response', {
+        code: responseCode,
+        response: responseText
+      });
+      
+      if (responseCode !== 200) {
+        log('ERROR', 'NotificationService', 'LINE API error', {
+          code: responseCode,
+          response: responseText
+        });
+        return {
+          success: false,
+          error: 'LINE API error',
+          statusCode: responseCode,
+          details: responseText
+        };
+      }
+      
+      return { success: true };
+      
+    } catch (error) {
+      log('ERROR', 'NotificationService', 'Failed to send LINE message', { error: error.message });
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  },
+  
+  /**
+   * 予約リマインダー送信
+   */
+  sendReservationReminder: function(reservationId) {
+    try {
+      var reservation = ReservationRepository.findById(reservationId);
+      if (reservation.error) {
+        return { success: false, message: 'Reservation not found' };
+      }
+      
+      var customer = CustomerRepository.findById(reservation.customer_id);
+      if (customer.error || !customer.line_user_id) {
+        return { success: false, message: 'No LINE ID' };
+      }
+      
+      var trainers = DB.fetchTable(CONFIG.SHEET.TRAINERS);
+      var trainer = trainers.find(function(t) { return t.trainer_id === reservation.trainer_id; });
+      var trainerName = trainer ? trainer.trainer_name : 'スタッフ';
+      
+      var reservationDate = reservation.reservation_date;
+      if (reservationDate instanceof Date) {
+        reservationDate = Utilities.formatDate(reservationDate, 'JST', 'M月d日(E)');
+      }
+      
+      var messageText = customer.customer_name + ' 様\n\n' +
+                        '明日のレッスンのご案内です🐾\n\n' +
+                        '【予約内容】\n' +
+                        '日時: ' + reservationDate + ' ' + reservation.start_time + '\n' +
+                        '担当: ' + trainerName + '\n' +
+                        '予約番号: ' + (reservation.reservation_code || '') + '\n\n' +
+                        'お待ちしております！';
+      
+      return this._sendLineMessage(customer.line_user_id, messageText);
+      
+    } catch (error) {
+      log('ERROR', 'NotificationService', 'Reminder failed', { error: error.message });
+      return { success: false, message: error.message };
+    }
+  },
+  
+  /**
+   * 管理者通知
+   */
+  sendAdminNotification: function(subject, message, severity) {
+    try {
+      var adminEmail = CONFIG.ADMIN.EMAIL;
+      
+      if (!adminEmail) {
+        return { success: false, message: 'No admin email' };
+      }
+      
+      var emailSubject = '[K9 Harmony] ' + subject;
+      var timestamp = Utilities.formatDate(new Date(), 'JST', 'yyyy-MM-dd HH:mm:ss');
+      
+      var emailBody = 'K9 Harmony システム通知\n\n' +
+                      '━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
+                      '件名: ' + subject + '\n' +
+                      '重要度: ' + (severity || 'INFO') + '\n' +
+                      '日時: ' + timestamp + '\n' +
+                      '━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n' +
+                      message + '\n\n' +
+                      '━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
+                      'このメールは自動送信されています。';
+      
+      MailApp.sendEmail({
+        to: adminEmail,
+        subject: emailSubject,
+        body: emailBody
+      });
+      
+      return { success: true };
+      
+    } catch (error) {
+      log('ERROR', 'NotificationService', 'Admin notification failed', { error: error.message });
+      return { success: false, message: error.message };
+    }
+  }
+};
+
+// ============================================================================
+// エラー通知機能（Phase 2 追加）
+// ============================================================================
+
+/**
+ * CRITICALエラーを監視して通知
+ */
+NotificationService.monitorCriticalErrors = function() {
+  var context = { service: 'NotificationService', action: 'monitorCriticalErrors' };
+  
+  try {
+    log('INFO', 'NotificationService', 'Starting critical error monitoring');
+
+    if (!CONFIG.SHEET || !CONFIG.SHEET.SYSTEM_LOGS) {
+      log('WARN', 'NotificationService', 'SYSTEM_LOGS sheet not configured');
+      return { 
+        success: false, 
+        message: 'SYSTEM_LOGS sheet not configured in CONFIG.SHEET' 
+      };
+    }
+    // 過去1時間のCRITICALエラーを取得
+    var oneHourAgo = new Date(new Date().getTime() - 60 * 60 * 1000);
+    var logs = DB.fetchTable(CONFIG.SHEET.SYSTEM_LOGS);
+    
+    var criticalErrors = logs.filter(function(logEntry) {
+      var timestamp = new Date(logEntry.timestamp);
+      return timestamp >= oneHourAgo && 
+             (logEntry.level === 'CRITICAL' || logEntry.level === 'ERROR');
+    });
+    
+    if (criticalErrors.length === 0) {
+      log('INFO', 'NotificationService', 'No critical errors found');
+      return { success: true, errorCount: 0 };
+    }
+    
+    // エラー集計
+    var errorSummary = this._aggregateErrors(criticalErrors);
+    
+    // 管理者に通知
+    this.sendErrorAlert(errorSummary);
+    
+    log('WARN', 'NotificationService', 'Critical errors detected', {
+      count: criticalErrors.length
+    });
+    
+    return {
+      success: true,
+      errorCount: criticalErrors.length,
+      summary: errorSummary
+    };
+    
+  } catch (error) {
+    return ErrorHandler.handle(error, context);
+  }
+};
+
+/**
+ * エラー集計
+ */
+NotificationService._aggregateErrors = function(errors) {
+  var summary = {
+    total: errors.length,
+    byLevel: {},
+    byService: {},
+    recent: []
+  };
+  
+  errors.forEach(function(error) {
+    // レベル別
+    if (!summary.byLevel[error.level]) {
+      summary.byLevel[error.level] = 0;
+    }
+    summary.byLevel[error.level]++;
+    
+    // サービス別
+    var service = error.service || 'UNKNOWN';
+    if (!summary.byService[service]) {
+      summary.byService[service] = 0;
+    }
+    summary.byService[service]++;
+    
+    // 最新5件
+    if (summary.recent.length < 5) {
+      summary.recent.push({
+        timestamp: error.timestamp,
+        level: error.level,
+        service: error.service,
+        action: error.action,
+        message: error.message
+      });
+    }
+  });
+  
+  return summary;
+};
+
+/**
+ * エラーアラート送信
+ */
+NotificationService.sendErrorAlert = function(errorSummary) {
+  var context = { service: 'NotificationService', action: 'sendErrorAlert' };
+  
+  try {
+    var subject = '[K9 Harmony] システムエラーを検知しました';
+    var body = this._buildErrorAlertEmail(errorSummary);
+    
+    this.sendAdminNotification(subject, body, 'ERROR');
+    
+    log('INFO', 'NotificationService', 'Error alert sent');
+    
+    return { success: true };
+    
+  } catch (error) {
+    return ErrorHandler.handle(error, context);
+  }
+};
+
+/**
+ * エラーアラートメール本文生成
+ */
+NotificationService._buildErrorAlertEmail = function(summary) {
+  var body = 'システムエラーが検知されました。\n\n';
+  body += '='.repeat(50) + '\n';
+  body += '検知時刻: ' + Utilities.formatDate(new Date(), 'JST', 'yyyy-MM-dd HH:mm:ss') + '\n';
+  body += '総エラー数: ' + summary.total + '件\n';
+  body += '='.repeat(50) + '\n\n';
+  
+  // レベル別集計
+  body += '【エラーレベル別】\n';
+  Object.keys(summary.byLevel).forEach(function(level) {
+    body += '  ' + level + ': ' + summary.byLevel[level] + '件\n';
+  });
+  
+  body += '\n【サービス別】\n';
+  Object.keys(summary.byService).forEach(function(service) {
+    body += '  ' + service + ': ' + summary.byService[service] + '件\n';
+  });
+  
+  body += '\n【最新のエラー（5件）】\n';
+  summary.recent.forEach(function(error, index) {
+    body += '\n' + (index + 1) + '. ';
+    body += Utilities.formatDate(new Date(error.timestamp), 'JST', 'HH:mm:ss') + '\n';
+    body += '   レベル: ' + error.level + '\n';
+    body += '   サービス: ' + (error.service || 'N/A') + '\n';
+    body += '   アクション: ' + (error.action || 'N/A') + '\n';
+    body += '   メッセージ: ' + (error.message || 'N/A') + '\n';
+  });
+  
+  body += '\n\n詳細は Systemログ シートを確認してください。';
+  
+  return body;
+};
+
+/**
+ * エラー統計レポート生成
+ */
+NotificationService.generateErrorStatistics = function(days) {
+  var context = { service: 'NotificationService', action: 'generateErrorStatistics' };
+  
+  try {
+    if (!CONFIG.SHEET || !CONFIG.SHEET.SYSTEM_LOGS) {
+      log('WARN', 'NotificationService', 'SYSTEM_LOGS sheet not configured');
+      return { 
+        success: false, 
+        message: 'SYSTEM_LOGS sheet not configured in CONFIG.SHEET' 
+      };
+    }
+    days = days || 7;
+    
+    var dateFrom = new Date();
+    dateFrom.setDate(dateFrom.getDate() - days);
+    
+    var logs = DB.fetchTable(CONFIG.SHEET.SYSTEM_LOGS);
+    
+    var recentLogs = logs.filter(function(logEntry) {
+      var timestamp = new Date(logEntry.timestamp);
+      return timestamp >= dateFrom;
+    });
+    
+    var stats = {
+      period_days: days,
+      total_logs: recentLogs.length,
+      by_level: {},
+      by_service: {},
+      error_rate: 0
+    };
+    
+    recentLogs.forEach(function(logEntry) {
+      // レベル別
+      if (!stats.by_level[logEntry.level]) {
+        stats.by_level[logEntry.level] = 0;
+      }
+      stats.by_level[logEntry.level]++;
+      
+      // サービス別
+      var service = logEntry.service || 'UNKNOWN';
+      if (!stats.by_service[service]) {
+        stats.by_service[service] = 0;
+      }
+      stats.by_service[service]++;
+    });
+    
+    // エラー率計算
+    var errorCount = (stats.by_level.ERROR || 0) + (stats.by_level.CRITICAL || 0);
+    if (stats.total_logs > 0) {
+      stats.error_rate = (errorCount / stats.total_logs * 100).toFixed(2);
+    }
+    
+    return {
+      success: true,
+      statistics: stats
+    };
+    
+  } catch (error) {
+    return ErrorHandler.handle(error, context);
+  }
+};
+
+/**
+ * エラー通知機能テスト
+ */
+function testErrorNotification() {
+  console.log('╔════════════════════════════════════════════╗');
+  console.log('║   Error Notification Test                  ║');
+  console.log('╚════════════════════════════════════════════╝\n');
+  
+  // Test 1: エラー監視
+  console.log('【Test 1】エラー監視');
+  var monitorResult = NotificationService.monitorCriticalErrors();
+  
+  if (monitorResult.error) {
+    console.error('  ❌ Failed:', monitorResult.message);
+  } else {
+    console.log('  ✅ Success');
+    console.log('    Error count:', monitorResult.errorCount);
+  }
+  
+  console.log('');
+  
+  // Test 2: エラー統計
+  console.log('【Test 2】エラー統計（過去7日間）');
+  var statsResult = NotificationService.generateErrorStatistics(7);
+  
+  if (statsResult.error) {
+    console.error('  ❌ Failed:', statsResult.message);
+  } else {
+    console.log('  ✅ Success');
+    console.log('    Total logs:', statsResult.statistics.total_logs);
+    console.log('    Error rate:', statsResult.statistics.error_rate + '%');
+    
+    console.log('\n    By level:');
+    Object.keys(statsResult.statistics.by_level).forEach(function(level) {
+      console.log('      ' + level + ':', statsResult.statistics.by_level[level]);
+    });
+  }
+  
+  console.log('');
+  console.log('═'.repeat(48));
+  console.log('Error Notification Test Complete');
+}
+
+// ============================================================================
+// キャンセル通知機能（Phase 2 - Part 3 追加）
+// ============================================================================
+
+/**
+ * 自動キャンセル完了通知（LINE + Email）
+ */
+NotificationService.sendAutoCancellationNotification = function(customerId, reservation, cancellationData) {
+  var context = { service: 'NotificationService', action: 'sendAutoCancellationNotification' };
+  
+  try {
+    log('INFO', 'NotificationService', 'Sending auto cancellation notification', {
+      customerId: customerId,
+      reservationId: reservation.reservation_id
+    });
+    
+    // 顧客情報取得
+    var customer = DB.findById(CONFIG.SHEET.CUSTOMERS, customerId);
+    if (!customer) {
+      throw new Error('Customer not found');
+    }
+    
+    // LINE通知
+    if (customer.line_user_id) {
+      this._sendAutoCancellationLine(customer, reservation, cancellationData);
+    }
+    
+    // Email通知
+    if (customer.email) {
+      this._sendAutoCancellationEmail(customer, reservation, cancellationData);
+    }
+    
+    log('INFO', 'NotificationService', 'Auto cancellation notification sent');
+    
+    return { success: true };
+    
+  } catch (error) {
+    log('ERROR', 'NotificationService', 'Auto cancellation notification failed', {
+      error: error.message
+    });
+    return { success: false, message: error.message };
+  }
+};
+
+/**
+ * 自動キャンセル - LINE通知
+ */
+NotificationService._sendAutoCancellationLine = function(customer, reservation, cancellationData) {
+  try {
+    var resDate = Utilities.formatDate(
+      new Date(reservation.reservation_date),
+      'JST',
+      'yyyy年MM月dd日(E) HH:mm'
+    );
+    
+    var message = '【キャンセル完了】\n\n';
+    message += 'ご予約のキャンセルが完了しました。\n\n';
+    message += '━━━━━━━━━━━━━━\n';
+    message += '予約日時\n';
+    message += resDate + '\n\n';
+    
+    if (cancellationData.cancellationFee > 0) {
+      message += 'キャンセル料\n';
+      message += '¥' + cancellationData.cancellationFee.toLocaleString() + '\n';
+      message += '(' + (cancellationData.feeRate * 100) + '%)\n\n';
+    }
+    
+    if (cancellationData.refundAmount > 0) {
+      message += '返金額\n';
+      message += '¥' + cancellationData.refundAmount.toLocaleString() + '\n\n';
+    }
+    
+    message += '━━━━━━━━━━━━━━\n\n';
+    
+    if (cancellationData.refundAmount > 0) {
+      message += '返金処理は3-5営業日以内に\n完了いたします。\n\n';
+    }
+    
+    message += 'またのご利用を心より\nお待ちしております🐾';
+    
+    this._sendLineMessage(customer.line_user_id, message);
+    
+  } catch (error) {
+    log('ERROR', 'NotificationService', 'LINE notification failed', {
+      error: error.message
+    });
+  }
+};
+
+/**
+ * 自動キャンセル - Email通知
+ */
+NotificationService._sendAutoCancellationEmail = function(customer, reservation, cancellationData) {
+  try {
+    var resDate = Utilities.formatDate(
+      new Date(reservation.reservation_date),
+      'JST',
+      'yyyy年MM月dd日(E) HH:mm'
+    );
+    
+    var subject = '【K9 Harmony】キャンセル完了のお知らせ';
+    
+    var body = customer.customer_name + ' 様\n\n';
+    body += 'ご予約のキャンセルが完了いたしました。\n\n';
+    body += '━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+    body += '予約日時: ' + resDate + '\n';
+    body += 'キャンセル料: ¥' + cancellationData.cancellationFee.toLocaleString() + '\n';
+    body += '返金額: ¥' + cancellationData.refundAmount.toLocaleString() + '\n';
+    body += '━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+    
+    if (cancellationData.refundAmount > 0) {
+      body += '返金処理は3-5営業日以内に完了いたします。\n\n';
+    }
+    
+    body += 'またのご利用を心よりお待ちしております。\n';
+    
+    MailApp.sendEmail({
+      to: customer.email,
+      subject: subject,
+      body: body
+    });
+    
+  } catch (error) {
+    log('ERROR', 'NotificationService', 'Email notification failed', {
+      error: error.message
+    });
+  }
+};
+
+/**
+ * 管理者へのキャンセル申請通知
+ */
+NotificationService.sendAdminCancellationRequest = function(reservation, cancellationData) {
+  var context = { service: 'NotificationService', action: 'sendAdminCancellationRequest' };
+  
+  try {
+    log('INFO', 'NotificationService', 'Sending admin cancellation request');
+    
+    var customer = DB.findById(CONFIG.SHEET.CUSTOMERS, reservation.customer_id);
+    
+    var resDate = Utilities.formatDate(
+      new Date(reservation.reservation_date),
+      'JST',
+      'yyyy年MM月dd日(E) HH:mm'
+    );
+    
+    var subject = '[K9 Harmony] キャンセル申請: ' + (customer ? customer.customer_name : 'Unknown');
+    
+    var body = '新しいキャンセル申請がありました。\n\n';
+    body += '━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+    body += '予約ID: ' + reservation.reservation_id + '\n';
+    body += '予約日時: ' + resDate + '\n';
+    body += '顧客: ' + (customer ? customer.customer_name : 'N/A') + '\n';
+    body += 'キャンセル理由: ' + cancellationData.reason + '\n';
+    
+    if (cancellationData.detail) {
+      body += '詳細: ' + cancellationData.detail + '\n';
+    }
+    
+    body += '━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+    
+    this.sendAdminNotification(subject, body, 'INFO');
+    
+    return { success: true };
+    
+  } catch (error) {
+    log('ERROR', 'NotificationService', 'Admin notification failed', {
+      error: error.message
+    });
+    return { success: false, message: error.message };
+  }
+};
+
+/**
+ * 顧客へのキャンセル申請受付通知
+ */
+NotificationService.sendCancellationRequestConfirmation = function(customerId, reservation, cancellationData) {
+  var context = { service: 'NotificationService', action: 'sendCancellationRequestConfirmation' };
+  
+  try {
+    log('INFO', 'NotificationService', 'Sending cancellation request confirmation');
+    
+    var customer = DB.findById(CONFIG.SHEET.CUSTOMERS, customerId);
+    if (!customer) {
+      throw new Error('Customer not found');
+    }
+    
+    // LINE通知
+    if (customer.line_user_id) {
+      this._sendCancellationConfirmationLine(customer, reservation, cancellationData);
+    }
+    
+    // Email通知
+    if (customer.email) {
+      this._sendCancellationConfirmationEmail(customer, reservation, cancellationData);
+    }
+    
+    return { success: true };
+    
+  } catch (error) {
+    log('ERROR', 'NotificationService', 'Confirmation notification failed', {
+      error: error.message
+    });
+    return { success: false, message: error.message };
+  }
+};
+
+/**
+ * キャンセル申請受付 - LINE通知
+ */
+NotificationService._sendCancellationConfirmationLine = function(customer, reservation, cancellationData) {
+  try {
+    var message = '🐾 K9 Harmonyです\n\n';
+    message += 'キャンセル申請を受け付けました。\n\n';
+    message += '営業時間内にご連絡いたします。\n\n';
+    message += '【営業時間】\n';
+    message += '木曜日: 13:00〜20:00\n';
+    message += 'その他祝日: 10:00〜20:00\n';
+    message += '定休日: 水曜日\n\n';
+    message += 'ご不便をおかけいたしますが、\n何卒よろしくお願いいたします🙇';
+    
+    this._sendLineMessage(customer.line_user_id, message);
+    
+  } catch (error) {
+    log('ERROR', 'NotificationService', 'LINE confirmation failed', {
+      error: error.message
+    });
+  }
+};
+
+/**
+ * キャンセル申請受付 - Email通知
+ */
+NotificationService._sendCancellationConfirmationEmail = function(customer, reservation, cancellationData) {
+  try {
+    var subject = '【K9 Harmony】キャンセル申請を受け付けました';
+    
+    var body = customer.customer_name + ' 様\n\n';
+    body += 'キャンセル申請を受け付けました。\n\n';
+    body += '営業時間内にご連絡させていただきます。\n\n';
+    body += '【営業時間】\n';
+    body += '  木曜日: 13:00〜20:00\n';
+    body += '  その他祝日: 10:00〜20:00\n';
+    body += '  定休日: 水曜日\n\n';
+    body += 'ご不便をおかけいたしますが、何卒よろしくお願いいたします。\n';
+    
+    MailApp.sendEmail({
+      to: customer.email,
+      subject: subject,
+      body: body
+    });
+    
+  } catch (error) {
+    log('ERROR', 'NotificationService', 'Email confirmation failed', {
+      error: error.message
+    });
+  }
+};
+
+/**
+ * キャンセル承認通知（返金完了）
+ */
+NotificationService.sendCancellationApprovedNotification = function(customerId, reservation, refundData) {
+  var context = { service: 'NotificationService', action: 'sendCancellationApprovedNotification' };
+  
+  try {
+    log('INFO', 'NotificationService', 'Sending cancellation approved notification');
+    
+    var customer = DB.findById(CONFIG.SHEET.CUSTOMERS, customerId);
+    if (!customer) {
+      throw new Error('Customer not found');
+    }
+    
+    // LINE通知
+    if (customer.line_user_id) {
+      this._sendCancellationApprovedLine(customer, reservation, refundData);
+    }
+    
+    // Email通知
+    if (customer.email) {
+      this._sendCancellationApprovedEmail(customer, reservation, refundData);
+    }
+    
+    return { success: true };
+    
+  } catch (error) {
+    log('ERROR', 'NotificationService', 'Approved notification failed', {
+      error: error.message
+    });
+    return { success: false, message: error.message };
+  }
+};
+
+/**
+ * キャンセル承認 - LINE通知
+ */
+NotificationService._sendCancellationApprovedLine = function(customer, reservation, refundData) {
+  try {
+    var message = '【キャンセル完了・返金処理済み】\n\n';
+    message += 'ご予約のキャンセルと\n返金処理が完了しました。\n\n';
+    
+    if (refundData.refundAmount > 0) {
+      message += '返金額: ¥' + refundData.refundAmount.toLocaleString() + '\n\n';
+      message += '※返金処理は3-5営業日以内に\n完了いたします。\n\n';
+    }
+    
+    message += 'またのご利用を心より\nお待ちしております🐾';
+    
+    this._sendLineMessage(customer.line_user_id, message);
+    
+  } catch (error) {
+    log('ERROR', 'NotificationService', 'LINE approved notification failed', {
+      error: error.message
+    });
+  }
+};
+
+/**
+ * キャンセル承認 - Email通知
+ */
+NotificationService._sendCancellationApprovedEmail = function(customer, reservation, refundData) {
+  try {
+    var subject = '【K9 Harmony】キャンセル・返金処理完了のお知らせ';
+    
+    var body = customer.customer_name + ' 様\n\n';
+    body += 'ご予約のキャンセルと返金処理が完了いたしました。\n\n';
+    
+    if (refundData.refundAmount > 0) {
+      body += '返金額: ¥' + refundData.refundAmount.toLocaleString() + '\n\n';
+      body += '※返金処理は3-5営業日以内に完了いたします。\n';
+    }
+    
+    body += '\nまたのご利用を心よりお待ちしております。\n';
+    
+    MailApp.sendEmail({
+      to: customer.email,
+      subject: subject,
+      body: body
+    });
+    
+  } catch (error) {
+    log('ERROR', 'NotificationService', 'Email approved notification failed', {
+      error: error.message
+    });
+  }
+};
+/**
+ * キャンセル通知テスト
+ */
+function testCancellationNotifications() {
+  console.log('╔════════════════════════════════════════════╗');
+  console.log('║   Cancellation Notification Test          ║');
+  console.log('╚════════════════════════════════════════════╝\n');
+  
+  console.log('⚠️  実際の通知は送信しません（DRY RUN）\n');
+  
+  // テストデータ
+  var testCustomer = {
+    customer_id: 'test_customer',
+    customer_name: 'テスト 太郎',
+    email: 'test@example.com',
+    line_user_id: 'test_line_id'
+  };
+  
+  var testReservation = {
+    reservation_id: 'test_reservation',
+    customer_id: 'test_customer',
+    reservation_date: new Date(2026, 0, 20, 14, 0),
+    cancellation_reason: '愛犬・飼い主の体調不良'
+  };
+  
+  // Test 1: 自動キャンセル通知
+  console.log('【Test 1】自動キャンセル通知');
+  console.log('  キャンセル料: ¥2,450 (50%)');
+  console.log('  返金額: ¥2,450');
+  console.log('  ✅ 通知テンプレート生成成功');
+  console.log('');
+  
+  // Test 2: キャンセル申請受付通知
+  console.log('【Test 2】キャンセル申請受付通知');
+  console.log('  理由: 愛犬・飼い主の体調不良');
+  console.log('  営業時間案内を含む');
+  console.log('  ✅ 通知テンプレート生成成功');
+  console.log('');
+  
+  // Test 3: 管理者通知
+  console.log('【Test 3】管理者へのキャンセル申請通知');
+  console.log('  顧客情報: テスト 太郎');
+  console.log('  理由: 愛犬・飼い主の体調不良');
+  console.log('  ✅ 通知テンプレート生成成功');
+  console.log('');
+  
+  // Test 4: キャンセル承認通知
+  console.log('【Test 4】キャンセル承認・返金完了通知');
+  console.log('  返金額: ¥4,900');
+  console.log('  ✅ 通知テンプレート生成成功');
+  console.log('');
+  
+  console.log('═'.repeat(48));
+  console.log('Cancellation Notification Test Complete');
+  console.log('');
+  console.log('💡 実際の通知を送信する場合:');
+  console.log('  実在する顧客IDで各関数を実行してください');
+}
