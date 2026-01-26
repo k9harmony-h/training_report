@@ -1073,3 +1073,299 @@
 .coupon-applied .btn-link:hover {
   color: var(--c-accent-coral);
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   新規ユーザー用アコーディオンフォーム
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.accordion-section {
+  margin-bottom: var(--spacing-md);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  background: white;
+}
+
+.accordion-header-new {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--c-bg-light);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.accordion-header-new:hover {
+  background: var(--c-bg-mint);
+}
+
+.accordion-header-new.open {
+  background: var(--c-main-turquoise);
+  color: white;
+}
+
+.accordion-header-new.open .accordion-icon {
+  transform: rotate(180deg);
+  color: white;
+}
+
+.accordion-header-new.completed {
+  background: var(--c-bg-mint);
+}
+
+.accordion-header-new.completed::after {
+  content: '✓';
+  margin-left: auto;
+  margin-right: var(--spacing-sm);
+  color: var(--c-main-turquoise);
+  font-weight: bold;
+}
+
+.accordion-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 24px;
+  background: rgba(255,255,255,0.2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  margin-right: var(--spacing-sm);
+}
+
+.accordion-header-new:not(.open) .accordion-step {
+  background: var(--c-border-color);
+  color: var(--c-text-gray);
+}
+
+.accordion-title {
+  flex: 1;
+  font-weight: 600;
+}
+
+.accordion-icon {
+  transition: transform 0.3s;
+  color: var(--c-text-gray);
+}
+
+.accordion-content-new {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+  padding: 0 var(--spacing-md);
+}
+
+.accordion-content-new.open {
+  max-height: 2000px;
+  padding: var(--spacing-md);
+}
+
+.accordion-nav {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--c-border-color);
+}
+
+.accordion-nav .btn {
+  flex: 1;
+}
+
+/* 住所確認エリア */
+.address-confirmation {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--c-bg-mint);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--c-main-turquoise);
+}
+
+.address-confirmation.hidden {
+  display: none;
+}
+
+.address-confirmation.error {
+  background: #FFF5F5;
+  border-color: var(--c-accent-coral);
+}
+
+.confirmation-icon {
+  color: var(--c-main-turquoise);
+  font-size: 20px;
+}
+
+.address-confirmation.error .confirmation-icon {
+  color: var(--c-accent-coral);
+}
+
+.confirmation-text {
+  flex: 1;
+}
+
+#confirmed-address {
+  font-size: var(--font-size-sm);
+  color: var(--c-text-body);
+  margin-bottom: 4px;
+}
+
+.travel-fee-result {
+  font-weight: 600;
+  color: var(--c-main-turquoise);
+}
+
+.address-confirmation.error .travel-fee-result {
+  color: var(--c-accent-coral);
+}
+
+/* 郵便番号入力グループ */
+.zip-input-group {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.zip-input-group input {
+  flex: 1;
+}
+
+.zip-input-group .btn {
+  white-space: nowrap;
+}
+
+/* 年齢入力グループ */
+.age-input-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.age-input-group select {
+  width: 80px;
+}
+
+.age-unit {
+  color: var(--c-text-body);
+  font-size: var(--font-size-sm);
+}
+
+/* チェックボックスグループ */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+/* 料金ボックス */
+.summary-box,
+.price-box {
+  background: var(--c-bg-light);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.summary-title,
+.price-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--c-text-body);
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--c-border-color);
+}
+
+/* 注意事項カード（View3） */
+.notice-card {
+  background: #FFF9E6;
+  border: 1px solid #F5D76E;
+}
+
+.notice-card .form-label {
+  color: #B7950B;
+}
+
+.notice-card .form-label i {
+  margin-right: var(--spacing-xs);
+}
+
+.notice-list {
+  margin: 0;
+  padding-left: var(--spacing-lg);
+}
+
+.notice-list li {
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--c-text-body);
+}
+
+/* 重要事項説明カード（View3 新規ユーザー向け） */
+.important-notice-card {
+  background: #FFF5F5;
+  border: 2px solid #E74C3C;
+}
+
+.important-notice-card .form-label {
+  color: #C0392B;
+  font-weight: bold;
+}
+
+.important-notice-card .form-label i {
+  margin-right: var(--spacing-xs);
+}
+
+.important-notice-content {
+  margin-bottom: var(--spacing-md);
+}
+
+.important-notice-content p {
+  margin: var(--spacing-sm) 0 var(--spacing-xs) 0;
+  font-weight: bold;
+  font-size: var(--font-size-sm);
+  color: var(--c-text-body);
+}
+
+.important-notice-content p:first-child {
+  margin-top: 0;
+}
+
+.important-checkbox {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid #E74C3C;
+}
+
+/* ラジオボタングループ改善 */
+.radio-group {
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  cursor: pointer;
+}
+
+.radio-label input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--c-main-turquoise);
+}

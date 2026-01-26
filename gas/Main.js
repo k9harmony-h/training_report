@@ -435,35 +435,46 @@ function handleAddReservation(lineUserId, requestBody) {
     if (requestBody.regData) {
       // 新規顧客の場合は登録
       log('INFO', 'Main', 'Creating new customer');
-      
+
+      // 年齢フィールドの互換性対応（新形式: dogAgeYears/dogAgeMonths、旧形式: dogAge）
+      var dogAgeYears = requestBody.regData.dogAgeYears || requestBody.regData.dogAge || 0;
+      var dogAgeMonths = requestBody.regData.dogAgeMonths || 0;
+
       customer = CustomerRepository.create({
         line_user_id: lineUserId,
         customer_name: requestBody.regData.name,
         customer_phone: requestBody.regData.phone,
+        customer_email: requestBody.regData.email || null,
         postal_code: requestBody.regData.zip,
         address: requestBody.regData.address,
-        landmark: requestBody.regData.landmark
+        building: requestBody.regData.building || null,
+        landmark: requestBody.regData.landmark || null,
+        base_lat: requestBody.regData.lat || null,
+        base_lng: requestBody.regData.lng || null
       });
-      
+
       if (customer.error) {
         throw customer;
       }
-      
+
       // 犬も登録
       var dog = DogRepository.create({
         customer_id: customer.customer_id,
         dog_name: requestBody.regData.dogName,
         breed: requestBody.regData.dogBreed,
-        age_years: requestBody.regData.dogAge,
-        is_neutered: requestBody.regData.neutered,
-        concerns: requestBody.regData.concerns,
-        notes: requestBody.regData.remarks
+        age_years: dogAgeYears,
+        age_months: dogAgeMonths,
+        dog_gender: requestBody.regData.dogGender || null,
+        is_neutered: requestBody.regData.neutered || false,
+        vaccinations: requestBody.regData.vaccinations ? JSON.stringify(requestBody.regData.vaccinations) : null,
+        concerns: requestBody.regData.concerns || null,
+        notes: requestBody.regData.remarks || null
       });
-      
+
       if (dog.error) {
         throw dog;
       }
-      
+
       requestBody.dogId = dog.dog_id;
       
     } else {

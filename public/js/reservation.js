@@ -16,7 +16,8 @@
     lineUserId: null,
     userData: null,
     userDogs: [],
-    
+    isNewUser: false,  // 新規ユーザーフラグ
+
     // 選択情報
     selectedDog: null,
     selectedTrainer: null,
@@ -49,7 +50,10 @@
     paymentToken: null,
 
     // クーポン
-    appliedCoupon: null
+    appliedCoupon: null,
+
+    // 新規ユーザー用ジオデータ
+    newUserGeoData: null
   };
 
   /**
@@ -156,8 +160,10 @@ async function loadEssentialData() {
     if (customerData && customerData.customer) {
       AppState.userData = customerData.customer;
       AppState.userDogs = customerData.dogs || [];
+      AppState.isNewUser = false;
       debugLog(`✅ 既存顧客: ${AppState.userData.name}`, 'success');
     } else {
+      AppState.isNewUser = true;
       debugLog('📝 新規顧客', 'info');
     }
     
@@ -502,9 +508,16 @@ async function loadCalendarData(monthOffset) {
         } else {
           // 新規顧客の場合
           debugLog('🆕 新規顧客として処理', 'info');
-          document.getElementById('selected-dog-name').textContent = 'ご新規のお客様';
-          document.getElementById('btn-change-dog').style.display = 'none';
+
+          // 犬選択カード全体を非表示
+          const dogSelectionCard = document.getElementById('dog-selection-card');
+          if (dogSelectionCard) {
+            dogSelectionCard.style.display = 'none';
+          }
+
+          // 「すでに契約済みのお客様」リンクを表示
           document.getElementById('existing-customer-link-area').classList.remove('hidden');
+
           // 新規顧客用のプレースホルダーを設定
           AppState.selectedDog = { name: 'ご新規のお客様', isNew: true };
         }
@@ -608,18 +621,19 @@ function renderTrainerSelect() {
 function renderMenuSelect() {
   debugLog('📋 renderMenuSelect() 開始', 'info');
   debugLog(`🔍 AppState.products.length: ${AppState.products.length}`, 'info');
-  
+  debugLog(`🔍 AppState.isNewUser: ${AppState.isNewUser}`, 'info');
+
   const select = document.getElementById('menu-select');
   if (!select) {
     debugLog('❌ menu-select要素が見つかりません', 'error');
     return;
   }
-  
+
   select.innerHTML = '';
-  
+
   if (AppState.products.length > 0) {
     debugLog('📦 商品データからメニュー生成', 'info');
-    
+
     AppState.products.forEach((product, index) => {
       // 複数のフィールド名パターンに対応
       const name = product.product_name || product.name;
@@ -627,12 +641,24 @@ function renderMenuSelect() {
       const price = product.product_price || product.price;
       const duration = product.product_duration || product.duration || 90;
       const productType = product.product_type || product.type;
-      
-      debugLog(`🔍 商品${index}: name=${name}, category=${category}, type=${productType}, price=${price}`, 'info');
+      const customerType = product.customer_type || 'ALL';
+
+      debugLog(`🔍 商品${index}: name=${name}, category=${category}, type=${productType}, customerType=${customerType}, price=${price}`, 'info');
 
       // product_status=ACTIVEのみ表示（GAS側で既にフィルタ済みだが念のため）
       const status = product.product_status || 'ACTIVE';
-      if (name && status === 'ACTIVE') {
+
+      // 新規ユーザーフィルタリング
+      // 新規ユーザー: customer_type='NEW' または 'ALL' のみ
+      // 既存ユーザー: customer_type='EXISTING' または 'ALL' のみ
+      let customerTypeMatch = false;
+      if (AppState.isNewUser) {
+        customerTypeMatch = (customerType === 'NEW' || customerType === 'ALL');
+      } else {
+        customerTypeMatch = (customerType === 'EXISTING' || customerType === 'ALL');
+      }
+
+      if (name && status === 'ACTIVE' && customerTypeMatch) {
         const option = document.createElement('option');
         option.value = duration;
         option.setAttribute('data-price', price);
@@ -642,10 +668,10 @@ function renderMenuSelect() {
         select.appendChild(option);
         debugLog(`✅ メニュー追加: ${name}`, 'success');
       } else {
-        debugLog(`⏭️ スキップ: ${name} (status=${status})`, 'info');
+        debugLog(`⏭️ スキップ: ${name} (status=${status}, customerType=${customerType}, match=${customerTypeMatch})`, 'info');
       }
     });
-    
+
   }
   
   // オプションが1つも追加されなかった場合、デフォルトを追加
@@ -710,23 +736,38 @@ function renderMenuSelect() {
   function initializeView2() {
     debugLog('📅 View 2 初期化', 'info');
     renderCalendar();
-    
-    // ①View2読み込み時に出張費を事前計算
-  preCalculateTravelFee();
-  
-  // 別住所チェックボックス
-  document.getElementById('alt-address-check').addEventListener('change', (e) => {
-    AppState.useAltAddress = e.target.checked;
-    toggleAltAddress();
-    
-    // ②別住所の場合は再計算をリセット
-    if (e.target.checked) {
-      AppState.travelFee = null;
-    } else {
-      preCalculateTravelFee();
+
+    // 新規ユーザーの場合は別住所セクションを非表示
+    const altAddressCard = document.getElementById('alt-address-check')?.closest('.card');
+    if (AppState.isNewUser) {
+      debugLog('🆕 新規ユーザー: 別住所セクション非表示', 'info');
+      if (altAddressCard) {
+        altAddressCard.style.display = 'none';
+      }
+      // 新規ユーザーはView4で住所入力するので事前計算しない
+      AppState.travelFeeStatus = 'NEW_USER';
+      return;
     }
-  });
-}
+
+    // ①View2読み込み時に出張費を事前計算（既存ユーザーのみ）
+    preCalculateTravelFee();
+
+    // 別住所チェックボックス（既存ユーザーのみ）
+    if (altAddressCard) {
+      altAddressCard.style.display = '';
+    }
+    document.getElementById('alt-address-check').addEventListener('change', (e) => {
+      AppState.useAltAddress = e.target.checked;
+      toggleAltAddress();
+
+      // ②別住所の場合は再計算をリセット
+      if (e.target.checked) {
+        AppState.travelFee = null;
+      } else {
+        preCalculateTravelFee();
+      }
+    });
+  }
   
   /**
    * 月間カレンダーのレンダリング
@@ -903,26 +944,47 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
   
      async function initializeView3() {
     debugLog('💰 View 3 初期化', 'info');
-  
+
   try {
+    // 新規ユーザー向けセクション表示切り替え
+    const importantSection = document.getElementById('important-notice-section');
+    const noticeSection = document.getElementById('notice-section-new-user');
+
+    if (AppState.isNewUser) {
+      // 重要事項説明セクション表示
+      if (importantSection) {
+        importantSection.classList.remove('hidden');
+        debugLog('🆕 重要事項説明セクション表示（新規ユーザー）', 'info');
+      }
+      // 注意事項セクション表示
+      if (noticeSection) {
+        noticeSection.classList.remove('hidden');
+        debugLog('🆕 注意事項セクション表示（新規ユーザー）', 'info');
+      }
+    } else {
+      // 既存ユーザーは非表示
+      if (importantSection) importantSection.classList.add('hidden');
+      if (noticeSection) noticeSection.classList.add('hidden');
+    }
+
     // 予約内容表示
     renderReservationSummary();
-    
+
     // 料金計算（非同期処理をawait）
     await calculatePricing();
-    
+
     // キャンセル料表示
     updateCancellationInfo();
-    
+
     // 規約チェックボックスのイベント
     document.querySelectorAll('.term-check').forEach(checkbox => {
       checkbox.addEventListener('change', checkAllTerms);
     });
-    
+
     document.getElementById('chk-all').addEventListener('change', toggleAllTerms);
-    
+
     debugLog('✅ View 3 初期化完了', 'success');
-    
+
   } catch (error) {
     debugLog(`❌ View 3 初期化エラー: ${error.message}`, 'error');
     console.error('initializeView3 Error:', error);
@@ -948,15 +1010,17 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
       } else if (AppState.userData) {
         place = AppState.userData.address || '未登録';
       } else {
-        place = '新規登録住所';
+        place = '住所入力後に表示します';
       }
       document.getElementById('conf-place').textContent = place;
       debugLog(`✅ 場所: ${place}`, 'success');
-      
+
       // 犬名
       let dogName = '';
-      if (AppState.selectedDog) {
+      if (AppState.selectedDog && !AppState.selectedDog.isNew) {
         dogName = AppState.selectedDog.name_disp || AppState.selectedDog.name;
+      } else if (AppState.isNewUser) {
+        dogName = '次のステップで登録';
       } else {
         dogName = '新規登録犬';
       }
@@ -1023,7 +1087,12 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
       AppState.travelFeeStatus = travelResult.status;
 
       // 表示更新
-      if (travelResult.status === 'OVER_AREA' || travelResult.status === 'GEOCODE_FAILED') {
+      if (travelResult.status === 'NEW_USER') {
+        document.getElementById('price-travel-fee').textContent = 'お客様情報入力後に計算いたします';
+        document.getElementById('price-total').textContent = 'お客様情報入力後に確定';
+        debugLog(`✅ 出張費: 新規ユーザー - お客様情報入力後に計算`, 'success');
+        return; // 新規ユーザーは合計計算をスキップ
+      } else if (travelResult.status === 'OVER_AREA' || travelResult.status === 'GEOCODE_FAILED') {
         document.getElementById('price-travel-fee').textContent = '別途';
       } else if (travelResult.fee === 0) {
         document.getElementById('price-travel-fee').textContent = '無料';
@@ -1280,8 +1349,8 @@ async function preCalculateTravelFee() {
    * View4へ遷移（ユーザータイプによって分岐）
    */
   function checkUserAndNext() {
-    // 別住所チェックがONの場合、必須項目を検証
-    if (AppState.useAltAddress) {
+    // 別住所チェックがONの場合、必須項目を検証（既存ユーザーのみ）
+    if (!AppState.isNewUser && AppState.useAltAddress) {
       const altAddr = document.getElementById('alt-addr')?.value?.trim();
       if (!altAddr) {
         alert('別住所を使用する場合は、住所を入力してください');
@@ -1290,24 +1359,27 @@ async function preCalculateTravelFee() {
       }
     }
 
+    if (AppState.isNewUser) {
+      // 新規ユーザー → アコーディオン形式の登録フォーム
+      debugLog('🆕 新規ユーザー → アコーディオンフォームへ', 'info');
+      showView4Pattern('new-card');
+      goToView(4);
+      // 最初のアコーディオンを開く
+      setTimeout(() => {
+        goToAccordionSection('owner');
+      }, 100);
+      return;
+    }
+
+    // 既存ユーザー
     const paymentMethod = document.getElementById('payment-method').value;
 
-    if (AppState.userData) {
-      // 既存ユーザー
-      if (paymentMethod === 'CARD') {
-        showView4Pattern('existing-card');
-      } else if (paymentMethod === 'CASH') {
-        showView4Pattern('cash');
-      } else {
-        showView4Pattern('existing-card'); // QUICPay, iD, IC も同様
-      }
+    if (paymentMethod === 'CARD') {
+      showView4Pattern('existing-card');
+    } else if (paymentMethod === 'CASH') {
+      showView4Pattern('cash');
     } else {
-      // 新規ユーザー
-      if (paymentMethod === 'CARD') {
-        showView4Pattern('new-card');
-      } else if (paymentMethod === 'CASH') {
-        showView4Pattern('cash');
-      }
+      showView4Pattern('existing-card'); // QUICPay, iD, IC も同様
     }
 
     goToView(4);
@@ -1631,10 +1703,16 @@ function renderFinalPricing() {
 async function executePayment() {
   try {
     showLoading('決済処理中...');
-    
+
     debugLog('💳 決済処理開始（アトミックトランザクション）', 'info');
-    
-    // submitReservation(true)に統合
+
+    // 新規ユーザーの場合は専用の送信関数を使用
+    if (AppState.isNewUser) {
+      await submitNewUserReservation(true);
+      return;
+    }
+
+    // 既存ユーザー: submitReservation(true)に統合
     // Square Tokenizeは既に完了しているので、
     // submitReservation内でcreateReservationWithPaymentを呼び出す
     await submitReservation(true);
@@ -1647,31 +1725,14 @@ async function executePayment() {
 }
   
   /**
- * 予約確定（現地決済 or 決済完了後）
+ * 予約確定（既存ユーザー用：現地決済 or 決済完了後）
+ * ※ 新規ユーザーは submitNewUserReservation() を使用
  * @param {boolean} isPaid - 決済済みかどうか
  */
   async function submitReservation(isPaid = false) {
     try {
       showLoading('予約を確定中...');
-      
-      // 新規ユーザーの登録情報
-      let regData = null;
-      if (!AppState.userData) {
-        regData = {
-          name: document.getElementById('reg-name').value,
-          phone: document.getElementById('reg-phone').value,
-          zip: document.getElementById('reg-zip').value,
-          address: document.getElementById('reg-addr').value,
-          landmark: document.getElementById('reg-landmark').value,
-          dogName: document.getElementById('reg-dog-name').value,
-          dogBreed: document.getElementById('reg-dog-breed').value,
-          dogAge: document.getElementById('reg-dog-age').value,
-          neutered: document.getElementById('reg-dog-neutered').checked,
-          concerns: document.getElementById('reg-concerns').value,
-          remarks: document.getElementById('reg-remarks').value
-        };
-      }
-      
+
       // ===== userId取得 =====
       let userId;
       if (AppState.userData && AppState.userData.customer_id) {
@@ -1765,7 +1826,7 @@ async function executePayment() {
           total_amount: AppState.totalPrice,
           payment_method: 'CREDIT',
           notes: document.getElementById('conf-remarks').value,
-          reg_data: regData
+          reg_data: null  // 既存ユーザーは登録データなし
         };
         
         // 決済データ構築
@@ -1843,7 +1904,7 @@ async function executePayment() {
           paymentMethod: 'CASH',
           paymentStatus: 'UNPAID',
           totalPrice: AppState.totalPrice,
-          regData: regData
+          regData: null  // 既存ユーザーは登録データなし
         };
         
         debugLog('📤 送信データ (add_reservation):', 'info');
@@ -2598,6 +2659,369 @@ function selectTime(date, time) {
     window.tipsTimer = timer;
   }
   
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     新規ユーザー用アコーディオンフォーム
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+  /**
+   * 新規ユーザーアコーディオントグル
+   */
+  function toggleNewUserAccordion(section) {
+    const sections = ['owner', 'dog', 'payment'];
+    sections.forEach(s => {
+      const header = document.querySelector(`#accordion-${s} .accordion-header-new`);
+      const content = document.getElementById(`accordion-${s}-content`);
+      if (s === section) {
+        header.classList.toggle('open');
+        content.classList.toggle('open');
+      }
+    });
+  }
+
+  /**
+   * アコーディオンセクション移動
+   */
+  function goToAccordionSection(section) {
+    const sections = ['owner', 'dog', 'payment'];
+    sections.forEach(s => {
+      const header = document.querySelector(`#accordion-${s} .accordion-header-new`);
+      const content = document.getElementById(`accordion-${s}-content`);
+      if (s === section) {
+        header.classList.add('open');
+        content.classList.add('open');
+      } else {
+        header.classList.remove('open');
+        content.classList.remove('open');
+      }
+    });
+
+    // 料金確認セクションに移動時はサマリーを更新
+    if (section === 'payment') {
+      updateNewUserPaymentSummary();
+      initializeSquare('square-card-container-new');
+    }
+
+    // スクロール
+    const targetSection = document.getElementById(`accordion-${section}`);
+    if (targetSection) {
+      targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  /**
+   * 飼い主情報バリデーション
+   */
+  function validateOwnerSection() {
+    const name = document.getElementById('reg-name')?.value?.trim();
+    const phone = document.getElementById('reg-phone')?.value?.trim();
+    const email = document.getElementById('reg-email')?.value?.trim();
+    const zip = document.getElementById('reg-zip')?.value?.trim();
+    const addr = document.getElementById('reg-addr')?.value?.trim();
+
+    // 電話番号バリデーション
+    const phoneClean = phone?.replace(/-/g, '') || '';
+    const phoneValid = /^0\d{9,10}$/.test(phoneClean);
+
+    // メールバリデーション
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+    // 郵便番号バリデーション
+    const zipClean = zip?.replace(/-/g, '') || '';
+    const zipValid = zipClean.length === 7;
+
+    const isValid = name && phoneValid && emailValid && zipValid && addr;
+
+    const btn = document.getElementById('btn-to-dog-section');
+    if (btn) {
+      btn.disabled = !isValid;
+    }
+
+    return isValid;
+  }
+
+  /**
+   * 犬情報バリデーション
+   */
+  function validateDogSection() {
+    const dogName = document.getElementById('reg-dog-name')?.value?.trim();
+    const dogBreed = document.getElementById('reg-dog-breed')?.value?.trim();
+    const dogAgeYear = document.getElementById('reg-dog-age-year')?.value;
+    const dogAgeMonth = document.getElementById('reg-dog-age-month')?.value;
+    const dogGender = document.querySelector('input[name="reg-dog-gender"]:checked');
+
+    const isValid = dogName && dogBreed && dogAgeYear !== '' && dogAgeMonth !== '' && dogGender;
+
+    const btn = document.getElementById('btn-to-payment-section');
+    if (btn) {
+      btn.disabled = !isValid;
+    }
+
+    return isValid;
+  }
+
+  /**
+   * 新規ユーザー住所ジオコーディング
+   */
+  async function geocodeNewUserAddress() {
+    const addr = document.getElementById('reg-addr')?.value?.trim();
+    const building = document.getElementById('reg-building')?.value?.trim();
+
+    if (!addr) return;
+
+    const fullAddress = building ? `${addr} ${building}` : addr;
+    debugLog(`📍 新規ユーザー住所ジオコーディング: ${fullAddress}`, 'info');
+
+    const confirmationEl = document.getElementById('address-confirmation');
+    const confirmedAddrEl = document.getElementById('confirmed-address');
+    const travelFeeEl = document.getElementById('travel-fee-result');
+
+    // 確認エリア表示
+    confirmationEl.classList.remove('hidden', 'error');
+    confirmedAddrEl.textContent = fullAddress;
+    travelFeeEl.textContent = '出張費: 計算中...';
+
+    try {
+      const geoResult = await geocodeWithRetry(fullAddress);
+
+      if (geoResult.success) {
+        // 座標保存
+        AppState.newUserGeoData = {
+          lat: geoResult.lat,
+          lng: geoResult.lng,
+          formattedAddress: geoResult.formattedAddress || fullAddress
+        };
+
+        // 距離計算
+        const distance = CONFIG.calculateDistance(
+          CONFIG.OFFICE.LAT,
+          CONFIG.OFFICE.LNG,
+          geoResult.lat,
+          geoResult.lng
+        );
+
+        // 15km超チェック
+        if (distance > 15) {
+          AppState.travelFee = 0;
+          AppState.travelFeeStatus = 'OVER_AREA';
+          travelFeeEl.textContent = '出張費: 別途（担当者よりご連絡）';
+          confirmationEl.classList.add('error');
+        } else {
+          AppState.travelFee = CONFIG.calculateTravelFee(distance);
+          AppState.travelFeeStatus = 'CALCULATED';
+          if (AppState.travelFee === 0) {
+            travelFeeEl.textContent = '出張費: 無料（3km以内）';
+          } else {
+            travelFeeEl.textContent = `出張費: ¥${AppState.travelFee.toLocaleString()}`;
+          }
+        }
+
+        debugLog(`✅ ジオコーディング成功: ${distance.toFixed(1)}km / ¥${AppState.travelFee}`, 'success');
+
+      } else if (geoResult.retry) {
+        // 再入力待ち
+        travelFeeEl.textContent = '出張費: 住所を確認してください';
+        confirmationEl.classList.add('error');
+        return;
+      } else {
+        // 2回失敗
+        AppState.travelFee = 0;
+        AppState.travelFeeStatus = 'GEOCODE_FAILED';
+        travelFeeEl.textContent = '出張費: 別途（担当者よりご連絡）';
+        confirmationEl.classList.add('error');
+      }
+
+    } catch (error) {
+      debugLog(`❌ ジオコーディングエラー: ${error.message}`, 'error');
+      AppState.travelFee = 0;
+      AppState.travelFeeStatus = 'GEOCODE_FAILED';
+      travelFeeEl.textContent = '出張費: 別途（担当者よりご連絡）';
+      confirmationEl.classList.add('error');
+    }
+  }
+
+  /**
+   * 郵便番号から住所検索
+   */
+  async function searchAddressByZip() {
+    const zipInput = document.getElementById('reg-zip');
+    const zip = zipInput?.value?.replace(/-/g, '') || '';
+
+    if (zip.length !== 7) {
+      showToast('郵便番号を7桁で入力してください', 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${CONFIG.EXTERNAL.ZIP_CLOUD_API}?zipcode=${zip}`);
+      const data = await response.json();
+
+      if (data.results) {
+        const result = data.results[0];
+        const address = result.address1 + result.address2 + result.address3;
+        document.getElementById('reg-addr').value = address;
+        debugLog(`📮 住所自動入力: ${address}`, 'info');
+        validateOwnerSection();
+      } else {
+        showToast('該当する住所が見つかりませんでした', 'error');
+      }
+    } catch (error) {
+      debugLog(`⚠️ 郵便番号検索エラー: ${error.message}`, 'warn');
+      showToast('住所検索に失敗しました', 'error');
+    }
+  }
+
+  /**
+   * 新規ユーザー支払い方法切り替え
+   */
+  function toggleNewUserPaymentMethod() {
+    const method = document.getElementById('new-user-payment-method')?.value;
+    const cardSection = document.getElementById('new-user-card-section');
+
+    if (method === 'CARD') {
+      cardSection.style.display = '';
+      initializeSquare('square-card-container-new');
+    } else {
+      cardSection.style.display = 'none';
+    }
+  }
+
+  /**
+   * 新規ユーザー料金サマリー更新
+   */
+  function updateNewUserPaymentSummary() {
+    // 日時
+    document.getElementById('new-user-conf-datetime').textContent =
+      `${AppState.selectedDate} ${AppState.selectedTime}`;
+
+    // 場所
+    const addr = document.getElementById('reg-addr')?.value?.trim() || '';
+    const building = document.getElementById('reg-building')?.value?.trim() || '';
+    document.getElementById('new-user-conf-place').textContent =
+      building ? `${addr} ${building}` : addr;
+
+    // パートナー名
+    const dogName = document.getElementById('reg-dog-name')?.value?.trim() || '';
+    document.getElementById('new-user-conf-dog').textContent = dogName;
+
+    // コース
+    document.getElementById('new-user-conf-course').textContent =
+      AppState.selectedMenu?.name || '初回体験トレーニング';
+
+    // 料金
+    document.getElementById('new-user-price-lesson').textContent =
+      `¥${AppState.lessonPrice?.toLocaleString() || '---'}`;
+
+    // 出張費
+    if (AppState.travelFeeStatus === 'OVER_AREA' || AppState.travelFeeStatus === 'GEOCODE_FAILED') {
+      document.getElementById('new-user-price-travel').textContent = '別途';
+    } else if (AppState.travelFee === 0) {
+      document.getElementById('new-user-price-travel').textContent = '無料';
+    } else {
+      document.getElementById('new-user-price-travel').textContent =
+        `¥${AppState.travelFee?.toLocaleString() || '---'}`;
+    }
+
+    // 合計
+    const total = AppState.lessonPrice + (AppState.travelFee || 0);
+    AppState.totalPrice = total;
+    document.getElementById('new-user-price-total').textContent = `¥${total.toLocaleString()}`;
+  }
+
+  /**
+   * 新規ユーザー予約確定
+   */
+  async function confirmNewUserReservation() {
+    const paymentMethod = document.getElementById('new-user-payment-method')?.value;
+
+    if (paymentMethod === 'CARD') {
+      // カード決済
+      await handleCardTokenize();
+    } else {
+      // 現金決済
+      await submitNewUserReservation(false);
+    }
+  }
+
+  /**
+   * 新規ユーザー予約送信
+   */
+  async function submitNewUserReservation(isPaid) {
+    try {
+      showLoading('予約を確定中...');
+
+      // 登録データ収集
+      const regData = {
+        name: document.getElementById('reg-name')?.value?.trim(),
+        phone: document.getElementById('reg-phone')?.value?.trim(),
+        email: document.getElementById('reg-email')?.value?.trim(),
+        zip: document.getElementById('reg-zip')?.value?.trim(),
+        address: document.getElementById('reg-addr')?.value?.trim(),
+        building: document.getElementById('reg-building')?.value?.trim(),
+        lat: AppState.newUserGeoData?.lat || null,
+        lng: AppState.newUserGeoData?.lng || null,
+        dogName: document.getElementById('reg-dog-name')?.value?.trim(),
+        dogBreed: document.getElementById('reg-dog-breed')?.value?.trim(),
+        dogAgeYears: document.getElementById('reg-dog-age-year')?.value,
+        dogAgeMonths: document.getElementById('reg-dog-age-month')?.value,
+        dogGender: document.querySelector('input[name="reg-dog-gender"]:checked')?.value,
+        neutered: document.querySelector('input[name="reg-dog-neutered"]:checked')?.value === 'true',
+        vaccinations: Array.from(document.querySelectorAll('input[name="reg-vaccine"]:checked')).map(cb => cb.value),
+        concerns: document.getElementById('reg-concerns')?.value?.trim()
+      };
+
+      // 予約送信
+      const payload = {
+        action: isPaid ? 'createReservationWithPayment' : 'add_reservation',
+        userId: AppState.lineUserId,
+        lineUserId: AppState.lineUserId,
+        date: AppState.selectedDate,
+        time: AppState.selectedTime,
+        trainerId: AppState.selectedTrainer,
+        menuId: AppState.selectedMenu?.id,
+        lesson_amount: AppState.lessonPrice,
+        travel_fee: (AppState.travelFeeStatus === 'OVER_AREA' || AppState.travelFeeStatus === 'GEOCODE_FAILED') ? null : AppState.travelFee,
+        totalPrice: AppState.totalPrice,
+        paymentMethod: isPaid ? 'CREDIT' : 'CASH',
+        paymentStatus: isPaid ? 'PAID' : 'UNPAID',
+        regData: regData,
+        isNewUser: true
+      };
+
+      if (isPaid && AppState.paymentToken) {
+        payload.paymentData = JSON.stringify({
+          amount: AppState.lessonPrice,
+          total_amount: AppState.totalPrice,
+          payment_method: 'CREDIT_CARD',
+          square_source_id: AppState.paymentToken
+        });
+      }
+
+      debugLog('📤 新規ユーザー予約送信:', 'info');
+      debugLog(JSON.stringify(payload, null, 2), 'info');
+
+      const result = await apiCall('POST', payload);
+
+      if (result.success || result.status === 'success') {
+        debugLog('✅ 新規ユーザー予約確定成功', 'success');
+
+        // AppStateに登録情報を保存（View5表示用）
+        AppState.userData = { name: regData.name, address: regData.address };
+        AppState.selectedDog = { name: regData.dogName, dog_gender: regData.dogGender };
+
+        hideLoading();
+        goToView(5);
+      } else {
+        hideLoading();
+        alert(`予約の確定に失敗しました: ${result.message || result.error}`);
+      }
+
+    } catch (error) {
+      hideLoading();
+      debugLog(`❌ 新規ユーザー予約エラー: ${error.message}`, 'error');
+      alert('予約処理中にエラーが発生しました: ' + error.message);
+    }
+  }
+
   debugLog('📦 reservation.js ロード完了', 'success');
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -2606,7 +3030,7 @@ function selectTime(date, time) {
   window.goToView = goToView;
   window.shiftMonth = shiftMonth;
   window.showDogSelectModal = showDogSelectModal;
-  window.closeDogSelectModal = closeDogSelectModal;
+  window.closeDogModal = closeDogModal;
   window.selectDogFromModal = selectDogFromModal;
   window.openTimeModal = openTimeModal;
   window.closeTimeModal = closeTimeModal;
@@ -2620,8 +3044,18 @@ function selectTime(date, time) {
   window.checkAllTerms = checkAllTerms;
   window.checkUserAndNext = checkUserAndNext;
   window.processPayment = processPayment;
-  window.confirmCashReservation = confirmCashReservation;
-  window.shareToLine = shareToLine;
-  window.addToCalendar = addToCalendar;
+  window.submitReservation = submitReservation;
+  window.shareLine = shareLine;
+  window.addToGoogleCalendar = addToGoogleCalendar;
   window.shareNative = shareNative;
   window.toggleAccordion = toggleAccordion;
+
+  // 新規ユーザー用
+  window.toggleNewUserAccordion = toggleNewUserAccordion;
+  window.goToAccordionSection = goToAccordionSection;
+  window.validateOwnerSection = validateOwnerSection;
+  window.validateDogSection = validateDogSection;
+  window.geocodeNewUserAddress = geocodeNewUserAddress;
+  window.searchAddressByZip = searchAddressByZip;
+  window.toggleNewUserPaymentMethod = toggleNewUserPaymentMethod;
+  window.confirmNewUserReservation = confirmNewUserReservation;

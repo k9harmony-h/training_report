@@ -13,8 +13,8 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   
   <!-- K9 Harmony Styles -->
-  <link href="css/common.css?v=20260117" rel="stylesheet">
-  <link href="css/reservation.css?v=20260117" rel="stylesheet">
+  <link href="css/common.css?v=20260127b" rel="stylesheet">
+  <link href="css/reservation.css?v=20260127b" rel="stylesheet">
 </head>
 
 <body class="debug-mode">
@@ -25,7 +25,7 @@
   <div id="debug-timestamp" class="debug-timestamp">
     <span class="debug-label">🐾 K9 Harmony Debug Mode</span>
     <span id="page-load-time">Loading...</span>
-    <span class="debug-version">v2026.01.17</span>
+    <span class="debug-version">v2026.01.27</span>
   </div>
 
   <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -81,9 +81,9 @@
     <div id="view-1" class="view-section active">
       <h2 class="card-title">予約内容</h2>
       
-      <!-- 選択中のワンちゃん -->
-      <div class="card">
-        <label class="form-label">選択中のワンちゃん</label>
+      <!-- 選択中の愛犬（新規ユーザーは非表示） -->
+      <div class="card" id="dog-selection-card">
+        <label class="form-label">選択中の愛犬</label>
         <div id="selected-dog-name" class="selected-dog-display">---</div>
         <button 
           class="btn btn-sm btn-secondary" 
@@ -351,10 +351,52 @@
         </select>
       </div>
 
+      <!-- 重要事項説明（新規ユーザー向け） -->
+      <div id="important-notice-section" class="card important-notice-card hidden">
+        <label class="form-label">
+          <i class="fa-solid fa-exclamation-triangle"></i> 重要事項説明
+        </label>
+        <div class="important-notice-content">
+          <p><strong>初回トレーニングについて</strong></p>
+          <ul class="notice-list">
+            <li>初回トレーニングは必ず飼い主様の同席が必要です</li>
+            <li>トレーニング時間は約90分を予定しています</li>
+            <li>当日は動きやすい服装でお越しください</li>
+          </ul>
+          <p><strong>ご準備いただくもの</strong></p>
+          <ul class="notice-list">
+            <li>狂犬病予防接種証明書</li>
+            <li>混合ワクチン接種証明書</li>
+            <li>普段使用しているリード・首輪</li>
+            <li>お気に入りのおやつ</li>
+          </ul>
+          <p><strong>免責事項</strong></p>
+          <ul class="notice-list">
+            <li>トレーニング中の事故について、当方の過失を除き責任を負いかねます</li>
+            <li>天候等により日程変更をお願いする場合があります</li>
+          </ul>
+        </div>
+        <div class="checkbox-row important-checkbox">
+          <input type="checkbox" class="term-check" id="chk-important" onchange="checkAllTerms()">
+          <label for="chk-important"><strong>上記重要事項を確認しました</strong></label>
+        </div>
+      </div>
+
+      <!-- 注意事項（新規ユーザー向け） -->
+      <div id="notice-section-new-user" class="card notice-card hidden">
+        <label class="form-label">
+          <i class="fa-solid fa-circle-info"></i> ご予約にあたっての注意事項
+        </label>
+        <ul class="notice-list">
+          <li>出張費は次のステップでお客様情報入力後に自動計算されます（3km以内無料）</li>
+          <li>予約確定後のキャンセルには規定のキャンセル料が発生します</li>
+        </ul>
+      </div>
+
       <!-- 規約等の確認 -->
       <div class="card">
         <label class="form-label">規約等の確認</label>
-        
+
         <div class="checkbox-row">
           <input type="checkbox" class="term-check" id="chk-policy" onchange="checkAllTerms()">
           <label onclick="openTerms('policy')">キャンセルポリシーに同意</label>
@@ -458,131 +500,322 @@
         </div>
       </div>
 
-      <!-- パターンB: 新規ユーザー + カード決済 -->
+      <!-- パターンB: 新規ユーザー（アコーディオン形式） -->
       <div id="view4-new-card" class="view4-pattern hidden">
-        <!-- 初回レッスン情報 -->
-        <div class="card info-card">
-          <div class="info-header">
-            <i class="fa-solid fa-circle-info"></i> 初回トレーニングについて
-          </div>
-          <div class="info-body">
-            <p>初回トレーニングは以下の流れです：</p>
-            <ul>
-              <li>最初の30分: カウンセリング</li>
-              <li>残り60分: トレーニング</li>
-            </ul>
-            <p class="info-note">合計90分間のトレーニングです</p>
-          </div>
-        </div>
 
-        <!-- Step 1: 顧客情報 + 犬情報 -->
-        <div id="view4-new-info" class="view4-substep">
-          <div class="card">
-            <h3 class="card-subtitle">顧客情報</h3>
-            
+        <!-- 犬種サジェスト用datalist -->
+        <datalist id="breed-suggestions">
+          <option value="トイプードル">
+          <option value="チワワ">
+          <option value="柴犬">
+          <option value="ミニチュアダックスフンド">
+          <option value="ポメラニアン">
+          <option value="フレンチブルドッグ">
+          <option value="ミニチュアシュナウザー">
+          <option value="ヨークシャーテリア">
+          <option value="シーズー">
+          <option value="マルチーズ">
+          <option value="パグ">
+          <option value="ゴールデンレトリバー">
+          <option value="ラブラドールレトリバー">
+          <option value="コーギー">
+          <option value="ビーグル">
+          <option value="ボーダーコリー">
+          <option value="ジャックラッセルテリア">
+          <option value="キャバリア">
+          <option value="パピヨン">
+          <option value="ミックス">
+        </datalist>
+
+        <!-- ===== アコーディオン1: 飼い主情報 ===== -->
+        <div class="accordion-section" id="accordion-owner">
+          <div class="accordion-header-new open" onclick="toggleNewUserAccordion('owner')">
+            <span class="accordion-step">1/3</span>
+            <span class="accordion-title">飼い主情報</span>
+            <i class="fa-solid fa-chevron-down accordion-icon"></i>
+          </div>
+          <div class="accordion-content-new open" id="accordion-owner-content">
             <div class="form-group">
-              <label class="form-label required">氏名</label>
-              <input type="text" id="reg-name" class="form-control" placeholder="山田 太郎">
+              <label class="form-label required">お名前</label>
+              <input type="text" id="reg-name" class="form-control" placeholder="山田 太郎" oninput="validateOwnerSection()">
             </div>
 
             <div class="form-group">
               <label class="form-label required">電話番号</label>
-              <input 
-                type="tel" 
-                id="reg-phone" 
-                class="form-control" 
-                placeholder="090-1234-5678" 
+              <input
+                type="tel"
+                id="reg-phone"
+                class="form-control"
+                placeholder="090-1234-5678"
                 inputmode="numeric"
-                oninput="formatPhone(this)"
+                oninput="formatPhone(this); validateOwnerSection()"
+              >
+            </div>
+
+            <div class="form-group">
+              <label class="form-label required">メールアドレス</label>
+              <input
+                type="email"
+                id="reg-email"
+                class="form-control"
+                placeholder="example@email.com"
+                oninput="validateOwnerSection()"
               >
             </div>
 
             <div class="form-group">
               <label class="form-label required">郵便番号</label>
-              <input 
-                type="tel" 
-                id="reg-zip" 
-                class="form-control" 
-                placeholder="123-4567" 
-                inputmode="numeric"
-                maxlength="8"
-                oninput="formatZipAndFetch(this, 'reg-addr')"
-              >
+              <div class="zip-input-group">
+                <input
+                  type="tel"
+                  id="reg-zip"
+                  class="form-control"
+                  placeholder="123-4567"
+                  inputmode="numeric"
+                  maxlength="8"
+                  oninput="formatZipAndFetch(this, 'reg-addr')"
+                >
+                <button type="button" class="btn btn-secondary btn-sm" onclick="searchAddressByZip()">住所検索</button>
+              </div>
             </div>
 
             <div class="form-group">
               <label class="form-label required">住所</label>
-              <input type="text" id="reg-addr" class="form-control" placeholder="自動入力...">
+              <input
+                type="text"
+                id="reg-addr"
+                class="form-control"
+                placeholder="都道府県〜番地まで入力"
+                onblur="geocodeNewUserAddress()"
+                oninput="validateOwnerSection()"
+              >
             </div>
 
             <div class="form-group">
-              <label class="form-label">目印</label>
-              <input type="text" id="reg-landmark" class="form-control" placeholder="近くの公園など">
-            </div>
-          </div>
-
-          <div class="card">
-            <h3 class="card-subtitle">愛犬情報</h3>
-            
-            <div class="form-group">
-              <label class="form-label required">名前</label>
-              <input type="text" id="reg-dog-name" class="form-control" placeholder="ポチ">
+              <label class="form-label">建物名・部屋番号</label>
+              <input type="text" id="reg-building" class="form-control" placeholder="○○マンション 101号室">
             </div>
 
-            <div class="form-group">
-              <label class="form-label">犬種</label>
-              <input type="text" id="reg-dog-breed" class="form-control" placeholder="トイプードル">
+            <!-- 住所確認・出張費表示エリア -->
+            <div id="address-confirmation" class="address-confirmation hidden">
+              <div class="confirmation-icon"><i class="fa-solid fa-circle-check"></i></div>
+              <div class="confirmation-text">
+                <div id="confirmed-address">-</div>
+                <div id="travel-fee-result" class="travel-fee-result">出張費: 計算中...</div>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">年齢（歳）</label>
-              <input type="number" id="reg-dog-age" class="form-control" placeholder="3" inputmode="numeric">
+            <div class="accordion-nav">
+              <button class="btn btn-secondary" onclick="goToView(3)">戻る</button>
+              <button class="btn btn-primary" id="btn-to-dog-section" onclick="goToAccordionSection('dog')" disabled>
+                次へ：パートナー情報 →
+              </button>
             </div>
-
-            <div class="checkbox-row">
-              <input type="checkbox" id="reg-dog-neutered">
-              <label>去勢・避妊済み</label>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">お困りごと</label>
-              <textarea 
-                id="reg-concerns" 
-                class="form-control" 
-                rows="3" 
-                placeholder="吠え癖、噛み癖など"
-              ></textarea>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">備考</label>
-              <textarea 
-                id="reg-remarks" 
-                class="form-control" 
-                rows="2" 
-                placeholder="その他連絡事項"
-              ></textarea>
-            </div>
-          </div>
-
-          <div class="btn-row">
-            <button class="btn btn-secondary" onclick="goToView(3)">戻る</button>
-            <button class="btn btn-primary" onclick="showNewUserCardForm()">次へ（カード入力）</button>
           </div>
         </div>
 
-        <!-- Step 2: カード情報 -->
-        <div id="view4-new-card-input" class="view4-substep hidden">
-          <div class="card">
-            <label class="form-label">クレジットカード情報</label>
-            <div id="square-card-container-new"></div>
+        <!-- ===== アコーディオン2: 犬情報 ===== -->
+        <div class="accordion-section" id="accordion-dog">
+          <div class="accordion-header-new" onclick="toggleNewUserAccordion('dog')">
+            <span class="accordion-step">2/3</span>
+            <span class="accordion-title">パートナー情報</span>
+            <i class="fa-solid fa-chevron-down accordion-icon"></i>
           </div>
+          <div class="accordion-content-new" id="accordion-dog-content">
+            <div class="form-group">
+              <label class="form-label required">パートナー名</label>
+              <input type="text" id="reg-dog-name" class="form-control" placeholder="ポチ" oninput="validateDogSection()">
+            </div>
 
-          <div class="btn-row">
-            <button class="btn btn-secondary" onclick="backToNewUserInfo()">戻る</button>
-            <button class="btn btn-primary" onclick="handleCardTokenize()">決済して予約確定</button>
+            <div class="form-group">
+              <label class="form-label required">犬種</label>
+              <input
+                type="text"
+                id="reg-dog-breed"
+                class="form-control"
+                placeholder="トイプードル"
+                list="breed-suggestions"
+                oninput="validateDogSection()"
+              >
+            </div>
+
+            <div class="form-group">
+              <label class="form-label required">年齢</label>
+              <div class="age-input-group">
+                <select id="reg-dog-age-year" class="form-control" onchange="validateDogSection()">
+                  <option value="">--</option>
+                  <option value="0">0</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                  <option value="8">8</option>
+                  <option value="9">9</option>
+                  <option value="10">10</option>
+                  <option value="11">11</option>
+                  <option value="12">12</option>
+                  <option value="13">13</option>
+                  <option value="14">14</option>
+                  <option value="15">15</option>
+                  <option value="16">16歳以上</option>
+                </select>
+                <span class="age-unit">歳</span>
+                <select id="reg-dog-age-month" class="form-control" onchange="validateDogSection()">
+                  <option value="">--</option>
+                  <option value="0">0</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                  <option value="8">8</option>
+                  <option value="9">9</option>
+                  <option value="10">10</option>
+                  <option value="11">11</option>
+                </select>
+                <span class="age-unit">ヶ月</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label required">性別</label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input type="radio" name="reg-dog-gender" value="♂" onchange="validateDogSection()">
+                  <span>♂ オス</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="reg-dog-gender" value="♀" onchange="validateDogSection()">
+                  <span>♀ メス</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">避妊・去勢</label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input type="radio" name="reg-dog-neutered" value="true">
+                  <span>済</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="reg-dog-neutered" value="false">
+                  <span>未</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">ワクチン接種</label>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" name="reg-vaccine" value="rabies">
+                  <span>狂犬病</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="reg-vaccine" value="mixed">
+                  <span>混合ワクチン</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">気になること・お困りごと</label>
+              <textarea
+                id="reg-concerns"
+                class="form-control"
+                rows="3"
+                placeholder="吠え癖、噛み癖、引っ張り癖など"
+              ></textarea>
+            </div>
+
+            <div class="accordion-nav">
+              <button class="btn btn-secondary" onclick="goToAccordionSection('owner')">← 戻る</button>
+              <button class="btn btn-primary" id="btn-to-payment-section" onclick="goToAccordionSection('payment')" disabled>
+                次へ：料金確認 →
+              </button>
+            </div>
           </div>
         </div>
+
+        <!-- ===== アコーディオン3: 料金確認・お支払い ===== -->
+        <div class="accordion-section" id="accordion-payment">
+          <div class="accordion-header-new" onclick="toggleNewUserAccordion('payment')">
+            <span class="accordion-step">3/3</span>
+            <span class="accordion-title">料金確認・お支払い</span>
+            <i class="fa-solid fa-chevron-down accordion-icon"></i>
+          </div>
+          <div class="accordion-content-new" id="accordion-payment-content">
+
+            <!-- 予約内容サマリー -->
+            <div class="summary-box">
+              <h4 class="summary-title">ご予約内容</h4>
+              <div class="summary-row">
+                <span>日時:</span>
+                <span id="new-user-conf-datetime">---</span>
+              </div>
+              <div class="summary-row">
+                <span>場所:</span>
+                <span id="new-user-conf-place">---</span>
+              </div>
+              <div class="summary-row">
+                <span>パートナー:</span>
+                <span id="new-user-conf-dog">---</span>
+              </div>
+              <div class="summary-row">
+                <span>コース:</span>
+                <span id="new-user-conf-course">---</span>
+              </div>
+            </div>
+
+            <!-- 料金内訳 -->
+            <div class="price-box">
+              <h4 class="price-title">料金</h4>
+              <div class="price-row">
+                <span>トレーニング料金</span>
+                <span id="new-user-price-lesson">¥---</span>
+              </div>
+              <div class="price-row">
+                <span>出張費</span>
+                <span id="new-user-price-travel">¥---</span>
+              </div>
+              <div class="price-row price-total">
+                <span>合計</span>
+                <span id="new-user-price-total">¥---</span>
+              </div>
+            </div>
+
+            <!-- お支払い方法 -->
+            <div class="form-group">
+              <label class="form-label">お支払い方法</label>
+              <select id="new-user-payment-method" class="form-control" onchange="toggleNewUserPaymentMethod()">
+                <option value="CARD">クレジットカード</option>
+                <option value="CASH">当日現金払い</option>
+              </select>
+            </div>
+
+            <!-- カード入力欄 -->
+            <div id="new-user-card-section">
+              <div class="form-group">
+                <label class="form-label">クレジットカード情報</label>
+                <div id="square-card-container-new"></div>
+              </div>
+            </div>
+
+            <div class="accordion-nav">
+              <button class="btn btn-secondary" onclick="goToAccordionSection('dog')">← 戻る</button>
+              <button class="btn btn-primary" id="btn-confirm-new-user" onclick="confirmNewUserReservation()">
+                予約を確定する
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- パターンC: 現地決済（カード入力なし） -->
@@ -818,11 +1051,11 @@
        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
   
   <!-- デバッグスクリプト（最優先読み込み） -->
-  <script src="js/debug.js?v=202601261315"></script>
+  <script src="js/debug.js?v=202601271500"></script>
   
   <!-- メインスクリプト -->
-  <script src="js/config.js?v=202601261315"></script>
-  <script src="js/reservation.js?v=202601261315"></script>
+  <script src="js/config.js?v=202601271500"></script>
+  <script src="js/reservation.js?v=202601271500"></script>
 
 </body>
 </html>
