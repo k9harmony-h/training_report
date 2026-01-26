@@ -62,6 +62,7 @@ export default {
         const gasUrl = new URL(env.GAS_API_URL);
         gasUrl.searchParams.append('action', 'createReservationWithPayment');
         gasUrl.searchParams.append('userId', body.userId);
+        gasUrl.searchParams.append('lineUserId', body.lineUserId);  // LINE IDを追加
         gasUrl.searchParams.append('reservationData', JSON.stringify(body.reservationData));
         gasUrl.searchParams.append('paymentData', JSON.stringify(body.paymentData));
         gasUrl.searchParams.append('lockId', body.lockId || 'null');
