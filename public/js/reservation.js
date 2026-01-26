@@ -504,6 +504,8 @@ async function loadCalendarData(monthOffset) {
           document.getElementById('selected-dog-name').textContent = 'ご新規のお客様';
           document.getElementById('btn-change-dog').style.display = 'none';
           document.getElementById('existing-customer-link-area').classList.remove('hidden');
+          // 新規顧客用のプレースホルダーを設定
+          AppState.selectedDog = { name: 'ご新規のお客様', isNew: true };
         }
         
         debugLog('✅ Step 3: ユーザー処理完了', 'success');
@@ -771,14 +773,21 @@ function renderMenuSelect() {
     const lastDay = new Date(year, month + 1, 0);
     const startDayOfWeek = firstDay.getDay();
     const daysInMonth = lastDay.getDate();
-    
+
+    // 月内の最大スロット数を計算（動的に判定）
+    const maxSlotsInMonth = Math.max(
+      ...Object.values(availability).map(slots => Array.isArray(slots) ? slots.length : 0),
+      0
+    );
+    debugLog(`📅 月内最大スロット数: ${maxSlotsInMonth}`, 'info');
+
     // 前月の余白
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = startDayOfWeek - 1; i >= 0; i--) {
       const day = prevMonthLastDay - i;
-      addCalendarDay(grid, day, true, null, false);
+      addCalendarDay(grid, day, true, null, false, null, [], maxSlotsInMonth);
     }
-    
+
     // 当月の日付
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
@@ -786,15 +795,15 @@ function renderMenuSelect() {
       const dayOfWeek = date.getDay();
       const isToday = isSameDay(date, new Date());
       const slots = availability[dateStr] || [];
-      
-      addCalendarDay(grid, day, false, dateStr, isToday, dayOfWeek, slots);
+
+      addCalendarDay(grid, day, false, dateStr, isToday, dayOfWeek, slots, maxSlotsInMonth);
     }
     
     // 次月の余白
     const totalCells = startDayOfWeek + daysInMonth;
     const remainingCells = 42 - totalCells; // 6週間分
     for (let day = 1; day <= remainingCells; day++) {
-      addCalendarDay(grid, day, true, null, false);
+      addCalendarDay(grid, day, true, null, false, null, [], maxSlotsInMonth);
     }
   }
   
@@ -803,11 +812,19 @@ function renderMenuSelect() {
    */
   /**
  * カレンダー日付セルを追加
+ * @param {HTMLElement} grid - カレンダーグリッド
+ * @param {number} dayNumber - 日付
+ * @param {boolean} isOtherMonth - 他の月かどうか
+ * @param {string} dateStr - 日付文字列 (YYYY-MM-DD)
+ * @param {boolean} isToday - 今日かどうか
+ * @param {number} dayOfWeek - 曜日
+ * @param {Array} slots - 空き時間枠
+ * @param {number} maxSlots - 月内の最大スロット数
  */
-function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWeek, slots = []) {
+function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWeek, slots = [], maxSlots = 8) {
   const cell = document.createElement('div');
   cell.className = 'calendar-day';
-  
+
   if (isOtherMonth) {
     cell.classList.add('calendar-day-other-month');
   }
@@ -820,23 +837,21 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
   if (dayOfWeek === 6) {
     cell.classList.add('saturday');
   }
-  
+
   // 日付番号
   const numberEl = document.createElement('div');
   numberEl.className = 'calendar-day-number';
   numberEl.textContent = dayNumber;
   cell.appendChild(numberEl);
-  
-  // 空き状況シンボル
-  // 1日の最大枠数（これより少なければ予約が入っている）
-  const MAX_SLOTS_PER_DAY = 8;
 
+  // 空き状況シンボル
   if (!isOtherMonth && slots.length > 0) {
     const symbolEl = document.createElement('div');
     symbolEl.className = 'availability-symbol';
 
     // 全枠空いている場合のみ「空きあり」、それ以外は「残り僅か」
-    if (slots.length >= MAX_SLOTS_PER_DAY) {
+    // maxSlots と比較して判定（動的に計算された最大値を使用）
+    if (slots.length >= maxSlots && maxSlots > 0) {
       symbolEl.classList.add('symbol-available');
       symbolEl.textContent = '●';
       symbolEl.title = '空きあり';
@@ -2490,3 +2505,29 @@ function selectTime(date, time) {
   }
   
   debugLog('📦 reservation.js ロード完了', 'success');
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // グローバルエクスポート（HTMLのonclickから呼び出す関数）
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  window.goToView = goToView;
+  window.shiftMonth = shiftMonth;
+  window.showDogSelectModal = showDogSelectModal;
+  window.closeDogSelectModal = closeDogSelectModal;
+  window.selectDogFromModal = selectDogFromModal;
+  window.openTimeModal = openTimeModal;
+  window.closeTimeModal = closeTimeModal;
+  window.selectTime = selectTime;
+  window.toggleAltAddress = toggleAltAddress;
+  window.validateCoupon = validateCoupon;
+  window.removeCoupon = removeCoupon;
+  window.openTerms = openTerms;
+  window.closeTerms = closeTerms;
+  window.toggleAllTerms = toggleAllTerms;
+  window.checkAllTerms = checkAllTerms;
+  window.checkUserAndNext = checkUserAndNext;
+  window.processPayment = processPayment;
+  window.confirmCashReservation = confirmCashReservation;
+  window.shareToLine = shareToLine;
+  window.addToCalendar = addToCalendar;
+  window.shareNative = shareNative;
+  window.toggleAccordion = toggleAccordion;

@@ -9,6 +9,7 @@
   <!-- External Libraries -->
   <script src="https://web.squarecdn.com/v1/square.js"></script>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   
   <!-- K9 Harmony Styles -->
@@ -43,13 +44,14 @@
        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
   <div id="loading-overlay" class="loading-overlay">
     <div class="loading-animation">
-      <div class="paw-loader">
-        <div class="paw"></div>
-        <div class="paw"></div>
-        <div class="paw"></div>
-        <div class="paw"></div>
-        <div class="paw-main"></div>
-      </div>
+      <lottie-player
+        src="https://assets-v2.lottiefiles.com/a/675504ee-1181-11ee-bcfe-cb540b492b01/NrfQwzw5Pa.json"
+        background="transparent"
+        speed="1"
+        style="width: 150px; height: 150px;"
+        loop
+        autoplay
+      ></lottie-player>
     </div>
     <div class="loading-text" id="loading-text">起動中...</div>
     <div class="loading-tips" id="loading-tips"></div>
@@ -376,7 +378,7 @@
 
         <div class="checkbox-row">
           <input type="checkbox" id="chk-all" onchange="toggleAllTerms()">
-          <label><strong>全てに同意する</strong></label>
+          <label for="chk-all"><strong>全てに同意する</strong></label>
         </div>
       </div>
 
