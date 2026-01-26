@@ -596,10 +596,10 @@ function renderMenuSelect() {
       const productType = product.product_type || product.type;
       
       debugLog(`🔍 商品${index}: name=${name}, category=${category}, type=${productType}, price=${price}`, 'info');
-      
-      // ===== 修正: categoryがない場合は全商品を表示 =====
-      // 条件: テスト決済以外をすべて表示
-      if (name && name !== 'テスト決済') {
+
+      // product_status=ACTIVEのみ表示（GAS側で既にフィルタ済みだが念のため）
+      const status = product.product_status || 'ACTIVE';
+      if (name && status === 'ACTIVE') {
         const option = document.createElement('option');
         option.value = duration;
         option.setAttribute('data-price', price);
@@ -608,6 +608,8 @@ function renderMenuSelect() {
         option.textContent = `${name} (¥${Number(price).toLocaleString()})`;
         select.appendChild(option);
         debugLog(`✅ メニュー追加: ${name}`, 'success');
+      } else {
+        debugLog(`⏭️ スキップ: ${name} (status=${status})`, 'info');
       }
     });
     

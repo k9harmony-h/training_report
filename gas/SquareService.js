@@ -34,7 +34,7 @@ var SquareService = {
         note: 'K9 Harmony レッスン予約'
       };
       
-      var response = RetryHandler.execute(function() {
+      var retryResult = RetryHandler.execute(function() {
         return UrlFetchApp.fetch(apiUrl, {
           method: 'post',
           headers: {
@@ -45,8 +45,18 @@ var SquareService = {
           payload: JSON.stringify(requestBody),
           muteHttpExceptions: true
         });
-      }, { maxRetries: 3, delay: 1000 });
-      
+      }, { maxRetries: 3, delay: 1000, context: { operation: 'squarePayment' } });
+
+      // RetryHandler returns wrapped object: { success, result, ... }
+      if (!retryResult.success) {
+        throw createK9Error(
+          ErrorCode.SQUARE_API_ERROR,
+          'Square payment failed after retries: ' + (retryResult.error ? retryResult.error.message : 'Unknown error'),
+          { retry_id: retryResult.retry_id, attempts: retryResult.attempts }
+        );
+      }
+
+      var response = retryResult.result;
       var result = JSON.parse(response.getContentText());
       
       if (result.errors) {
@@ -109,7 +119,7 @@ var SquareService = {
         }
       };
       
-      var response = RetryHandler.execute(function() {
+      var retryResult = RetryHandler.execute(function() {
         return UrlFetchApp.fetch(apiUrl, {
           method: 'post',
           headers: {
@@ -120,10 +130,20 @@ var SquareService = {
           payload: JSON.stringify(requestBody),
           muteHttpExceptions: true
         });
-      });
-      
+      }, { context: { operation: 'squarePayment' } });
+
+      // RetryHandler returns wrapped object: { success, result, ... }
+      if (!retryResult.success) {
+        throw createK9Error(
+          ErrorCode.SQUARE_API_ERROR,
+          'Payment link creation failed after retries',
+          { retry_id: retryResult.retry_id, attempts: retryResult.attempts }
+        );
+      }
+
+      var response = retryResult.result;
       var result = JSON.parse(response.getContentText());
-      
+
       if (result.errors) {
         throw createK9Error(
           ErrorCode.SQUARE_API_ERROR,
@@ -131,7 +151,7 @@ var SquareService = {
           { errors: result.errors }
         );
       }
-      
+
       log('INFO', 'SquareService', 'Payment link created: ' + result.payment_link.id);
       
       return {

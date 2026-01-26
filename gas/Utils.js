@@ -375,13 +375,52 @@ const DB = {
       });
       
       log('INFO', 'DB', `Updated ${sheetName} record: ${id}`);
-      
+
     } catch (e) {
       log('ERROR', 'DB', `Failed to update ${sheetName}`, { error: e.message });
       throw e;
     }
   },
-  
+
+  /**
+   * データ削除（行削除）
+   * @param {string} sheetName シート名
+   * @param {string} id ID値
+   */
+  deleteById: function(sheetName, id) {
+    try {
+      const ss = this._getSpreadsheet(sheetName);
+      const sheet = ss.getSheetByName(sheetName);
+
+      if (!sheet) {
+        throw new Error(`Sheet not found: ${sheetName}`);
+      }
+
+      const allData = sheet.getDataRange().getValues();
+      const idColumnIndex = 0; // 最初のカラムがIDと仮定
+
+      // IDでマッチする行を検索
+      const rowIndex = allData.findIndex((row, index) =>
+        index > 0 && row[idColumnIndex] === id
+      );
+
+      if (rowIndex === -1) {
+        log('WARN', 'DB', `Record not found for deletion: ${id}`);
+        return false;
+      }
+
+      // 行を削除（rowIndexは0始まり、シートは1始まり）
+      sheet.deleteRow(rowIndex + 1);
+
+      log('INFO', 'DB', `Deleted from ${sheetName}: ${id}`);
+      return true;
+
+    } catch (e) {
+      log('ERROR', 'DB', `Failed to delete from ${sheetName}`, { error: e.message });
+      throw e;
+    }
+  },
+
 /**
  * スプレッドシート取得（内部用）
  */

@@ -396,7 +396,8 @@ var Transaction = {
           var customer = CustomerRepository.findById(reservation.customer_id);
 
           if (!customer.error && customer.line_user_id) {
-            NotificationService.sendReservationConfirmation(reservation, customer);
+            // reservation_idを渡す（オブジェクト全体ではない）
+            NotificationService.sendReservationConfirmation(reservation.reservation_id);
           }
         } catch (notificationError) {
           log('WARN', 'Transaction', 'Notification failed (non-critical): ' + notificationError.message);
