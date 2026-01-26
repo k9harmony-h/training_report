@@ -45,9 +45,38 @@
     
     // Square
     squareCard: null,
-    paymentToken: null
+    paymentToken: null,
+
+    // クーポン
+    appliedCoupon: null
   };
-  
+
+  /**
+   * トースト通知表示
+   */
+  function showToast(message, type = 'info') {
+    debugLog(`🔔 Toast: ${message}`, type === 'error' ? 'error' : 'info');
+    // 簡易トースト表示
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: ${type === 'error' ? '#D0021B' : 'var(--c-main-turquoise)'};
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      z-index: 10000;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), CONFIG.UI.TOAST_DURATION || 3000);
+  }
+
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      初期化処理
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
