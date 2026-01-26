@@ -33,7 +33,7 @@ const CONFIG = {
     // Cloudflare Workers プロキシ経由（CORS対応）
     GAS_URL: 'https://k9-harmony-ppcl.k9-harmony-ppcl.workers.dev',
     // 直接GAS（参考用・CORS非対応）
-    // GAS_URL: 'https://script.google.com/macros/s/AKfycby5nbPNJ_Tc_lA6TFNDRn9g6ZpMN7As1ldsa9eCreZuCFWzvTRjqij3DDrhzcvolk_6JA/exec',
+    // GAS_URL: 'https://script.google.com/macros/s/AKfycbya1cNbUgl_-iNlvk0RXOMeiL2ziQBeNyhPdEafZWoK7jk9cFKFA07AM0QiscJ80zZtiQ/exec',
     TIMEOUT: 30000,             // タイムアウト（ミリ秒）
     RETRY_COUNT: 3,             // リトライ回数
     RETRY_DELAY: 1000           // リトライ間隔（ミリ秒）
