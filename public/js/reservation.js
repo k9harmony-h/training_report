@@ -117,15 +117,15 @@ window.onload = async () => {
     debugLog('📊 Priority 2: 必須データ読み込み', 'info');
     await loadEssentialData();
 
-    // Priority 3: カレンダーデータ（当月）- View2表示前にプリロード
-    debugLog('📅 Priority 3: 当月カレンダー読み込み', 'info');
-    await loadCalendarData(0);
-
-    // 画面表示
+    // 画面表示（即座に表示）
     hideLoading();
     goToView(1);
 
-    // Priority 4: 事前読み込み（翌月・翌々月をバックグラウンドで）
+    // Priority 3: カレンダーデータ（バックグラウンドで読み込み）
+    debugLog('📅 Priority 3: 当月カレンダー読み込み（バックグラウンド）', 'info');
+    loadCalendarData(0);
+
+    // Priority 4: 事前読み込み（翌月・翌々月）
     prefetchData();
     
   } catch (error) {
@@ -2781,18 +2781,21 @@ function selectTime(date, time) {
       updateNewUserCardSectionVisibility();
     }
 
-    // スクロール（アコーディオン展開アニメーション後に実行）
-    const targetHeader = document.querySelector(`#accordion-${section} .accordion-header-new`);
-    if (targetHeader) {
-      // アコーディオン展開完了を待ってからスクロール
-      setTimeout(() => {
-        targetHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        // 追加の微調整（ヘッダーが見切れないように）
-        setTimeout(() => {
-          window.scrollBy({ top: -20, behavior: 'smooth' });
-        }, 300);
-      }, 100);
-    }
+    // スクロール処理
+    const scrollToSection = () => {
+      const targetSection = document.getElementById(`accordion-${section}`);
+      if (targetSection) {
+        // セクション全体の位置を取得してスクロール
+        const rect = targetSection.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const targetY = scrollTop + rect.top - 10; // 上に10pxの余白
+        window.scrollTo({ top: targetY, behavior: 'smooth' });
+      }
+    };
+
+    // paymentセクションはSquare初期化があるため長めに待機
+    const delay = section === 'payment' ? 600 : 150;
+    setTimeout(scrollToSection, delay);
   }
 
   /**

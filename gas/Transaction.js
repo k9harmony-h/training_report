@@ -601,8 +601,10 @@ var Transaction = {
       log('INFO', 'Transaction', 'Transaction enqueued: ' + queueEntry.queue_id);
       return { success: true, queue_id: queueEntry.queue_id, idempotency_key: queueEntry.idempotency_key };
     } catch (error) {
-      log('ERROR', 'Transaction', 'Failed to enqueue transaction: ' + error.message);
-      return { error: true, message: error.message };
+      // シートが存在しない場合はスキップ（警告のみ）
+      log('WARN', 'Transaction', 'Failed to enqueue transaction (sheet may not exist): ' + error.message);
+      // キュー機能なしで続行可能にするためqueue_idを返す
+      return { success: true, queue_id: queueEntry.queue_id, idempotency_key: queueEntry.idempotency_key, skipped: true };
     }
   },
 
@@ -613,26 +615,31 @@ var Transaction = {
    * @param {Object} additionalData - 追加データ
    */
   updateQueueStatus: function(queueId, status, additionalData) {
-    var updateData = {
-      status: status,
-      updated_at: new Date()
-    };
+    try {
+      var updateData = {
+        status: status,
+        updated_at: new Date()
+      };
 
-    if (status === 'COMPLETED') {
-      updateData.completed_at = new Date();
-    }
-
-    if (additionalData) {
-      if (additionalData.error) {
-        updateData.last_error = additionalData.error;
+      if (status === 'COMPLETED') {
+        updateData.completed_at = new Date();
       }
-      if (additionalData.retry_count !== undefined) {
-        updateData.retry_count = additionalData.retry_count;
-      }
-    }
 
-    DB.update(CONFIG.SHEET.TRANSACTION_QUEUE, queueId, updateData);
-    log('INFO', 'Transaction', 'Queue status updated: ' + queueId + ' -> ' + status);
+      if (additionalData) {
+        if (additionalData.error) {
+          updateData.last_error = additionalData.error;
+        }
+        if (additionalData.retry_count !== undefined) {
+          updateData.retry_count = additionalData.retry_count;
+        }
+      }
+
+      DB.update(CONFIG.SHEET.TRANSACTION_QUEUE, queueId, updateData);
+      log('INFO', 'Transaction', 'Queue status updated: ' + queueId + ' -> ' + status);
+    } catch (error) {
+      // シートが存在しない場合はスキップ（警告のみ）
+      log('WARN', 'Transaction', 'Failed to update queue status (sheet may not exist): ' + error.message);
+    }
   },
 
   /**

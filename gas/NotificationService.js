@@ -89,11 +89,13 @@ var NotificationService = {
       var travelFee = reservation.travel_fee;
       var isTravelFeeSeparate = (travelFee === null || travelFee === undefined || travelFee === '');
       // 割引額
-      var discountAmount = couponValue;
+      var discountAmount = couponValue || 0;
       // 合計（予約から取得、なければ計算）
+      // 出張費が別途（null/undefined）の場合は出張費を0として計算
+      var calculatedTravelFee = (travelFee !== null && travelFee !== undefined && travelFee !== '') ? Number(travelFee) : 0;
       var totalAmount = (reservation.total_amount && reservation.total_amount > 0)
         ? reservation.total_amount
-        : (lessonPrice + travelFee - discountAmount);
+        : ((lessonPrice || 0) + calculatedTravelFee - discountAmount);
 
       // 決済方法
       var paymentMethod = reservation.payment_method || '';
