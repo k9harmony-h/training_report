@@ -1524,11 +1524,8 @@ function showView4Pattern(pattern) {
   // Square初期化（カード決済の場合）
   if (pattern === 'existing-card') {
     initializeSquare('square-card-container');
-  } else if (pattern === 'new-card') {
-    // 新規ユーザーは最初情報入力画面
-    document.getElementById('view4-new-info').classList.add('active');
-    document.getElementById('view4-new-card-input').classList.remove('active');
   }
+  // 新規ユーザーのSquare初期化はgoToAccordionSection('payment')で行う
 }
   
   /**

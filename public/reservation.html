@@ -13,8 +13,8 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   
   <!-- K9 Harmony Styles -->
-  <link href="css/common.css?v=20260127b" rel="stylesheet">
-  <link href="css/reservation.css?v=20260127b" rel="stylesheet">
+  <link href="css/common.css?v=20260127c" rel="stylesheet">
+  <link href="css/reservation.css?v=20260127c" rel="stylesheet">
 </head>
 
 <body class="debug-mode">
@@ -351,7 +351,18 @@
         </select>
       </div>
 
-      <!-- 重要事項説明（新規ユーザー向け） -->
+      <!-- 1. 注意事項（新規ユーザー向け） -->
+      <div id="notice-section-new-user" class="card notice-card hidden">
+        <label class="form-label">
+          <i class="fa-solid fa-circle-info"></i> ご予約にあたっての注意事項
+        </label>
+        <ul class="notice-list">
+          <li>出張費は次のステップでお客様情報入力後に自動計算されます（3km以内無料）</li>
+          <li>予約確定後のキャンセルには規定のキャンセル料が発生します</li>
+        </ul>
+      </div>
+
+      <!-- 2. 重要事項説明（新規ユーザー向け） -->
       <div id="important-notice-section" class="card important-notice-card hidden">
         <label class="form-label">
           <i class="fa-solid fa-exclamation-triangle"></i> 重要事項説明
@@ -380,17 +391,6 @@
           <input type="checkbox" class="term-check" id="chk-important" onchange="checkAllTerms()">
           <label for="chk-important"><strong>上記重要事項を確認しました</strong></label>
         </div>
-      </div>
-
-      <!-- 注意事項（新規ユーザー向け） -->
-      <div id="notice-section-new-user" class="card notice-card hidden">
-        <label class="form-label">
-          <i class="fa-solid fa-circle-info"></i> ご予約にあたっての注意事項
-        </label>
-        <ul class="notice-list">
-          <li>出張費は次のステップでお客様情報入力後に自動計算されます（3km以内無料）</li>
-          <li>予約確定後のキャンセルには規定のキャンセル料が発生します</li>
-        </ul>
       </div>
 
       <!-- 規約等の確認 -->
@@ -1051,11 +1051,11 @@
        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
   
   <!-- デバッグスクリプト（最優先読み込み） -->
-  <script src="js/debug.js?v=202601271500"></script>
+  <script src="js/debug.js?v=202601271540"></script>
   
   <!-- メインスクリプト -->
-  <script src="js/config.js?v=202601271500"></script>
-  <script src="js/reservation.js?v=202601271500"></script>
+  <script src="js/config.js?v=202601271540"></script>
+  <script src="js/reservation.js?v=202601271540"></script>
 
 </body>
 </html>
