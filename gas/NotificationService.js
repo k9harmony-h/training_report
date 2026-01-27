@@ -63,17 +63,16 @@ var NotificationService = {
         productPrice = product.tax_included_price || product.product_price || product.price || 0;
       }
 
-      // Voucher情報取得（予約レコードから直接取得）
-      var voucherName = '';
-      var voucherValue = 0;
-      if (reservation.voucher_code) {
-        // Voucher情報をクーポンマスターから取得（名前表示用）
+      // クーポン情報取得
+      var couponName = '';
+      var couponValue = 0;
+      if (reservation.coupon_id) {
         var coupons = DB.fetchTable(CONFIG.SHEET.COUPONS);
-        var voucher = coupons.find(function(c) { return c.coupon_code === reservation.voucher_code; });
-        if (voucher) {
-          voucherName = voucher.coupon_name || '';
+        var coupon = coupons.find(function(c) { return c.coupon_id === reservation.coupon_id; });
+        if (coupon) {
+          couponName = coupon.coupon_name || '';
+          couponValue = reservation.coupon_value || coupon.discount_value || 0;
         }
-        voucherValue = reservation.voucher_amount || 0;
       }
 
       // 金額情報
@@ -90,7 +89,7 @@ var NotificationService = {
       var travelFee = reservation.travel_fee;
       var isTravelFeeSeparate = (travelFee === null || travelFee === undefined || travelFee === '');
       // 割引額
-      var discountAmount = voucherValue || 0;
+      var discountAmount = couponValue || 0;
       // 合計（予約から取得、なければ計算）
       // 出張費が別途（null/undefined）の場合は出張費を0として計算
       var calculatedTravelFee = (travelFee !== null && travelFee !== undefined && travelFee !== '') ? Number(travelFee) : 0;
@@ -174,8 +173,8 @@ if (isTravelFeeSeparate) {
 // 割引がある場合
 if (discountAmount > 0) {
   messageText += '割引: -¥' + discountAmount.toLocaleString() + '\n';
-  if (voucherName) {
-    messageText += '（' + voucherName + '）\n';
+  if (couponName) {
+    messageText += '（' + couponName + '）\n';
   }
 }
 
