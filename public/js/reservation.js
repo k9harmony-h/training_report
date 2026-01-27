@@ -880,6 +880,12 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
     cell.classList.add('saturday');
   }
 
+  // 選択済み日付のハイライト
+  if (dateStr && dateStr === AppState.selectedDate) {
+    cell.classList.add('calendar-day-selected');
+    debugLog(`📅 選択済み日付ハイライト: ${dateStr}`, 'info');
+  }
+
   // 日付番号
   const numberEl = document.createElement('div');
   numberEl.className = 'calendar-day-number';
@@ -2338,21 +2344,8 @@ function selectTime(date, time) {
   debugLog(`✅ 時間選択: ${date} ${time}`, 'success');
 }
   
-  /**
-   * 時間選択
-   * @param {string} date - 日付
-   * @param {string} time - 時間
-   */
-  function selectTime(date, time) {
-    AppState.selectedDate = date;
-    AppState.selectedTime = time;
-    
-    document.getElementById('btn-next-view3').disabled = false;
-    document.getElementById('btn-next-view3').textContent = `${date} ${time}〜 次へ`;
-    
-    debugLog(`📅 日時選択: ${date} ${time}`, 'info');
-  }
-  
+  // selectTime は上で定義済み（重複削除）
+
   /**
    * 規約モーダル表示
    * @param {string} type - 'policy' | 'privacy' | 'terms' | 'law'
@@ -2709,7 +2702,7 @@ function selectTime(date, time) {
     // 料金確認セクションに移動時はサマリーを更新
     if (section === 'payment') {
       updateNewUserPaymentSummary();
-      initializeSquare('square-card-container-new');
+      updateNewUserCardSectionVisibility();
     }
 
     // スクロール
@@ -2752,15 +2745,18 @@ function selectTime(date, time) {
 
   /**
    * 犬情報バリデーション
+   * 歳は必須、ヶ月は任意
    */
   function validateDogSection() {
     const dogName = document.getElementById('reg-dog-name')?.value?.trim();
     const dogBreed = document.getElementById('reg-dog-breed')?.value?.trim();
     const dogAgeYear = document.getElementById('reg-dog-age-year')?.value;
-    const dogAgeMonth = document.getElementById('reg-dog-age-month')?.value;
     const dogGender = document.querySelector('input[name="reg-dog-gender"]:checked');
 
-    const isValid = dogName && dogBreed && dogAgeYear !== '' && dogAgeMonth !== '' && dogGender;
+    // 歳は必須、ヶ月は任意
+    const isValid = dogName && dogBreed && dogAgeYear !== '' && dogGender;
+
+    debugLog(`🐕 犬情報バリデーション: name=${!!dogName}, breed=${!!dogBreed}, ageYear=${dogAgeYear}, gender=${!!dogGender} → ${isValid}`, 'info');
 
     const btn = document.getElementById('btn-to-payment-section');
     if (btn) {
@@ -2769,6 +2765,141 @@ function selectTime(date, time) {
 
     return isValid;
   }
+
+  /**
+   * 犬種サジェストリスト
+   */
+  const DOG_BREEDS = [
+    'トイプードル', 'チワワ', '柴犬', 'ミニチュアダックスフンド', 'ポメラニアン',
+    'フレンチブルドッグ', 'ミニチュアシュナウザー', 'ヨークシャーテリア', 'シーズー',
+    'マルチーズ', 'パグ', 'ゴールデンレトリバー', 'ラブラドールレトリバー', 'コーギー',
+    'ビーグル', 'ボーダーコリー', 'ジャックラッセルテリア', 'キャバリア', 'パピヨン',
+    'ミックス', 'ボストンテリア', 'シベリアンハスキー', 'アメリカンコッカースパニエル',
+    'イングリッシュコッカースパニエル', 'ブルドッグ', 'セントバーナード', 'ダルメシアン',
+    'ドーベルマン', 'アキタ', '甲斐犬', '紀州犬', '四国犬', '北海道犬', '日本スピッツ',
+    'ペキニーズ', 'ボクサー', 'シェットランドシープドッグ', 'ウェルシュコーギー',
+    'オーストラリアンシェパード', 'バーニーズマウンテンドッグ'
+  ];
+
+  /**
+   * 犬種オートコンプリート初期化
+   */
+  function initBreedAutocomplete() {
+    const input = document.getElementById('reg-dog-breed');
+    if (!input) return;
+
+    // 既存のサジェストコンテナがあれば削除
+    const existingContainer = document.getElementById('breed-autocomplete-container');
+    if (existingContainer) {
+      existingContainer.remove();
+    }
+
+    // サジェスト用のコンテナを作成
+    const container = document.createElement('div');
+    container.id = 'breed-autocomplete-container';
+    container.className = 'autocomplete-container';
+    container.style.cssText = `
+      position: absolute;
+      width: 100%;
+      max-height: 200px;
+      overflow-y: auto;
+      background: white;
+      border: 1px solid var(--c-border-color);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 1000;
+      display: none;
+    `;
+
+    // inputの親要素にposition: relativeを設定
+    const formGroup = input.closest('.form-group');
+    if (formGroup) {
+      formGroup.style.position = 'relative';
+      formGroup.appendChild(container);
+    }
+
+    // 入力イベント
+    input.addEventListener('input', (e) => {
+      const value = e.target.value.trim().toLowerCase();
+      debugLog(`🐕 犬種入力: "${value}"`, 'info');
+
+      if (value.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+
+      // フィルタリング（部分一致）
+      const matches = DOG_BREEDS.filter(breed =>
+        breed.toLowerCase().includes(value) ||
+        // ひらがな→カタカナ変換も試行
+        breed.toLowerCase().includes(value.replace(/[\u3041-\u3096]/g, m =>
+          String.fromCharCode(m.charCodeAt(0) + 0x60)))
+      );
+
+      if (matches.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+
+      // サジェストリスト生成
+      container.innerHTML = '';
+      matches.forEach(breed => {
+        const item = document.createElement('div');
+        item.className = 'autocomplete-item';
+        item.style.cssText = `
+          padding: 12px 16px;
+          cursor: pointer;
+          border-bottom: 1px solid var(--c-border-light);
+          font-size: 14px;
+        `;
+        item.textContent = breed;
+
+        item.addEventListener('click', () => {
+          input.value = breed;
+          container.style.display = 'none';
+          validateDogSection();
+          debugLog(`🐕 犬種選択: ${breed}`, 'success');
+        });
+
+        item.addEventListener('mouseenter', () => {
+          item.style.background = 'var(--c-bg-mist)';
+        });
+        item.addEventListener('mouseleave', () => {
+          item.style.background = 'white';
+        });
+
+        container.appendChild(item);
+      });
+
+      container.style.display = 'block';
+      debugLog(`🐕 サジェスト表示: ${matches.length}件`, 'info');
+    });
+
+    // フォーカスアウトで非表示（遅延を入れてクリックを検知）
+    input.addEventListener('blur', () => {
+      setTimeout(() => {
+        container.style.display = 'none';
+      }, 200);
+    });
+
+    // フォーカスで既存入力があれば再表示
+    input.addEventListener('focus', () => {
+      if (input.value.trim().length > 0) {
+        input.dispatchEvent(new Event('input'));
+      }
+    });
+
+    debugLog('🐕 犬種オートコンプリート初期化完了', 'success');
+  }
+
+  // View4が表示されたら犬種オートコンプリートを初期化
+  const originalShowView4Pattern = showView4Pattern;
+  showView4Pattern = function(pattern) {
+    originalShowView4Pattern(pattern);
+    if (pattern === 'new-card') {
+      setTimeout(initBreedAutocomplete, 100);
+    }
+  };
 
   /**
    * 新規ユーザー住所ジオコーディング
@@ -2882,17 +3013,22 @@ function selectTime(date, time) {
   }
 
   /**
-   * 新規ユーザー支払い方法切り替え
+   * 新規ユーザーカードセクション表示切り替え
+   * View3で選択された支払い方法に基づいて表示/非表示を切り替え
    */
-  function toggleNewUserPaymentMethod() {
-    const method = document.getElementById('new-user-payment-method')?.value;
+  function updateNewUserCardSectionVisibility() {
+    const paymentMethod = document.getElementById('payment-method')?.value;
     const cardSection = document.getElementById('new-user-card-section');
 
-    if (method === 'CARD') {
+    debugLog(`📋 新規ユーザーカードセクション切替: ${paymentMethod}`, 'info');
+
+    if (paymentMethod === 'CARD') {
       cardSection.style.display = '';
       initializeSquare('square-card-container-new');
+      debugLog('💳 カード入力セクション表示・Square初期化', 'info');
     } else {
       cardSection.style.display = 'none';
+      debugLog('💵 カード入力セクション非表示（現金決済）', 'info');
     }
   }
 
@@ -2944,13 +3080,22 @@ function selectTime(date, time) {
    * 新規ユーザー予約確定
    */
   async function confirmNewUserReservation() {
-    const paymentMethod = document.getElementById('new-user-payment-method')?.value;
+    // View3で選択された支払い方法を使用
+    const paymentMethod = document.getElementById('payment-method')?.value;
+    debugLog(`💳 新規ユーザー予約確定開始 - 支払方法: ${paymentMethod}`, 'info');
 
     if (paymentMethod === 'CARD') {
-      // カード決済
+      // カード決済 - Squareカードが初期化されているか確認
+      if (!AppState.squareCard) {
+        debugLog('❌ Squareカードが初期化されていません', 'error');
+        alert('カード決済の準備ができていません。ページを再読み込みしてください。');
+        return;
+      }
+      debugLog('💳 カード決済処理開始', 'info');
       await handleCardTokenize();
     } else {
       // 現金決済
+      debugLog('💵 現金決済処理開始', 'info');
       await submitNewUserReservation(false);
     }
   }
@@ -3044,7 +3189,7 @@ function selectTime(date, time) {
   window.shiftMonth = shiftMonth;
   window.showDogSelectModal = showDogSelectModal;
   window.closeDogModal = closeDogModal;
-  window.selectDogFromModal = selectDogFromModal;
+  // selectDogFromModal は showDogSelectModal 内で直接 selectDog を呼び出すため不要
   window.openTimeModal = openTimeModal;
   window.closeTimeModal = closeTimeModal;
   window.selectTime = selectTime;
@@ -3070,5 +3215,4 @@ function selectTime(date, time) {
   window.validateDogSection = validateDogSection;
   window.geocodeNewUserAddress = geocodeNewUserAddress;
   window.searchAddressByZip = searchAddressByZip;
-  window.toggleNewUserPaymentMethod = toggleNewUserPaymentMethod;
   window.confirmNewUserReservation = confirmNewUserReservation;
