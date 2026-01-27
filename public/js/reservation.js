@@ -1188,16 +1188,36 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
    * ジオコーディング（2回リトライ）
    */
   async function geocodeWithRetry(address) {
+    debugLog(`📍 ========== ジオコーディング開始 ==========`, 'info');
+    debugLog(`📍 入力住所: "${address}"`, 'info');
+    debugLog(`📍 住所の長さ: ${address.length}文字`, 'info');
+    debugLog(`📍 isNewUser: ${AppState.isNewUser}`, 'info');
+
     for (let attempt = 1; attempt <= 2; attempt++) {
-      debugLog(`📍 ジオコーディング試行 ${attempt}/2: ${address}`, 'info');
+      debugLog(`📍 ジオコーディング試行 ${attempt}/2`, 'info');
 
       try {
-        const geoResult = await apiCall('GET', { action: 'geocodeAddress', address: address });
-        debugLog(`🔍 ジオコーディング応答: ${JSON.stringify(geoResult)}`, 'info');
+        const requestParams = { action: 'geocodeAddress', address: address };
+        debugLog(`📍 リクエストパラメータ: ${JSON.stringify(requestParams)}`, 'info');
+
+        const geoResult = await apiCall('GET', requestParams);
+
+        debugLog(`🔍 ジオコーディング応答 (全体): ${JSON.stringify(geoResult)}`, 'info');
+        debugLog(`🔍 応答フィールド確認:`, 'info');
+        debugLog(`   - success: ${geoResult.success} (type: ${typeof geoResult.success})`, 'info');
+        debugLog(`   - lat: ${geoResult.lat} (type: ${typeof geoResult.lat})`, 'info');
+        debugLog(`   - lng: ${geoResult.lng} (type: ${typeof geoResult.lng})`, 'info');
+        debugLog(`   - formattedAddress: ${geoResult.formattedAddress}`, 'info');
+        debugLog(`   - error: ${geoResult.error}`, 'info');
+        debugLog(`   - message: ${geoResult.message}`, 'info');
 
         // success=true または lat/lng が存在する場合は成功
-        if (geoResult.success || (geoResult.lat && geoResult.lng)) {
+        const hasLatLng = geoResult.lat && geoResult.lng;
+        debugLog(`🔍 成功判定: success=${geoResult.success}, hasLatLng=${hasLatLng}`, 'info');
+
+        if (geoResult.success || hasLatLng) {
           debugLog(`✅ 座標取得成功: ${geoResult.lat}, ${geoResult.lng}`, 'success');
+          debugLog(`📍 ========== ジオコーディング完了（成功） ==========`, 'success');
           return {
             success: true,
             lat: geoResult.lat,
@@ -1213,22 +1233,27 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
           // 1回目失敗 - 新規ユーザーの場合はそのまま続行（出張費は後で計算）
           if (AppState.isNewUser) {
             debugLog('⚠️ 新規ユーザー - 出張費は後で確定', 'warn');
+            debugLog(`📍 ========== ジオコーディング完了（新規ユーザー失敗） ==========`, 'warn');
             return { success: false, retry: false };
           }
           // 既存ユーザーの場合は再入力を促す
           alert('住所が見つかりませんでした。正確な住所を再度入力してください。');
           document.getElementById('alt-addr')?.focus();
+          debugLog(`📍 ========== ジオコーディング完了（既存ユーザー再入力要求） ==========`, 'warn');
           return { success: false, retry: true };
         }
       } catch (error) {
         debugLog(`❌ ジオコーディングエラー (${attempt}回目): ${error.message}`, 'error');
+        debugLog(`❌ エラースタック: ${error.stack}`, 'error');
       }
     }
 
     // 2回失敗
+    debugLog(`❌ ジオコーディング2回とも失敗`, 'error');
     if (!AppState.isNewUser) {
       alert('サービスエラーにより位置情報が読み込めませんでした。\n出張費は後日トレーナーからご連絡いたします。');
     }
+    debugLog(`📍 ========== ジオコーディング完了（失敗） ==========`, 'error');
     return { success: false, retry: false };
   }
   
@@ -2515,33 +2540,39 @@ function selectTime(date, time) {
    */
   async function apiCall(method, params) {
     const startTime = performance.now();
-    
+
     try {
       let url = CONFIG.API.GAS_URL;
       let options = {
         method: method,
         headers: { 'Content-Type': 'application/json' }
       };
-      
+
       if (method === 'GET') {
         const queryString = new URLSearchParams(params).toString();
         url += '?' + queryString;
       } else {
         options.body = JSON.stringify(params);
       }
-      
+
       debugLog(`🌐 API呼び出し: ${method} ${params.action || params.type}`, 'info');
-      
+      debugLog(`🌐 リクエストURL: ${url}`, 'info');
+      debugLog(`🌐 リクエストパラメータ: ${JSON.stringify(params)}`, 'info');
+
       const response = await fetch(url, options);
+      const responseStatus = response.status;
+      const responseOk = response.ok;
       const data = await response.json();
-      
+
       const endTime = performance.now();
-      debugLog(`✅ API応答 (${Math.round(endTime - startTime)}ms)`, 'success');
-      
+      debugLog(`✅ API応答 (${Math.round(endTime - startTime)}ms) status=${responseStatus} ok=${responseOk}`, 'success');
+      debugLog(`📥 レスポンスデータ: ${JSON.stringify(data).substring(0, 500)}${JSON.stringify(data).length > 500 ? '...' : ''}`, 'info');
+
       return data;
-      
+
     } catch (error) {
       debugLog(`❌ API エラー: ${error.message}`, 'error');
+      debugLog(`❌ エラースタック: ${error.stack}`, 'error');
       throw error;
     }
   }
@@ -2905,17 +2936,31 @@ function selectTime(date, time) {
    * 新規ユーザー住所ジオコーディング
    */
   async function geocodeNewUserAddress() {
-    const addr = document.getElementById('reg-addr')?.value?.trim();
-    const building = document.getElementById('reg-building')?.value?.trim();
+    debugLog(`🏠 ========== 新規ユーザー住所ジオコーディング開始 ==========`, 'info');
 
-    if (!addr) return;
+    const addrEl = document.getElementById('reg-addr');
+    const buildingEl = document.getElementById('reg-building');
+
+    debugLog(`🏠 住所フィールド存在確認: reg-addr=${!!addrEl}, reg-building=${!!buildingEl}`, 'info');
+
+    const addr = addrEl?.value?.trim();
+    const building = buildingEl?.value?.trim();
+
+    debugLog(`🏠 入力値: addr="${addr}", building="${building}"`, 'info');
+
+    if (!addr) {
+      debugLog(`⚠️ 住所が空のため処理スキップ`, 'warn');
+      return;
+    }
 
     const fullAddress = building ? `${addr} ${building}` : addr;
-    debugLog(`📍 新規ユーザー住所ジオコーディング: ${fullAddress}`, 'info');
+    debugLog(`🏠 結合住所: "${fullAddress}"`, 'info');
 
     const confirmationEl = document.getElementById('address-confirmation');
     const confirmedAddrEl = document.getElementById('confirmed-address');
     const travelFeeEl = document.getElementById('travel-fee-result');
+
+    debugLog(`🏠 UI要素確認: confirmation=${!!confirmationEl}, confirmedAddr=${!!confirmedAddrEl}, travelFee=${!!travelFeeEl}`, 'info');
 
     // 確認エリア表示
     confirmationEl.classList.remove('hidden', 'error');
@@ -2923,7 +2968,9 @@ function selectTime(date, time) {
     travelFeeEl.textContent = '出張費: 計算中...';
 
     try {
+      debugLog(`🏠 geocodeWithRetry呼び出し開始`, 'info');
       const geoResult = await geocodeWithRetry(fullAddress);
+      debugLog(`🏠 geocodeWithRetry結果: ${JSON.stringify(geoResult)}`, 'info');
 
       if (geoResult.success) {
         // 座標保存
@@ -2932,14 +2979,17 @@ function selectTime(date, time) {
           lng: geoResult.lng,
           formattedAddress: geoResult.formattedAddress || fullAddress
         };
+        debugLog(`🏠 座標保存: ${JSON.stringify(AppState.newUserGeoData)}`, 'info');
 
         // 距離計算
+        debugLog(`🏠 距離計算: 事務所(${CONFIG.OFFICE.LAT}, ${CONFIG.OFFICE.LNG}) → 顧客(${geoResult.lat}, ${geoResult.lng})`, 'info');
         const distance = CONFIG.calculateDistance(
           CONFIG.OFFICE.LAT,
           CONFIG.OFFICE.LNG,
           geoResult.lat,
           geoResult.lng
         );
+        debugLog(`🏠 計算結果: ${distance.toFixed(2)}km`, 'info');
 
         // 15km超チェック
         if (distance > 15) {
@@ -2947,6 +2997,7 @@ function selectTime(date, time) {
           AppState.travelFeeStatus = 'OVER_AREA';
           travelFeeEl.textContent = '出張費: 別途（担当者よりご連絡）';
           confirmationEl.classList.add('error');
+          debugLog(`⚠️ サービスエリア外: ${distance.toFixed(1)}km > 15km`, 'warn');
         } else {
           AppState.travelFee = CONFIG.calculateTravelFee(distance);
           AppState.travelFeeStatus = 'CALCULATED';
@@ -2955,17 +3006,20 @@ function selectTime(date, time) {
           } else {
             travelFeeEl.textContent = `出張費: ¥${AppState.travelFee.toLocaleString()}`;
           }
+          debugLog(`✅ 出張費計算完了: ${distance.toFixed(1)}km = ¥${AppState.travelFee}`, 'success');
         }
 
-        debugLog(`✅ ジオコーディング成功: ${distance.toFixed(1)}km / ¥${AppState.travelFee}`, 'success');
+        debugLog(`🏠 最終状態: travelFee=${AppState.travelFee}, status=${AppState.travelFeeStatus}`, 'success');
 
       } else if (geoResult.retry) {
         // 再入力待ち
+        debugLog(`⚠️ ジオコーディング失敗 - 再入力待ち`, 'warn');
         travelFeeEl.textContent = '出張費: 住所を確認してください';
         confirmationEl.classList.add('error');
         return;
       } else {
         // 2回失敗
+        debugLog(`❌ ジオコーディング2回失敗`, 'error');
         AppState.travelFee = 0;
         AppState.travelFeeStatus = 'GEOCODE_FAILED';
         travelFeeEl.textContent = '出張費: 別途（担当者よりご連絡）';
@@ -2973,12 +3027,15 @@ function selectTime(date, time) {
       }
 
     } catch (error) {
-      debugLog(`❌ ジオコーディングエラー: ${error.message}`, 'error');
+      debugLog(`❌ ジオコーディング例外エラー: ${error.message}`, 'error');
+      debugLog(`❌ エラースタック: ${error.stack}`, 'error');
       AppState.travelFee = 0;
       AppState.travelFeeStatus = 'GEOCODE_FAILED';
       travelFeeEl.textContent = '出張費: 別途（担当者よりご連絡）';
       confirmationEl.classList.add('error');
     }
+
+    debugLog(`🏠 ========== 新規ユーザー住所ジオコーディング完了 ==========`, 'info');
   }
 
   /**
