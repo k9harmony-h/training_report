@@ -1317,12 +1317,12 @@
 
 /* 重要事項説明カード（View3 新規ユーザー向け） */
 .important-notice-card {
-  background: rgba(47, 93, 98, 0.05);  /* サブブランドカラーの薄い背景 */
-  border: 2px solid var(--c-sub-deep-ocean);
+  background: rgba(200, 122, 86, 0.08);  /* コッパーカラーの薄い背景 */
+  border: 2px solid var(--c-accent-copper);
 }
 
 .important-notice-card .form-label {
-  color: var(--c-sub-deep-ocean);
+  color: var(--c-accent-copper);
   font-weight: bold;
 }
 
@@ -1348,7 +1348,7 @@
 .important-checkbox {
   margin-top: var(--spacing-md);
   padding-top: var(--spacing-sm);
-  border-top: 1px solid var(--c-sub-deep-ocean);
+  border-top: 1px solid var(--c-accent-copper);
 }
 
 /* ラジオボタングループ改善 */

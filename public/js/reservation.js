@@ -1187,19 +1187,31 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
 
       try {
         const geoResult = await apiCall('GET', { action: 'geocodeAddress', address: address });
+        debugLog(`🔍 ジオコーディング応答: ${JSON.stringify(geoResult)}`, 'info');
 
-        if (geoResult.success) {
+        // success=true または lat/lng が存在する場合は成功
+        if (geoResult.success || (geoResult.lat && geoResult.lng)) {
           debugLog(`✅ 座標取得成功: ${geoResult.lat}, ${geoResult.lng}`, 'success');
-          return geoResult;
+          return {
+            success: true,
+            lat: geoResult.lat,
+            lng: geoResult.lng,
+            formattedAddress: geoResult.formattedAddress
+          };
         }
 
-        debugLog(`⚠️ ジオコーディング失敗 (${attempt}回目): ${geoResult.error}`, 'warn');
+        const errorMsg = geoResult.message || geoResult.error || '不明なエラー';
+        debugLog(`⚠️ ジオコーディング失敗 (${attempt}回目): ${errorMsg}`, 'warn');
 
         if (attempt === 1) {
-          // 1回目失敗 - 再入力を促す
+          // 1回目失敗 - 新規ユーザーの場合はそのまま続行（出張費は後で計算）
+          if (AppState.isNewUser) {
+            debugLog('⚠️ 新規ユーザー - 出張費は後で確定', 'warn');
+            return { success: false, retry: false };
+          }
+          // 既存ユーザーの場合は再入力を促す
           alert('住所が見つかりませんでした。正確な住所を再度入力してください。');
           document.getElementById('alt-addr')?.focus();
-          // ユーザーが修正して再度calculateTravelFeeを呼ぶまで待つ
           return { success: false, retry: true };
         }
       } catch (error) {
@@ -1208,7 +1220,9 @@ function addCalendarDay(grid, dayNumber, isOtherMonth, dateStr, isToday, dayOfWe
     }
 
     // 2回失敗
-    alert('サービスエラーにより位置情報が読み込めませんでした。\n出張費は後日トレーナーからご連絡いたします。');
+    if (!AppState.isNewUser) {
+      alert('サービスエラーにより位置情報が読み込めませんでした。\n出張費は後日トレーナーからご連絡いたします。');
+    }
     return { success: false, retry: false };
   }
   
@@ -2909,13 +2923,15 @@ function selectTime(date, time) {
       `¥${AppState.lessonPrice?.toLocaleString() || '---'}`;
 
     // 出張費
-    if (AppState.travelFeeStatus === 'OVER_AREA' || AppState.travelFeeStatus === 'GEOCODE_FAILED') {
-      document.getElementById('new-user-price-travel').textContent = '別途';
-    } else if (AppState.travelFee === 0) {
-      document.getElementById('new-user-price-travel').textContent = '無料';
-    } else {
+    if (AppState.travelFeeStatus === 'OVER_AREA' || AppState.travelFeeStatus === 'GEOCODE_FAILED' || AppState.travelFeeStatus === 'NEW_USER') {
+      document.getElementById('new-user-price-travel').textContent = '別途（後日ご連絡）';
+    } else if (AppState.travelFeeStatus === 'CALCULATED' && AppState.travelFee === 0) {
+      document.getElementById('new-user-price-travel').textContent = '無料（3km以内）';
+    } else if (AppState.travelFeeStatus === 'CALCULATED') {
       document.getElementById('new-user-price-travel').textContent =
         `¥${AppState.travelFee?.toLocaleString() || '---'}`;
+    } else {
+      document.getElementById('new-user-price-travel').textContent = '---';
     }
 
     // 合計
