@@ -55,25 +55,22 @@ var CustomerRepository = {
       data.created_by = this._getCurrentUser();
       data.updated_by = this._getCurrentUser();
       
-      // 6. トランザクション内で実行
-      var customer = TransactionManager.execute(function(tx) {
-        // DB登録
-        tx.insert(CONFIG.SHEET.CUSTOMERS, data);
-        
-        // フォルダ自動生成
-        var folderInfo = CustomerRepository._createCustomerFolder(data);
-        
-        // フォルダ情報を更新
-        tx.update(CONFIG.SHEET.CUSTOMERS, data.customer_id, {
-          google_drive_folder_id: folderInfo.folderId,
-          google_drive_folder_url: folderInfo.folderUrl
-        });
-        
-        data.google_drive_folder_id = folderInfo.folderId;
-        data.google_drive_folder_url = folderInfo.folderUrl;
-        
-        return data;
+      // 6. DB登録
+      DB.insert(CONFIG.SHEET.CUSTOMERS, data);
+
+      // フォルダ自動生成
+      var folderInfo = CustomerRepository._createCustomerFolder(data);
+
+      // フォルダ情報を更新
+      DB.update(CONFIG.SHEET.CUSTOMERS, data.customer_id, {
+        google_drive_folder_id: folderInfo.folderId,
+        google_drive_folder_url: folderInfo.folderUrl
       });
+
+      data.google_drive_folder_id = folderInfo.folderId;
+      data.google_drive_folder_url = folderInfo.folderUrl;
+
+      var customer = data;
       
       // 7. 監査ログ記録（AuditServiceが実装されている場合）
       if (typeof AuditService !== 'undefined') {

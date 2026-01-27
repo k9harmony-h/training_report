@@ -47,25 +47,22 @@ var DogRepository = {
       data.created_at = new Date();
       data.updated_at = new Date();
       
-      // 6. トランザクション内で実行
-      var dog = TransactionManager.execute(function(tx) {
-        // DB登録
-        tx.insert(CONFIG.SHEET.DOGS, data);
-        
-        // フォルダ自動生成
-        var folderInfo = DogRepository._createDogFolder(data, customer);
-        
-        // フォルダ情報を更新
-        tx.update(CONFIG.SHEET.DOGS, data.dog_id, {
-          dog_shared_folder_id: folderInfo.folderId,
-          dog_shared_folder_url: folderInfo.folderUrl
-        });
-        
-        data.dog_shared_folder_id = folderInfo.folderId;
-        data.dog_shared_folder_url = folderInfo.folderUrl;
-        
-        return data;
+      // 6. DB登録
+      DB.insert(CONFIG.SHEET.DOGS, data);
+
+      // フォルダ自動生成
+      var folderInfo = DogRepository._createDogFolder(data, customer);
+
+      // フォルダ情報を更新
+      DB.update(CONFIG.SHEET.DOGS, data.dog_id, {
+        dog_shared_folder_id: folderInfo.folderId,
+        dog_shared_folder_url: folderInfo.folderUrl
       });
+
+      data.dog_shared_folder_id = folderInfo.folderId;
+      data.dog_shared_folder_url = folderInfo.folderUrl;
+
+      var dog = data;
       
       // 7. 監査ログ記録
       if (typeof AuditService !== 'undefined') {

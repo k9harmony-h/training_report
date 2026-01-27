@@ -116,16 +116,16 @@ window.onload = async () => {
     // Priority 2: 必須データ読み込み
     debugLog('📊 Priority 2: 必須データ読み込み', 'info');
     await loadEssentialData();
-    
+
+    // Priority 3: カレンダーデータ（当月）- View2表示前にプリロード
+    debugLog('📅 Priority 3: 当月カレンダー読み込み', 'info');
+    await loadCalendarData(0);
+
     // 画面表示
     hideLoading();
     goToView(1);
-    
-    // Priority 3: カレンダーデータ（当月）
-    debugLog('📅 Priority 3: 当月カレンダー読み込み', 'info');
-    loadCalendarData(0);
-    
-    // Priority 4: 事前読み込み
+
+    // Priority 4: 事前読み込み（翌月・翌々月をバックグラウンドで）
     prefetchData();
     
   } catch (error) {
@@ -2781,10 +2781,17 @@ function selectTime(date, time) {
       updateNewUserCardSectionVisibility();
     }
 
-    // スクロール
-    const targetSection = document.getElementById(`accordion-${section}`);
-    if (targetSection) {
-      targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // スクロール（アコーディオン展開アニメーション後に実行）
+    const targetHeader = document.querySelector(`#accordion-${section} .accordion-header-new`);
+    if (targetHeader) {
+      // アコーディオン展開完了を待ってからスクロール
+      setTimeout(() => {
+        targetHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // 追加の微調整（ヘッダーが見切れないように）
+        setTimeout(() => {
+          window.scrollBy({ top: -20, behavior: 'smooth' });
+        }, 300);
+      }, 100);
     }
   }
 

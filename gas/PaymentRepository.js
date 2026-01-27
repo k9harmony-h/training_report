@@ -202,34 +202,31 @@ return data;
         );
       }
       
-      // トランザクション内で実行
-      return TransactionManager.execute(function(tx) {
-        // 決済ステータス更新
-        tx.update(CONFIG.SHEET.PAYMENTS, paymentId, {
-          payment_status: 'CAPTURED',
-          captured_at: new Date(),
-          updated_at: new Date()
-        });
-        
-        // 売上計上
-        var saleData = {
-          sale_id: Utilities.getUuid(),
-          payment_id: paymentId,
-          reservation_id: payment.reservation_id,
-          customer_id: payment.customer_id || PaymentRepository._getCustomerIdFromReservation(payment.reservation_id),
-          sale_date: new Date(),
-          sales_amount: payment.total_amount,
-          tax_amount: payment.tax_amount,
-          created_at: new Date(),
-          updated_at: new Date()
-        };
-        
-        tx.insert(CONFIG.SHEET.SALES, saleData);
-        
-        log('INFO', 'PaymentRepository', 'Payment captured and sale recorded: ' + paymentId);
-        
-        return PaymentRepository.findById(paymentId);
+      // 決済ステータス更新
+      DB.update(CONFIG.SHEET.PAYMENTS, paymentId, {
+        payment_status: 'CAPTURED',
+        captured_at: new Date(),
+        updated_at: new Date()
       });
+
+      // 売上計上
+      var saleData = {
+        sale_id: Utilities.getUuid(),
+        payment_id: paymentId,
+        reservation_id: payment.reservation_id,
+        customer_id: payment.customer_id || PaymentRepository._getCustomerIdFromReservation(payment.reservation_id),
+        sale_date: new Date(),
+        sales_amount: payment.total_amount,
+        tax_amount: payment.tax_amount,
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+
+      DB.insert(CONFIG.SHEET.SALES, saleData);
+
+      log('INFO', 'PaymentRepository', 'Payment captured and sale recorded: ' + paymentId);
+
+      return this.findById(paymentId);
       
     } catch (error) {
       return ErrorHandler.handle(error, context);
