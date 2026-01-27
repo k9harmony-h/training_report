@@ -454,10 +454,9 @@ function handleAddReservation(lineUserId, requestBody) {
         customer_name: requestBody.regData.name,
         customer_phone: requestBody.regData.phone,
         customer_email: requestBody.regData.email || null,
-        postal_code: requestBody.regData.zip,
-        address: requestBody.regData.address,
-        building: requestBody.regData.building || null,
-        landmark: requestBody.regData.landmark || null,
+        customer_zip_code: requestBody.regData.zip,
+        customer_address_street: requestBody.regData.address,
+        customer_address_building: requestBody.regData.building || null,
         base_lat: requestBody.regData.lat || null,
         base_lng: requestBody.regData.lng || null
       });
@@ -696,12 +695,11 @@ alt_remarks: altRemarks,
 
   // ===== クーポン情報 =====
   coupon_id: requestBody.coupon_id || null,
-  coupon_code: requestBody.coupon_code || null,
-  coupon_value: requestBody.coupon_value || 0,
-
   // ===== 金額内訳 =====
   lesson_amount: requestBody.lesson_amount || 0,
   travel_fee: requestBody.travel_fee || 0,
+  voucher_code: requestBody.voucher_code || requestBody.coupon_code || null,
+  voucher_amount: requestBody.voucher_amount || requestBody.coupon_value || 0,
   total_amount: requestBody.totalPrice || 0,
 
   // ===== CalendarRepository用の追加データ =====
@@ -1205,10 +1203,9 @@ function handleCreateReservationWithPayment(lineUserId, requestBody) {
         customer_name: regData.name,
         customer_phone: regData.phone,
         customer_email: regData.email || null,
-        postal_code: regData.zip || null,
-        address: regData.address,
-        building: regData.building || null,
-        landmark: regData.landmark || null,
+        customer_zip_code: regData.zip || null,
+        customer_address_street: regData.address,
+        customer_address_building: regData.building || null,
         base_lat: regData.lat || null,
         base_lng: regData.lng || null,
         registration_status: 'ACTIVE'
@@ -1245,6 +1242,8 @@ function handleCreateReservationWithPayment(lineUserId, requestBody) {
       is_multi_dog: requestBody.isMultiDog || false,
       lesson_amount: requestBody.lesson_amount,
       travel_fee: requestBody.travel_fee,
+      voucher_code: requestBody.voucher_code || requestBody.coupon_code || null,
+      voucher_amount: requestBody.voucher_amount || requestBody.coupon_value || 0,
       total_amount: requestBody.totalPrice
     };
     paymentDataFromClient = requestBody.paymentData ? JSON.parse(requestBody.paymentData) : {
@@ -1441,14 +1440,11 @@ function handleCreateReservationWithPayment(lineUserId, requestBody) {
     payment_method: paymentDataFromClient.payment_method || 'CREDIT',
     notes: reservationDataFromClient.notes || '',
 
-    // クーポン情報
-    coupon_id: reservationDataFromClient.coupon_id || null,
-    coupon_code: reservationDataFromClient.coupon_code || null,
-    coupon_value: reservationDataFromClient.coupon_value || 0,
-
     // 金額内訳
     lesson_amount: reservationDataFromClient.lesson_amount || 0,
     travel_fee: reservationDataFromClient.travel_fee || 0,
+    voucher_code: reservationDataFromClient.voucher_code || reservationDataFromClient.coupon_code || null,
+    voucher_amount: reservationDataFromClient.voucher_amount || reservationDataFromClient.coupon_value || 0,
     total_amount: paymentDataFromClient.total_amount || 0,
 
     // CalendarRepository用の追加データ
@@ -1908,10 +1904,9 @@ function handleRegisterCustomer(lineUserId, requestBody) {
     customer_name: regData.name,
     customer_phone: regData.phone,
     customer_email: regData.email || null,
-    postal_code: regData.zip || null,
-    address: regData.address,
-    building: regData.building || null,
-    landmark: regData.landmark || null,
+    customer_zip_code: regData.zip || null,
+    customer_address_street: regData.address,
+    customer_address_building: regData.building || null,
     base_lat: regData.lat || null,
     base_lng: regData.lng || null,
     registration_status: 'PENDING'  // 予約完了まではPENDING

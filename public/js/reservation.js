@@ -1889,9 +1889,8 @@ async function executePayment() {
           is_multi_dog: AppState.isMultiDog,
           use_alt_address: AppState.useAltAddress,
           alt_address: altAddressData,
-          coupon_id: couponInfo ? (couponInfo.coupon_id || null) : null,
-          coupon_code: couponInfo ? (couponInfo.code || couponInfo.coupon_code || null) : null,
-          coupon_value: couponInfo ? (couponInfo.discount_value || couponInfo.discount_amount || 0) : 0,
+          voucher_code: AppState.voucherData ? (AppState.voucherData.code || null) : null,
+          voucher_amount: AppState.voucherData ? (AppState.voucherData.discount_value || 0) : 0,
           lesson_amount: AppState.lessonPrice + (AppState.isMultiDog ? 2000 : 0),
           travel_fee: (AppState.travelFeeStatus === 'OVER_AREA' || AppState.travelFeeStatus === 'GEOCODE_FAILED') ? null : AppState.travelFee,
           total_amount: AppState.totalPrice,
@@ -1950,9 +1949,6 @@ async function executePayment() {
         // ★★★ 現地決済: 従来のadd_reservation ★★★
         debugLog('💵 現地決済: add_reservationを使用', 'info');
 
-        // クーポン情報を統合（voucherDataまたはappliedCouponから取得）
-        const couponInfoCash = AppState.voucherData || AppState.appliedCoupon;
-
         const payload = {
           action: 'add_reservation',
           userId: userId,
@@ -1965,10 +1961,8 @@ async function executePayment() {
           isMultiDog: AppState.isMultiDog,
           useAltAddress: AppState.useAltAddress,
           altAddress: altAddressData,
-          voucherCode: AppState.voucherData ? AppState.voucherData.code : null,
-          coupon_id: couponInfoCash ? (couponInfoCash.coupon_id || null) : null,
-          coupon_code: couponInfoCash ? (couponInfoCash.code || couponInfoCash.coupon_code || null) : null,
-          coupon_value: couponInfoCash ? (couponInfoCash.discount_value || couponInfoCash.discount_amount || 0) : 0,
+          voucher_code: AppState.voucherData ? (AppState.voucherData.code || null) : null,
+          voucher_amount: AppState.voucherData ? (AppState.voucherData.discount_value || 0) : 0,
           lesson_amount: AppState.lessonPrice + (AppState.isMultiDog ? 2000 : 0),
           travel_fee: (AppState.travelFeeStatus === 'OVER_AREA' || AppState.travelFeeStatus === 'GEOCODE_FAILED') ? null : AppState.travelFee,
           remarks: document.getElementById('conf-remarks').value,
@@ -2063,16 +2057,16 @@ async function executePayment() {
     }
     document.getElementById('thanks-course').textContent = courseName;
 
-    // クーポン情報の表示
-    const couponInfo = AppState.voucherData || AppState.appliedCoupon;
-    const couponRow = document.getElementById('thanks-coupon-row');
-    if (couponInfo && (couponInfo.discount_value || couponInfo.discount_amount)) {
-      const couponName = couponInfo.name || couponInfo.coupon_name || 'クーポン';
-      const couponValue = couponInfo.discount_value || couponInfo.discount_amount || 0;
-      document.getElementById('thanks-coupon').textContent = `${couponName} (-¥${couponValue.toLocaleString()})`;
-      couponRow.style.display = 'flex';
+    // Voucher情報の表示（入力時のみ表示）
+    const voucherInfo = AppState.voucherData;  // 手動入力のVoucherのみ（自動適用クーポンは除外）
+    const voucherRow = document.getElementById('thanks-voucher-row');
+    if (voucherInfo && (voucherInfo.discount_value || voucherInfo.discount_amount)) {
+      const voucherName = voucherInfo.name || voucherInfo.coupon_name || 'Voucher';
+      const voucherValue = voucherInfo.discount_value || voucherInfo.discount_amount || 0;
+      document.getElementById('thanks-voucher').textContent = `${voucherName} (-¥${voucherValue.toLocaleString()})`;
+      voucherRow.style.display = 'flex';
     } else {
-      couponRow.style.display = 'none';
+      voucherRow.style.display = 'none';
     }
 
     // 合計金額
