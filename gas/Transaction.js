@@ -76,10 +76,26 @@ var Transaction = {
       
       this._saveTransactionLog(transactionLog);
       
+      // エラーオブジェクトをシリアライズ可能な形式に変換
+      var serializedError = {
+        message: error.message || error.toString(),
+        code: error.code || 'UNKNOWN_ERROR',
+        details: error.details || null
+      };
+
+      // errorがオブジェクトの場合は全プロパティをコピー
+      if (typeof error === 'object' && error !== null) {
+        for (var key in error) {
+          if (error.hasOwnProperty(key) && serializedError[key] === undefined) {
+            serializedError[key] = error[key];
+          }
+        }
+      }
+
       return {
         success: false,
         transaction_id: transactionId,
-        error: error,
+        error: serializedError,
         rollback_result: rollbackResult
       };
     }
@@ -535,10 +551,154 @@ var Transaction = {
         success: true,
         statistics: stats
       };
-      
+
     } catch (error) {
       return ErrorHandler.handle(error, context);
     }
+  },
+
+  // ============================================================================
+  // TransactionQueue（リトライ対応キュー）
+  // ============================================================================
+
+  /**
+   * idempotency_key生成
+   * @param {string} prefix - プレフィックス（reservation_idなど）
+   * @returns {string} 一意のidempotency_key
+   */
+  generateIdempotencyKey: function(prefix) {
+    var timestamp = new Date().getTime();
+    var random = Math.random().toString(36).substring(2, 8);
+    return 'k9_' + (prefix || 'txn') + '_' + timestamp + '_' + random;
+  },
+
+  /**
+   * トランザクションをキューに登録
+   * @param {Object} data - トランザクションデータ
+   * @returns {Object} キューエントリ
+   */
+  enqueue: function(data) {
+    log('INFO', 'Transaction', 'Enqueueing transaction');
+
+    var queueEntry = {
+      queue_id: Utilities.getUuid(),
+      idempotency_key: data.idempotency_key || this.generateIdempotencyKey(data.reservation_id),
+      transaction_type: data.transaction_type || 'PAYMENT',
+      customer_id: data.customer_id,
+      reservation_id: data.reservation_id || null,
+      request_data: JSON.stringify(data.request_data),
+      status: 'PENDING',
+      retry_count: 0,
+      max_retries: 3,
+      last_error: null,
+      created_at: new Date(),
+      updated_at: new Date(),
+      completed_at: null
+    };
+
+    try {
+      DB.insert(CONFIG.SHEET.TRANSACTION_QUEUE, queueEntry);
+      log('INFO', 'Transaction', 'Transaction enqueued: ' + queueEntry.queue_id);
+      return { success: true, queue_id: queueEntry.queue_id, idempotency_key: queueEntry.idempotency_key };
+    } catch (error) {
+      log('ERROR', 'Transaction', 'Failed to enqueue transaction: ' + error.message);
+      return { error: true, message: error.message };
+    }
+  },
+
+  /**
+   * キューエントリのステータスを更新
+   * @param {string} queueId - キューID
+   * @param {string} status - 新しいステータス
+   * @param {Object} additionalData - 追加データ
+   */
+  updateQueueStatus: function(queueId, status, additionalData) {
+    var updateData = {
+      status: status,
+      updated_at: new Date()
+    };
+
+    if (status === 'COMPLETED') {
+      updateData.completed_at = new Date();
+    }
+
+    if (additionalData) {
+      if (additionalData.error) {
+        updateData.last_error = additionalData.error;
+      }
+      if (additionalData.retry_count !== undefined) {
+        updateData.retry_count = additionalData.retry_count;
+      }
+    }
+
+    DB.update(CONFIG.SHEET.TRANSACTION_QUEUE, queueId, updateData);
+    log('INFO', 'Transaction', 'Queue status updated: ' + queueId + ' -> ' + status);
+  },
+
+  /**
+   * リトライが必要なトランザクションを取得
+   * @returns {Array} リトライ対象のキューエントリ
+   */
+  getPendingRetries: function() {
+    try {
+      var allEntries = DB.fetchTable(CONFIG.SHEET.TRANSACTION_QUEUE);
+
+      var pendingRetries = allEntries.filter(function(entry) {
+        return (entry.status === 'FAILED' || entry.status === 'PENDING') &&
+               entry.retry_count < entry.max_retries;
+      });
+
+      log('INFO', 'Transaction', 'Found ' + pendingRetries.length + ' pending retries');
+      return pendingRetries;
+    } catch (error) {
+      log('ERROR', 'Transaction', 'Failed to get pending retries: ' + error.message);
+      return [];
+    }
+  },
+
+  /**
+   * idempotency_keyで既存トランザクションを確認
+   * @param {string} idempotencyKey - idempotency_key
+   * @returns {Object|null} 既存のキューエントリまたはnull
+   */
+  findByIdempotencyKey: function(idempotencyKey) {
+    try {
+      var allEntries = DB.fetchTable(CONFIG.SHEET.TRANSACTION_QUEUE);
+
+      var existing = allEntries.find(function(entry) {
+        return entry.idempotency_key === idempotencyKey;
+      });
+
+      return existing || null;
+    } catch (error) {
+      log('ERROR', 'Transaction', 'Failed to find by idempotency key: ' + error.message);
+      return null;
+    }
+  },
+
+  /**
+   * Square決済の二重処理チェック
+   * @param {string} idempotencyKey - idempotency_key
+   * @returns {Object} チェック結果
+   */
+  checkSquareDuplicate: function(idempotencyKey) {
+    // 既存のキューエントリを確認
+    var existing = this.findByIdempotencyKey(idempotencyKey);
+
+    if (existing && existing.status === 'COMPLETED') {
+      log('INFO', 'Transaction', 'Duplicate transaction detected (already completed): ' + idempotencyKey);
+      return {
+        isDuplicate: true,
+        existingEntry: existing,
+        message: 'この決済は既に完了しています'
+      };
+    }
+
+    // Square APIで決済履歴を確認（オプション）
+    // 注: Square APIにはidempotency_keyによる検索機能があるため、
+    // 必要に応じてSquareService.checkPaymentByIdempotencyKey()を実装
+
+    return { isDuplicate: false };
   }
 };
 

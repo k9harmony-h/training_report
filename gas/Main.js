@@ -120,7 +120,7 @@ log('DEBUG', 'Main', 'Final lineUserId', { lineUserId: lineUserId });
     // ============================================================================
     // userId必須チェック
     // ============================================================================
-    var actionsWithoutUserId = ['getProductList', 'getTrainerList', 'healthCheck', 'getAvailableSlots', 'products', 'validateCouponCode', 'getApplicableCoupon', 'check_voucher'];
+    var actionsWithoutUserId = ['getProductList', 'getTrainerList', 'healthCheck', 'getAvailableSlots', 'products', 'validateCouponCode', 'getApplicableCoupon', 'check_voucher', 'geocodeAddress'];
     
     if (actionsWithoutUserId.indexOf(action) === -1 && !lineUserId) {
       return ContentService.createTextOutput(JSON.stringify({
@@ -350,7 +350,16 @@ switch (action) {
 
   case 'getMonthAvailability':
     response = handleGetMonthAvailability(lineUserId, requestBody);
-    break;  
+    break;
+
+  // ===== 新規ユーザー早期登録 =====
+  case 'registerCustomer':
+    response = handleRegisterCustomer(lineUserId, requestBody);
+    break;
+
+  case 'registerDog':
+    response = handleRegisterDog(lineUserId, requestBody);
+    break;
 
   default:
     return ContentService.createTextOutput(JSON.stringify({
@@ -1160,40 +1169,143 @@ function handleHealthCheck() {
 /**
  * 予約作成 + 決済（アトミック）
  * handleAddReservationと同等のデータ処理 + Square決済を実行
+ *
+ * 対応パターン:
+ * 1. 既存ユーザー: customer_id/dog_idで顧客・犬を取得
+ * 2. 新規ユーザー（事前登録済み）: lineUserIdで顧客・犬を取得
+ * 3. 新規ユーザー（未登録）: regDataから顧客・犬を作成
  */
 function handleCreateReservationWithPayment(lineUserId, requestBody) {
   log('INFO', 'Main', '=== handleCreateReservationWithPayment START ===');
   log('DEBUG', 'Main', 'Input lineUserId: ' + lineUserId);
   log('DEBUG', 'Main', 'requestBody keys: ' + Object.keys(requestBody).join(', '));
+  log('DEBUG', 'Main', 'isNewUser: ' + requestBody.isNewUser);
 
-  // ===== 1. 顧客情報取得 =====
-  var customer = CustomerRepository.findByLineUserId(lineUserId);
+  var customer, dog;
+  var isNewUser = requestBody.isNewUser === true || requestBody.isNewUser === 'true';
+
+  // ===== 1. 顧客情報取得/作成 =====
+  customer = CustomerRepository.findByLineUserId(lineUserId);
 
   log('DEBUG', 'Main', 'CustomerRepository.findByLineUserId result:', {
-    found: !!customer,
+    found: !!customer && !customer.error,
     error: customer ? customer.error : 'null',
     customer_id: customer ? customer.customer_id : 'null'
   });
 
   if (!customer || customer.error) {
-    log('ERROR', 'Main', 'Customer not found for lineUserId: ' + lineUserId);
-    throw customer || createK9Error(ErrorCode.RECORD_NOT_FOUND, 'Customer not found');
+    // 顧客が見つからない場合
+    if (isNewUser && requestBody.regData) {
+      // 新規ユーザー: regDataから顧客を作成
+      log('INFO', 'Main', 'Creating new customer from regData');
+
+      var regData = requestBody.regData;
+      customer = CustomerRepository.create({
+        line_user_id: lineUserId,
+        customer_name: regData.name,
+        customer_phone: regData.phone,
+        customer_email: regData.email || null,
+        postal_code: regData.zip || null,
+        address: regData.address,
+        building: regData.building || null,
+        landmark: regData.landmark || null,
+        base_lat: regData.lat || null,
+        base_lng: regData.lng || null,
+        registration_status: 'ACTIVE'
+      });
+
+      if (customer.error) {
+        log('ERROR', 'Main', 'Customer creation failed', customer);
+        throw customer;
+      }
+      log('INFO', 'Main', 'New customer created: ' + customer.customer_id);
+    } else {
+      log('ERROR', 'Main', 'Customer not found for lineUserId: ' + lineUserId);
+      throw createK9Error(ErrorCode.RECORD_NOT_FOUND, 'Customer not found');
+    }
   }
 
   log('INFO', 'Main', 'Customer identified: ' + customer.customer_id);
 
-  // JSON文字列を解析
-  var reservationDataFromClient = JSON.parse(requestBody.reservationData);
-  var paymentDataFromClient = JSON.parse(requestBody.paymentData);
+  // ===== データ解析 =====
+  var reservationDataFromClient, paymentDataFromClient;
+
+  // 新規ユーザーフォーマット vs 既存ユーザーフォーマットの判定
+  if (requestBody.reservationData && typeof requestBody.reservationData === 'string') {
+    // 既存フォーマット（JSON文字列）
+    reservationDataFromClient = JSON.parse(requestBody.reservationData);
+    paymentDataFromClient = JSON.parse(requestBody.paymentData);
+  } else {
+    // 新規ユーザーフォーマット（直接オブジェクト）
+    reservationDataFromClient = {
+      reservation_date: requestBody.date,
+      start_time: requestBody.time,
+      trainer_id: requestBody.trainerId,
+      product_id: requestBody.menuId,
+      is_multi_dog: requestBody.isMultiDog || false,
+      lesson_amount: requestBody.lesson_amount,
+      travel_fee: requestBody.travel_fee,
+      total_amount: requestBody.totalPrice
+    };
+    paymentDataFromClient = requestBody.paymentData ? JSON.parse(requestBody.paymentData) : {
+      amount: requestBody.lesson_amount,
+      total_amount: requestBody.totalPrice,
+      payment_method: requestBody.paymentMethod === 'CREDIT' ? 'CREDIT_CARD' : 'CASH'
+    };
+  }
 
   log('DEBUG', 'Main', 'Parsed reservationData:', reservationDataFromClient);
   log('DEBUG', 'Main', 'Parsed paymentData:', paymentDataFromClient);
 
-  // ===== 2. 犬情報取得 =====
-  var dog = DogRepository.findById(reservationDataFromClient.primary_dog_id);
-  if (!dog || dog.error) {
-    throw createK9Error(ErrorCode.RECORD_NOT_FOUND, 'Dog not found: ' + reservationDataFromClient.primary_dog_id);
+  // ===== 2. 犬情報取得/作成 =====
+  var dogId = reservationDataFromClient.primary_dog_id;
+
+  if (dogId) {
+    // 犬IDが指定されている場合
+    dog = DogRepository.findById(dogId);
+  } else {
+    // 犬IDがない場合、顧客の犬を検索
+    var customerDogs = DogRepository.findByCustomerId(customer.customer_id);
+    if (customerDogs && customerDogs.length > 0) {
+      dog = customerDogs[0];
+      log('INFO', 'Main', 'Found existing dog for customer: ' + dog.dog_id);
+    }
   }
+
+  // 犬が見つからない場合、新規作成を試みる
+  if ((!dog || dog.error) && isNewUser && requestBody.regData) {
+    log('INFO', 'Main', 'Creating new dog from regData');
+
+    var regData = requestBody.regData;
+    var dogAgeYears = regData.dogAgeYears || regData.dogAge || 0;
+    var dogAgeMonths = regData.dogAgeMonths || 0;
+
+    dog = DogRepository.create({
+      customer_id: customer.customer_id,
+      dog_name: regData.dogName,
+      breed: regData.dogBreed,
+      age_years: dogAgeYears,
+      age_months: dogAgeMonths,
+      dog_gender: regData.dogGender || null,
+      is_neutered: regData.neutered || false,
+      vaccinations: regData.vaccinations ? JSON.stringify(regData.vaccinations) : null,
+      concerns: regData.concerns || null,
+      notes: regData.remarks || null
+    });
+
+    if (dog.error) {
+      log('ERROR', 'Main', 'Dog creation failed', dog);
+      throw dog;
+    }
+    log('INFO', 'Main', 'New dog created: ' + dog.dog_id);
+  }
+
+  if (!dog || dog.error) {
+    throw createK9Error(ErrorCode.RECORD_NOT_FOUND, 'Dog not found and could not be created');
+  }
+
+  // reservationDataにdog_idを設定
+  reservationDataFromClient.primary_dog_id = dog.dog_id;
 
   // ===== 3. トレーナー情報取得 =====
   var trainerId = reservationDataFromClient.trainer_id;
@@ -1373,20 +1485,109 @@ function handleCreateReservationWithPayment(lineUserId, requestBody) {
 
   var lockId = requestBody.lockId;
 
-  // ===== 9. アトミックトランザクション実行（Square決済含む）=====
-  var result = Transaction.createReservationWithPaymentAtomic(
-    reservationData,
-    paymentData,
-    lockId
-  );
+  // ===== 9. idempotency_key生成・キュー登録 =====
+  var idempotencyKey = Transaction.generateIdempotencyKey(customer.customer_id);
+  paymentData.idempotency_key = idempotencyKey;
 
-  if (result.error || !result.success) {
-    log('ERROR', 'Main', 'Transaction failed', result);
-    throw result;
+  log('INFO', 'Main', 'idempotency_key generated: ' + idempotencyKey);
+
+  // 二重処理チェック
+  var duplicateCheck = Transaction.checkSquareDuplicate(idempotencyKey);
+  if (duplicateCheck.isDuplicate) {
+    log('WARN', 'Main', 'Duplicate transaction detected');
+    return {
+      success: true,
+      duplicate: true,
+      message: duplicateCheck.message,
+      existingEntry: duplicateCheck.existingEntry
+    };
   }
 
-  log('INFO', 'Main', '=== handleCreateReservationWithPayment SUCCESS ===');
-  return result;
+  // トランザクションキューに登録
+  var queueEntry = Transaction.enqueue({
+    idempotency_key: idempotencyKey,
+    transaction_type: 'PAYMENT',
+    customer_id: customer.customer_id,
+    request_data: {
+      reservationData: reservationData,
+      paymentData: paymentData,
+      lockId: lockId
+    }
+  });
+
+  // ===== 10. アトミックトランザクション実行（Square決済含む）=====
+  var result;
+  try {
+    result = Transaction.createReservationWithPaymentAtomic(
+      reservationData,
+      paymentData,
+      lockId
+    );
+
+    if (result.error || !result.success) {
+      throw result;
+    }
+
+    // 成功: キューステータスを更新
+    Transaction.updateQueueStatus(queueEntry.queue_id, 'COMPLETED');
+
+    log('INFO', 'Main', '=== handleCreateReservationWithPayment SUCCESS ===');
+    return result;
+
+  } catch (transactionError) {
+    log('ERROR', 'Main', 'Transaction failed, creating PENDING_PAYMENT reservation', transactionError);
+
+    // キューステータスを更新
+    Transaction.updateQueueStatus(queueEntry.queue_id, 'FAILED', {
+      error: transactionError.message || JSON.stringify(transactionError),
+      retry_count: 1
+    });
+
+    // ===== PENDING_PAYMENT予約を作成（決済なしで予約確保）=====
+    try {
+      reservationData.status = 'CONFIRMED';  // 予約自体は確定
+      reservationData.payment_status = 'PENDING_PAYMENT';  // 決済は保留
+
+      var reservationOnly = ReservationRepository.create(reservationData);
+
+      if (reservationOnly.error) {
+        log('ERROR', 'Main', 'Failed to create PENDING_PAYMENT reservation', reservationOnly);
+        throw transactionError;  // 元のエラーを投げる
+      }
+
+      // キューにreservation_idを追加
+      Transaction.updateQueueStatus(queueEntry.queue_id, 'PENDING_RETRY', {
+        reservation_id: reservationOnly.reservation_id
+      });
+
+      log('INFO', 'Main', 'PENDING_PAYMENT reservation created: ' + reservationOnly.reservation_code);
+
+      // LINE通知（予約確保 + 決済リトライ中）
+      if (typeof NotificationService !== 'undefined' && customer.line_user_id) {
+        try {
+          NotificationService.sendPaymentPendingNotification(
+            customer.line_user_id,
+            reservationOnly,
+            '決済処理を再試行しております'
+          );
+        } catch (notifyError) {
+          log('WARN', 'Main', 'Failed to send PENDING_PAYMENT notification: ' + notifyError.message);
+        }
+      }
+
+      return {
+        success: true,
+        payment_pending: true,
+        reservation: reservationOnly,
+        message: '予約は確保されました。決済処理を再試行中です。',
+        queue_id: queueEntry.queue_id
+      };
+
+    } catch (fallbackError) {
+      log('ERROR', 'Main', 'Failed to create fallback reservation', fallbackError);
+      throw transactionError;
+    }
+  }
 }
 
 /**
@@ -1667,28 +1868,459 @@ function testTokenVerification() {
   }
 }
 
+// ============================================================================
+// 新規ユーザー早期登録（二段階処理用）
+// ============================================================================
+
+/**
+ * 顧客情報の早期登録
+ * View4 飼い主情報入力完了時にバックグラウンドで呼び出される
+ */
+function handleRegisterCustomer(lineUserId, requestBody) {
+  log('INFO', 'Main', '=== handleRegisterCustomer START ===');
+  log('DEBUG', 'Main', 'lineUserId: ' + lineUserId);
+  log('DEBUG', 'Main', 'requestBody: ' + JSON.stringify(requestBody));
+
+  // 既存顧客チェック
+  var existingCustomer = CustomerRepository.findByLineUserId(lineUserId);
+  if (existingCustomer && !existingCustomer.error) {
+    log('INFO', 'Main', 'Customer already exists: ' + existingCustomer.customer_id);
+    return {
+      success: true,
+      customer_id: existingCustomer.customer_id,
+      existing: true
+    };
+  }
+
+  // 必須フィールド検証
+  var regData = requestBody.regData || requestBody;
+  if (!regData.name || !regData.phone || !regData.address) {
+    throw createK9Error(
+      ErrorCode.REQUIRED_FIELD_MISSING,
+      '顧客登録に必要な情報が不足しています',
+      { required: ['name', 'phone', 'address'] }
+    );
+  }
+
+  // 顧客作成
+  var customer = CustomerRepository.create({
+    line_user_id: lineUserId,
+    customer_name: regData.name,
+    customer_phone: regData.phone,
+    customer_email: regData.email || null,
+    postal_code: regData.zip || null,
+    address: regData.address,
+    building: regData.building || null,
+    landmark: regData.landmark || null,
+    base_lat: regData.lat || null,
+    base_lng: regData.lng || null,
+    registration_status: 'PENDING'  // 予約完了まではPENDING
+  });
+
+  if (customer.error) {
+    log('ERROR', 'Main', 'Customer creation failed', customer);
+    throw customer;
+  }
+
+  log('INFO', 'Main', 'Customer created: ' + customer.customer_id);
+  log('INFO', 'Main', '=== handleRegisterCustomer SUCCESS ===');
+
+  return {
+    success: true,
+    customer_id: customer.customer_id,
+    existing: false
+  };
+}
+
+/**
+ * 犬情報の早期登録
+ * View4 犬情報入力完了時にバックグラウンドで呼び出される
+ */
+function handleRegisterDog(lineUserId, requestBody) {
+  log('INFO', 'Main', '=== handleRegisterDog START ===');
+  log('DEBUG', 'Main', 'lineUserId: ' + lineUserId);
+  log('DEBUG', 'Main', 'requestBody: ' + JSON.stringify(requestBody));
+
+  // 顧客取得
+  var customer = CustomerRepository.findByLineUserId(lineUserId);
+  if (!customer || customer.error) {
+    throw createK9Error(
+      ErrorCode.RECORD_NOT_FOUND,
+      '顧客情報が見つかりません。先に顧客登録を行ってください。'
+    );
+  }
+
+  // 必須フィールド検証
+  var regData = requestBody.regData || requestBody;
+  if (!regData.dogName || !regData.dogBreed) {
+    throw createK9Error(
+      ErrorCode.REQUIRED_FIELD_MISSING,
+      '犬情報登録に必要な情報が不足しています',
+      { required: ['dogName', 'dogBreed'] }
+    );
+  }
+
+  // 年齢フィールドの互換性対応
+  var dogAgeYears = regData.dogAgeYears || regData.dogAge || 0;
+  var dogAgeMonths = regData.dogAgeMonths || 0;
+
+  // 犬作成
+  var dog = DogRepository.create({
+    customer_id: customer.customer_id,
+    dog_name: regData.dogName,
+    breed: regData.dogBreed,
+    age_years: dogAgeYears,
+    age_months: dogAgeMonths,
+    dog_gender: regData.dogGender || null,
+    is_neutered: regData.neutered || false,
+    vaccinations: regData.vaccinations ? JSON.stringify(regData.vaccinations) : null,
+    concerns: regData.concerns || null,
+    notes: regData.remarks || null
+  });
+
+  if (dog.error) {
+    log('ERROR', 'Main', 'Dog creation failed', dog);
+    throw dog;
+  }
+
+  log('INFO', 'Main', 'Dog created: ' + dog.dog_id);
+  log('INFO', 'Main', '=== handleRegisterDog SUCCESS ===');
+
+  return {
+    success: true,
+    customer_id: customer.customer_id,
+    dog_id: dog.dog_id
+  };
+}
+
 /**
  * LineTokenVerification が存在するか確認
  */
 function testLineTokenVerificationExists() {
   console.log('=== LineTokenVerification Existence Test ===\n');
-  
+
   try {
     if (typeof LineTokenVerification === 'undefined') {
       console.log('❌ LineTokenVerification is NOT defined');
       console.log('Please make sure LineTokenVerification.gs is deployed');
       return;
     }
-    
+
     console.log('✅ LineTokenVerification is defined');
-    
+
     if (typeof LineTokenVerification.verifyToken === 'function') {
       console.log('✅ LineTokenVerification.verifyToken is a function');
     } else {
       console.log('❌ LineTokenVerification.verifyToken is NOT a function');
     }
-    
+
   } catch (error) {
     console.error('❌ Test failed:', error.message);
   }
+}
+
+// ============================================================================
+// 決済リトライトリガー
+// ============================================================================
+
+/**
+ * 決済リトライトリガー（5分毎に実行）
+ * GASのトリガーとして設定: トリガー → retryFailedPayments → 時間主導型 → 5分毎
+ */
+function retryFailedPayments() {
+  log('INFO', 'Main', '=== retryFailedPayments START ===');
+
+  try {
+    // リトライ対象のキューエントリを取得
+    var allEntries = DB.fetchTable(CONFIG.SHEET.TRANSACTION_QUEUE);
+
+    var pendingRetries = allEntries.filter(function(entry) {
+      return entry.status === 'PENDING_RETRY' &&
+             entry.retry_count < (entry.max_retries || 3);
+    });
+
+    log('INFO', 'Main', 'Found ' + pendingRetries.length + ' pending payment retries');
+
+    if (pendingRetries.length === 0) {
+      log('INFO', 'Main', '=== retryFailedPayments END (no pending retries) ===');
+      return { success: true, processed: 0 };
+    }
+
+    var results = {
+      processed: 0,
+      succeeded: 0,
+      failed: 0,
+      manualRequired: 0
+    };
+
+    pendingRetries.forEach(function(entry) {
+      try {
+        log('INFO', 'Main', 'Processing retry for queue_id: ' + entry.queue_id);
+        results.processed++;
+
+        // リクエストデータを復元
+        var requestData = typeof entry.request_data === 'string'
+          ? JSON.parse(entry.request_data)
+          : entry.request_data;
+
+        var paymentData = requestData.paymentData;
+        var reservationId = entry.reservation_id;
+
+        if (!paymentData || !paymentData.square_source_id) {
+          log('ERROR', 'Main', 'Invalid payment data for retry', { queue_id: entry.queue_id });
+          handleRetryFailure(entry, 'Invalid payment data: square_source_id missing');
+          results.failed++;
+          return;
+        }
+
+        // Square決済リトライ
+        log('INFO', 'Main', 'Retrying Square payment', {
+          queue_id: entry.queue_id,
+          amount: paymentData.total_amount,
+          idempotency_key: entry.idempotency_key
+        });
+
+        // idempotency_keyを設定（同じキーで再試行）
+        paymentData.idempotency_key = entry.idempotency_key;
+
+        var squareResult = SquareService.processCardPayment(paymentData, paymentData.square_source_id);
+
+        if (squareResult.success) {
+          // 成功: キュー更新 + 予約更新 + 通知
+          handleRetrySuccess(entry, squareResult, reservationId);
+          results.succeeded++;
+        } else {
+          // 失敗: リトライカウント増加
+          handleRetryFailure(entry, squareResult.message || 'Square payment failed');
+          results.failed++;
+        }
+
+      } catch (retryError) {
+        log('ERROR', 'Main', 'Retry exception for queue_id: ' + entry.queue_id, {
+          error: retryError.message
+        });
+        handleRetryFailure(entry, retryError.message);
+        results.failed++;
+      }
+    });
+
+    log('INFO', 'Main', '=== retryFailedPayments END ===', results);
+    return { success: true, results: results };
+
+  } catch (error) {
+    log('ERROR', 'Main', 'retryFailedPayments failed: ' + error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * リトライ成功時の処理
+ */
+function handleRetrySuccess(queueEntry, squareResult, reservationId) {
+  log('INFO', 'Main', 'Payment retry succeeded for queue_id: ' + queueEntry.queue_id);
+
+  // 1. キューステータスを更新
+  Transaction.updateQueueStatus(queueEntry.queue_id, 'COMPLETED', {
+    square_payment_id: squareResult.square_payment_id
+  });
+
+  // 2. 予約の決済ステータスを更新
+  if (reservationId) {
+    DB.update(CONFIG.SHEET.RESERVATIONS, reservationId, {
+      payment_status: 'CAPTURED',
+      updated_at: new Date()
+    });
+
+    log('INFO', 'Main', 'Reservation payment status updated to CAPTURED: ' + reservationId);
+  }
+
+  // 3. 決済レコード作成/更新
+  try {
+    var requestData = typeof queueEntry.request_data === 'string'
+      ? JSON.parse(queueEntry.request_data)
+      : queueEntry.request_data;
+
+    var paymentData = requestData.paymentData;
+
+    var paymentRecord = {
+      payment_id: Utilities.getUuid(),
+      reservation_id: reservationId,
+      customer_id: queueEntry.customer_id,
+      amount: paymentData.amount,
+      tax_amount: paymentData.tax_amount || 0,
+      total_amount: paymentData.total_amount,
+      payment_method: 'CREDIT_CARD',
+      payment_status: 'CAPTURED',
+      square_payment_id: squareResult.square_payment_id,
+      square_order_id: squareResult.square_order_id || '',
+      square_receipt_url: squareResult.square_receipt_url || '',
+      card_brand: squareResult.card_brand || '',
+      card_last4: squareResult.card_last4 || '',
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+
+    DB.insert(CONFIG.SHEET.PAYMENTS, paymentRecord);
+    log('INFO', 'Main', 'Payment record created: ' + paymentRecord.payment_id);
+  } catch (paymentError) {
+    log('WARN', 'Main', 'Failed to create payment record: ' + paymentError.message);
+  }
+
+  // 4. LINE通知（決済完了）
+  try {
+    var customer = CustomerRepository.findById(queueEntry.customer_id);
+    if (customer && !customer.error && customer.line_user_id) {
+      var reservation = ReservationRepository.findById(reservationId);
+      if (reservation && !reservation.error) {
+        NotificationService.sendPaymentCompletedNotification(
+          customer.line_user_id,
+          reservation,
+          squareResult
+        );
+        log('INFO', 'Main', 'Payment completed notification sent');
+      }
+    }
+  } catch (notifyError) {
+    log('WARN', 'Main', 'Failed to send payment completed notification: ' + notifyError.message);
+  }
+}
+
+/**
+ * リトライ失敗時の処理
+ */
+function handleRetryFailure(queueEntry, errorMessage) {
+  var newRetryCount = (queueEntry.retry_count || 0) + 1;
+  var maxRetries = queueEntry.max_retries || 3;
+
+  log('INFO', 'Main', 'Payment retry failed', {
+    queue_id: queueEntry.queue_id,
+    retry_count: newRetryCount,
+    max_retries: maxRetries,
+    error: errorMessage
+  });
+
+  if (newRetryCount >= maxRetries) {
+    // 最大リトライ回数到達: MANUAL_REQUIRED
+    log('WARN', 'Main', 'Max retries reached, marking as MANUAL_REQUIRED');
+
+    DB.update(CONFIG.SHEET.TRANSACTION_QUEUE, queueEntry.queue_id, {
+      status: 'MANUAL_REQUIRED',
+      retry_count: newRetryCount,
+      last_error: errorMessage,
+      updated_at: new Date()
+    });
+
+    // 顧客に通知（最終失敗）
+    try {
+      var customer = CustomerRepository.findById(queueEntry.customer_id);
+      if (customer && !customer.error && customer.line_user_id) {
+        var reservation = null;
+        if (queueEntry.reservation_id) {
+          reservation = ReservationRepository.findById(queueEntry.reservation_id);
+        }
+        NotificationService.sendPaymentFailedNotification(
+          customer.line_user_id,
+          reservation,
+          errorMessage
+        );
+        log('INFO', 'Main', 'Payment failed notification sent to customer');
+      }
+    } catch (notifyError) {
+      log('WARN', 'Main', 'Failed to send payment failed notification: ' + notifyError.message);
+    }
+
+    // 管理者に通知
+    try {
+      var adminCustomer = CustomerRepository.findById(queueEntry.customer_id);
+      var adminReservation = queueEntry.reservation_id
+        ? ReservationRepository.findById(queueEntry.reservation_id)
+        : null;
+      NotificationService.sendPaymentErrorToAdmin(queueEntry, adminCustomer, adminReservation);
+      log('INFO', 'Main', 'Payment error notification sent to admin');
+    } catch (adminNotifyError) {
+      log('WARN', 'Main', 'Failed to send admin notification: ' + adminNotifyError.message);
+    }
+
+  } else {
+    // まだリトライ可能: PENDING_RETRY
+    DB.update(CONFIG.SHEET.TRANSACTION_QUEUE, queueEntry.queue_id, {
+      status: 'PENDING_RETRY',
+      retry_count: newRetryCount,
+      last_error: errorMessage,
+      updated_at: new Date()
+    });
+  }
+}
+
+/**
+ * 手動リトライ用関数
+ * 管理者がqueueIdを指定して手動でリトライを実行
+ */
+function manualRetryPayment(queueId) {
+  log('INFO', 'Main', 'Manual retry requested for queue_id: ' + queueId);
+
+  var allEntries = DB.fetchTable(CONFIG.SHEET.TRANSACTION_QUEUE);
+  var entry = allEntries.find(function(e) {
+    return e.queue_id === queueId;
+  });
+
+  if (!entry) {
+    return { error: true, message: 'Queue entry not found: ' + queueId };
+  }
+
+  // リトライカウントをリセットして再試行を許可
+  DB.update(CONFIG.SHEET.TRANSACTION_QUEUE, queueId, {
+    status: 'PENDING_RETRY',
+    retry_count: 0,
+    updated_at: new Date()
+  });
+
+  log('INFO', 'Main', 'Queue entry reset for manual retry: ' + queueId);
+
+  // 即時リトライ実行
+  return retryFailedPayments();
+}
+
+/**
+ * 決済リトライトリガーを設定（一度だけ実行）
+ * GASエディタから手動でこの関数を実行してください
+ */
+function setupPaymentRetryTrigger() {
+  // 既存のretryFailedPaymentsトリガーを削除
+  var triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(function(trigger) {
+    if (trigger.getHandlerFunction() === 'retryFailedPayments') {
+      ScriptApp.deleteTrigger(trigger);
+      log('INFO', 'Main', 'Deleted existing retryFailedPayments trigger');
+    }
+  });
+
+  // 5分毎のトリガーを作成
+  ScriptApp.newTrigger('retryFailedPayments')
+    .timeBased()
+    .everyMinutes(5)
+    .create();
+
+  log('INFO', 'Main', 'Created retryFailedPayments trigger (every 5 minutes)');
+
+  return { success: true, message: 'Payment retry trigger setup complete (every 5 minutes)' };
+}
+
+/**
+ * 決済リトライトリガーを削除
+ */
+function removePaymentRetryTrigger() {
+  var triggers = ScriptApp.getProjectTriggers();
+  var deletedCount = 0;
+
+  triggers.forEach(function(trigger) {
+    if (trigger.getHandlerFunction() === 'retryFailedPayments') {
+      ScriptApp.deleteTrigger(trigger);
+      deletedCount++;
+    }
+  });
+
+  log('INFO', 'Main', 'Removed ' + deletedCount + ' retryFailedPayments triggers');
+
+  return { success: true, message: 'Removed ' + deletedCount + ' triggers' };
 }

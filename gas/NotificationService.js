@@ -1012,6 +1012,235 @@ NotificationService._sendCancellationApprovedEmail = function(customer, reservat
     });
   }
 };
+
+// ============================================================================
+// 決済リトライ関連通知
+// ============================================================================
+
+/**
+ * 決済保留通知（予約確保 + 決済リトライ中）
+ * @param {string} lineUserId - LINE User ID
+ * @param {Object} reservation - 予約情報
+ * @param {string} reason - 保留理由
+ */
+NotificationService.sendPaymentPendingNotification = function(lineUserId, reservation, reason) {
+  var context = { service: 'NotificationService', action: 'sendPaymentPendingNotification' };
+
+  try {
+    log('INFO', 'NotificationService', 'Sending payment pending notification', {
+      lineUserId: lineUserId,
+      reservationId: reservation.reservation_id
+    });
+
+    // 犬情報取得
+    var dogName = reservation.dog_name || '';
+    var dogSuffix = '';
+    if (reservation.primary_dog_id) {
+      var dog = DogRepository.findById(reservation.primary_dog_id);
+      if (!dog.error) {
+        dogName = dog.dog_name || dogName;
+        if (dog.dog_gender === '♂' || dog.dog_gender === 'オス') {
+          dogSuffix = 'くん';
+        } else if (dog.dog_gender) {
+          dogSuffix = 'ちゃん';
+        }
+      }
+    }
+
+    // 日付フォーマット
+    var reservationDate = reservation.reservation_date;
+    if (typeof reservationDate === 'string') {
+      reservationDate = new Date(reservationDate);
+    }
+    var dateStr = Utilities.formatDate(reservationDate, 'JST', 'yyyy年M月d日（E）');
+    var timeStr = reservation.start_time || '';
+
+    var message = 'K9 Harmony 代表の平田でございます。\n\n' +
+      'ご予約が確定いたしました。\n\n' +
+      '◻︎ ご予約内容\n' +
+      '・日時: ' + dateStr + ' ' + timeStr + '\n' +
+      '・パートナー: ' + dogName + dogSuffix + '\n\n' +
+      '⚠️ 決済について\n' +
+      'サーバーの一時的な障害により、決済処理を再試行しております。\n' +
+      '決済完了時に改めてLINEでお知らせいたします。\n\n' +
+      '万が一決済が完了しない場合は、担当者よりご連絡いたします。\n\n' +
+      '当日、' + dogName + dogSuffix + 'にお会いできることを楽しみにしております。';
+
+    this._pushLineMessage(lineUserId, message);
+
+    log('INFO', 'NotificationService', 'Payment pending notification sent');
+    return { success: true };
+
+  } catch (error) {
+    log('ERROR', 'NotificationService', 'Payment pending notification failed', {
+      error: error.message
+    });
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * 決済完了通知（リトライ成功時）
+ * @param {string} lineUserId - LINE User ID
+ * @param {Object} reservation - 予約情報
+ * @param {Object} payment - 決済情報
+ */
+NotificationService.sendPaymentCompletedNotification = function(lineUserId, reservation, payment) {
+  var context = { service: 'NotificationService', action: 'sendPaymentCompletedNotification' };
+
+  try {
+    log('INFO', 'NotificationService', 'Sending payment completed notification', {
+      lineUserId: lineUserId,
+      reservationId: reservation.reservation_id
+    });
+
+    // 犬情報取得
+    var dogName = reservation.dog_name || '';
+    var dogSuffix = '';
+    if (reservation.primary_dog_id) {
+      var dog = DogRepository.findById(reservation.primary_dog_id);
+      if (!dog.error) {
+        dogName = dog.dog_name || dogName;
+        if (dog.dog_gender === '♂' || dog.dog_gender === 'オス') {
+          dogSuffix = 'くん';
+        } else if (dog.dog_gender) {
+          dogSuffix = 'ちゃん';
+        }
+      }
+    }
+
+    // 日付フォーマット
+    var reservationDate = reservation.reservation_date;
+    if (typeof reservationDate === 'string') {
+      reservationDate = new Date(reservationDate);
+    }
+    var dateStr = Utilities.formatDate(reservationDate, 'JST', 'yyyy年M月d日（E）');
+    var timeStr = reservation.start_time || '';
+
+    var totalAmount = payment.total_amount || reservation.total_amount || 0;
+
+    var message = 'K9 Harmony からのお知らせ\n\n' +
+      '決済が完了いたしました。\n\n' +
+      '◻︎ ご予約内容\n' +
+      '・日時: ' + dateStr + ' ' + timeStr + '\n' +
+      '・パートナー: ' + dogName + dogSuffix + '\n' +
+      '・お支払い: ¥' + totalAmount.toLocaleString() + '（クレジットカード）\n\n' +
+      '当日、' + dogName + dogSuffix + 'にお会いできることを楽しみにしております。';
+
+    this._pushLineMessage(lineUserId, message);
+
+    log('INFO', 'NotificationService', 'Payment completed notification sent');
+    return { success: true };
+
+  } catch (error) {
+    log('ERROR', 'NotificationService', 'Payment completed notification failed', {
+      error: error.message
+    });
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * 決済失敗通知（リトライ上限到達時）
+ * @param {string} lineUserId - LINE User ID
+ * @param {Object} reservation - 予約情報
+ */
+NotificationService.sendPaymentFailedNotification = function(lineUserId, reservation) {
+  var context = { service: 'NotificationService', action: 'sendPaymentFailedNotification' };
+
+  try {
+    log('INFO', 'NotificationService', 'Sending payment failed notification', {
+      lineUserId: lineUserId,
+      reservationId: reservation.reservation_id
+    });
+
+    // 犬情報取得
+    var dogName = reservation.dog_name || '';
+    var dogSuffix = '';
+    if (reservation.primary_dog_id) {
+      var dog = DogRepository.findById(reservation.primary_dog_id);
+      if (!dog.error) {
+        dogName = dog.dog_name || dogName;
+        if (dog.dog_gender === '♂' || dog.dog_gender === 'オス') {
+          dogSuffix = 'くん';
+        } else if (dog.dog_gender) {
+          dogSuffix = 'ちゃん';
+        }
+      }
+    }
+
+    // 日付フォーマット
+    var reservationDate = reservation.reservation_date;
+    if (typeof reservationDate === 'string') {
+      reservationDate = new Date(reservationDate);
+    }
+    var dateStr = Utilities.formatDate(reservationDate, 'JST', 'yyyy年M月d日（E）');
+    var timeStr = reservation.start_time || '';
+
+    var message = 'K9 Harmony からのお知らせ\n\n' +
+      'ご予約は確保されております。\n\n' +
+      '◻︎ ご予約内容\n' +
+      '・日時: ' + dateStr + ' ' + timeStr + '\n' +
+      '・パートナー: ' + dogName + dogSuffix + '\n\n' +
+      '決済処理が完了できませんでした。\n' +
+      'お支払いについては担当者より改めてご連絡いたします。\n\n' +
+      'ご不便をおかけし申し訳ございません。';
+
+    this._pushLineMessage(lineUserId, message);
+
+    log('INFO', 'NotificationService', 'Payment failed notification sent');
+    return { success: true };
+
+  } catch (error) {
+    log('ERROR', 'NotificationService', 'Payment failed notification failed', {
+      error: error.message
+    });
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * 管理者への決済エラー通知
+ * @param {Object} queueEntry - キューエントリ
+ * @param {Object} customer - 顧客情報
+ * @param {Object} reservation - 予約情報（あれば）
+ */
+NotificationService.sendPaymentErrorToAdmin = function(queueEntry, customer, reservation) {
+  var context = { service: 'NotificationService', action: 'sendPaymentErrorToAdmin' };
+
+  try {
+    var adminLineId = CONFIG.LINE.ADMIN_USER_ID;
+    if (!adminLineId) {
+      log('WARN', 'NotificationService', 'Admin LINE ID not configured');
+      return { success: false, error: 'Admin LINE ID not configured' };
+    }
+
+    var message = '【要対応】決済エラー発生\n\n' +
+      '顧客: ' + (customer ? customer.customer_name : '不明') + '様\n' +
+      'キューID: ' + queueEntry.queue_id + '\n' +
+      'リトライ回数: ' + queueEntry.retry_count + '/' + queueEntry.max_retries + '\n' +
+      'ステータス: ' + queueEntry.status + '\n' +
+      'エラー: ' + (queueEntry.last_error || '不明') + '\n';
+
+    if (reservation) {
+      var dateStr = reservation.reservation_date || '';
+      message += '\n予約日時: ' + dateStr + ' ' + (reservation.start_time || '') + '\n' +
+        '予約ID: ' + reservation.reservation_id;
+    }
+
+    this._pushLineMessage(adminLineId, message);
+
+    log('INFO', 'NotificationService', 'Admin payment error notification sent');
+    return { success: true };
+
+  } catch (error) {
+    log('ERROR', 'NotificationService', 'Admin notification failed', {
+      error: error.message
+    });
+    return { success: false, error: error.message };
+  }
+};
+
 /**
  * キャンセル通知テスト
  */

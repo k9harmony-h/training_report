@@ -53,7 +53,11 @@
     appliedCoupon: null,
 
     // 新規ユーザー用ジオデータ
-    newUserGeoData: null
+    newUserGeoData: null,
+
+    // 二段階登録（バックグラウンド登録済みID）
+    registeredCustomerId: null,
+    registeredDogId: null
   };
 
   /**
@@ -1408,11 +1412,36 @@ async function preCalculateTravelFee() {
       // 新規ユーザー → アコーディオン形式の登録フォーム
       debugLog('🆕 新規ユーザー → アコーディオンフォームへ', 'info');
       showView4Pattern('new-card');
+
+      // 先にトップへスクロール
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+
       goToView(4);
-      // 最初のアコーディオンを開く
+
+      // 最初のアコーディオンを開く（スクロールせずに）
       setTimeout(() => {
-        goToAccordionSection('owner');
-      }, 100);
+        // ownerセクションを開く（スクロールなし）
+        const sections = ['owner', 'dog', 'payment'];
+        sections.forEach(s => {
+          const header = document.querySelector(`#accordion-${s} .accordion-header-new`);
+          const content = document.getElementById(`accordion-${s}-content`);
+          if (s === 'owner') {
+            header?.classList.add('open');
+            content?.classList.add('open');
+          } else {
+            header?.classList.remove('open');
+            content?.classList.remove('open');
+          }
+        });
+        // 再度トップへスクロール（DOM更新後）
+        requestAnimationFrame(() => {
+          window.scrollTo(0, 0);
+          document.body.scrollTop = 0;
+          document.documentElement.scrollTop = 0;
+        });
+      }, 150);
       return;
     }
 
@@ -2715,9 +2744,25 @@ function selectTime(date, time) {
 
   /**
    * アコーディオンセクション移動
+   * 二段階登録: 各セクション完了時にバックグラウンドでDB登録
    */
   function goToAccordionSection(section) {
     const sections = ['owner', 'dog', 'payment'];
+    const currentSection = sections.find(s => {
+      const content = document.getElementById(`accordion-${s}-content`);
+      return content && content.classList.contains('open');
+    });
+
+    // ===== バックグラウンド登録（二段階処理）=====
+    // 飼い主セクション → 犬セクションへ移動時: 顧客DB登録
+    if (currentSection === 'owner' && section === 'dog') {
+      registerCustomerInBackground();
+    }
+    // 犬セクション → 料金確認セクションへ移動時: 犬DB登録
+    if (currentSection === 'dog' && section === 'payment') {
+      registerDogInBackground();
+    }
+
     sections.forEach(s => {
       const header = document.querySelector(`#accordion-${s} .accordion-header-new`);
       const content = document.getElementById(`accordion-${s}-content`);
@@ -2740,6 +2785,100 @@ function selectTime(date, time) {
     const targetSection = document.getElementById(`accordion-${section}`);
     if (targetSection) {
       targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  /**
+   * 顧客情報をバックグラウンドでDB登録
+   * View4飼い主セクション完了時に呼び出される
+   */
+  async function registerCustomerInBackground() {
+    debugLog('🔄 バックグラウンド顧客登録開始', 'info');
+
+    // 既に登録済みの場合はスキップ
+    if (AppState.registeredCustomerId) {
+      debugLog('✅ 顧客は既に登録済み: ' + AppState.registeredCustomerId, 'info');
+      return;
+    }
+
+    try {
+      const regData = {
+        name: document.getElementById('reg-name')?.value?.trim(),
+        phone: document.getElementById('reg-phone')?.value?.trim(),
+        email: document.getElementById('reg-email')?.value?.trim(),
+        zip: document.getElementById('reg-zip')?.value?.trim(),
+        address: document.getElementById('reg-addr')?.value?.trim(),
+        building: document.getElementById('reg-building')?.value?.trim(),
+        lat: AppState.newUserGeoData?.lat || null,
+        lng: AppState.newUserGeoData?.lng || null
+      };
+
+      const payload = {
+        action: 'registerCustomer',
+        lineUserId: AppState.lineUserId,
+        regData: regData
+      };
+
+      debugLog('📤 顧客登録リクエスト: ' + JSON.stringify(payload), 'info');
+
+      const result = await apiCall('POST', payload);
+
+      if (result.success) {
+        AppState.registeredCustomerId = result.customer_id;
+        debugLog('✅ 顧客登録成功: ' + result.customer_id + (result.existing ? ' (既存)' : ' (新規)'), 'success');
+      } else {
+        debugLog('⚠️ 顧客登録失敗（予約時に再試行）: ' + (result.message || result.error), 'warn');
+      }
+    } catch (error) {
+      debugLog('⚠️ 顧客登録エラー（予約時に再試行）: ' + error.message, 'warn');
+      // エラーでも続行（予約確定時にregDataを送信するフォールバック）
+    }
+  }
+
+  /**
+   * 犬情報をバックグラウンドでDB登録
+   * View4犬セクション完了時に呼び出される
+   */
+  async function registerDogInBackground() {
+    debugLog('🔄 バックグラウンド犬登録開始', 'info');
+
+    // 既に登録済みの場合はスキップ
+    if (AppState.registeredDogId) {
+      debugLog('✅ 犬は既に登録済み: ' + AppState.registeredDogId, 'info');
+      return;
+    }
+
+    try {
+      const regData = {
+        dogName: document.getElementById('reg-dog-name')?.value?.trim(),
+        dogBreed: document.getElementById('reg-dog-breed')?.value?.trim(),
+        dogAgeYears: document.getElementById('reg-dog-age-year')?.value,
+        dogAgeMonths: document.getElementById('reg-dog-age-month')?.value || '0',
+        dogGender: document.querySelector('input[name="reg-dog-gender"]:checked')?.value,
+        neutered: document.querySelector('input[name="reg-dog-neutered"]:checked')?.value === 'true',
+        vaccinations: Array.from(document.querySelectorAll('input[name="reg-vaccine"]:checked')).map(cb => cb.value),
+        concerns: document.getElementById('reg-concerns')?.value?.trim()
+      };
+
+      const payload = {
+        action: 'registerDog',
+        lineUserId: AppState.lineUserId,
+        regData: regData
+      };
+
+      debugLog('📤 犬登録リクエスト: ' + JSON.stringify(payload), 'info');
+
+      const result = await apiCall('POST', payload);
+
+      if (result.success) {
+        AppState.registeredDogId = result.dog_id;
+        debugLog('✅ 犬登録成功: ' + result.dog_id, 'success');
+      } else {
+        debugLog('⚠️ 犬登録失敗（予約時に再試行）: ' + (result.message || result.error), 'warn');
+      }
+    } catch (error) {
+      debugLog('⚠️ 犬登録エラー（予約時に再試行）: ' + error.message, 'warn');
+      // エラーでも続行（予約確定時にregDataを送信するフォールバック）
     }
   }
 
@@ -3159,12 +3298,14 @@ function selectTime(date, time) {
 
   /**
    * 新規ユーザー予約送信
+   * 二段階登録対応: バックグラウンドで登録済みの場合はIDを使用、
+   * 未登録の場合はregDataをフォールバックとして送信
    */
   async function submitNewUserReservation(isPaid) {
     try {
       showLoading('予約を確定中...');
 
-      // 登録データ収集
+      // 登録データ収集（フォールバック用 + View5表示用）
       const regData = {
         name: document.getElementById('reg-name')?.value?.trim(),
         phone: document.getElementById('reg-phone')?.value?.trim(),
@@ -3177,7 +3318,7 @@ function selectTime(date, time) {
         dogName: document.getElementById('reg-dog-name')?.value?.trim(),
         dogBreed: document.getElementById('reg-dog-breed')?.value?.trim(),
         dogAgeYears: document.getElementById('reg-dog-age-year')?.value,
-        dogAgeMonths: document.getElementById('reg-dog-age-month')?.value,
+        dogAgeMonths: document.getElementById('reg-dog-age-month')?.value || '0',
         dogGender: document.querySelector('input[name="reg-dog-gender"]:checked')?.value,
         neutered: document.querySelector('input[name="reg-dog-neutered"]:checked')?.value === 'true',
         vaccinations: Array.from(document.querySelectorAll('input[name="reg-vaccine"]:checked')).map(cb => cb.value),
@@ -3198,9 +3339,19 @@ function selectTime(date, time) {
         totalPrice: AppState.totalPrice,
         paymentMethod: isPaid ? 'CREDIT' : 'CASH',
         paymentStatus: isPaid ? 'PAID' : 'UNPAID',
-        regData: regData,
         isNewUser: true
       };
+
+      // 二段階登録: 登録済みIDがあれば使用、なければregDataをフォールバック
+      if (AppState.registeredCustomerId && AppState.registeredDogId) {
+        // 事前登録済み: IDを使用（GASはlineUserIdで顧客を検索）
+        payload.dogId = AppState.registeredDogId;
+        debugLog('✅ 事前登録済みID使用: customer=' + AppState.registeredCustomerId + ', dog=' + AppState.registeredDogId, 'info');
+      } else {
+        // 未登録: regDataをフォールバックとして送信
+        payload.regData = regData;
+        debugLog('⚠️ regDataフォールバック使用（事前登録未完了）', 'warn');
+      }
 
       if (isPaid && AppState.paymentToken) {
         payload.paymentData = JSON.stringify({
@@ -3218,6 +3369,11 @@ function selectTime(date, time) {
 
       if (result.success || result.status === 'success') {
         debugLog('✅ 新規ユーザー予約確定成功', 'success');
+
+        // PENDING_PAYMENT の場合は特別メッセージ
+        if (result.payment_pending) {
+          debugLog('⚠️ 決済はリトライ中: ' + result.message, 'warn');
+        }
 
         // AppStateに登録情報を保存（View5表示用）
         AppState.userData = { name: regData.name, address: regData.address };

@@ -88,6 +88,7 @@ SPREADSHEET: {
     PROCUREMENTS: '仕入',
     RESERVATION_LOCKS: '予約枠ロック',
     TRANSACTION_LOG: 'トランザクションログ',
+    TRANSACTION_QUEUE: 'トランザクションキューシート',
     RETRY_LOGS: 'リトライログ',
     
     // Analytics
