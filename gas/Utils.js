@@ -447,7 +447,8 @@ _getSpreadsheet: function(sheetName) {
     CONFIG.SHEET.PROCUREMENTS,
     CONFIG.SHEET.RESERVATION_LOCKS,
     CONFIG.SHEET.TRANSACTION_LOG,
-    CONFIG.SHEET.RETRY_LOGS  // ← ★★★ 追加 ★★★
+    CONFIG.SHEET.TRANSACTION_QUEUE,
+    CONFIG.SHEET.RETRY_LOGS
   ];
   
   if (masterSheets.includes(sheetName)) {
