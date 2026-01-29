@@ -1,0 +1,22 @@
+# ==============================================================================
+# K9 Harmony - Cloudflare Worker 設定
+# ==============================================================================
+# デプロイ: npx wrangler deploy
+# ==============================================================================
+
+name = "k9-harmony-ppcl"
+main = "worker.js"
+compatibility_date = "2026-01-30"
+
+# 本番環境変数
+# GAS_API_URLはCloudflareダッシュボードでシークレットとして設定するか、
+# または以下のコメントを外して直接設定できます
+# [vars]
+# GAS_API_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"
+
+# ログ設定
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
