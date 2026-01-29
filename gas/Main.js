@@ -1245,8 +1245,12 @@ function handleCreateReservationWithPayment(lineUserId, requestBody) {
     // 既存フォーマット（JSON文字列）
     reservationDataFromClient = JSON.parse(requestBody.reservationData);
     paymentDataFromClient = JSON.parse(requestBody.paymentData);
+  } else if (requestBody.reservationData && typeof requestBody.reservationData === 'object') {
+    // k9-liff Vue版: reservationDataとpaymentDataが直接オブジェクトとして送信される
+    reservationDataFromClient = requestBody.reservationData;
+    paymentDataFromClient = requestBody.paymentData || {};
   } else {
-    // 新規ユーザーフォーマット（直接オブジェクト）
+    // 新規ユーザーフォーマット（旧形式: 個別フィールド）
     reservationDataFromClient = {
       reservation_date: requestBody.date,
       start_time: requestBody.time,
@@ -1257,7 +1261,7 @@ function handleCreateReservationWithPayment(lineUserId, requestBody) {
       travel_fee: requestBody.travel_fee,
       total_amount: requestBody.totalPrice
     };
-    paymentDataFromClient = requestBody.paymentData ? JSON.parse(requestBody.paymentData) : {
+    paymentDataFromClient = {
       amount: requestBody.lesson_amount,
       total_amount: requestBody.totalPrice,
       payment_method: requestBody.paymentMethod === 'CREDIT' ? 'CREDIT_CARD' : 'CASH'
@@ -1942,14 +1946,15 @@ function handleRegisterCustomer(lineUserId, requestBody) {
   }
 
   // 顧客作成
+  // スプレッドシートのカラム名に合わせる
   var customer = CustomerRepository.create({
     line_user_id: lineUserId,
     customer_name: regData.name,
     customer_phone: phoneNumber,
     customer_email: regData.email || null,
     postal_code: postalCode,
-    address: regData.address,
-    building: regData.building || null,
+    customer_address_street: regData.address,           // スプレッドシートカラム名
+    customer_address_building: regData.building || null, // スプレッドシートカラム名
     landmark: regData.landmark || null,
     base_lat: regData.lat || null,
     base_lng: regData.lng || null,
