@@ -1912,13 +1912,42 @@ function handleRegisterCustomer(lineUserId, requestBody) {
     );
   }
 
+  // 電話番号をハイフン付きの標準形式に整形
+  // Google Sheetsは数字のような文字列を数値に変換して先頭の0が消えるため、
+  // ハイフンを含む形式で保存することで文字列として維持
+  var phoneNumber = regData.phone;
+  if (phoneNumber) {
+    // すでにハイフンがある場合はそのまま、ない場合は追加
+    var cleanPhone = String(phoneNumber).replace(/-/g, '');
+    if (cleanPhone.length === 11) {
+      // 携帯電話: 090-1234-5678
+      phoneNumber = cleanPhone.slice(0, 3) + '-' + cleanPhone.slice(3, 7) + '-' + cleanPhone.slice(7);
+    } else if (cleanPhone.length === 10) {
+      // 固定電話: 03-1234-5678 or 0123-45-6789
+      phoneNumber = cleanPhone.slice(0, 2) + '-' + cleanPhone.slice(2, 6) + '-' + cleanPhone.slice(6);
+    }
+  }
+
+  // 郵便番号をハイフン付きの標準形式に整形 (XXX-XXXX)
+  var postalCode = regData.zip;
+  if (postalCode) {
+    var cleanZip = String(postalCode).replace(/-/g, '');
+    // 先頭の0が消えている場合は補完（7桁に満たない場合）
+    while (cleanZip.length < 7) {
+      cleanZip = '0' + cleanZip;
+    }
+    if (cleanZip.length === 7) {
+      postalCode = cleanZip.slice(0, 3) + '-' + cleanZip.slice(3);
+    }
+  }
+
   // 顧客作成
   var customer = CustomerRepository.create({
     line_user_id: lineUserId,
     customer_name: regData.name,
-    customer_phone: regData.phone,
+    customer_phone: phoneNumber,
     customer_email: regData.email || null,
-    postal_code: regData.zip || null,
+    postal_code: postalCode,
     address: regData.address,
     building: regData.building || null,
     landmark: regData.landmark || null,
