@@ -24,81 +24,74 @@ class CalendarService {
   
   getMonthAvailability(params) {
     try {
-      Logger.log('📅 ========== 空き状況取得開始 ==========');
-      Logger.log('📋 パラメータ: ' + JSON.stringify(params));
-      
+      // 最適化: ログを最小限に
+      Logger.log('📅 空き状況取得: ' + params.year + '/' + params.month);
+
       this._validateParams(params);
-      
+
       var year = params.year;
       var month = params.month;
       var trainerCode = params.trainer_code;
       var isMultipleDogs = params.is_multiple_dogs;
-      
+
       var trainer = this.trainerRepo.findByTrainerCode(trainerCode);
       if (!trainer || trainer.error) {
         throw new Error('トレーナーが見つかりません: ' + trainerCode);
       }
-      
-      Logger.log('✅ トレーナー: ' + trainer.trainer_name + ' (' + trainerCode + ')');
-      
+
       var singleDuration = parseInt(this.reservationConfig.SINGLE_LESSON_DURATION) || 90;
       var multiAdditional = parseInt(this.reservationConfig.MULTI_DOG_ADDITIONAL) || 30;
       var lessonDuration = isMultipleDogs ? singleDuration + multiAdditional : singleDuration;
-      
-      Logger.log('⏱️ レッスン時間: ' + lessonDuration + '分');
-      
+
       var searchRange = this._calculateSearchRange(year, month);
-      
-      Logger.log('📅 検索範囲: ' + searchRange.startDate.toISOString() + ' - ' + searchRange.endDate.toISOString());
-      
+
       var existingReservations = this.reservationRepo.getReservationsByDateRange(
         searchRange.startDate,
         searchRange.endDate,
         trainer.trainer_id,
         ['PENDING', 'CONFIRMED']
       );
-      
-      Logger.log('📝 既存予約: ' + existingReservations.length + '件');
-      
+
       var availability = {};
       var currentDate = new Date(searchRange.startDate);
-      
+
+      // 最適化: バッファ時間を事前に取得
+      var bufferMinutes = parseInt(this.reservationConfig.BUFFER_MINUTES) || 30;
+
       while (currentDate <= searchRange.endDate) {
         var dateKey = this._formatDate(currentDate);
-        
+
         if (this._isPastDate(currentDate)) {
-          Logger.log('⏭️ 過去の日付をスキップ: ' + dateKey);
           currentDate.setDate(currentDate.getDate() + 1);
           continue;
         }
-        
+
         var businessHours = this._getBusinessHoursForDate(currentDate);
-        
+
         if (!businessHours) {
           availability[dateKey] = [];
-          Logger.log('🚫 定休日: ' + dateKey);
           currentDate.setDate(currentDate.getDate() + 1);
           continue;
         }
-        
+
         var timeSlots = this._generateTimeSlots(currentDate, businessHours, lessonDuration);
-        
-        var availableSlots = this._filterAvailableSlots(
+
+        // 最適化: バッファ時間を引数として渡す
+        var availableSlots = this._filterAvailableSlotsOptimized(
           currentDate,
           timeSlots,
           existingReservations,
-          lessonDuration
+          lessonDuration,
+          bufferMinutes,
+          businessHours
         );
-        
+
         availability[dateKey] = availableSlots;
-        
-        Logger.log('✅ ' + dateKey + ': ' + availableSlots.length + '枠');
-        
         currentDate.setDate(currentDate.getDate() + 1);
       }
-      
-      Logger.log('📅 ========== 空き状況取得完了 ==========');
-      
+
+      Logger.log('📅 空き状況取得完了: ' + Object.keys(availability).length + '日分');
+
       return {
         success: true,
         year: year,
@@ -109,17 +102,60 @@ class CalendarService {
         max_advance_days: parseInt(this.reservationConfig.MAX_ADVANCE_DAYS) || 60,
         availability: availability
       };
-      
+
     } catch (error) {
       Logger.log('❌ 空き状況取得エラー: ' + error.message);
-      Logger.log('❌ スタックトレース: ' + error.stack);
-      
+
       return {
         success: false,
         error: error.message,
         error_details: error.stack
       };
     }
+  }
+
+  /**
+   * 最適化版: 空きスロットフィルタリング（ログ最小化）
+   */
+  _filterAvailableSlotsOptimized(date, slots, existingReservations, lessonDuration, bufferMinutes, businessHours) {
+    var availableSlots = [];
+
+    var endParts = businessHours.end.split(':');
+    var businessEnd = new Date(date);
+    businessEnd.setHours(parseInt(endParts[0]), parseInt(endParts[1]), 0, 0);
+
+    for (var j = 0; j < slots.length; j++) {
+      var slot = slots[j];
+      var slotParts = slot.split(':');
+
+      var slotStart = new Date(date);
+      slotStart.setHours(parseInt(slotParts[0]), parseInt(slotParts[1]), 0, 0);
+
+      var slotEnd = new Date(slotStart.getTime() + lessonDuration * 60 * 1000);
+      var slotBufferEnd = slotEnd < businessEnd
+        ? new Date(slotEnd.getTime() + bufferMinutes * 60 * 1000)
+        : slotEnd;
+
+      var isAvailable = true;
+
+      for (var k = 0; k < existingReservations.length; k++) {
+        var reservation = existingReservations[k];
+        var resStart = new Date(reservation.start_datetime);
+        var resEnd = new Date(reservation.end_datetime);
+        var resBufferEnd = new Date(resEnd.getTime() + bufferMinutes * 60 * 1000);
+
+        if (slotStart < resBufferEnd && slotBufferEnd > resStart) {
+          isAvailable = false;
+          break;
+        }
+      }
+
+      if (isAvailable) {
+        availableSlots.push(slot);
+      }
+    }
+
+    return availableSlots;
   }
   
   _validateParams(params) {

@@ -361,6 +361,16 @@ switch (action) {
     response = handleRegisterDog(lineUserId, requestBody);
     break;
 
+  // ===== LINE通知送信 =====
+  case 'send_line_msg':
+    response = handleSendLineMessage(requestBody);
+    break;
+
+  // ===== Eメール送信 =====
+  case 'send_email':
+    response = handleSendEmail(requestBody);
+    break;
+
   default:
     return ContentService.createTextOutput(JSON.stringify({
       error: true,
@@ -476,7 +486,7 @@ function handleAddReservation(lineUserId, requestBody) {
         dog_gender: requestBody.regData.dogGender || null,
         is_neutered: requestBody.regData.neutered || false,
         vaccinations: requestBody.regData.vaccinations ? JSON.stringify(requestBody.regData.vaccinations) : null,
-        concerns: requestBody.regData.concerns || null,
+        problem: requestBody.regData.concerns || null,
         notes: requestBody.regData.remarks || null
       });
 
@@ -1289,7 +1299,7 @@ function handleCreateReservationWithPayment(lineUserId, requestBody) {
       dog_gender: regData.dogGender || null,
       is_neutered: regData.neutered || false,
       vaccinations: regData.vaccinations ? JSON.stringify(regData.vaccinations) : null,
-      concerns: regData.concerns || null,
+      problem: regData.concerns || null,
       notes: regData.remarks || null
     });
 
@@ -1974,7 +1984,7 @@ function handleRegisterDog(lineUserId, requestBody) {
     dog_gender: regData.dogGender || null,
     is_neutered: regData.neutered || false,
     vaccinations: regData.vaccinations ? JSON.stringify(regData.vaccinations) : null,
-    concerns: regData.concerns || null,
+    problem: regData.concerns || null,
     notes: regData.remarks || null
   });
 
@@ -2323,4 +2333,101 @@ function removePaymentRetryTrigger() {
   log('INFO', 'Main', 'Removed ' + deletedCount + ' retryFailedPayments triggers');
 
   return { success: true, message: 'Removed ' + deletedCount + ' triggers' };
+}
+
+// ============================================================================
+// LINE通知・Eメール送信
+// ============================================================================
+
+/**
+ * LINEメッセージ送信ハンドラー
+ */
+function handleSendLineMessage(requestBody) {
+  log('INFO', 'Main', 'handleSendLineMessage called', {
+    userId: requestBody.userId,
+    messageLength: requestBody.message ? requestBody.message.length : 0
+  });
+
+  try {
+    var userId = requestBody.userId;
+    var message = requestBody.message;
+
+    if (!userId || !message) {
+      return {
+        success: false,
+        error: 'userId and message are required'
+      };
+    }
+
+    // LINE Messaging API を使用して送信
+    var result = NotificationService.sendPushMessage(userId, message);
+
+    log('INFO', 'Main', 'LINE message sent', { userId: userId, result: result });
+
+    return {
+      success: true,
+      status: 'success'
+    };
+
+  } catch (error) {
+    log('ERROR', 'Main', 'handleSendLineMessage failed', { error: error.message });
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+/**
+ * Eメール送信ハンドラー
+ */
+function handleSendEmail(requestBody) {
+  log('INFO', 'Main', 'handleSendEmail called', {
+    to: requestBody.to,
+    subject: requestBody.subject
+  });
+
+  try {
+    var to = requestBody.to;
+    var subject = requestBody.subject;
+    var body = requestBody.body;
+
+    if (!to || !subject || !body) {
+      return {
+        success: false,
+        error: 'to, subject, and body are required'
+      };
+    }
+
+    // メールアドレスのバリデーション
+    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(to)) {
+      return {
+        success: false,
+        error: 'Invalid email address format'
+      };
+    }
+
+    // GASのMailAppを使用してメール送信
+    MailApp.sendEmail({
+      to: to,
+      subject: subject,
+      body: body,
+      name: 'K9 Harmony',
+      replyTo: 'info@k9harmony.jp'
+    });
+
+    log('INFO', 'Main', 'Email sent successfully', { to: to, subject: subject });
+
+    return {
+      success: true
+    };
+
+  } catch (error) {
+    log('ERROR', 'Main', 'handleSendEmail failed', { error: error.message });
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 }
