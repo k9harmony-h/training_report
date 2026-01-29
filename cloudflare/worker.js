@@ -113,8 +113,8 @@ async function proxyToGAS(request, env, url) {
   try {
     // GAS URLの取得
     const gasBaseUrl = env.GAS_API_URL ||
-      'https://script.google.com/macros/s/AKfycbwRMtETs62DDqeopcyC5A0YfftoxRhDWytaG_e9FShUsa7QltQ2s6kg5qIFaXM5BNX4ZQ/exec';
-    // 最新デプロイURL: 2026-01-26 18:45 更新
+      'https://script.google.com/macros/s/AKfycbwYH8J9GPDqtRf7S3OkBmZfC7rNqiJ3BbhabwWIgdehgH3OTtc9tC25HV9JCKyM0hVy3A/exec';
+    // 最新デプロイURL: 2026-01-30 更新 - v2026.01.30a - Fix JSON parse for Vue object data
     
     const gasUrl = new URL(gasBaseUrl);
     
