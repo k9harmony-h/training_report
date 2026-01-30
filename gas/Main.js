@@ -1240,6 +1240,17 @@ function handleCreateReservationWithPayment(lineUserId, requestBody) {
   // ===== データ解析 =====
   var reservationDataFromClient, paymentDataFromClient;
 
+  // デバッグログ: reservationDataの型と内容を確認
+  log('DEBUG', 'Main', 'reservationData analysis', {
+    exists: !!requestBody.reservationData,
+    type: typeof requestBody.reservationData,
+    isString: typeof requestBody.reservationData === 'string',
+    isObject: typeof requestBody.reservationData === 'object',
+    preview: typeof requestBody.reservationData === 'string'
+      ? requestBody.reservationData.substring(0, 100)
+      : JSON.stringify(requestBody.reservationData).substring(0, 100)
+  });
+
   // 新規ユーザーフォーマット vs 既存ユーザーフォーマットの判定
   if (requestBody.reservationData && typeof requestBody.reservationData === 'string') {
     // 既存フォーマット（JSON文字列）
