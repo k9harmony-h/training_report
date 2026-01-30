@@ -252,12 +252,31 @@ var ValidationRules = {
       if (data.reservation_date && !data.reservation_id) {
         var reservationDate = new Date(data.reservation_date);
         var now = new Date();
-        
-        if (reservationDate < now) {
+
+        // 日付のみで比較（時刻を無視）
+        // start_timeがある場合は、予約時刻も考慮
+        var reservationDateOnly = new Date(reservationDate.getFullYear(), reservationDate.getMonth(), reservationDate.getDate());
+        var todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        if (reservationDateOnly < todayOnly) {
           throw ErrorHandler.validationError(
             'reservation_date',
             'Reservation date must be in the future'
           );
+        }
+
+        // 当日予約の場合、予約開始時刻が現在時刻より後かチェック
+        if (reservationDateOnly.getTime() === todayOnly.getTime() && data.start_time) {
+          var timeParts = data.start_time.split(':');
+          var reservationDateTime = new Date(reservationDate.getFullYear(), reservationDate.getMonth(), reservationDate.getDate(),
+            parseInt(timeParts[0], 10), parseInt(timeParts[1], 10), 0);
+
+          if (reservationDateTime < now) {
+            throw ErrorHandler.validationError(
+              'start_time',
+              'Reservation time must be in the future'
+            );
+          }
         }
       }
       
