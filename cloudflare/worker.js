@@ -113,7 +113,7 @@ async function proxyToGAS(request, env, url) {
   try {
     // GAS URLの取得
     const gasBaseUrl = env.GAS_API_URL ||
-      'https://script.google.com/macros/s/AKfycbzRr5mcUEyql3j4tfcrAjD5NDGp5sQV7y7CA5sju-udKSekOnxNtf2wEfisnKDJZ5pU1Q/exec';
+      'https://script.google.com/macros/s/AKfycbxRPrmUeUJ1GwHRzenPKFz8AzckXHp0PXgK2yDL-lM4Q_ArntSNC9fSksi7_HYh5wOlKQ/exec';
     // 最新デプロイURL: 2026-01-30 @102 - v2026.01.30b - Force redeploy with JSON parse fix
     
     const gasUrl = new URL(gasBaseUrl);

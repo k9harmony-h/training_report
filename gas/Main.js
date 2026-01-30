@@ -2019,6 +2019,23 @@ function handleRegisterDog(lineUserId, requestBody) {
   var dogAgeYears = regData.dogAgeYears || regData.dogAge || 0;
   var dogAgeMonths = regData.dogAgeMonths || 0;
 
+  // 重複チェック: 同じ顧客IDと犬名の組み合わせが既に存在するか確認
+  var existingDogs = DogRepository.findByCustomerId(customer.customer_id);
+  if (existingDogs && existingDogs.length > 0) {
+    var duplicateDog = existingDogs.find(function(d) {
+      return d.dog_name === regData.dogName;
+    });
+    if (duplicateDog) {
+      log('INFO', 'Main', 'Dog already exists, returning existing dog_id: ' + duplicateDog.dog_id);
+      return {
+        success: true,
+        customer_id: customer.customer_id,
+        dog_id: duplicateDog.dog_id,
+        existing: true
+      };
+    }
+  }
+
   // 犬作成
   var dog = DogRepository.create({
     customer_id: customer.customer_id,
