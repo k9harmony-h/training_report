@@ -244,6 +244,84 @@ function log(level, service, message, data) {
 }
 
 // ============================================================================
+// テーブルキャッシュ（Phase 3最適化）
+// ============================================================================
+
+/**
+ * テーブルデータをメモリキャッシュ＆CacheServiceでキャッシュ
+ * 同一リクエスト内での複数回読み込みを防止
+ */
+var TableCache = {
+  TTL_SECONDS: 300,  // 5分
+  _memoryCache: {},  // リクエスト内メモリキャッシュ
+
+  /**
+   * テーブルデータを取得（キャッシュ優先）
+   * @param {string} sheetName シート名
+   * @return {Array<Object>} データ配列
+   */
+  getTable: function(sheetName) {
+    // 1. メモリキャッシュ確認（同一リクエスト内の重複読み込み防止）
+    if (this._memoryCache[sheetName]) {
+      return this._memoryCache[sheetName];
+    }
+
+    // 2. CacheService確認（リクエスト間のキャッシュ）
+    var cacheKey = 'TBL_' + sheetName;
+    try {
+      var cached = CacheService.getScriptCache().get(cacheKey);
+      if (cached) {
+        var data = JSON.parse(cached);
+        this._memoryCache[sheetName] = data;
+        return data;
+      }
+    } catch (e) {
+      // キャッシュ読み込みエラーは無視
+      log('DEBUG', 'TableCache', 'Cache read error', { sheetName: sheetName, error: e.message });
+    }
+
+    // 3. DBから読み込み
+    var data = DB.fetchTable(sheetName);
+
+    // 4. キャッシュに保存
+    this._memoryCache[sheetName] = data;
+    try {
+      var jsonData = JSON.stringify(data);
+      // CacheServiceの容量制限（100KB）を超える場合はスキップ
+      if (jsonData.length < 100000) {
+        CacheService.getScriptCache().put(cacheKey, jsonData, this.TTL_SECONDS);
+      }
+    } catch (e) {
+      // キャッシュ書き込みエラーは無視
+      log('DEBUG', 'TableCache', 'Cache write error', { sheetName: sheetName, error: e.message });
+    }
+
+    return data;
+  },
+
+  /**
+   * 特定のテーブルキャッシュをクリア
+   * @param {string} sheetName シート名
+   */
+  invalidate: function(sheetName) {
+    delete this._memoryCache[sheetName];
+    try {
+      CacheService.getScriptCache().remove('TBL_' + sheetName);
+    } catch (e) {
+      // エラーは無視
+    }
+  },
+
+  /**
+   * 全キャッシュクリア
+   */
+  invalidateAll: function() {
+    this._memoryCache = {};
+    // CacheServiceの一括クリアはAPIがないため、個別にクリアする必要がある
+  }
+};
+
+// ============================================================================
 // DB操作関数（簡易版）
 // ============================================================================
 
@@ -434,9 +512,10 @@ _getSpreadsheet: function(sheetName) {
     CONFIG.SHEET.PRODUCTS,
     CONFIG.SHEET.COUPONS,
     CONFIG.SHEET.SYSTEM_CONFIG,
-    CONFIG.SHEET.SYSTEM_LOGS
+    CONFIG.SHEET.SYSTEM_LOGS,
+    CONFIG.SHEET.MILESTONE_DEFINITIONS
   ];
-  
+
   // トランザクションシートの判定
   const transSheets = [
     CONFIG.SHEET.RESERVATIONS,
@@ -448,7 +527,8 @@ _getSpreadsheet: function(sheetName) {
     CONFIG.SHEET.RESERVATION_LOCKS,
     CONFIG.SHEET.TRANSACTION_LOG,
     CONFIG.SHEET.TRANSACTION_QUEUE,
-    CONFIG.SHEET.RETRY_LOGS
+    CONFIG.SHEET.RETRY_LOGS,
+    CONFIG.SHEET.MILESTONE_LOGS
   ];
   
   if (masterSheets.includes(sheetName)) {

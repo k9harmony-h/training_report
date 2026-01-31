@@ -197,6 +197,32 @@ log('DEBUG', 'Main', 'Final lineUserId', { lineUserId: lineUserId });
         response = handleCheckVoucher(e.parameter);
         break;
 
+      // === 画像取得API（LIFF評価ページ用） ===
+      case 'img_profile':
+        response = handleGetProfileImage(lineUserId, e.parameter.dogId);
+        break;
+
+      case 'img_latest':
+        response = handleGetLessonImages(lineUserId, e.parameter.dogId);
+        break;
+
+      // === 評価データAPI（LIFF評価ページ用） ===
+      case 'getEvaluationBundle':
+      case 'evaluationBundle':
+        response = handleGetEvaluationBundle(lineUserId, e.parameter.dogId);
+        break;
+
+      case 'getEvaluationData':
+      case 'evaluation':
+        response = handleGetEvaluationData(lineUserId, e.parameter.dogId);
+        break;
+
+      // === マイルストーンAPI（LIFF評価ページ用） ===
+      case 'milestone':
+      case 'getMilestones':
+        response = handleGetMilestones(lineUserId, e.parameter.dogId);
+        break;
+
       default:
         return ContentService.createTextOutput(JSON.stringify({
           error: true,
@@ -369,6 +395,11 @@ switch (action) {
   // ===== Eメール送信 =====
   case 'send_email':
     response = handleSendEmail(requestBody);
+    break;
+
+  // ===== マイルストーン既読マーク =====
+  case 'markMilestoneSeen':
+    response = handleMarkMilestoneSeen(requestBody);
     break;
 
   default:
@@ -1798,6 +1829,149 @@ function handleGetMonthAvailability(lineUserId, requestBody) {
     throw error;
   }
 }
+
+// ============================================================================
+// 画像取得ハンドラー（LIFF評価ページ用）
+// ============================================================================
+
+/**
+ * プロフィール画像取得ハンドラー
+ * @param {string} lineUserId - LINEユーザーID
+ * @param {string} dogId - 犬ID（オプション）
+ * @returns {object} { error: boolean, image?: string, message?: string }
+ */
+function handleGetProfileImage(lineUserId, dogId) {
+  log('INFO', 'Main', 'handleGetProfileImage', {
+    lineUserId: lineUserId ? lineUserId.substring(0, 8) + '...' : null,
+    dogId: dogId
+  });
+
+  try {
+    // 顧客確認
+    var customer = CustomerRepository.findByLineUserId(lineUserId);
+    if (!customer || customer.error) {
+      return {
+        error: true,
+        message: '顧客情報が見つかりません'
+      };
+    }
+
+    // 犬IDが指定されていない場合は最初の犬を使用
+    var targetDogId = dogId;
+    if (!targetDogId) {
+      var dogs = DogRepository.findByCustomerId(customer.customer_id);
+      if (dogs && dogs.length > 0) {
+        targetDogId = dogs[0].dog_id;
+      }
+    }
+
+    if (!targetDogId) {
+      return {
+        error: true,
+        message: '犬情報が見つかりません'
+      };
+    }
+
+    // ImageServiceでプロフィール画像取得
+    var result = ImageService.getProfileImage(targetDogId);
+
+    if (result.error) {
+      log('WARN', 'Main', 'Profile image not found', { dogId: targetDogId, error: result.error });
+      return {
+        error: false,
+        image: null,
+        message: result.error
+      };
+    }
+
+    log('INFO', 'Main', 'Profile image retrieved', {
+      dogId: targetDogId,
+      hasImage: !!result.image
+    });
+
+    return {
+      error: false,
+      image: result.image
+    };
+
+  } catch (e) {
+    log('ERROR', 'Main', 'handleGetProfileImage failed', { error: e.message });
+    return {
+      error: true,
+      message: e.message
+    };
+  }
+}
+
+/**
+ * レッスン写真取得ハンドラー
+ * @param {string} lineUserId - LINEユーザーID
+ * @param {string} dogId - 犬ID（オプション）
+ * @returns {object} { error: boolean, images?: string[], message?: string }
+ */
+function handleGetLessonImages(lineUserId, dogId) {
+  log('INFO', 'Main', 'handleGetLessonImages', {
+    lineUserId: lineUserId ? lineUserId.substring(0, 8) + '...' : null,
+    dogId: dogId
+  });
+
+  try {
+    // 顧客確認
+    var customer = CustomerRepository.findByLineUserId(lineUserId);
+    if (!customer || customer.error) {
+      return {
+        error: true,
+        message: '顧客情報が見つかりません'
+      };
+    }
+
+    // 犬IDが指定されていない場合は最初の犬を使用
+    var targetDogId = dogId;
+    if (!targetDogId) {
+      var dogs = DogRepository.findByCustomerId(customer.customer_id);
+      if (dogs && dogs.length > 0) {
+        targetDogId = dogs[0].dog_id;
+      }
+    }
+
+    if (!targetDogId) {
+      return {
+        error: true,
+        message: '犬情報が見つかりません'
+      };
+    }
+
+    // ImageServiceでレッスン写真取得
+    var result = ImageService.getLessonImages(targetDogId);
+
+    if (result.error) {
+      log('WARN', 'Main', 'Lesson images not found', { dogId: targetDogId, error: result.error });
+      return {
+        error: false,
+        images: [],
+        message: result.error
+      };
+    }
+
+    log('INFO', 'Main', 'Lesson images retrieved', {
+      dogId: targetDogId,
+      count: result.images ? result.images.length : 0
+    });
+
+    return {
+      error: false,
+      images: result.images || []
+    };
+
+  } catch (e) {
+    log('ERROR', 'Main', 'handleGetLessonImages failed', { error: e.message });
+    return {
+      error: true,
+      message: e.message
+    };
+  }
+}
+
 // ============================================================================
 // テスト関数
 // ============================================================================
@@ -2492,4 +2666,570 @@ function handleSendEmail(requestBody) {
       error: error.message
     };
   }
+}
+
+// ============================================================================
+// 評価ページ用APIハンドラー
+// ============================================================================
+
+/**
+ * 評価データ統合API（Phase 1最適化）
+ * 評価データ + マイルストーン + プロフィール画像を1回のAPIで返す
+ * @param {string} lineUserId LINE User ID
+ * @param {string} dogId 犬ID（オプション）
+ * @return {Object} 統合評価データ
+ */
+function handleGetEvaluationBundle(lineUserId, dogId) {
+  var startTime = new Date().getTime();
+  log('INFO', 'Main', 'handleGetEvaluationBundle called', { lineUserId: lineUserId, dogId: dogId });
+
+  try {
+    // ========================================================================
+    // Phase 1: テーブルを1回だけ読み込みキャッシュ（最大の最適化ポイント）
+    // ========================================================================
+    var tables = {
+      customers: TableCache.getTable(CONFIG.SHEET.CUSTOMERS),
+      dogs: TableCache.getTable(CONFIG.SHEET.DOGS),
+      lessons: TableCache.getTable(CONFIG.SHEET.LESSONS),
+      reservations: TableCache.getTable(CONFIG.SHEET.RESERVATIONS),
+      milestoneDefs: TableCache.getTable(CONFIG.SHEET.MILESTONE_DEFINITIONS),
+      milestoneLogs: TableCache.getTable(CONFIG.SHEET.MILESTONE_LOGS)
+    };
+    var tableLoadTime = new Date().getTime() - startTime;
+    log('DEBUG', 'Main', 'Tables loaded', { elapsed: tableLoadTime + 'ms' });
+
+    // 1. 顧客情報取得
+    var customer = tables.customers.find(function(c) {
+      return c.line_user_id === lineUserId;
+    });
+    if (!customer) {
+      throw createK9Error(ErrorCode.RECORD_NOT_FOUND, 'Customer not found', { lineUserId: lineUserId });
+    }
+
+    // 2. 犬情報取得
+    var dogs = tables.dogs.filter(function(d) {
+      return d.customer_id === customer.customer_id;
+    });
+
+    // 犬が複数いて、dogIdが指定されていない場合
+    if (dogs.length > 1 && !dogId) {
+      return {
+        multiple_dogs: dogs.map(function(d) {
+          return {
+            id: d.dog_id,
+            name: d.dog_name,
+            name_disp: d.dog_name,
+            birth_date: d.birth_date
+          };
+        }),
+        customer: {
+          name: customer.customer_name,
+          birth_date: customer.birth_date,
+          shared_folder_url: customer.shared_folder_url || null
+        }
+      };
+    }
+
+    // 対象の犬を決定
+    var targetDog = null;
+    if (dogId) {
+      targetDog = dogs.find(function(d) { return d.dog_id === dogId; });
+    } else if (dogs.length > 0) {
+      targetDog = dogs[0];
+    }
+
+    if (!targetDog) {
+      throw createK9Error(ErrorCode.RECORD_NOT_FOUND, 'Dog not found', { dogId: dogId });
+    }
+
+    // 3. レッスン履歴取得（キャッシュ済みテーブルからフィルタ）
+    var lessons = tables.lessons.filter(function(l) {
+      return l.dog_id === targetDog.dog_id;
+    });
+    // 日付順ソート（新しい順）
+    lessons.sort(function(a, b) {
+      var dateA = a.lesson_date ? new Date(a.lesson_date) : new Date(0);
+      var dateB = b.lesson_date ? new Date(b.lesson_date) : new Date(0);
+      return dateB - dateA;
+    });
+
+    // 4. 最新レッスンデータ変換
+    var latest = null;
+    if (lessons.length > 0) {
+      var latestLesson = lessons[0];
+      latest = _convertLessonToLatest(latestLesson, targetDog);
+    }
+
+    // 5. スコア履歴変換
+    var scoreHistory = lessons.slice(0, 10).map(function(lesson) {
+      return _convertLessonToHistory(lesson);
+    });
+
+    // 6. チケット残数（キャッシュ済みテーブルからフィルタ）
+    var reservations = tables.reservations.filter(function(r) {
+      return r.customer_id === customer.customer_id;
+    });
+    var ticketCount = reservations.filter(function(r) {
+      return r.status === 'CONFIRMED';
+    }).length;
+
+    // 7. 総トレーニング時間
+    var totalTrainingTime = Math.round(lessons.length * 1.5);
+
+    // ========================================================================
+    // Phase 2: マイルストーンデータ（キャッシュ済みテーブルから取得）
+    // ========================================================================
+    var milestoneDefs = tables.milestoneDefs.filter(function(d) {
+      return d.is_active === true || d.is_active === 'TRUE' || d.is_active === 1;
+    });
+
+    var milestoneLogs = tables.milestoneLogs.filter(function(l) {
+      return l.dog_id === targetDog.dog_id;
+    });
+
+    // ログをmilestone_idでマップ化
+    var logMap = {};
+    milestoneLogs.forEach(function(log) {
+      logMap[log.milestone_id] = log;
+    });
+
+    // 定義と獲得状態を結合
+    var badges = milestoneDefs.map(function(def) {
+      var logEntry = logMap[def.milestone_id];
+      return {
+        milestone_id: def.milestone_id,
+        tier: def.tier,
+        sort_order: def.sort_order || 0,
+        title: def.title,
+        description: def.description,
+        tips: def.tips || '',
+        condition_type: def.condition_type,
+        condition_value: def.condition_value,
+        icon_type: def.icon_type || 'paw',
+        badge_color: def.badge_color || 'pastel-sage',
+        is_active: true,
+        is_acquired: !!logEntry,
+        is_new: logEntry ? (logEntry.is_seen_animation === false || logEntry.is_seen_animation === 'FALSE') : false,
+        acquired_date: logEntry ? logEntry.acquired_date : null
+      };
+    });
+
+    // sort_order順にソート
+    badges.sort(function(a, b) {
+      return a.sort_order - b.sort_order;
+    });
+
+    // ========================================================================
+    // Phase 3: プロフィール画像（サムネイルURL優先）
+    // ========================================================================
+    var profileImage = null;
+    var profileImageUrl = null;
+    try {
+      // サムネイルURL取得を試行
+      profileImageUrl = ImageService.getProfileThumbnailUrl(targetDog.dog_id);
+      if (!profileImageUrl) {
+        // サムネイルURLが取得できない場合はBase64フォールバック
+        var imgResult = ImageService.getProfileImage(targetDog.dog_id);
+        if (!imgResult.error) {
+          profileImage = imgResult.image;
+        }
+      }
+    } catch (imgError) {
+      log('WARN', 'Main', 'Profile image fetch failed', { error: imgError.message });
+    }
+
+    var elapsed = new Date().getTime() - startTime;
+    log('INFO', 'Main', 'handleGetEvaluationBundle completed', { elapsed: elapsed + 'ms' });
+
+    return {
+      customer: {
+        name: customer.customer_name,
+        birth_date: customer.birth_date,
+        shared_folder_url: customer.shared_folder_url || null
+      },
+      dog: {
+        id: targetDog.dog_id,
+        name: targetDog.dog_name,
+        name_disp: targetDog.dog_name,
+        birth_date: targetDog.birth_date
+      },
+      latest: latest,
+      score_history: scoreHistory,
+      ticket_count: ticketCount,
+      total_training_time: totalTrainingTime,
+      all_dogs: dogs.map(function(d) {
+        return {
+          id: d.dog_id,
+          name: d.dog_name,
+          name_disp: d.dog_name,
+          birth_date: d.birth_date
+        };
+      }),
+      // 統合データ
+      milestones: {
+        status: 'success',
+        badges: badges
+      },
+      profile_image: profileImage,
+      profile_image_url: profileImageUrl,
+      // パフォーマンス情報
+      _perf: {
+        elapsed_ms: elapsed,
+        table_load_ms: tableLoadTime
+      }
+    };
+
+  } catch (error) {
+    log('ERROR', 'Main', 'handleGetEvaluationBundle failed', { error: error.message });
+    throw error;
+  }
+}
+
+/**
+ * 評価データ取得ハンドラー
+ * @param {string} lineUserId LINE User ID
+ * @param {string} dogId 犬ID（オプション）
+ * @return {Object} 評価データ
+ */
+function handleGetEvaluationData(lineUserId, dogId) {
+  log('INFO', 'Main', 'handleGetEvaluationData called', { lineUserId: lineUserId, dogId: dogId });
+
+  try {
+    // 1. 顧客情報取得
+    var customer = CustomerRepository.findByLineUserId(lineUserId);
+    if (!customer || customer.error) {
+      throw createK9Error(ErrorCode.RECORD_NOT_FOUND, 'Customer not found', { lineUserId: lineUserId });
+    }
+
+    // 2. 犬情報取得
+    var dogs = DogRepository.findByCustomerId(customer.customer_id);
+    if (dogs.error) {
+      dogs = [];
+    }
+
+    // 犬が複数いて、dogIdが指定されていない場合
+    if (dogs.length > 1 && !dogId) {
+      return {
+        multiple_dogs: dogs.map(function(d) {
+          return {
+            id: d.dog_id,
+            name: d.dog_name,
+            name_disp: d.dog_name,
+            birth_date: d.birth_date
+          };
+        }),
+        customer: {
+          name: customer.customer_name,
+          birth_date: customer.birth_date,
+          shared_folder_url: customer.shared_folder_url || null
+        }
+      };
+    }
+
+    // 対象の犬を決定
+    var targetDog = null;
+    if (dogId) {
+      targetDog = dogs.find(function(d) { return d.dog_id === dogId; });
+    } else if (dogs.length > 0) {
+      targetDog = dogs[0];
+    }
+
+    if (!targetDog) {
+      throw createK9Error(ErrorCode.RECORD_NOT_FOUND, 'Dog not found', { dogId: dogId });
+    }
+
+    // 3. レッスン履歴取得
+    var lessons = LessonRepository.findByDogId(targetDog.dog_id);
+    if (lessons.error) {
+      lessons = [];
+    }
+
+    // 4. 最新レッスンデータ変換
+    var latest = null;
+    if (lessons.length > 0) {
+      var latestLesson = lessons[0];
+      latest = _convertLessonToLatest(latestLesson, targetDog);
+    }
+
+    // 5. スコア履歴変換
+    var scoreHistory = lessons.slice(0, 10).map(function(lesson) {
+      return _convertLessonToHistory(lesson);
+    });
+
+    // 6. チケット残数（予約から計算）
+    var reservations = ReservationRepository.findByCustomerId(customer.customer_id);
+    var ticketCount = 0;
+    if (!reservations.error) {
+      // status=CONFIRMEDの予約数を未使用チケットと見なす（仮実装）
+      ticketCount = reservations.filter(function(r) {
+        return r.status === 'CONFIRMED';
+      }).length;
+    }
+
+    // 7. 総トレーニング時間（レッスン数 × 90分 / 60）
+    var totalTrainingTime = Math.round(lessons.length * 1.5);
+
+    return {
+      customer: {
+        name: customer.customer_name,
+        birth_date: customer.birth_date,
+        shared_folder_url: customer.shared_folder_url || null
+      },
+      dog: {
+        id: targetDog.dog_id,
+        name: targetDog.dog_name,
+        name_disp: targetDog.dog_name,
+        birth_date: targetDog.birth_date
+      },
+      latest: latest,
+      score_history: scoreHistory,
+      ticket_count: ticketCount,
+      total_training_time: totalTrainingTime,
+      all_dogs: dogs.map(function(d) {
+        return {
+          id: d.dog_id,
+          name: d.dog_name,
+          name_disp: d.dog_name,
+          birth_date: d.birth_date
+        };
+      })
+    };
+
+  } catch (error) {
+    log('ERROR', 'Main', 'handleGetEvaluationData failed', { error: error.message });
+    throw error;
+  }
+}
+
+/**
+ * レッスンデータをLatestLesson形式に変換
+ * @private
+ */
+function _convertLessonToLatest(lesson, dog) {
+  // スコア配列生成
+  var scores = [];
+  var details = [];
+  for (var i = 1; i <= 10; i++) {
+    scores.push(lesson['score_' + i] || 0);
+    details.push(lesson['score_detail_' + i] || '');
+  }
+
+  // 日付フォーマット
+  var lessonDate = lesson.lesson_date;
+  if (lessonDate && typeof lessonDate === 'object' && lessonDate.getTime) {
+    lessonDate = Utilities.formatDate(lessonDate, 'JST', 'yyyy/MM/dd');
+  } else if (lessonDate && lessonDate.indexOf('-') !== -1) {
+    lessonDate = lessonDate.replace(/-/g, '/');
+  }
+
+  // 次回予約推奨日の計算（レッスン日から7-10日後）
+  var recommendDate = null;
+  if (lesson.lesson_date) {
+    var baseDate = new Date(lesson.lesson_date);
+    var today = new Date();
+    var startDate = new Date(baseDate);
+    startDate.setDate(startDate.getDate() + 7);
+    var endDate = new Date(baseDate);
+    endDate.setDate(endDate.getDate() + 10);
+
+    // 期限内であれば推奨日を設定
+    if (endDate >= today) {
+      recommendDate = Utilities.formatDate(startDate, 'JST', 'MM/dd') + ' 〜 ' + Utilities.formatDate(endDate, 'JST', 'MM/dd');
+    }
+  }
+
+  // 写真有無チェック（photo_1カラムの存在で判定）
+  var hasPhotos = !!(lesson.photo_1 || lesson.photo_1_id);
+
+  return {
+    date: lessonDate,
+    goal: lesson.goal || '',
+    done: lesson.done || '',
+    unable: lesson.unable || '',
+    homework: lesson.next_homework || '',
+    next_goal: lesson.next_goal || '',
+    comment: lesson.comment_trainer || '',
+    recommend_date: recommendDate,
+    has_photos: hasPhotos,
+    scores: scores,
+    details: details
+  };
+}
+
+/**
+ * レッスンデータをScoreHistory形式に変換
+ * @private
+ */
+function _convertLessonToHistory(lesson) {
+  // スコア配列生成
+  var scores = [];
+  for (var i = 1; i <= 10; i++) {
+    scores.push(lesson['score_' + i] || 0);
+  }
+
+  // 日付フォーマット
+  var lessonDate = lesson.lesson_date;
+  if (lessonDate && typeof lessonDate === 'object' && lessonDate.getTime) {
+    lessonDate = Utilities.formatDate(lessonDate, 'JST', 'yyyy/MM/dd');
+  } else if (lessonDate && lessonDate.indexOf('-') !== -1) {
+    lessonDate = lessonDate.replace(/-/g, '/');
+  }
+
+  return {
+    id: lesson.lesson_id,
+    date: lessonDate,
+    scores: scores,
+    comment: lesson.comment_trainer || '',
+    homework: lesson.next_homework || '',
+    done: lesson.done || ''
+  };
+}
+
+/**
+ * マイルストーン取得ハンドラー
+ * @param {string} lineUserId LINE User ID
+ * @param {string} dogId 犬ID
+ * @return {Object} マイルストーンデータ
+ */
+function handleGetMilestones(lineUserId, dogId) {
+  log('INFO', 'Main', 'handleGetMilestones called', { lineUserId: lineUserId, dogId: dogId });
+
+  try {
+    // 顧客確認
+    var customer = CustomerRepository.findByLineUserId(lineUserId);
+    if (!customer || customer.error) {
+      throw createK9Error(ErrorCode.RECORD_NOT_FOUND, 'Customer not found', { lineUserId: lineUserId });
+    }
+
+    // 犬確認（dogIdが必須）
+    if (!dogId) {
+      // dogIdがない場合は最初の犬を使用
+      var dogs = DogRepository.findByCustomerId(customer.customer_id);
+      if (dogs.error || dogs.length === 0) {
+        throw createK9Error(ErrorCode.RECORD_NOT_FOUND, 'Dog not found');
+      }
+      dogId = dogs[0].dog_id;
+    }
+
+    // マイルストーンバッジ取得
+    var badges = MilestoneRepository.getBadgesForDog(dogId);
+
+    return {
+      status: 'success',
+      badges: badges
+    };
+
+  } catch (error) {
+    log('ERROR', 'Main', 'handleGetMilestones failed', { error: error.message });
+    return {
+      status: 'error',
+      error: error.message
+    };
+  }
+}
+
+/**
+ * マイルストーン既読マークハンドラー
+ * @param {Object} requestBody { dogId, milestoneId }
+ * @return {Object} 結果
+ */
+function handleMarkMilestoneSeen(requestBody) {
+  log('INFO', 'Main', 'handleMarkMilestoneSeen called', {
+    dogId: requestBody.dogId,
+    milestoneId: requestBody.milestoneId
+  });
+
+  try {
+    var dogId = requestBody.dogId;
+    var milestoneId = requestBody.milestoneId;
+
+    if (!dogId || !milestoneId) {
+      return {
+        success: false,
+        error: 'dogId and milestoneId are required'
+      };
+    }
+
+    var result = MilestoneRepository.markAsSeen(dogId, milestoneId);
+
+    return result;
+
+  } catch (error) {
+    log('ERROR', 'Main', 'handleMarkMilestoneSeen failed', { error: error.message });
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+// ============================================================================
+// テスト関数
+// ============================================================================
+
+/**
+ * 統合評価APIのテスト
+ * 実行方法: GASエディタで testGetEvaluationBundle() を実行
+ */
+function testGetEvaluationBundle() {
+  console.log('╔════════════════════════════════════════════╗');
+  console.log('║   getEvaluationBundle Test                  ║');
+  console.log('╚════════════════════════════════════════════╝\n');
+
+  // テスト用のLINE User IDを取得（最初の顧客）
+  var customers = DB.fetchTable(CONFIG.SHEET.CUSTOMERS);
+  if (customers.length === 0) {
+    console.log('❌ テスト用顧客データがありません');
+    return;
+  }
+
+  var testCustomer = customers.find(function(c) { return c.line_user_id; });
+  if (!testCustomer) {
+    console.log('❌ LINE User IDを持つ顧客がいません');
+    return;
+  }
+
+  var lineUserId = testCustomer.line_user_id;
+  console.log('テスト対象顧客:', testCustomer.customer_name);
+  console.log('LINE User ID:', lineUserId.substring(0, 10) + '...\n');
+
+  // 統合API呼び出し
+  var startTime = new Date().getTime();
+  try {
+    var result = handleGetEvaluationBundle(lineUserId, null);
+    var elapsed = new Date().getTime() - startTime;
+
+    console.log('✅ 統合API完了');
+    console.log('処理時間:', elapsed, 'ms');
+    console.log('サーバー計測:', result._perf ? result._perf.elapsed_ms + 'ms' : 'N/A');
+
+    // 結果サマリー
+    console.log('\n--- 結果サマリー ---');
+    console.log('顧客名:', result.customer ? result.customer.name : 'なし');
+    console.log('犬名:', result.dog ? result.dog.name : 'なし');
+    console.log('最新レッスン日:', result.latest ? result.latest.date : 'なし');
+    console.log('履歴件数:', result.score_history ? result.score_history.length : 0);
+    console.log('チケット残:', result.ticket_count);
+    console.log('マイルストーン件数:', result.milestones && result.milestones.badges ? result.milestones.badges.length : 0);
+    console.log('プロフィール画像URL:', result.profile_image_url ? '取得成功' : 'なし');
+    console.log('プロフィール画像Base64:', result.profile_image ? '取得成功' : 'なし');
+
+  } catch (error) {
+    var elapsed = new Date().getTime() - startTime;
+    console.log('❌ エラー:', error.message);
+    console.log('処理時間:', elapsed, 'ms');
+  }
+
+  // 比較: 従来API
+  console.log('\n--- 従来API比較 ---');
+  var startTime2 = new Date().getTime();
+  try {
+    var oldResult = handleGetEvaluationData(lineUserId, null);
+    var oldElapsed = new Date().getTime() - startTime2;
+    console.log('従来API処理時間:', oldElapsed, 'ms');
+  } catch (error) {
+    console.log('従来APIエラー:', error.message);
+  }
+
+  console.log('\n✅ テスト完了');
 }
