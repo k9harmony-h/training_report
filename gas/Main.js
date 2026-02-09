@@ -212,6 +212,11 @@ log('DEBUG', 'Main', 'Final lineUserId', { lineUserId: lineUserId });
         response = handleGetEvaluationBundle(lineUserId, e.parameter.dogId);
         break;
 
+      // === MyPageバンドルAPI（マイページ用） ===
+      case 'getMyPageBundle':
+        response = handleGetMyPageBundle(lineUserId, e.parameter.dogId);
+        break;
+
       case 'getEvaluationData':
       case 'evaluation':
         response = handleGetEvaluationData(lineUserId, e.parameter.dogId);
@@ -221,6 +226,26 @@ log('DEBUG', 'Main', 'Final lineUserId', { lineUserId: lineUserId });
       case 'milestone':
       case 'getMilestones':
         response = handleGetMilestones(lineUserId, e.parameter.dogId);
+        break;
+
+      // === マイメモAPI（LIFF評価ページ用） ===
+      case 'getMemo':
+        response = handleGetMemo(lineUserId, e.parameter.dogId);
+        break;
+
+      // === バウチャーAPI（マイページ用） ===
+      case 'getVouchers':
+        response = handleGetVouchers(lineUserId);
+        break;
+
+      // === 支払い履歴API（マイページ用） ===
+      case 'getPaymentHistory':
+        response = handleGetPaymentHistory(lineUserId);
+        break;
+
+      // === 防災手帳API ===
+      case 'getDisasterData':
+        response = handleGetDisasterData(lineUserId, e.parameter.dogId);
         break;
 
       default:
@@ -400,6 +425,16 @@ switch (action) {
   // ===== マイルストーン既読マーク =====
   case 'markMilestoneSeen':
     response = handleMarkMilestoneSeen(requestBody);
+    break;
+
+  // ===== マイメモ保存 =====
+  case 'saveMemo':
+    response = handleSaveMemo(lineUserId, requestBody);
+    break;
+
+  // ===== チケット購入（クレジットカード決済）=====
+  case 'purchaseTicket':
+    response = handlePurchaseTicket(lineUserId, requestBody);
     break;
 
   default:
@@ -911,10 +946,24 @@ function handleGetMyReservations(lineUserId) {
       var reservationDate = reservation.reservation_date;
       if (reservationDate && typeof reservationDate === 'object' && reservationDate.getTime) {
         reservationDate = Utilities.formatDate(reservationDate, 'JST', 'yyyy-MM-dd');
-      } else if (reservationDate && reservationDate.length > 10) {
+      } else if (reservationDate && typeof reservationDate === 'string' && reservationDate.length > 10) {
         reservationDate = reservationDate.split(' ')[0];
       }
-      
+
+      // 時刻を正規化（HH:mm形式にする）
+      var startTime = reservation.start_time;
+      if (startTime && typeof startTime === 'object' && startTime.getTime) {
+        startTime = Utilities.formatDate(startTime, 'JST', 'HH:mm');
+      } else if (startTime && typeof startTime === 'string') {
+        // "HH:MM:SS" → "HH:MM" に変換、"1899-..." を含む場合は時刻部分だけ取得
+        if (startTime.indexOf('1899') !== -1 || startTime.indexOf('1900') !== -1) {
+          var timeParts = startTime.match(/(\d{1,2}):(\d{2})/);
+          startTime = timeParts ? timeParts[0] : startTime;
+        } else if (startTime.split(':').length > 2) {
+          startTime = startTime.split(':').slice(0, 2).join(':');
+        }
+      }
+
       return {
         reservation_id: reservation.reservation_id,
         reservation_code: reservation.reservation_code,
@@ -924,7 +973,7 @@ function handleGetMyReservations(lineUserId) {
         office_id: reservation.office_id,
         product_id: reservation.product_id,
         reservation_date: reservationDate,
-        start_time: reservation.start_time,
+        start_time: startTime,
         duration: reservation.duration_minutes || 90,
         status: reservation.status,
         payment_status: reservation.payment_status,
@@ -943,6 +992,241 @@ function handleGetMyReservations(lineUserId) {
     
   } catch (error) {
     log('ERROR', 'Main', 'Failed to get my reservations', { error: error.message });
+    throw error;
+  }
+}
+
+/**
+ * MyPage全データバンドル取得
+ * 顧客データ + 犬データ + 予約データ を統合して返す
+ */
+function handleGetMyPageBundle(lineUserId, dogId) {
+  var startTime = new Date().getTime();
+  log('INFO', 'Main', 'handleGetMyPageBundle called', { lineUserId: lineUserId, dogId: dogId });
+
+  try {
+    // ========================================================================
+    // Phase 1: テーブルを1回だけ読み込み（最適化）
+    // ========================================================================
+    var tables = {
+      customers: TableCache.getTable(CONFIG.SHEET.CUSTOMERS),
+      dogs: TableCache.getTable(CONFIG.SHEET.DOGS),
+      reservations: TableCache.getTable(CONFIG.SHEET.RESERVATIONS),
+      products: TableCache.getTable(CONFIG.SHEET.PRODUCTS),
+      trainers: TableCache.getTable(CONFIG.SHEET.TRAINERS)
+    };
+    var tableLoadTime = new Date().getTime() - startTime;
+    log('DEBUG', 'Main', 'Tables loaded for MyPageBundle', { elapsed: tableLoadTime + 'ms' });
+
+    // ========================================================================
+    // Phase 2: 顧客情報取得
+    // ========================================================================
+    var customer = tables.customers.find(function(c) {
+      return c.line_user_id === lineUserId;
+    });
+    if (!customer) {
+      throw createK9Error(ErrorCode.RECORD_NOT_FOUND, 'Customer not found', { lineUserId: lineUserId });
+    }
+
+    // ========================================================================
+    // Phase 3: 犬情報取得
+    // ========================================================================
+    var dogs = tables.dogs.filter(function(d) {
+      return d.customer_id === customer.customer_id;
+    });
+
+    // 複数犬の場合もデータを全て返す（犬選択用）
+    // NOTE: 以前は早期リターンしていたが、reservationsも含めて全データを返すように変更
+    log('DEBUG', 'Main', 'handleGetMyPageBundle - dogs found', {
+      count: dogs.length,
+      customerId: customer.customer_id,
+      ticketRemaining: customer.ticket_remaining
+    });
+
+    // 対象の犬を決定
+    var targetDog = null;
+    if (dogId) {
+      targetDog = dogs.find(function(d) { return d.dog_id === dogId; });
+    } else if (dogs.length > 0) {
+      targetDog = dogs[0];
+    }
+
+    // ========================================================================
+    // Phase 4: 予約データ取得
+    // ========================================================================
+    var reservations = tables.reservations.filter(function(r) {
+      return r.customer_id === customer.customer_id;
+    });
+
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 予約データのエンリッチ＆分類
+    var upcomingReservations = [];
+    var pastReservations = [];
+
+    reservations.forEach(function(reservation) {
+      // 犬情報取得
+      var dogName = null;
+      if (reservation.primary_dog_id) {
+        var dog = tables.dogs.find(function(d) { return d.dog_id === reservation.primary_dog_id; });
+        if (dog) {
+          dogName = dog.dog_name;
+        }
+      }
+
+      // 商品情報取得
+      var productName = null;
+      var amount = null;
+      if (reservation.product_id) {
+        var product = tables.products.find(function(p) { return p.product_id === reservation.product_id; });
+        if (product) {
+          productName = product.product_name;
+          amount = product.tax_included_price || product.product_price;
+        }
+      }
+
+      // トレーナー情報取得
+      var trainerName = 'スタッフ';
+      if (reservation.trainer_id && reservation.trainer_id !== 'default-trainer') {
+        var trainer = tables.trainers.find(function(t) { return t.trainer_id === reservation.trainer_id; });
+        if (trainer) {
+          trainerName = trainer.trainer_name;
+        }
+      }
+
+      // 日付を正規化
+      var reservationDate = reservation.reservation_date;
+      var reservationDateObj = null;
+      if (reservationDate && typeof reservationDate === 'object' && reservationDate.getTime) {
+        reservationDateObj = new Date(reservationDate);
+        reservationDate = Utilities.formatDate(reservationDate, 'JST', 'yyyy-MM-dd');
+      } else if (reservationDate && typeof reservationDate === 'string') {
+        if (reservationDate.length > 10) {
+          reservationDate = reservationDate.split(' ')[0];
+        }
+        reservationDateObj = new Date(reservationDate);
+      }
+
+      // 時刻を正規化
+      var startTime = reservation.start_time;
+      if (startTime && typeof startTime === 'object' && startTime.getTime) {
+        startTime = Utilities.formatDate(startTime, 'JST', 'HH:mm');
+      } else if (startTime && typeof startTime === 'string') {
+        if (startTime.indexOf('1899') !== -1 || startTime.indexOf('1900') !== -1) {
+          var timeParts = startTime.match(/(\d{1,2}):(\d{2})/);
+          startTime = timeParts ? timeParts[0] : startTime;
+        } else if (startTime.split(':').length > 2) {
+          startTime = startTime.split(':').slice(0, 2).join(':');
+        }
+      }
+
+      var enrichedReservation = {
+        reservation_id: reservation.reservation_id,
+        reservation_code: reservation.reservation_code,
+        customer_id: reservation.customer_id,
+        primary_dog_id: reservation.primary_dog_id,
+        trainer_id: reservation.trainer_id,
+        office_id: reservation.office_id,
+        product_id: reservation.product_id,
+        reservation_date: reservationDate,
+        start_time: startTime,
+        duration: reservation.duration_minutes || 90,
+        status: reservation.status,
+        payment_status: reservation.payment_status,
+        dog_name: dogName,
+        product_name: productName,
+        trainer_name: trainerName,
+        amount: amount
+      };
+
+      // 未来 or 過去に分類
+      if (reservationDateObj && reservationDateObj >= today &&
+          (reservation.status === 'CONFIRMED' || reservation.status === 'PENDING')) {
+        upcomingReservations.push(enrichedReservation);
+      } else {
+        pastReservations.push(enrichedReservation);
+      }
+    });
+
+    // 日付でソート
+    upcomingReservations.sort(function(a, b) {
+      return new Date(a.reservation_date) - new Date(b.reservation_date);
+    });
+    pastReservations.sort(function(a, b) {
+      return new Date(b.reservation_date) - new Date(a.reservation_date);
+    });
+
+    // ========================================================================
+    // Phase 5: レスポンス構築
+    // ========================================================================
+    var elapsed = new Date().getTime() - startTime;
+    log('INFO', 'Main', 'handleGetMyPageBundle completed', {
+      elapsed: elapsed + 'ms',
+      upcomingCount: upcomingReservations.length,
+      pastCount: pastReservations.length,
+      ticketRemaining: customer.ticket_remaining
+    });
+
+    // 犬データをマップ
+    var dogsData = dogs.map(function(d) {
+      return {
+        dog_id: d.dog_id,
+        id: d.dog_id, // 互換性のため両方含める
+        dog_name: d.dog_name,
+        name: d.dog_name,
+        name_disp: d.dog_name,
+        profile_image_url: d.profile_image_url || null,
+        dog_breed: d.dog_breed || d.breed || null,
+        birth_date: d.dog_birth_date || d.birth_date,
+        gender: d.dog_gender || d.gender
+      };
+    });
+
+    // レスポンス構築
+    var response = {
+      error: false,
+      customer: {
+        customer_id: customer.customer_id,
+        name: customer.customer_name,
+        name_disp: customer.customer_name ? customer.customer_name.split(' ')[0] : '',
+        birth_date: customer.birth_date,
+        ticket_remaining: customer.ticket_remaining || 0,
+        phone: customer.phone || null,
+        email: customer.email || null,
+        address: customer.address || null
+      },
+      dogs: dogsData,
+      reservations: {
+        upcoming: upcomingReservations,
+        past: pastReservations
+      },
+      _perf: {
+        elapsed_ms: elapsed,
+        table_load_ms: tableLoadTime,
+        reservations_count: reservations.length,
+        dogs_count: dogs.length
+      }
+    };
+
+    // 複数犬がいる場合は multiple_dogs も含める（犬選択UI用）
+    if (dogs.length > 1) {
+      response.multiple_dogs = dogsData;
+      log('DEBUG', 'Main', 'Multiple dogs found, adding multiple_dogs to response', { count: dogs.length });
+    }
+
+    log('INFO', 'Main', 'handleGetMyPageBundle response', {
+      hasDogs: dogsData.length,
+      hasMultipleDogs: !!response.multiple_dogs,
+      upcomingCount: upcomingReservations.length,
+      pastCount: pastReservations.length,
+      ticketRemaining: customer.ticket_remaining
+    });
+
+    return response;
+
+  } catch (error) {
+    log('ERROR', 'Main', 'Failed to get my page bundle', { error: error.message });
     throw error;
   }
 }
@@ -1835,12 +2119,13 @@ function handleGetMonthAvailability(lineUserId, requestBody) {
 // ============================================================================
 
 /**
- * プロフィール画像取得ハンドラー
+ * プロフィール画像取得ハンドラー（サムネイルURL優先）
  * @param {string} lineUserId - LINEユーザーID
  * @param {string} dogId - 犬ID（オプション）
  * @returns {object} { error: boolean, image?: string, message?: string }
  */
 function handleGetProfileImage(lineUserId, dogId) {
+  var startTime = new Date().getTime();
   log('INFO', 'Main', 'handleGetProfileImage', {
     lineUserId: lineUserId ? lineUserId.substring(0, 8) + '...' : null,
     dogId: dogId
@@ -1872,7 +2157,23 @@ function handleGetProfileImage(lineUserId, dogId) {
       };
     }
 
-    // ImageServiceでプロフィール画像取得
+    // サムネイルURLを優先して取得（高速）
+    var thumbnailUrl = ImageService.getProfileThumbnailUrl(targetDogId, 400);
+
+    if (thumbnailUrl) {
+      var elapsed = new Date().getTime() - startTime;
+      log('INFO', 'Main', 'Profile thumbnail URL retrieved', {
+        dogId: targetDogId,
+        elapsed: elapsed + 'ms'
+      });
+
+      return {
+        error: false,
+        image: thumbnailUrl
+      };
+    }
+
+    // フォールバック: Base64（サムネイルURLが取得できない場合）
     var result = ImageService.getProfileImage(targetDogId);
 
     if (result.error) {
@@ -1884,9 +2185,11 @@ function handleGetProfileImage(lineUserId, dogId) {
       };
     }
 
-    log('INFO', 'Main', 'Profile image retrieved', {
+    var elapsed = new Date().getTime() - startTime;
+    log('INFO', 'Main', 'Profile image retrieved (Base64 fallback)', {
       dogId: targetDogId,
-      hasImage: !!result.image
+      hasImage: !!result.image,
+      elapsed: elapsed + 'ms'
     });
 
     return {
@@ -1904,12 +2207,13 @@ function handleGetProfileImage(lineUserId, dogId) {
 }
 
 /**
- * レッスン写真取得ハンドラー
+ * レッスン写真取得ハンドラー（サムネイルURL優先）
  * @param {string} lineUserId - LINEユーザーID
  * @param {string} dogId - 犬ID（オプション）
  * @returns {object} { error: boolean, images?: string[], message?: string }
  */
 function handleGetLessonImages(lineUserId, dogId) {
+  var startTime = new Date().getTime();
   log('INFO', 'Main', 'handleGetLessonImages', {
     lineUserId: lineUserId ? lineUserId.substring(0, 8) + '...' : null,
     dogId: dogId
@@ -1941,7 +2245,34 @@ function handleGetLessonImages(lineUserId, dogId) {
       };
     }
 
-    // ImageServiceでレッスン写真取得
+    // サムネイルURLを優先して取得（高速）
+    var thumbnailResult = ImageService.getLessonThumbnailUrlsWithFolder(targetDogId, 5, 800);
+
+    // デバッグログ: thumbnailResultの内容を確認
+    log('DEBUG', 'Main', 'thumbnailResult details', {
+      hasResult: !!thumbnailResult,
+      imageCount: thumbnailResult ? (thumbnailResult.images ? thumbnailResult.images.length : 0) : 0,
+      folderUrl: thumbnailResult ? thumbnailResult.folderUrl : 'undefined',
+      resultKeys: thumbnailResult ? Object.keys(thumbnailResult).join(',') : 'null'
+    });
+
+    if (thumbnailResult && thumbnailResult.images && thumbnailResult.images.length > 0) {
+      var elapsed = new Date().getTime() - startTime;
+      log('INFO', 'Main', 'Lesson thumbnail URLs retrieved', {
+        dogId: targetDogId,
+        count: thumbnailResult.images.length,
+        folderUrl: thumbnailResult.folderUrl || 'NOT SET',
+        elapsed: elapsed + 'ms'
+      });
+
+      return {
+        error: false,
+        images: thumbnailResult.images,
+        folderUrl: thumbnailResult.folderUrl
+      };
+    }
+
+    // フォールバック: Base64（サムネイルURLが取得できない場合）
     var result = ImageService.getLessonImages(targetDogId);
 
     if (result.error) {
@@ -1949,18 +2280,22 @@ function handleGetLessonImages(lineUserId, dogId) {
       return {
         error: false,
         images: [],
+        folderUrl: null,
         message: result.error
       };
     }
 
-    log('INFO', 'Main', 'Lesson images retrieved', {
+    var elapsed = new Date().getTime() - startTime;
+    log('INFO', 'Main', 'Lesson images retrieved (Base64 fallback)', {
       dogId: targetDogId,
-      count: result.images ? result.images.length : 0
+      count: result.images ? result.images.length : 0,
+      elapsed: elapsed + 'ms'
     });
 
     return {
       error: false,
-      images: result.images || []
+      images: result.images || [],
+      folderUrl: result.folderUrl || null
     };
 
   } catch (e) {
@@ -2685,18 +3020,16 @@ function handleGetEvaluationBundle(lineUserId, dogId) {
 
   try {
     // ========================================================================
-    // Phase 1: テーブルを1回だけ読み込みキャッシュ（最大の最適化ポイント）
+    // Phase 1: 必須テーブルのみ先に読み込み（multiple_dogs早期返却で2テーブル節約）
     // ========================================================================
     var tables = {
       customers: TableCache.getTable(CONFIG.SHEET.CUSTOMERS),
       dogs: TableCache.getTable(CONFIG.SHEET.DOGS),
       lessons: TableCache.getTable(CONFIG.SHEET.LESSONS),
-      reservations: TableCache.getTable(CONFIG.SHEET.RESERVATIONS),
-      milestoneDefs: TableCache.getTable(CONFIG.SHEET.MILESTONE_DEFINITIONS),
-      milestoneLogs: TableCache.getTable(CONFIG.SHEET.MILESTONE_LOGS)
+      reservations: TableCache.getTable(CONFIG.SHEET.RESERVATIONS)
     };
     var tableLoadTime = new Date().getTime() - startTime;
-    log('DEBUG', 'Main', 'Tables loaded', { elapsed: tableLoadTime + 'ms' });
+    log('DEBUG', 'Main', 'Essential tables loaded (4/6)', { elapsed: tableLoadTime + 'ms' });
 
     // 1. 顧客情報取得
     var customer = tables.customers.find(function(c) {
@@ -2713,22 +3046,70 @@ function handleGetEvaluationBundle(lineUserId, dogId) {
 
     // 犬が複数いて、dogIdが指定されていない場合
     if (dogs.length > 1 && !dogId) {
+      // 顧客レベルの統計を計算（全ての犬の合計）
+      var allDogIdSetEarly = {};
+      dogs.forEach(function(d) { allDogIdSetEarly[d.dog_id] = true; });
+      var allLessonsEarly = (tables.lessons || []).filter(function(l) {
+        return allDogIdSetEarly[l.dog_id] === true;
+      });
+      // 日付順ソート（新しい順）
+      allLessonsEarly.sort(function(a, b) {
+        var dateA = a.lesson_date ? new Date(a.lesson_date) : new Date(0);
+        var dateB = b.lesson_date ? new Date(b.lesson_date) : new Date(0);
+        return dateB - dateA;
+      });
+
+      var earlyTotalLessonCount = allLessonsEarly.length;
+      var earlyTotalTrainingTime = allLessonsEarly.length * 90; // 分単位（90分/レッスン）
+      var earlyLastLessonDate = null;
+      if (allLessonsEarly.length > 0 && allLessonsEarly[0].lesson_date) {
+        var lessonDateEarly = allLessonsEarly[0].lesson_date;
+        if (typeof lessonDateEarly === 'object' && typeof lessonDateEarly.getTime === 'function') {
+          earlyLastLessonDate = Utilities.formatDate(lessonDateEarly, 'JST', 'yyyy-MM-dd');
+        } else {
+          // 文字列の場合: ISO形式(T区切り)やスペース区切りに対応
+          var dateStr = String(lessonDateEarly);
+          earlyLastLessonDate = dateStr.split('T')[0].split(' ')[0].replace(/\//g, '-');
+        }
+      }
+
+      // チケット残数を計算
+      var earlyReservations = tables.reservations.filter(function(r) {
+        return r.customer_id === customer.customer_id;
+      });
+      var earlyTicketCount = earlyReservations.filter(function(r) {
+        return r.status === 'CONFIRMED';
+      }).length;
+
       return {
         multiple_dogs: dogs.map(function(d) {
           return {
             id: d.dog_id,
             name: d.dog_name,
             name_disp: d.dog_name,
-            birth_date: d.birth_date
+            birth_date: d.dog_birth_date || d.birth_date,
+            gender: d.dog_gender || d.gender
           };
         }),
         customer: {
           name: customer.customer_name,
           birth_date: customer.birth_date,
           shared_folder_url: customer.shared_folder_url || null
-        }
+        },
+        total_lesson_count: earlyTotalLessonCount,
+        total_training_time: earlyTotalTrainingTime,
+        last_lesson_date: earlyLastLessonDate,
+        ticket_count: earlyTicketCount
       };
     }
+
+    // ========================================================================
+    // Phase 2: マイルストーンテーブル読み込み（multiple_dogs早期返却後のみ）
+    // ========================================================================
+    tables.milestoneDefs = TableCache.getTable(CONFIG.SHEET.MILESTONE_DEFINITIONS);
+    tables.milestoneLogs = TableCache.getTable(CONFIG.SHEET.MILESTONE_LOGS);
+    tableLoadTime = new Date().getTime() - startTime;
+    log('DEBUG', 'Main', 'All tables loaded (6/6)', { elapsed: tableLoadTime + 'ms' });
 
     // 対象の犬を決定
     var targetDog = null;
@@ -2774,7 +3155,7 @@ function handleGetEvaluationBundle(lineUserId, dogId) {
     }).length;
 
     // 7. 総トレーニング時間
-    var totalTrainingTime = Math.round(lessons.length * 1.5);
+    var totalTrainingTime = lessons.length * 90; // 分単位（90分/レッスン）
 
     // ========================================================================
     // Phase 2: マイルストーンデータ（キャッシュ済みテーブルから取得）
@@ -2820,22 +3201,59 @@ function handleGetEvaluationBundle(lineUserId, dogId) {
     });
 
     // ========================================================================
-    // Phase 3: プロフィール画像（サムネイルURL優先）
+    // Phase 3: プロフィール画像（サムネイルURL優先・高速版）
     // ========================================================================
     var profileImage = null;
     var profileImageUrl = null;
+    var imageStartTime = new Date().getTime();
     try {
-      // サムネイルURL取得を試行
-      profileImageUrl = ImageService.getProfileThumbnailUrl(targetDog.dog_id);
+      // 既に取得済みのフォルダIDを直接使用（DB再読み込みをスキップ）
+      var sharedFolderId = targetDog.dog_shared_folder_id;
+      if (sharedFolderId) {
+        profileImageUrl = ImageService.getProfileThumbnailUrlFromFolderId(sharedFolderId, 400);
+      }
+
       if (!profileImageUrl) {
-        // サムネイルURLが取得できない場合はBase64フォールバック
+        // サムネイルURLが取得できない場合はBase64フォールバック（遅いので非推奨）
+        log('WARN', 'Main', 'Thumbnail URL failed, falling back to Base64');
         var imgResult = ImageService.getProfileImage(targetDog.dog_id);
         if (!imgResult.error) {
           profileImage = imgResult.image;
         }
       }
+      var imageElapsed = new Date().getTime() - imageStartTime;
+      log('DEBUG', 'Main', 'Profile image retrieved', { elapsed: imageElapsed + 'ms', hasUrl: !!profileImageUrl, hasBase64: !!profileImage });
     } catch (imgError) {
       log('WARN', 'Main', 'Profile image fetch failed', { error: imgError.message });
+    }
+
+    // ========================================================================
+    // 顧客レベルの統計を計算（全ての犬の合計）- O(n)ルックアップで最適化
+    // ========================================================================
+    var allDogIdSet = {};
+    dogs.forEach(function(d) { allDogIdSet[d.dog_id] = true; });
+    var allLessons = tables.lessons.filter(function(l) {
+      return allDogIdSet[l.dog_id] === true;
+    });
+    // 日付順ソート（新しい順）
+    allLessons.sort(function(a, b) {
+      var dateA = a.lesson_date ? new Date(a.lesson_date) : new Date(0);
+      var dateB = b.lesson_date ? new Date(b.lesson_date) : new Date(0);
+      return dateB - dateA;
+    });
+
+    var customerTotalLessonCount = allLessons.length;
+    var customerTotalTrainingTime = allLessons.length * 90; // 分単位（90分/レッスン）
+    var customerLastLessonDate = null;
+    if (allLessons.length > 0 && allLessons[0].lesson_date) {
+      var lessonDate = allLessons[0].lesson_date;
+      if (typeof lessonDate === 'object' && typeof lessonDate.getTime === 'function') {
+        customerLastLessonDate = Utilities.formatDate(lessonDate, 'JST', 'yyyy-MM-dd');
+      } else {
+        // 文字列の場合: ISO形式(T区切り)やスペース区切りに対応
+        var dateStr = String(lessonDate);
+        customerLastLessonDate = dateStr.split('T')[0].split(' ')[0].replace(/\//g, '-');
+      }
     }
 
     var elapsed = new Date().getTime() - startTime;
@@ -2851,18 +3269,22 @@ function handleGetEvaluationBundle(lineUserId, dogId) {
         id: targetDog.dog_id,
         name: targetDog.dog_name,
         name_disp: targetDog.dog_name,
-        birth_date: targetDog.birth_date
+        birth_date: targetDog.dog_birth_date || targetDog.birth_date,
+        gender: targetDog.dog_gender || targetDog.gender
       },
       latest: latest,
       score_history: scoreHistory,
       ticket_count: ticketCount,
-      total_training_time: totalTrainingTime,
+      total_training_time: customerTotalTrainingTime,
+      total_lesson_count: customerTotalLessonCount,
+      last_lesson_date: customerLastLessonDate,
       all_dogs: dogs.map(function(d) {
         return {
           id: d.dog_id,
           name: d.dog_name,
           name_disp: d.dog_name,
-          birth_date: d.birth_date
+          birth_date: d.dog_birth_date || d.birth_date,
+          gender: d.dog_gender || d.gender
         };
       }),
       // 統合データ
@@ -2909,20 +3331,63 @@ function handleGetEvaluationData(lineUserId, dogId) {
 
     // 犬が複数いて、dogIdが指定されていない場合
     if (dogs.length > 1 && !dogId) {
+      // 顧客レベルの統計を計算（全ての犬の合計）- LessonRepositoryを使用
+      var allLessonsEarly = [];
+      dogs.forEach(function(d) {
+        var dogLessons = LessonRepository.findByDogId(d.dog_id);
+        if (!dogLessons.error && Array.isArray(dogLessons)) {
+          allLessonsEarly = allLessonsEarly.concat(dogLessons);
+        }
+      });
+      // 日付順ソート（新しい順）
+      allLessonsEarly.sort(function(a, b) {
+        var dateA = a.lesson_date ? new Date(a.lesson_date) : new Date(0);
+        var dateB = b.lesson_date ? new Date(b.lesson_date) : new Date(0);
+        return dateB - dateA;
+      });
+
+      var earlyTotalLessonCount = allLessonsEarly.length;
+      var earlyTotalTrainingTime = allLessonsEarly.length * 90; // 分単位（90分/レッスン）
+      var earlyLastLessonDate = null;
+      if (allLessonsEarly.length > 0 && allLessonsEarly[0].lesson_date) {
+        var lessonDateEarly = allLessonsEarly[0].lesson_date;
+        if (typeof lessonDateEarly === 'object' && typeof lessonDateEarly.getTime === 'function') {
+          earlyLastLessonDate = Utilities.formatDate(lessonDateEarly, 'JST', 'yyyy-MM-dd');
+        } else {
+          // 文字列の場合: ISO形式(T区切り)やスペース区切りに対応
+          var dateStr = String(lessonDateEarly);
+          earlyLastLessonDate = dateStr.split('T')[0].split(' ')[0].replace(/\//g, '-');
+        }
+      }
+
+      // チケット残数を計算（ReservationRepositoryを使用）
+      var earlyReservations = ReservationRepository.findByCustomerId(customer.customer_id);
+      var earlyTicketCount = 0;
+      if (!earlyReservations.error && Array.isArray(earlyReservations)) {
+        earlyTicketCount = earlyReservations.filter(function(r) {
+          return r.status === 'CONFIRMED';
+        }).length;
+      }
+
       return {
         multiple_dogs: dogs.map(function(d) {
           return {
             id: d.dog_id,
             name: d.dog_name,
             name_disp: d.dog_name,
-            birth_date: d.birth_date
+            birth_date: d.dog_birth_date || d.birth_date,
+            gender: d.dog_gender || d.gender
           };
         }),
         customer: {
           name: customer.customer_name,
           birth_date: customer.birth_date,
           shared_folder_url: customer.shared_folder_url || null
-        }
+        },
+        total_lesson_count: earlyTotalLessonCount,
+        total_training_time: earlyTotalTrainingTime,
+        last_lesson_date: earlyLastLessonDate,
+        ticket_count: earlyTicketCount
       };
     }
 
@@ -2967,7 +3432,7 @@ function handleGetEvaluationData(lineUserId, dogId) {
     }
 
     // 7. 総トレーニング時間（レッスン数 × 90分 / 60）
-    var totalTrainingTime = Math.round(lessons.length * 1.5);
+    var totalTrainingTime = lessons.length * 90; // 分単位（90分/レッスン）
 
     return {
       customer: {
@@ -2979,7 +3444,8 @@ function handleGetEvaluationData(lineUserId, dogId) {
         id: targetDog.dog_id,
         name: targetDog.dog_name,
         name_disp: targetDog.dog_name,
-        birth_date: targetDog.birth_date
+        birth_date: targetDog.dog_birth_date || targetDog.birth_date,
+        gender: targetDog.dog_gender || targetDog.gender
       },
       latest: latest,
       score_history: scoreHistory,
@@ -2990,7 +3456,8 @@ function handleGetEvaluationData(lineUserId, dogId) {
           id: d.dog_id,
           name: d.dog_name,
           name_disp: d.dog_name,
-          birth_date: d.birth_date
+          birth_date: d.dog_birth_date || d.birth_date,
+          gender: d.dog_gender || d.gender
         };
       })
     };
@@ -3159,6 +3626,491 @@ function handleMarkMilestoneSeen(requestBody) {
     return {
       success: false,
       error: error.message
+    };
+  }
+}
+
+// ============================================================================
+// マイメモAPI（LIFF評価ページ用）
+// ============================================================================
+
+/**
+ * マイメモ取得ハンドラー
+ * @param {string} lineUserId LINE User ID
+ * @param {string} dogId 犬ID
+ * @return {Object} { memo: string }
+ */
+function handleGetMemo(lineUserId, dogId) {
+  log('INFO', 'Main', 'handleGetMemo called', { lineUserId: lineUserId, dogId: dogId });
+
+  try {
+    // 顧客検証（本人の犬かどうか）
+    var customer = CustomerRepository.findByLineUserId(lineUserId);
+    if (!customer || customer.error) {
+      return { memo: '', error: 'Customer not found' };
+    }
+
+    var dogs = DogRepository.findByCustomerId(customer.customer_id);
+    var targetDog = dogs.find(function(d) { return d.dog_id === dogId; });
+
+    if (!targetDog) {
+      return { memo: '', error: 'Dog not found or not owned by this customer' };
+    }
+
+    var memo = DogRepository.getMemo(dogId);
+
+    return { memo: memo };
+
+  } catch (error) {
+    log('ERROR', 'Main', 'handleGetMemo failed', { error: error.message });
+    return { memo: '', error: error.message };
+  }
+}
+
+/**
+ * バウチャー一覧取得ハンドラー（マイページ用）
+ * @param {string} lineUserId LINE User ID
+ * @return {Object} { vouchers: Array, error?: string }
+ */
+function handleGetVouchers(lineUserId) {
+  log('INFO', 'Main', 'handleGetVouchers called', { lineUserId: lineUserId });
+
+  try {
+    // 顧客検証
+    var customer = CustomerRepository.findByLineUserId(lineUserId);
+    if (!customer || customer.error) {
+      return { vouchers: [], error: 'Customer not found' };
+    }
+
+    // CouponServiceから顧客向けバウチャーを取得
+    var vouchers = CouponService.getCustomerVouchers(customer.customer_id);
+
+    log('INFO', 'Main', 'Vouchers retrieved', { count: vouchers.length });
+
+    return { vouchers: vouchers };
+
+  } catch (error) {
+    log('ERROR', 'Main', 'handleGetVouchers failed', { error: error.message });
+    return { vouchers: [], error: error.message };
+  }
+}
+
+/**
+ * 支払い履歴取得ハンドラー
+ * @param {string} lineUserId LINE User ID
+ * @return {Object} { payments: Array }
+ */
+function handleGetPaymentHistory(lineUserId) {
+  log('INFO', 'Main', 'handleGetPaymentHistory called', { lineUserId: lineUserId });
+
+  try {
+    // 顧客検証
+    var customer = CustomerRepository.findByLineUserId(lineUserId);
+    if (!customer || customer.error) {
+      return { payments: [], error: 'Customer not found' };
+    }
+
+    // 決済履歴を取得
+    var allPayments = DB.fetchTable(CONFIG.SHEET.PAYMENTS);
+    var customerPayments = allPayments.filter(function(p) {
+      return p.customer_id === customer.customer_id;
+    });
+
+    // 商品マスタを取得（商品名表示用）
+    var products = DB.fetchTable(CONFIG.SHEET.PRODUCTS);
+    var productMap = {};
+    products.forEach(function(p) {
+      productMap[p.product_id] = p;
+    });
+
+    // 予約情報を取得（予約コード表示用）
+    var reservations = DB.fetchTable(CONFIG.SHEET.RESERVATIONS);
+    var reservationMap = {};
+    reservations.forEach(function(r) {
+      reservationMap[r.reservation_id] = r;
+    });
+
+    // レスポンス形式に変換
+    var payments = customerPayments.map(function(payment) {
+      var product = productMap[payment.product_id] || {};
+      var reservation = payment.reservation_id ? reservationMap[payment.reservation_id] : null;
+
+      return {
+        payment_id: payment.payment_id,
+        payment_code: payment.payment_code || '',
+        payment_date: payment.created_at ? Utilities.formatDate(new Date(payment.created_at), 'Asia/Tokyo', 'yyyy-MM-dd') : '',
+        amount: payment.total_amount || 0,
+        payment_method: payment.payment_method || 'CREDIT_CARD',
+        status: payment.payment_status || 'CAPTURED',
+        reservation_code: reservation ? reservation.reservation_code : null,
+        product_name: product.product_name || '不明',
+        square_receipt_url: payment.square_receipt_url || null
+      };
+    });
+
+    // 日付の新しい順にソート
+    payments.sort(function(a, b) {
+      return new Date(b.payment_date) - new Date(a.payment_date);
+    });
+
+    log('INFO', 'Main', 'Payment history retrieved', { count: payments.length });
+
+    return { payments: payments };
+
+  } catch (error) {
+    log('ERROR', 'Main', 'handleGetPaymentHistory failed', { error: error.message });
+    return { payments: [], error: error.message };
+  }
+}
+
+/**
+ * マイメモ保存ハンドラー
+ * @param {string} lineUserId LINE User ID
+ * @param {Object} requestBody { dogId, memo }
+ * @return {Object} { success: boolean, error?: string }
+ */
+function handleSaveMemo(lineUserId, requestBody) {
+  log('INFO', 'Main', 'handleSaveMemo called', {
+    lineUserId: lineUserId,
+    dogId: requestBody.dogId,
+    memoLength: (requestBody.memo || '').length
+  });
+
+  try {
+    var dogId = requestBody.dogId;
+    var memo = requestBody.memo || '';
+
+    if (!dogId) {
+      return { success: false, error: 'dogId is required' };
+    }
+
+    // 顧客検証（本人の犬かどうか）
+    var customer = CustomerRepository.findByLineUserId(lineUserId);
+    if (!customer || customer.error) {
+      return { success: false, error: 'Customer not found' };
+    }
+
+    var dogs = DogRepository.findByCustomerId(customer.customer_id);
+    var targetDog = dogs.find(function(d) { return d.dog_id === dogId; });
+
+    if (!targetDog) {
+      return { success: false, error: 'Dog not found or not owned by this customer' };
+    }
+
+    var result = DogRepository.saveMemo(dogId, memo);
+
+    return result;
+
+  } catch (error) {
+    log('ERROR', 'Main', 'handleSaveMemo failed', { error: error.message });
+    return { success: false, error: error.message };
+  }
+}
+
+// ============================================================================
+// チケット購入処理
+// ============================================================================
+
+/**
+ * チケット購入（クレジットカード決済）
+ *
+ * @param {string} lineUserId - LINE User ID
+ * @param {Object} requestBody - リクエストデータ
+ * @param {string} requestBody.productId - 商品ID (prod002 or prod003)
+ * @param {number} requestBody.quantity - 購入数量
+ * @param {string} requestBody.sourceId - Square カードトークン
+ * @param {string} requestBody.cardBrand - カードブランド
+ * @param {string} requestBody.cardLast4 - カード下4桁
+ * @param {number} requestBody.totalAmount - 合計金額（税込）
+ * @param {string} requestBody.idempotencyKey - 冪等キー
+ * @return {Object} 処理結果
+ */
+function handlePurchaseTicket(lineUserId, requestBody) {
+  log('INFO', 'Main', '=== handlePurchaseTicket START ===');
+  log('DEBUG', 'Main', 'Input:', {
+    lineUserId: lineUserId,
+    productId: requestBody.productId,
+    quantity: requestBody.quantity,
+    totalAmount: requestBody.totalAmount,
+    idempotencyKey: requestBody.idempotencyKey
+  });
+
+  try {
+    // ===== 1. 入力バリデーション =====
+    if (!requestBody.productId || !requestBody.sourceId || !requestBody.totalAmount || !requestBody.idempotencyKey) {
+      throw createK9Error(
+        ErrorCode.VALIDATION_ERROR,
+        'Required fields missing: productId, sourceId, totalAmount, idempotencyKey'
+      );
+    }
+
+    // ===== 2. 顧客検証 =====
+    var customer = CustomerRepository.findByLineUserId(lineUserId);
+    if (!customer || customer.error) {
+      throw createK9Error(ErrorCode.RECORD_NOT_FOUND, 'Customer not found');
+    }
+    log('INFO', 'Main', 'Customer verified: ' + customer.customer_id);
+
+    // ===== 3. 商品情報取得・検証 =====
+    var products = DB.fetchTable(CONFIG.SHEET.PRODUCTS);
+    var product = products.find(function(p) { return p.product_id === requestBody.productId; });
+
+    if (!product) {
+      throw createK9Error(ErrorCode.RECORD_NOT_FOUND, 'Product not found: ' + requestBody.productId);
+    }
+
+    // 商品タイプ確認（チケット商品のみ）
+    if (product.product_type !== 'TICKET') {
+      throw createK9Error(
+        ErrorCode.VALIDATION_ERROR,
+        'Invalid product type. Only TICKET products can be purchased here.'
+      );
+    }
+    log('INFO', 'Main', 'Product verified: ' + product.product_name);
+
+    // ===== 4. 金額検証 =====
+    var productPrice = Number(product.product_price) || Number(product.price) || 0;
+    var expectedAmount = productPrice * requestBody.quantity;
+    log('DEBUG', 'Main', 'Amount validation', {
+      productPrice: productPrice,
+      quantity: requestBody.quantity,
+      expectedAmount: expectedAmount,
+      gotAmount: requestBody.totalAmount
+    });
+    if (expectedAmount !== requestBody.totalAmount) {
+      throw createK9Error(
+        ErrorCode.VALIDATION_ERROR,
+        'Amount mismatch. Expected: ' + expectedAmount + ', Got: ' + requestBody.totalAmount
+      );
+    }
+
+    // ===== 5. 冪等性チェック（重複決済防止）=====
+    var existingPayments = DB.findBy(CONFIG.SHEET.PAYMENTS, 'idempotency_key', requestBody.idempotencyKey);
+    if (existingPayments && existingPayments.length > 0) {
+      log('WARN', 'Main', 'Duplicate idempotency key detected: ' + requestBody.idempotencyKey);
+      // 既存の決済情報を返す
+      var existingPayment = existingPayments[0];
+      return {
+        success: true,
+        duplicate: true,
+        payment_id: existingPayment.payment_id,
+        message: 'Payment already processed'
+      };
+    }
+
+    // ===== 6. トランザクション実行 =====
+    var transactionResult = Transaction.execute(function(transactionLog) {
+
+      // 6-1. Square決済実行
+      log('INFO', 'Main', 'Processing Square payment...');
+      var paymentData = {
+        total_amount: requestBody.totalAmount,
+        payment_id: Utilities.getUuid(),
+        customer_id: customer.customer_id
+      };
+
+      var squareResult = SquareService.processCardPayment(paymentData, requestBody.sourceId);
+
+      if (squareResult.error || !squareResult.success) {
+        throw createK9Error(
+          ErrorCode.SQUARE_API_ERROR,
+          'Square payment failed: ' + (squareResult.message || 'Unknown error'),
+          { square_error: squareResult }
+        );
+      }
+
+      log('INFO', 'Main', 'Square payment successful: ' + squareResult.square_payment_id);
+      Transaction.recordOperation(transactionLog, 'Square決済成功', { square_payment_id: squareResult.square_payment_id });
+
+      // 6-2. 決済履歴INSERT
+      var paymentId = Utilities.getUuid();
+      var paymentCode = 'PAY-' + Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyyMMdd') + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+
+      // 税額計算
+      var taxRate = CONFIG.BUSINESS.TAX_RATE || 0.10;
+      var taxAmount = Math.floor(requestBody.totalAmount * taxRate / (1 + taxRate));
+      var netAmount = requestBody.totalAmount - taxAmount;
+
+      // Square手数料計算（3.25%）
+      var squareFeeRate = 0.0325;
+      var squareFeeAmount = Math.floor(requestBody.totalAmount * squareFeeRate);
+      var netAfterFee = requestBody.totalAmount - squareFeeAmount;
+
+      var paymentRecord = {
+        payment_id: paymentId,
+        payment_code: paymentCode,
+        customer_id: customer.customer_id,
+        reservation_id: null,  // チケット購入は予約なし
+        product_id: requestBody.productId,
+        amount: netAmount,
+        tax_amount: taxAmount,
+        total_amount: requestBody.totalAmount,
+        payment_method: 'CREDIT_CARD',
+        payment_status: 'CAPTURED',
+        square_payment_id: squareResult.square_payment_id,
+        square_order_id: squareResult.square_order_id || null,
+        square_receipt_url: squareResult.square_receipt_url || null,
+        card_last4: requestBody.cardLast4 || squareResult.card_last4 || null,
+        card_brand: requestBody.cardBrand || squareResult.card_brand || null,
+        square_fee_rate: squareFeeRate,
+        square_fee_amount: squareFeeAmount,
+        net_amount: netAfterFee,
+        idempotency_key: requestBody.idempotencyKey,
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+
+      DB.insert(CONFIG.SHEET.PAYMENTS, paymentRecord);
+      log('INFO', 'Main', 'Payment record created: ' + paymentId);
+      Transaction.recordOperation(transactionLog, '決済履歴INSERT', { payment_id: paymentId });
+
+      // ロールバック登録（Square返金）
+      Transaction.registerRollback(transactionLog, 'Square決済返金', function() {
+        log('WARN', 'Main', 'Executing Square refund for: ' + squareResult.square_payment_id);
+        SquareService.refundPayment(squareResult.square_payment_id, requestBody.totalAmount, 'Transaction rollback');
+      });
+
+      // 6-3. 売上台帳INSERT
+      var saleId = Utilities.getUuid();
+      var saleRecord = {
+        sale_id: saleId,
+        sale_code: '',
+        sale_date: new Date(),
+        customer_id: customer.customer_id,
+        product_id: requestBody.productId,
+        product_name: product.product_name,
+        quantity: requestBody.quantity,
+        unit_price: product.price,
+        sales_amount: requestBody.totalAmount,
+        tax_amount: taxAmount,
+        payment_method: 'CREDIT_CARD',
+        payment_id: paymentId,
+        remarks: 'チケット購入 - Square: ' + squareResult.square_payment_id,
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+
+      DB.insert(CONFIG.SHEET.SALES, saleRecord);
+      log('INFO', 'Main', 'Sale record created: ' + saleId);
+      Transaction.recordOperation(transactionLog, '売上台帳INSERT', { sale_id: saleId });
+
+      // 6-4. チケット加算
+      var ticketsToAdd = (product.max_lessons || product.lesson_count || 0) * requestBody.quantity;
+      log('DEBUG', 'Main', 'Adding tickets', { customer_id: customer.customer_id, tickets_to_add: ticketsToAdd });
+      var ticketResult = CustomerRepository.addTickets(customer.customer_id, ticketsToAdd);
+      log('DEBUG', 'Main', 'Ticket add result', {
+        success: ticketResult.success,
+        old_balance: ticketResult.old_balance,
+        new_balance: ticketResult.new_balance,
+        error: ticketResult.error ? ticketResult.message : null
+      });
+
+      if (ticketResult.error) {
+        // チケット加算失敗 - 管理者通知が必要
+        log('ERROR', 'Main', 'Failed to add tickets', { customer_id: customer.customer_id, tickets: ticketsToAdd });
+
+        // 管理者LINE通知
+        try {
+          var adminMessage = '⚠️ チケット加算エラー\n顧客ID: ' + customer.customer_id + '\n購入回数: ' + ticketsToAdd + '回\n決済ID: ' + paymentId + '\n要手動対応';
+          NotificationService.sendAdminLineNotification(adminMessage);
+        } catch (notifyError) {
+          log('ERROR', 'Main', 'Failed to send admin notification: ' + notifyError.message);
+        }
+
+        // エラーは投げない（決済は成功しているため）
+        // ただし結果にフラグを立てる
+      }
+
+      log('INFO', 'Main', 'Tickets added: ' + ticketsToAdd + ' to customer: ' + customer.customer_id);
+      Transaction.recordOperation(transactionLog, 'チケット加算', { tickets_added: ticketsToAdd, new_balance: ticketResult.new_balance });
+
+      // 6-5. 監査ログINSERT
+      if (typeof AuditService !== 'undefined') {
+        AuditService.logSafe(
+          'ticket_purchase',
+          paymentId,
+          'TICKET_PURCHASE',
+          { ticket_remaining: ticketResult.old_balance },
+          { ticket_remaining: ticketResult.new_balance },
+          'CUSTOMER',
+          lineUserId
+        );
+      }
+      Transaction.recordOperation(transactionLog, '監査ログINSERT', { payment_id: paymentId });
+
+      // 新しいチケット残高を確実に数値で返す
+      var newBalance = parseInt(ticketResult.new_balance) || 0;
+      log('INFO', 'Main', 'Ticket purchase complete', {
+        payment_id: paymentId,
+        tickets_added: ticketsToAdd,
+        new_ticket_balance: newBalance
+      });
+
+      return {
+        payment_id: paymentId,
+        payment_code: paymentCode,
+        square_payment_id: squareResult.square_payment_id,
+        square_receipt_url: squareResult.square_receipt_url,
+        tickets_added: ticketsToAdd,
+        new_ticket_balance: newBalance
+      };
+    }, {
+      operation: 'purchaseTicket',
+      customer_id: customer.customer_id,
+      product_id: requestBody.productId,
+      amount: requestBody.totalAmount
+    });
+
+    // ===== 7. 結果処理 =====
+    if (!transactionResult.success) {
+      log('ERROR', 'Main', 'Transaction failed', transactionResult.error);
+      return {
+        success: false,
+        error: true,
+        code: transactionResult.error ? transactionResult.error.code : 'TRANSACTION_ERROR',
+        message: transactionResult.error ? transactionResult.error.message : 'Transaction failed'
+      };
+    }
+
+    // ===== 8. LINE通知送信（非同期・エラー無視）=====
+    try {
+      if (typeof NotificationService !== 'undefined' && customer.line_user_id) {
+        NotificationService.sendTicketPurchaseConfirmation(
+          customer.line_user_id,
+          {
+            product_name: product.product_name,
+            quantity: requestBody.quantity,
+            total_amount: requestBody.totalAmount,
+            tickets_added: transactionResult.result.tickets_added,
+            new_balance: transactionResult.result.new_ticket_balance,
+            receipt_url: transactionResult.result.square_receipt_url
+          }
+        );
+      }
+    } catch (notifyError) {
+      log('WARN', 'Main', 'Failed to send purchase confirmation: ' + notifyError.message);
+    }
+
+    log('INFO', 'Main', '=== handlePurchaseTicket SUCCESS ===');
+
+    return {
+      success: true,
+      payment_id: transactionResult.result.payment_id,
+      payment_code: transactionResult.result.payment_code,
+      square_payment_id: transactionResult.result.square_payment_id,
+      square_receipt_url: transactionResult.result.square_receipt_url,
+      tickets_added: transactionResult.result.tickets_added,
+      new_ticket_balance: transactionResult.result.new_ticket_balance
+    };
+
+  } catch (error) {
+    log('ERROR', 'Main', 'handlePurchaseTicket failed', { error: error.message || error });
+
+    return {
+      success: false,
+      error: true,
+      code: error.code || 'UNKNOWN_ERROR',
+      message: error.message || 'Ticket purchase failed'
     };
   }
 }
