@@ -39,13 +39,16 @@ function setupAllTriggers() {
     
     // 4. 月次レポート生成（毎月1日AM 9:00）
     createMonthlyReportTrigger();
-    
+
+    // 5. Keep-Warm（5分間隔 - V8コールドスタート防止）
+    createKeepWarmTrigger();
+
     console.log('\n╔════════════════════════════════════════════╗');
     console.log('║   All Triggers Created Successfully!       ║');
     console.log('╚════════════════════════════════════════════╝');
     console.log('\n確認方法:');
     console.log('GASエディタ → 左メニュー「トリガー」⏰');
-    console.log('→ 4つのトリガーが表示されていればOK');
+    console.log('→ 5つのトリガーが表示されていればOK');
     
   } catch (error) {
     console.error('❌ トリガー設定失敗:', error.message);
@@ -165,6 +168,65 @@ function createMonthlyReportTrigger() {
   } catch (error) {
     console.error('❌ 作成失敗:', error.message);
   }
+}
+
+/**
+ * 5. Keep-Warmトリガー
+ * 5分間隔で実行 - V8コールドスタート防止 & コアテーブル事前ロード
+ *
+ * 効果:
+ * - V8インスタンスをwarm状態に維持（コールドスタート ~8秒を排除）
+ * - コアテーブル（customers, dogs, lessons, reservations）をCacheServiceに事前ロード
+ * - 結果: ユーザーリクエスト時の応答が ~14秒 → ~1-2秒に改善
+ */
+function createKeepWarmTrigger() {
+  console.log('[5/5] Keep-Warmトリガー作成中...');
+
+  try {
+    ScriptApp.newTrigger('keepWarmGAS')
+      .timeBased()
+      .everyMinutes(5)
+      .create();
+
+    console.log('✅ 作成完了: keepWarmGAS');
+    console.log('   実行間隔: 5分ごと');
+    console.log('   機能: V8コールドスタート防止 & コアテーブル事前ロード');
+    console.log('');
+
+  } catch (error) {
+    console.error('❌ 作成失敗:', error.message);
+  }
+}
+
+/**
+ * Keep-Warm実行関数（トリガーから呼び出される）
+ * コアテーブルをCacheServiceに事前ロードし、V8を暖機する
+ */
+function keepWarmGAS() {
+  var startTime = new Date().getTime();
+
+  // コアテーブルを事前ロード（CONFIG.SHEET定数使用）
+  var coreTableConfig = {
+    customers: CONFIG.SHEET.CUSTOMERS,
+    dogs: CONFIG.SHEET.DOGS,
+    lessons: CONFIG.SHEET.LESSONS,
+    reservations: CONFIG.SHEET.RESERVATIONS
+  };
+  var results = {};
+
+  Object.keys(coreTableConfig).forEach(function(key) {
+    var sheetName = coreTableConfig[key];
+    var tableStart = new Date().getTime();
+    try {
+      TableCache.getTable(sheetName);
+      results[key] = new Date().getTime() - tableStart;
+    } catch (e) {
+      results[key] = -1;
+    }
+  });
+
+  var totalMs = new Date().getTime() - startTime;
+  console.log('Keep-Warm完了: ' + totalMs + 'ms - ' + JSON.stringify(results));
 }
 
 /**

@@ -14,6 +14,15 @@ compatibility_date = "2024-01-01"
 # [vars]
 # GAS_API_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"
 
+# KV Namespace for Edge Cache
+[[kv_namespaces]]
+binding = "K9_CACHE"
+id = "1e41f1f169974c9a8f7ca08af68c796c"
+
+# Cron Trigger: GAS Keep-Warm（5分間隔でV8コールドスタート防止）
+[triggers]
+crons = ["*/5 * * * *"]
+
 # ログ設定
 [observability]
 enabled = true

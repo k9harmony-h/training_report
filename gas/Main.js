@@ -55,7 +55,7 @@ log('DEBUG', 'Main', 'Token verification check', {
 
 if (ENABLE_TOKEN_VERIFICATION) {
   // Token検証が有効な場合
-  var actionsWithoutAuth = ['getProductList', 'getTrainerList', 'healthCheck', 'products'];
+  var actionsWithoutAuth = ['getProductList', 'getTrainerList', 'healthCheck', 'keepWarm', 'products'];
   
   log('DEBUG', 'Main', 'Checking if action requires auth', {
     action: action,
@@ -120,7 +120,7 @@ log('DEBUG', 'Main', 'Final lineUserId', { lineUserId: lineUserId });
     // ============================================================================
     // userId必須チェック
     // ============================================================================
-    var actionsWithoutUserId = ['getProductList', 'getTrainerList', 'healthCheck', 'getAvailableSlots', 'products', 'validateCouponCode', 'getApplicableCoupon', 'check_voucher', 'geocodeAddress'];
+    var actionsWithoutUserId = ['getProductList', 'getTrainerList', 'healthCheck', 'keepWarm', 'getAvailableSlots', 'products', 'validateCouponCode', 'getApplicableCoupon', 'check_voucher', 'geocodeAddress'];
     
     if (actionsWithoutUserId.indexOf(action) === -1 && !lineUserId) {
       return ContentService.createTextOutput(JSON.stringify({
@@ -179,6 +179,10 @@ log('DEBUG', 'Main', 'Final lineUserId', { lineUserId: lineUserId });
         
       case 'healthCheck':
         response = handleHealthCheck();
+        break;
+
+      case 'keepWarm':
+        response = handleKeepWarm();
         break;
 
       case 'getApplicableCoupon':
@@ -1484,6 +1488,51 @@ function handleHealthCheck() {
     timestamp: new Date().toISOString(),
     version: CONFIG.SYSTEM.API_VERSION,
     tokenVerificationEnabled: ENABLE_TOKEN_VERIFICATION
+  };
+}
+
+/**
+ * Keep Warm - V8コールドスタート防止 & コアテーブル事前ロード
+ * Cloudflare Worker Cronトリガーから5分間隔で呼び出される
+ *
+ * 効果:
+ * 1. V8インスタンスをwarm状態に維持（コールドスタート ~8秒を排除）
+ * 2. コアテーブルをCacheServiceに事前ロード（テーブル読み込み ~5秒を排除）
+ * 3. 結果: ユーザーリクエスト時のレスポンスが ~14秒 → ~1-2秒に改善
+ */
+function handleKeepWarm() {
+  var startTime = new Date().getTime();
+  var tableTimings = {};
+
+  // コアテーブルを事前ロード（getEvaluationBundleで使用する4テーブル）
+  // CONFIG.SHEET定数を使用（実際のシート名は日本語）
+  var coreTableConfig = {
+    customers: CONFIG.SHEET.CUSTOMERS,
+    dogs: CONFIG.SHEET.DOGS,
+    lessons: CONFIG.SHEET.LESSONS,
+    reservations: CONFIG.SHEET.RESERVATIONS
+  };
+
+  Object.keys(coreTableConfig).forEach(function(key) {
+    var sheetName = coreTableConfig[key];
+    var tableStart = new Date().getTime();
+    try {
+      TableCache.getTable(sheetName);
+      tableTimings[key] = new Date().getTime() - tableStart;
+    } catch (e) {
+      tableTimings[key] = -1; // エラー
+      log('WARN', 'KeepWarm', 'Table load failed: ' + key + ' (' + sheetName + ')', { error: e.message });
+    }
+  });
+
+  var totalMs = new Date().getTime() - startTime;
+  log('INFO', 'KeepWarm', 'Warm-up complete', { totalMs: totalMs, tables: tableTimings });
+
+  return {
+    status: 'warm',
+    timestamp: new Date().toISOString(),
+    elapsed_ms: totalMs,
+    tables: tableTimings
   };
 }
 
